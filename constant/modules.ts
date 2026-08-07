@@ -21,7 +21,7 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     items: [
       { name: "Employee Master Dashboard", slug: "employee-master-dashboard" },
       { name: "Employee Master", slug: "employee-master" },
-      { name: "Employee Master new", slug: "Employee_Master/Employee_Master" },
+      { name: "Employee Master new", slug: "Employee_Master" },
       { name: "Employee View", slug: "employee-view" },
       { name: "Salary Approver Grid", slug: "salary-approver-grid" },
       { name: "Employee Master With Basic Info", slug: "employee-master-with-basic-info" },

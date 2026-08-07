@@ -1,19 +1,24 @@
 import React, { ChangeEvent, FC, InputHTMLAttributes } from "react";
 import { Input } from "../ui/input";
+import { cn } from "@/lib/utils";
 
 interface AinputProps extends InputHTMLAttributes<HTMLInputElement> {
   title: string;
   type: string;
   name: string;
-  disabled: boolean;
-  onInput: (name: string, value: string) => void;
-  handleInputChange: (name: string, value: string) => void;
+  disabled?: boolean;
+  handleInputChange: (name: string, value: any) => void;
   required?: boolean;
   value: string | number | null;
-  readOnly?: boolean; // Should be readOnly, not readonly
+
+  readOnly?: boolean;
   errorMessage?: string;
   redlabel?: string;
   autoComplete?: string;
+  ShortName?: boolean;
+
+  // ✅ attach button/icon inside input (right side)
+  rightElement?: React.ReactNode;
 }
 
 const Ainput: FC<AinputProps> = ({
@@ -30,66 +35,100 @@ const Ainput: FC<AinputProps> = ({
   maxLength,
   onKeyDown,
   redlabel,
-  onInput,
   style,
   ShortName,
-  autoComplete
+  autoComplete,
+  rightElement,
+  placeholder,
+  ...rest
 }) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+    const v = event.target.value;
 
-    if (type == 'date' && value === '') {
-      // When date is cleared, send null
+    if (type === "date" && v === "") {
       handleInputChange(name, null);
-    } else if (type == 'date') {
-      // For date with value, optionally validate year
-      const year = value.split('-')[0];
-      if (year.length <= 4) {
-        handleInputChange(name, value);
-      }
-    } else {
-      // For other types
-      handleInputChange(name, value);
+      return;
     }
+    if (type === "date") {
+      const year = v.split("-")[0];
+      if (year.length <= 4) handleInputChange(name, v);
+      return;
+    }
+    handleInputChange(name, v);
   };
 
-  const toTitleCase = (str) => {
-    if (!str) return '';
+  const toTitleCase = (str?: string) => {
+    if (!str) return "";
     return str
       .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
   };
 
-  const getAutoComplete = () => {
-    if (autoComplete != undefined) return autoComplete;
-    return "nope";
-  };
+  const getAutoComplete = () =>
+    autoComplete !== undefined ? autoComplete : "off";
+
+  const isDate = type === "date";
 
   return (
-    <div className="relative w-full">
-      <label className="flex text-xs font-bold mt-1 mb-1 text-muted dark:text-fg" htmlFor={name}>
-        {ShortName ? title : toTitleCase(title)}{redlabel && <p className="text-danger-border text-xs -mt-[3px] ml-2">{redlabel}</p>}{errorMessage && <p className="text-danger-border text-xs ml-2">{errorMessage}</p>}
+    <div className="w-full space-y-1">
+      <label
+        className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300"
+        htmlFor={name}
+      >
+        {ShortName ? title : toTitleCase(title)}
+        {redlabel ? <span className="text-red-500">{redlabel}</span> : null}
+        {errorMessage ? (
+          <span className="text-red-500 text-[11px]">{errorMessage}</span>
+        ) : null}
       </label>
 
-      <Input
-        className={`h-[28px] bg-card dark:bg-card text-fg dark:text-fg border-line dark:border-line placeholder:text-muted focus-visible:ring-brand dark:focus-visible:ring-brand ${className}`}
-        type={type}
-        name={name}
-        onChange={handleChange}
-        value={value || ""}
-        required={required}
-        onInput={onInput}
-        disabled={disabled}
-        onKeyDown={onKeyDown}
-        readOnly={readOnly}
-        maxLength={maxLength}
-        style={style}
-        autoComplete={getAutoComplete()}
-        autoCorrect="off"
-        spellCheck={false}
-      />
+      <div className="relative">
+        <Input
+          {...rest}
+          placeholder={placeholder}
+          className={cn(
+            "h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-slate-900 shadow-sm outline-none",
+            "border-slate-200 placeholder:text-slate-400",
+            "focus-visible:ring-4 focus-visible:ring-indigo-100 focus-visible:border-indigo-400",
+            "disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed",
+            "dark:bg-black dark:text-white dark:border-slate-800 dark:placeholder:text-slate-500",
+            "dark:focus-visible:ring-indigo-950/40",
+
+            // ✅ date input: keep room + class for moving native icon to end
+            isDate ? "date-end-icon pr-10" : "",
+
+            // ✅ right attached element: override padding (more space)
+            rightElement ? "pr-[112px]" : "",
+
+            errorMessage
+              ? "border-red-400 focus-visible:ring-red-100 focus-visible:border-red-400"
+              : "",
+            className
+          )}
+          type={type}
+          name={name}
+          onChange={handleChange}
+          value={value ?? ""}
+          required={required}
+          disabled={disabled}
+          onKeyDown={onKeyDown}
+          readOnly={readOnly}
+          maxLength={maxLength}
+          style={style}
+          autoComplete={getAutoComplete()}
+          autoCorrect="off"
+          spellCheck={false}
+        />
+
+        {/* ✅ Right attached button/icon */}
+        {rightElement ? (
+          <div className="absolute right-1 top-1 h-7 flex items-center">
+            {rightElement}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };
