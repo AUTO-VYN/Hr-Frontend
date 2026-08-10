@@ -1,5 +1,4 @@
 "use client";
-import SmallTitle from "@/components/atoms/smallTitle";
 import React, { useEffect, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
 import TableComponent from "@/components/atoms/DynamicTable";
@@ -9,16 +8,6 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import HashloaderComponent from "@/components/Templates/hashloader";
 
-interface RowData {
-  Asset_Serial_no: string;
-  Aset_Code: string;
-  Aset_Name: string;
-  Asset_Type: string;
-  Issue_Date: string;
-  Revoke_Date: string;
-  Lost_Date: string;
-  Revoke_Rem: string;
-}
 function showSideAlert(message: any, type: any) {
   const Toast = Swal.mixin({
     toast: true,
@@ -39,10 +28,22 @@ function showSideAlert(message: any, type: any) {
     title: message,
   });
 }
+
+interface AssetRow {
+  UTD?: string | number | null;
+  Asset_Serial_no?: string;
+  Aset_Code?: string;
+  Aset_Name?: string;
+  Asset_Type?: string;
+  Issue_Date?: string;
+  Revoke_Date?: string;
+  Lost_Date?: string;
+  Revoke_Rem?: string;
+}
 const Page: React.FC = () => {
   const user = useCurrentUser();
   const { formData, setFormData } = useFormData();
-  const [tableData, setTableData] = useState([{}]);
+ const [tableData, setTableData] = useState<AssetRow[]>([]);
   const [isUTDPresent, setIsUTDPresent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +64,7 @@ const Page: React.FC = () => {
         {},
         {
           headers: {
-            compcode: user?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code, name: user?.name,
           },
         }
       );
@@ -96,7 +97,7 @@ const Page: React.FC = () => {
         },
         {
           headers: {
-            compcode: user?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code, name: user?.name,
           },
         }
       );
@@ -123,7 +124,7 @@ const Page: React.FC = () => {
         },
         {
           headers: {
-            compcode: user?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code, name: user?.name,
           },
         }
       );
@@ -201,12 +202,12 @@ const Page: React.FC = () => {
         />
       </div>
       <div className="flex mt-2 flex-wrap gap-x-2 p-2.5">
-        {user?.role1.includes("1.2.2") && (
+        {(user as any)?.role1.includes("1.2.2") && (
           <Button variant={"save"} onClick={SaveAssets} disabled={isUTDPresent}>
             Save
           </Button>
         )}
-        {user?.role1.includes("1.2.3") && (
+        {(user as any)?.role1.includes("1.2.3") && (
           <Button
             variant={"update"}
             onClick={UpdateAssets}
@@ -218,7 +219,7 @@ const Page: React.FC = () => {
         <Button
           variant={"outline"}
           onClick={() => {
-            const url = `${process.env.NEXT_PUBLIC_URL}/asset/AssetViewEmployeeMaster?compcode=${user?.Comp_Code}&EmpCode=${formData.EmpMst.EMPCODE}`;
+            const url = `${process.env.NEXT_PUBLIC_URL}/asset/AssetViewEmployeeMaster?compcode=${(user as any)?.Comp_Code}&EmpCode=${formData.EmpMst.EMPCODE}`;
             window.open(url, "_blank"); // Opens the URL in a new tab/window
           }}
         >

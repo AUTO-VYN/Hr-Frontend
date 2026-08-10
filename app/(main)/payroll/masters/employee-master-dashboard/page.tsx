@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -11,8 +10,6 @@ import DepartmentPieChart from "./DepartmentPieChart";
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
-    DialogTitle,
 } from "@/components/ui/dialog";
 
 function showSideAlert(message, type) {
@@ -60,11 +57,11 @@ export default function Employee_Master_Dashboard() {
                     range: selectedRange,
                     location: selectedLocation,
                     month: selectedMonth,
-                    login_loc: user?.branch
+                    login_loc: (user as any)?.branch
                 },
                 {
                     headers: {
-                        compcode: user?.Comp_Code,
+                        compcode: (user as any)?.Comp_Code,
                         name: user?.name,
                     }
                 });
@@ -104,11 +101,11 @@ export default function Employee_Master_Dashboard() {
                 {
                     type,
                     value,
-                    login_loc: user?.branch
+                    login_loc: (user as any)?.branch
                 },
                 {
                     headers: {
-                        compcode: user?.Comp_Code,
+                        compcode: (user as any)?.Comp_Code,
                         name: user?.name
                     }
                 }
@@ -189,11 +186,11 @@ export default function Employee_Master_Dashboard() {
                 `${process.env.NEXT_PUBLIC_URL}/employee/getEmployeeDetails`,
                 {
                     empcode,
-                    login_loc: user?.branch
+                    login_loc: (user as any)?.branch
                 },
                 {
                     headers: {
-                        compcode: user?.Comp_Code,
+                        compcode: (user as any)?.Comp_Code,
                         name: user?.name,
                     }
                 }
@@ -211,7 +208,23 @@ export default function Employee_Master_Dashboard() {
         }
     };
 
-    const StatCard = ({ title, value, percentage, icon, color, bgColor, onClick }) => (
+    const StatCard = ({
+    title,
+    value,
+    percentage,
+    icon,
+    color,
+    bgColor,
+    onClick,
+}: {
+    title: any;
+    value: any;
+    percentage?: number | null;
+    icon: any;
+    color: string;
+    bgColor: string;
+    onClick?: () => void;
+}) => (
         <div className={`rounded-xl shadow-sm p-4 border-l-4 transition-all hover:shadow-md hover:cursor-pointer`}
             style={{
                 borderLeftColor: color,
@@ -380,15 +393,19 @@ export default function Employee_Master_Dashboard() {
                                                             className="w-14 h-14 rounded-full object-cover border-2 shadow-md"
                                                             style={{ borderColor: color }}
                                                             onError={(e) => {
-                                                                e.target.onerror = null;
-                                                                e.target.style.display = 'none';
-                                                                const parent = e.target.parentElement;
+                                                                const img = e.currentTarget;
+
+                                                                img.onerror = null;
+                                                                img.style.display = "none";
+
+                                                                const parent = img.parentElement;
+
                                                                 if (parent) {
                                                                     parent.innerHTML = `
-                                                                <div class="w-14 h-14 rounded-full bg-gradient-to-br ${gradientColor} flex items-center justify-center text-white font-bold text-xl shadow-md">
-                                                                    ${initials}
-                                                                </div>
-                                                            `;
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-br ${gradientColor} flex items-center justify-center text-white font-bold text-xl shadow-md">
+                            ${initials}
+                        </div>
+                    `;
                                                                 }
                                                             }}
                                                         />

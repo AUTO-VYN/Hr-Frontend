@@ -6,22 +6,27 @@ import clsx from "clsx";
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?:
-    | "default"
-    | "primary"
-    | "outline"
-    | "outlineBrand"
-    | "ghost"
-    | "icon"
-    | "print"
-    | ""
-    | undefined;
+  | "default"
+  | "primary"
+  | "outline"
+  | "outlineBrand"
+  | "ghost"
+  | "icon"
+  | "print"
+  | "save"
+  | "update"
+  | ""
+  | undefined;
 
   size?: "default" | "sm" | "lg" | "icon" | "iconSm" | undefined;
 
   shape?: "rounded" | "pill" | undefined;
 }
 
-const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
+const variantStyles: Record<
+  NonNullable<ButtonProps["variant"]>,
+  string
+> = {
   // Backward compatible
   default: "bg-brand text-white hover:brightness-105",
   "": "bg-brand text-white hover:brightness-105",
@@ -34,6 +39,10 @@ const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
     "border border-brand/30 bg-white text-brand hover:bg-brand/5",
   ghost: "bg-transparent text-fg hover:bg-hoverbg",
   icon: "border border-line bg-white text-fg hover:bg-hoverbg",
+
+  // Save / Update
+  save: "bg-green-600 text-white hover:bg-green-700",
+  update: "bg-blue-600 text-white hover:bg-blue-700",
 };
 
 const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {

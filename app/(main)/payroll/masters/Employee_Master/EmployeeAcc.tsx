@@ -1,15 +1,12 @@
 "use client";
-import Acheckbox from "@/components/atoms/Checkbox";
 import Ainput from "@/components/atoms/Input";
 import SelectSearch from "@/components/atoms/Select";
-import SmallTitle from "@/components/atoms/smallTitle";
 import React, { useEffect, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import axios from "axios";
-import ModulesRightsSection from "@/components/Templates/ModulesRightsSection";
-import { Button } from "@/components/ui/button";
+ 
 
 function showSideAlert(message, type) {
   const Toast = Swal.mixin({
@@ -140,7 +137,7 @@ export default function Page() {
         { User_Name: username },
         {
           headers: {
-            compcode: user?.Comp_Code,
+            compcode: (user as any)?.Comp_Code,
             name: user?.name,
             user_id: user?.id,
           },
@@ -185,7 +182,7 @@ export default function Page() {
         {},
         {
           headers: {
-            compcode: user?.Comp_Code,
+            compcode: (user as any)?.Comp_Code,
             name: user?.name,
             token: user?.email,
           },
