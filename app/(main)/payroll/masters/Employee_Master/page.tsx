@@ -1,19 +1,20 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useFormData } from "./Context/FormDataContext";
 import EmpTabs from "./EmpTabs";
-import Einput from "@/components/atoms/Einput";
-import Image from "next/image";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from "uuid";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
-import Eselect from "@/components/atoms/Eselect";
 import HashloaderComponent from "@/components/Templates/hashloader";
+// import { useSearchParams, useRouter } from "next/navigation";
 import { useSearchParams, useRouter } from "next/navigation";
-import FileViewer from "@/components/atoms/Fileviewer";
-import { FaUsers } from "react-icons/fa";
 import DigiLockerVerification from "@/components/Digilocker/DigiLockerVerification";
 import TutorialHelpButton from "@/components/atoms/TutorialHelpButton1";
 import { ArrowRight, ArrowLeft, CheckCircle, FileText, RotateCw, X, Plus, Moon, HelpCircle, Search, BadgeCheck, Check} from "lucide-react";
@@ -271,11 +272,9 @@ function showSideAlert(message, type) {
 
 // Example usage:
 
-export default function Home() {
+function EmployeeMasterContent() {
+
   const router = useRouter();
-
-  
-
   const user = useCurrentUser();
   const { compdata } = useSecureStorage();
   const { formData, setFormData } = useFormData();
@@ -564,7 +563,7 @@ const getSectionProgress = (key: string) => {
       setSaveDisable(true);
       setIsGenerate(true);
     } catch (error) {
-      console.error("Error loading employee data:", error);
+      console.log("Error loading employee data:", error);
     }
   };
 
@@ -709,7 +708,7 @@ const getSectionProgress = (key: string) => {
 
       setIsGenerate(true);
     } catch (error) {
-      console.error("Error generating code:", error);
+      console.log("Error generating code:", error);
 
       await Swal.fire({
         icon: "error",
@@ -1354,8 +1353,7 @@ const getSectionProgress = (key: string) => {
       } else {
         showSideAlert("Error UPDATING DATA", "warning");
       }
-    } catch (error) {
-      console.error("Error updating data:", error);
+    } catch (error) { 
       showSideAlert(`${error?.response?.data?.errors}`, "error");
     } finally {
       setIsLoading(false);
@@ -2278,7 +2276,6 @@ const getSectionProgress = (key: string) => {
         });
       }
     } catch (error) {
-      console.error("Error updating data:", error);
       showSideAlert(`${error?.response?.data?.message}`, "error");
     } finally {
       setIsLoading(false);
@@ -2562,7 +2559,7 @@ const getSectionProgress = (key: string) => {
       }));
       setIsGenerate(true);
     } catch (error) {
-      console.error("Error", error);
+      console.log("Error", error);
       // showSideAlert(`${error?.response?.data?.message}`, "error");
 
       // Swal.fire({
@@ -2637,10 +2634,9 @@ const getSectionProgress = (key: string) => {
         setPolicyLogs(response.data.data || []);
         setShowLogModal(true);
       } else {
-        throw new Error(response.data.message || 'Failed to load history');
+        console.log(response.data.message || 'Failed to load history');
       }
     } catch (error) {
-      console.error('Error fetching policy logs:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -3076,4 +3072,11 @@ const getSectionProgress = (key: string) => {
     )}
   </div>
 );
+}
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EmployeeMasterContent />
+    </Suspense>
+  );
 }

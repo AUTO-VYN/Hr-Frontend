@@ -3,16 +3,27 @@ import { MdDelete, MdNoteAdd } from "react-icons/md";
 import "tailwindcss/tailwind.css";
 import Swal from "sweetalert2";
 import Eselect from "./Eselect";
-import Fselect from "./Fselect";
 
-const TableComponent = ({
+interface TableComponentProps {
+  columns: string[];
+  columnsShow: string[];
+  tableData: any[];
+  setTableData: React.Dispatch<React.SetStateAction<any[]>>;
+  constraints: Record<string, any>;
+  disabledProp?: boolean;
+  DropDownOp?: Record<string, any[]>;
+  Height?: number;
+  AddBtn?: boolean;
+}
+
+const TableComponent: React.FC<TableComponentProps> = ({
   columns,
   columnsShow,
   tableData,
   setTableData,
   constraints,
-  disabledProp,
-  DropDownOp = [],
+  disabledProp = false,
+  DropDownOp = {},
   Height = 0,
   AddBtn = false,
 }) => {
