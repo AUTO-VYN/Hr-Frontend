@@ -1,12 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
-import TableComponent from "@/components/atoms/DynamicTable";
+import TableComponent from "@/components/atoms/YNDynamicTable";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import axios from "axios";
 import Swal from "sweetalert2";
 import HashloaderComponent from "@/components/Templates/hashloader";
+import { Plus, Box } from "lucide-react";
 
 function showSideAlert(message: any, type: any) {
   const Toast = Swal.mixin({
@@ -40,10 +41,14 @@ interface AssetRow {
   Lost_Date?: string;
   Revoke_Rem?: string;
 }
+
 const Page: React.FC = () => {
   const user = useCurrentUser();
   const { formData, setFormData } = useFormData();
- const [tableData, setTableData] = useState<AssetRow[]>([]);
+  
+  // ✅ Initial state mein ek empty row set ki
+  const [tableData, setTableData] = useState<AssetRow[]>([{}]);
+  
   const [isUTDPresent, setIsUTDPresent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,26 +62,36 @@ const Page: React.FC = () => {
   }, [tableData]);
 
   const handleEmpChange = async (EMP_CODE) => {
-    setTableData([{}]);
+   
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/AssetDetailsEmp/${EMP_CODE}`,
         {},
         {
           headers: {
-            compcode: (user as any)?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code,
+            name: user?.name,
           },
         }
       );
-      setTableData(response?.data?.data?.AssetIssue || []);
+      
+      const apiData = response?.data?.data?.AssetIssue || [];
+
+      setTableData(apiData.length > 0 ? apiData : [{}]);
+      
     } catch (e) {
-      showSideAlert(e.response.data.message, "warning");
+      showSideAlert(e.response?.data?.message || "Error fetching data", "warning");
+
+      setTableData([{}]);
     }
   };
 
   useEffect(() => {
     if (formData.EmpMst.EMPCODE) {
       handleEmpChange(formData.EmpMst.EMPCODE);
+    } else {
+    
+      setTableData([{}]);
     }
   }, [formData.EmpMst.EMPCODE]);
 
@@ -86,7 +101,6 @@ const Page: React.FC = () => {
       return;
     }
     setIsLoading(true);
-    console.log(tableData, "tableData");
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/AssetDetailsSave`,
@@ -97,23 +111,21 @@ const Page: React.FC = () => {
         },
         {
           headers: {
-            compcode: (user as any)?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code,
+            name: user?.name,
           },
         }
       );
-      console.log(response)
       handleEmpChange(formData.EmpMst.EMPCODE);
     } catch (e) {
-      console.log(e, 'hfvb')
-      showSideAlert(e.response.data.message, "warning");
+      showSideAlert(e.response?.data?.message || "Error", "warning");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
   const UpdateAssets = async () => {
-    setIsLoading(true)
-    console.log(tableData, "tableData");
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/UpdateAssets`,
@@ -124,18 +136,23 @@ const Page: React.FC = () => {
         },
         {
           headers: {
-            compcode: (user as any)?.Comp_Code, name: user?.name,
+            compcode: (user as any)?.Comp_Code,
+            name: user?.name,
           },
         }
       );
-      console.log(response);
       handleEmpChange(formData.EmpMst.EMPCODE);
       showSideAlert("Asset updated successfully", "success");
     } catch (e) {
-      showSideAlert(e.response.data.message, "warning");
+      showSideAlert(e.response?.data?.message || "Error", "warning");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
+  };
+
+  // ✅ Function to add new row when "+ Issue asset" button is clicked
+  const handleAddRow = () => {
+    setTableData((prev) => [...prev, {}]);
   };
 
   const a = {};
@@ -175,59 +192,91 @@ const Page: React.FC = () => {
     Lost_Date: { type: "DATE" },
     Revoke_Rem: { type: "TEXT" },
   };
-  return (
-    <div className="">
-      {/* <SmallTitle text="Asset Details" /> */}
 
-      <div className="rounded-t bg-[#193A69] dark:bg-black mb-0 px-2 py-2 border dark:border-[#D0D5DD]"> {/* ye pri div replesh karna h */}
-        <div className="flex flex-col sm:flex-row items-center justify-between ">
-          <h1 className=" font-semibold text-sm">
-            <div className="flex  text-white dark:text-[#37a9dd] uppercase">
-              Asset Details
-            </div>
+  return (
+    <div className="w-full bg-[#F8FAFC] dark:bg-[#1E293B] p-4 rounded-xl border border-[#E2E8F0] dark:border-[#334155] shadow-sm">
+      
+      {/* ✅ Header Section */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-md">
+            <Box className="h-7 w-6 text-[#4F46E5] dark:text-[#818CF8]" />
+          </div>
+          <h1 className="font-bold text-[13px] text-[#1E293B] dark:text-[#E2E8F0] tracking-wide uppercase">
+            Asset Details
           </h1>
+        </div>
+
+        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          {/* View Asset Button */}
+          <Button
+            variant="outline"
+            className="h-9 border-[#E2E8F0] dark:border-[#334155] text-[#4F46E5] dark:text-[#818CF8] font-large bg-white dark:bg-[#0F172A] hover:bg-[#EEF2FF] dark:hover:bg-[#1E293B] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"
+            onClick={() => {
+              const url = `${process.env.NEXT_PUBLIC_URL}/asset/AssetViewEmployeeMaster?compcode=${(user as any)?.Comp_Code}&EmpCode=${formData.EmpMst.EMPCODE}`;
+              window.open(url, "_blank");
+            }}
+          >
+            View asset
+          </Button>
+
+          {/* Save Button (Role 1.2.2) */}
+          {(user as any)?.role1.includes("1.2.2") && (
+            <Button
+              variant="outline"
+              className="h-9 border-[#E2E8F0] dark:border-[#334155] text-[#4F46E5] dark:text-[#818CF8] font-large bg-white dark:bg-[#0F172A] hover:bg-[#EEF2FF] dark:hover:bg-[#1E293B] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"
+              onClick={SaveAssets}
+              disabled={isUTDPresent}
+            >
+              Save
+            </Button>
+          )}
+
+          {/* Update Button (Role 1.2.3) */}
+          {(user as any)?.role1.includes("1.2.3") && (
+            <Button
+              variant="outline"
+              className="h-9 border-[#E2E8F0] dark:border-[#334155] text-[#4F46E5] dark:text-[#818CF8] font-medium bg-white dark:bg-[#0F172A] hover:bg-[#EEF2FF] dark:hover:bg-[#1E293B] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"
+              onClick={UpdateAssets}
+              disabled={!isUTDPresent}
+            >
+              Update
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* ✅ Table Wrapper */}
+      <div className="w-full border border-[#EAECF0] dark:border-[#334155] rounded-lg overflow-hidden bg-white dark:bg-[#0F172A]">
+        
+        {/* Original TableComponent */}
+        <div className="[&_th]:!text-[10px] [&_th]:!tracking-[0.08em] [&_th]:!bg-[#F8FAFC] dark:[&_th]:!bg-[#1E293B] [&_th]:!text-[#475569] dark:[&_th]:!text-[#94A3B8] [&_tbody_tr]:!bg-white dark:[&_tbody_tr]:!bg-[#0F172A] [&_tbody_td]:!text-[#334155] dark:[&_tbody_td]:!text-[#E2E8F0] [&_tbody_tr:last-child]:!hidden [&_tbody_tr:last-child]:!pointer-events-none">
+          <TableComponent
+            columns={columns}
+            tableData={tableData}
+            setTableData={setTableData}
+            constraints={constraints}
+            columnsShow={columnsShow}
+            DropDownOp={a}
+          />
+        </div>
 
-      <div className="overflow-x-auto w-full h-[200px] gap-3 p-4 mt-2 bg-white dark:bg-black border border-[#b5bfcb] dark:border-[#D0D5DD] rounded-b shadow">
-        <TableComponent
-          columns={columns}
-          tableData={tableData}
-          setTableData={setTableData}
-          constraints={constraints}
-          columnsShow={columnsShow}
-          DropDownOp={a}
-           AddBtn={true}
-        />
-      </div>
-      <div className="flex mt-2 flex-wrap gap-x-2 p-2.5">
-        {(user as any)?.role1.includes("1.2.2") && (
-          <Button variant={"save"} onClick={SaveAssets} disabled={isUTDPresent}>
-            Save
-          </Button>
-        )}
-        {(user as any)?.role1.includes("1.2.3") && (
-          <Button
-            variant={"update"}
-            onClick={UpdateAssets}
-            disabled={!isUTDPresent}
+        {/* ✅ "+ Issue asset" button */}
+        <div className="px-6 py-4 border-t border-[#EAECF0] dark:border-[#334155] bg-white dark:bg-[#0F172A]">
+          <button
+            type="button"
+            onClick={handleAddRow}
+            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#D0D5DD] dark:border-[#475569] bg-white dark:bg-[#0F172A] px-4 py-2 text-m font-medium text-[#4F46E5] dark:text-[#818CF8] hover:bg-[#F3F4FF] dark:hover:bg-[#1E293B] hover:border-[#A5B4FC] dark:hover:border-[#6366F1] transition-colors"
           >
-            update
-          </Button>
-        )}
-        <Button
-          variant={"outline"}
-          onClick={() => {
-            const url = `${process.env.NEXT_PUBLIC_URL}/asset/AssetViewEmployeeMaster?compcode=${(user as any)?.Comp_Code}&EmpCode=${formData.EmpMst.EMPCODE}`;
-            window.open(url, "_blank"); // Opens the URL in a new tab/window
-          }}
-        >
-          View Asset
-        </Button>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Issue asset
+          </button>
+        </div>
       </div>
+
       <HashloaderComponent isLoading={isLoading} />
     </div>
   );
 };
+
 export default Page;

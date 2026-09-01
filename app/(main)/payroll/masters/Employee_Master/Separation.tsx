@@ -1,21 +1,12 @@
-"use client";
-import AButton from "@/components/atoms/Buttton";
+"use client"; 
 import Einput from "@/components/atoms/Einput";
-import SelectSearch from "@/components/atoms/Select";
-import SmallTitle from "@/components/atoms/smallTitle";
 import ATextArea from "@/components/atoms/textArea";
 import React, { useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
-import { Button } from "@/components/ui/button";
 import Eselect from "@/components/atoms/Eselect";
 import Image from "next/image";
 import FileViewer from "@/components/atoms/Fileviewer";
 
-const yesno = [
-  // { value: 0, label: "--Select--" },
-  { value: "1", label: "YES" },
-  { value: "2", label: "NO" },
-];
 function Separation({ masterData }) {
   console.log(masterData, "masterData")
   const { formData, setFormData } = useFormData();

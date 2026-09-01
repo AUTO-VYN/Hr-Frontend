@@ -231,12 +231,14 @@ const EmpTabs = ({
           )}
 
           {activeTab === 3 && (
+             <div className="h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-2 light-scroll">
             <SalaryDetails
               disapleForSalary={disableSalaryTab}
               isActiveTab={activeTab === 3}
               isMandatory={isMandatory}
               masterData={masterData}
             />
+            </div>
           )}
 
           {activeTab === 4 && <Education />}
