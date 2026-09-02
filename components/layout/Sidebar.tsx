@@ -88,7 +88,7 @@ export default function Sidebar() {
         </div>
 
         {/* modules */}
-        <nav className="flex-1 overflow-y-auto px-2.5 pb-3 branch-scroll">
+        <nav className="flex-1 overflow-y-auto px-2.5 pb-3 light-scroll">
           {PAYROLL_MODULES.map((group) => {
             const isOpen = openGroup === group.slug;
             const holdsActive = pathname?.includes(`/payroll/${group.slug}/`);

@@ -133,11 +133,13 @@ input::placeholder {
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
+  overflow: auto;
 }
 
 .fluid-panel {
   min-height: 100vh;
   overflow: hidden;
+  overflow: auto;
 }
 
 .fluid-p-sm { padding: clamp(10px, 2vh, 16px) clamp(12px, 2.5vw, 20px) !important; }
@@ -227,9 +229,14 @@ input::placeholder {
 }
 
 @layer base {
-  @media (min-width: 1024px) {
+  @media (min-width: 1024px)
+  
+    {
     html {
-      font-size: 11.390px; /* 16 * (100/110) */
+      font-size: 10.390px; /* 16 * (100/110) */
     }
   }
+}
+html, body {
+  height: 100%;
 }
