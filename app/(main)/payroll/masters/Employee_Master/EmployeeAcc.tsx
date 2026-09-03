@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -64,17 +66,21 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-4 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          {icon ? <span className="text-violet-600">{icon}</span> : null}
-          <h2 className="text-sm font-semibold tracking-wider text-slate-900 uppercase">
+          {icon ? (
+            <span className="text-violet-600 dark:text-violet-400">{icon}</span>
+          ) : null}
+          <h2 className="text-sm font-semibold tracking-wider text-slate-900 uppercase dark:text-slate-100">
             {title}
           </h2>
         </div>
         {right}
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-6 py-5 text-slate-900 dark:text-slate-100">
+        {children}
+      </div>
     </div>
   );
 }
@@ -111,7 +117,6 @@ export default function Page() {
       setScrollWrapHeight(h);
     };
 
-    // run after layout paint
     const raf = requestAnimationFrame(calc);
     window.addEventListener("resize", calc);
 
@@ -210,7 +215,7 @@ export default function Page() {
             name: (user as any)?.name,
             user_id: (user as any)?.id,
           },
-        },
+        }
       );
 
       if (!res.data.success) {
@@ -253,7 +258,7 @@ export default function Page() {
             name: (user as any)?.name,
             token: (user as any)?.email,
           },
-        },
+        }
       );
       SetGeoOffenceLocation(response.data.Result);
     } catch (error) {
@@ -281,7 +286,7 @@ export default function Page() {
           .map((key: string) => key.trim());
 
         const validKeys = selectedKeys.filter((key: string) =>
-          GeoOffenceLocation.some((loc: any) => loc.value.toString() === key),
+          GeoOffenceLocation.some((loc: any) => loc.value.toString() === key)
         );
 
         setCheckedKeys(validKeys);
@@ -305,7 +310,7 @@ export default function Page() {
         splRem: item.splRem,
         children: [],
       })),
-    [GeoOffenceLocation],
+    [GeoOffenceLocation]
   );
 
   const isLocationSelectable = (location: any) => {
@@ -316,7 +321,7 @@ export default function Page() {
     if (!isLocationSelectable(location)) {
       showSideAlert(
         `Geo location is not set for ${location.title} — cannot select it`,
-        "warning",
+        "warning"
       );
       return;
     }
@@ -332,7 +337,7 @@ export default function Page() {
   const filteredLocations = useMemo(() => {
     const t = searchTerm.toLowerCase();
     return transformedGeoData.filter((location: any) =>
-      location.title.toLowerCase().includes(t),
+      location.title.toLowerCase().includes(t)
     );
   }, [transformedGeoData, searchTerm]);
 
@@ -342,13 +347,13 @@ export default function Page() {
 
     const selectableFiltered = filteredLocations.filter(isLocationSelectable);
     const skippedLocations = filteredLocations.filter(
-      (loc: any) => !isLocationSelectable(loc),
+      (loc: any) => !isLocationSelectable(loc)
     );
 
     if (checked) {
       const filteredKeys = selectableFiltered.map((item: any) => item.key);
       const otherSelectedKeys = checkedKeys.filter(
-        (key) => !filteredLocations.some((loc: any) => loc.key === key),
+        (key) => !filteredLocations.some((loc: any) => loc.key === key)
       );
 
       onCheck([...otherSelectedKeys, ...filteredKeys], { checked: true });
@@ -362,7 +367,7 @@ export default function Page() {
       }
     } else {
       const remainingKeys = checkedKeys.filter(
-        (key) => !filteredLocations.some((loc: any) => loc.key === key),
+        (key) => !filteredLocations.some((loc: any) => loc.key === key)
       );
       onCheck(remainingKeys, { checked: false });
     }
@@ -372,7 +377,7 @@ export default function Page() {
     const selectableFiltered = filteredLocations.filter(isLocationSelectable);
     if (selectableFiltered.length > 0) {
       const allFilteredSelected = selectableFiltered.every((loc: any) =>
-        checkedKeys.includes(loc.key),
+        checkedKeys.includes(loc.key)
       );
       setIsAllSelected(allFilteredSelected);
     } else {
@@ -385,7 +390,7 @@ export default function Page() {
   return (
     <>
       <div
-        className="tab-pane fade min-h-0"
+        className="tab-pane fade min-h-0 text-slate-900 dark:text-slate-100"
         id="ex1-tabs-7"
         role="tabpanel"
         aria-labelledby="ex1-tab-7"
@@ -401,8 +406,9 @@ export default function Page() {
             <div className="space-y-6">
               <Card
                 title="Mobile app access"
-                icon={<Smartphone className="h-5 w-5" />}
+                icon={<Smartphone className="h-5 w-5 d" />}
               >
+                {/* ✅ darkmode: removed dark:bg-black block; card handles dark background */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <SelectSearch
                     name={"App_Attendance"}
@@ -410,7 +416,7 @@ export default function Page() {
                     options={yesno}
                     selectedValue={formData?.EmpMst?.App_Attendance}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <SelectSearch
@@ -419,7 +425,7 @@ export default function Page() {
                     name="mMispunch"
                     selectedValue={formData?.EmpMst?.mMispunch}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <Ainput
@@ -429,7 +435,7 @@ export default function Page() {
                     name="IEMI"
                     value={formData?.EmpMst?.IEMI}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName
                   />
 
@@ -439,7 +445,7 @@ export default function Page() {
                     name="mApprove"
                     selectedValue={formData?.EmpMst?.mApprove}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <Ainput
@@ -449,7 +455,7 @@ export default function Page() {
                     name="Android_ID"
                     value={formData?.EmpMst?.Android_ID}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <SelectSearch
@@ -458,7 +464,7 @@ export default function Page() {
                     name="mLeave"
                     selectedValue={formData?.EmpMst?.mLeave}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <SelectSearch
@@ -467,7 +473,7 @@ export default function Page() {
                     options={yesno}
                     selectedValue={formData?.EmpMst?.mPunch}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <SelectSearch
@@ -476,7 +482,7 @@ export default function Page() {
                     name="mCalender"
                     selectedValue={formData?.EmpMst?.mCalender}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <div className="md:col-span-2">
@@ -487,7 +493,7 @@ export default function Page() {
                       selectedValue={formData?.EmpMst?.MOBILE_RIGHTS?.toString()}
                       handleInputChange={handleInputChange}
                       disabled={formData?.EmpMst?.mobile_rights_flag}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     />
                   </div>
                 </div>
@@ -501,30 +507,30 @@ export default function Page() {
                   <SelectSearch
                     title="Reporting 1"
                     name="Reporting_1"
-                    options={[]} // <-- yahan Reporting-1 ke options pass karo (employees list etc.)
+                    options={[]}
                     selectedValue={formData?.EmpMst?.Reporting_1}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
                   />
 
                   <SelectSearch
                     title="Reporting 2"
                     name="Reporting_2"
-                    options={[]} // <-- yahan Reporting-2 ke options pass karo
+                    options={[]}
                     selectedValue={formData?.EmpMst?.Reporting_2}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
                   />
 
                   <SelectSearch
                     title="HR team"
                     name="Reporting_3"
-                    options={[]} // <-- yahan HR team ke options pass karo
+                    options={[]}
                     selectedValue={formData?.EmpMst?.Reporting_3}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
                   />
                 </div>
@@ -542,7 +548,7 @@ export default function Page() {
                     placeholder="Emp code 2"
                     value={formData?.EmpMst?.empcode2}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
                   <Ainput
                     title="Emp code 3"
@@ -551,7 +557,7 @@ export default function Page() {
                     placeholder="Emp code 3"
                     value={formData?.EmpMst?.empcode3}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
                   <Ainput
                     title="Emp code 4"
@@ -560,15 +566,12 @@ export default function Page() {
                     placeholder="Emp code 4"
                     value={formData?.EmpMst?.empcode4}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
                 </div>
               </Card>
 
-              <Card
-                title="Use iPhone"
-                icon={<Smartphone className="h-5 w-5" />}
-              >
+              <Card title="Use iPhone" icon={<Smartphone className="h-5 w-5" />}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-3">
                     <SelectSearch
@@ -577,7 +580,7 @@ export default function Page() {
                       name="IsiphoneUser"
                       selectedValue={formData?.EmpMst?.IsiphoneUser?.toString()}
                       handleInputChange={handleInputChange}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       ShortName={true}
                     />
                   </div>
@@ -592,7 +595,7 @@ export default function Page() {
                         formData?.EmpMst?.EMPCODE
                       }
                       handleInputChange={handleInputChange}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       ShortName={true}
                       disabled
                     />
@@ -605,22 +608,22 @@ export default function Page() {
                       name="userPassIphone"
                       value={formData?.EmpMst?.userPassIphone}
                       handleInputChange={handleInputChange}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       ShortName={true}
                     />
                   )}
 
                   {isIphoneUser && (
                     <div className="md:col-span-1 flex items-end">
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
                         {checkingUser ? "Checking username..." : null}
                         {!checkingUser && flagMessage ? (
-                          <span className="text-red-600">
+                          <span className="text-red-600 dark:text-red-400">
                             {String(flagMessage)}
                           </span>
                         ) : null}
                         {!checkingUser && isUsernameValid ? (
-                          <span className="text-green-600">
+                          <span className="text-green-600 dark:text-green-400">
                             Username available
                           </span>
                         ) : null}
@@ -645,8 +648,8 @@ export default function Page() {
                     className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition
                       ${
                         isAllSelected
-                          ? "border-violet-200 bg-violet-50 text-violet-700"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          ? "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                       }`}
                   >
                     <CheckSquare className="h-4 w-4" />
@@ -656,37 +659,39 @@ export default function Page() {
               >
                 <div className="space-y-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       placeholder="Search locations..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-900 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-900 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400/60 dark:focus:ring-violet-500/20"
                     />
                   </div>
 
-                  <div className="text-sm text-slate-600">
-                    <span className="font-medium">{selectedCount}</span>{" "}
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      {selectedCount}
+                    </span>{" "}
                     selected
                   </div>
 
-                  <div className="h-[285px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="h-[285px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     {filteredLocations.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
                         {[
                           filteredLocations.slice(
                             0,
-                            Math.ceil(filteredLocations.length / 2),
+                            Math.ceil(filteredLocations.length / 2)
                           ),
                           filteredLocations.slice(
-                            Math.ceil(filteredLocations.length / 2),
+                            Math.ceil(filteredLocations.length / 2)
                           ),
                         ].map((col, colIdx) => (
                           <div key={colIdx} className="space-y-3">
                             {col.map((location: any) => {
                               const checked = checkedKeys.includes(
-                                location.key,
+                                location.key
                               );
                               const selectable = isLocationSelectable(location);
 
@@ -700,10 +705,10 @@ export default function Page() {
                                     ${
                                       !selectable
                                         ? "cursor-not-allowed opacity-50"
-                                        : "hover:bg-slate-50"
+                                        : "hover:bg-slate-50 dark:hover:bg-slate-800"
                                     }`}
                                 >
-                                  <span className="text-slate-700">
+                                  <span className="text-slate-700 dark:text-slate-300">
                                     {checked ? (
                                       <CheckSquare className="h-5 w-5" />
                                     ) : (
@@ -711,7 +716,7 @@ export default function Page() {
                                     )}
                                   </span>
                                   <span
-                                    className="truncate text-sm text-slate-800"
+                                    className="truncate text-sm text-slate-800 dark:text-slate-200"
                                     title={location.title}
                                   >
                                     {location.title}
@@ -723,7 +728,7 @@ export default function Page() {
                         ))}
                       </div>
                     ) : (
-                      <div className="py-10 text-center text-sm text-slate-500">
+                      <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                         No locations found
                       </div>
                     )}
@@ -738,7 +743,7 @@ export default function Page() {
                   <button
                     type="button"
                     onClick={() => setIsRelaxationOpen((s) => !s)}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                     aria-label="Toggle relaxation"
                   >
                     <ChevronDown
@@ -758,7 +763,7 @@ export default function Page() {
                       name="ShiftIn_Relaxation"
                       value={formData?.EmpMst?.ShiftIn_Relaxation}
                       handleInputChange={handleInputChange}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     />
 
                     <Ainput
@@ -768,7 +773,7 @@ export default function Page() {
                       value={formData?.EmpMst?.ShiftOut_Relaxation}
                       name="ShiftOut_Relaxation"
                       handleInputChange={handleInputChange}
-                      className="h-11"
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     />
 
                     <div className="md:col-span-2">
@@ -778,12 +783,12 @@ export default function Page() {
                         selectedValue={formData?.EmpMst?.Relaxation_Type?.toString()}
                         name="Relaxation_Type"
                         handleInputChange={handleInputChange}
-                        className="h-11"
+                        className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       />
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-slate-500">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     {/* collapsed */}
                   </div>
                 )}
@@ -801,7 +806,7 @@ export default function Page() {
                     name="MSPIN"
                     value={formData?.EmpMst?.MSPIN}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName={true}
                   />
 
@@ -812,7 +817,7 @@ export default function Page() {
                     name="MSPN_Id"
                     value={formData?.EmpMst?.MSPN_Id}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName={true}
                   />
 
@@ -822,7 +827,7 @@ export default function Page() {
                     name="IsMSPN"
                     selectedValue={formData?.EmpMst?.IsMSPN?.toString()}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName={true}
                   />
 
@@ -833,7 +838,7 @@ export default function Page() {
                     name="MSPN_DTL"
                     value={formData?.EmpMst?.MSPN_DTL}
                     handleInputChange={handleInputChange}
-                    className="h-11"
+                    className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName={true}
                   />
                 </div>

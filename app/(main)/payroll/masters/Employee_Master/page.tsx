@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
 import EmpTabs from "./EmpTabs";
 import axios from "axios";
@@ -17,7 +12,20 @@ import HashloaderComponent from "@/components/Templates/hashloader";
 import { useSearchParams, useRouter } from "next/navigation";
 import DigiLockerVerification from "@/components/Digilocker/DigiLockerVerification";
 import TutorialHelpButton from "@/components/atoms/TutorialHelpButton1";
-import { ArrowRight, ArrowLeft, CheckCircle, FileText, RotateCw, X, Plus, Moon, HelpCircle, Search, BadgeCheck, Check} from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle,
+  FileText,
+  RotateCw,
+  X,
+  Plus,
+  Moon,
+  HelpCircle,
+  Search,
+  BadgeCheck,
+  Check,
+} from "lucide-react";
 import { useSecureStorage } from "@/app/hooks/comp-key-data";
 import EmployeeIdentitySection from "./BasicInfo";
 import EmployeeMiniHeader from "./EmployeeMiniHeader";
@@ -273,7 +281,6 @@ function showSideAlert(message, type) {
 // Example usage:
 
 function EmployeeMasterContent() {
-
   const router = useRouter();
   const user = useCurrentUser();
   const { compdata } = useSecureStorage();
@@ -291,7 +298,7 @@ function EmployeeMasterContent() {
   const [divisionoption, setDivisionoption] = useState([]);
   const [empDataRefresh, setEmpDataRefresh] = useState(false);
   const [EMPLOYEEDESIGNATIONoption, setEMPLOYEEDESIGNATIONoption] = useState(
-    []
+    [],
   );
   const [Empshiftoption, setEmpshiftoption] = useState([]);
   const [locationnoption, setlocationnoption] = useState([]);
@@ -304,11 +311,9 @@ function EmployeeMasterContent() {
   const [MandatoryFieldsOption, setMandatoryFieldsOption] = useState([]);
   const searchParams = useSearchParams();
   const Empcode = searchParams.get("UTD");
-  
 
   useEffect(() => {
     const fetchData = async () => {
-
       const data = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
         {},
@@ -317,7 +322,7 @@ function EmployeeMasterContent() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
@@ -329,7 +334,7 @@ function EmployeeMasterContent() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const convertValuesToString = (array) => {
@@ -348,7 +353,7 @@ function EmployeeMasterContent() {
       setCityoption(convertValuesToString(masters.CITY));
       setDivisionoption(convertValuesToString(masters.DIVISION));
       setEMPLOYEEDESIGNATIONoption(
-        convertValuesToString(masters.EMPLOYEEDESIGNATION)
+        convertValuesToString(masters.EMPLOYEEDESIGNATION),
       );
       setEmpshiftoption(convertValuesToString(masters.EMP_SHIFT));
       setlocationnoption(convertValuesToString(masters.LOCATION));
@@ -358,14 +363,12 @@ function EmployeeMasterContent() {
       setEmpcode(result.data?.data);
       setChannelOption(convertValuesToString(masters.CHANNEL1));
       setClusterOption(convertValuesToString(masters.CLUSTER1));
-
     };
     fetchData();
   }, [empDataRefresh]);
 
   useEffect(() => {
     const fetchDataforMandatory = async () => {
-
       const data = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/GetMandtoryFieldsName`,
         { misc_code: 1 },
@@ -374,7 +377,7 @@ function EmployeeMasterContent() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
       const convertValuesToString = (array) => {
         return array.map((obj) => {
@@ -387,19 +390,14 @@ function EmployeeMasterContent() {
       const masters = data.data.Result;
       console.log(masters, "data");
       setMandatoryFieldsOption(convertValuesToString(masters));
-
     };
     fetchDataforMandatory();
   }, [empDataRefresh]);
 
-
-
-  //start add code 
+  //start add code
 
   const mandatorySet = useMemo(() => {
-    return new Set(
-      MandatoryFieldsOption.map(f => f.value?.toString())
-    );
+    return new Set(MandatoryFieldsOption.map((f) => f.value?.toString()));
   }, [MandatoryFieldsOption]);
 
   const isMandatory = (fieldName) => {
@@ -407,108 +405,156 @@ function EmployeeMasterContent() {
     return mandatorySet.has(fieldName.toString());
   };
 
-/////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////
   const recordCompletion = useMemo(() => {
-  const keys = Array.from(mandatorySet || []);
-  const total = keys.length;
+    const keys = Array.from(mandatorySet || []);
+    const total = keys.length;
 
-  if (!total) {
-    return { percent: 0, filled: 0, total: 0, left: 0 };
-  }
+    if (!total) {
+      return { percent: 0, filled: 0, total: 0, left: 0 };
+    }
 
-  const filled = keys.filter((k) => {
-    const v = formData?.EmpMst?.[k];
-    return v !== null && v !== undefined && String(v).trim() !== "";
-  }).length;
+    const filled = keys.filter((k) => {
+      const v = formData?.EmpMst?.[k];
+      return v !== null && v !== undefined && String(v).trim() !== "";
+    }).length;
 
-  const left = Math.max(total - filled, 0);
-  const percent = Math.min(100, Math.round((filled / total) * 100));
+    const left = Math.max(total - filled, 0);
+    const percent = Math.min(100, Math.round((filled / total) * 100));
 
-  return { percent, filled, total, left };
-}, [mandatorySet, formData]);
-  // end add code 
+    return { percent, filled, total, left };
+  }, [mandatorySet, formData]);
+  // end add code
 
   ///////////////////////////////////////////
   // ===== Left sidebar sections (screenshot style) =====
-const SECTIONS = useMemo(
-  () => [
-   
-       {
-      key: "identity",
-      label: "Basic Info",
-      desc: "Employee master header fields and photo upload.",
-      total: 20,
-    },
-    {
-      key: "info",
-      label: "Employee Identity",
-      desc: "Joining dates, contact details and statutory identity. Required to save the record.",
-      total: 30,
-    },
-    { key: "personal", label: "Personal Info", desc: "Personal and family details.", total: 25 },
-    { key: "salary", label: "Salary Details", desc: "Payroll and salary configuration.", total: 41 },
-    { key: "education", label: "Education/Skills", desc: "Education, language, skills and experience.", total: 30 },
-    { key: "work", label: "Work Details", desc: "Work profile, department, reporting etc.", total: 9 },
-    { key: "mobile", label: "Mobile App Access", desc: "Mobile app access and rights.", total: 24 },
-    { key: "asset", label: "Asset Issue", desc: "Assets issued to employee.", total: 8 },
-    { key: "doc", label: "Doc Upload", desc: "Upload documents (Aadhar, PAN, etc.)", total: 8 },
-    { key: "others", label: "Others", desc: "Other information.", total: 17 },
-    { key: "separation", label: "Separation", desc: "Resignation/separation details.", total: 19 },
-  ],
-  []
-);
+  const SECTIONS = useMemo(
+    () => [
+      {
+        key: "identity",
+        label: "Basic Info",
+        desc: "Employee master header fields and photo upload.",
+        total: 20,
+      },
+      {
+        key: "info",
+        label: "Employee Identity",
+        desc: "Joining dates, contact details and statutory identity. Required to save the record.",
+        total: 30,
+      },
+      {
+        key: "personal",
+        label: "Personal Info",
+        desc: "Personal and family details.",
+        total: 25,
+      },
+      {
+        key: "salary",
+        label: "Salary Details",
+        desc: "Payroll and salary configuration.",
+        total: 41,
+      },
+      {
+        key: "education",
+        label: "Education/Skills",
+        desc: "Education, language, skills and experience.",
+        total: 30,
+      },
+      {
+        key: "work",
+        label: "Work Details",
+        desc: "Work profile, department, reporting etc.",
+        total: 9,
+      },
+      {
+        key: "mobile",
+        label: "Mobile App Access",
+        desc: "Mobile app access and rights.",
+        total: 24,
+      },
+      {
+        key: "asset",
+        label: "Asset Issue",
+        desc: "Assets issued to employee.",
+        total: 8,
+      },
+      {
+        key: "doc",
+        label: "Doc Upload",
+        desc: "Upload documents (Aadhar, PAN, etc.)",
+        total: 8,
+      },
+      {
+        key: "others",
+        label: "Others",
+        desc: "Category, previous experience and system audit trail.",
+        total: 17,
+      },
+      {
+        key: "separation",
+        label: "Separation",
+        desc: "Resignation/separation details.",
+        total: 19,
+      },
+    ],
+    [],
+  );
 
-// ✅ EmpTabs tab mapping: "info" section will open EmpTabs tab 1 (Basic Info Page1)
-const TAB_MAP: Record<string, number> = {
-  info: 1,
-  personal: 2,
-  salary: 3,
-  education: 4,
-  separation: 5,
-  others: 6,
-  mobile: 7,
-  asset: 8,
-  doc: 9,
-  work: 10,
-};
+  // ✅ EmpTabs tab mapping: "info" section will open EmpTabs tab 1 (Basic Info Page1)
+  const TAB_MAP: Record<string, number> = {
+    info: 1,
+    personal: 2,
+    salary: 3,
+    education: 4,
+    separation: 5,
+    others: 6,
+    mobile: 7,
+    asset: 8,
+    doc: 9,
+    work: 10,
+  };
 
-const REVERSE_TAB_MAP: Record<number, string> = Object.fromEntries(
-  Object.entries(TAB_MAP).map(([k, v]) => [v, k])
-) as Record<number, string>;
+  const REVERSE_TAB_MAP: Record<number, string> = Object.fromEntries(
+    Object.entries(TAB_MAP).map(([k, v]) => [v, k]),
+  ) as Record<number, string>;
 
-// active section controlled by sidebar
-const [activeSection, setActiveSection] = useState<string>("identity");
+  // active section controlled by sidebar
+  const [activeSection, setActiveSection] = useState<string>("identity");
 
-const activeIndex = useMemo(
-  () => SECTIONS.findIndex((s) => s.key === activeSection),
-  [SECTIONS, activeSection]
-);
+  const activeIndex = useMemo(
+    () => SECTIONS.findIndex((s) => s.key === activeSection),
+    [SECTIONS, activeSection],
+  );
 
-const activeMeta = useMemo(
-  () => SECTIONS.find((s) => s.key === activeSection) || SECTIONS[0],
-  [SECTIONS, activeSection]
-);
+  const activeMeta = useMemo(
+    () => SECTIONS.find((s) => s.key === activeSection) || SECTIONS[0],
+    [SECTIONS, activeSection],
+  );
 
-const goPrevSection = () => {
-  if (activeIndex > 0) setActiveSection(SECTIONS[activeIndex - 1].key);
-};
+  const goPrevSection = () => {
+    if (activeIndex > 0) setActiveSection(SECTIONS[activeIndex - 1].key);
+  };
 
-const goNextSection = () => {
-  if (activeIndex < SECTIONS.length - 1) setActiveSection(SECTIONS[activeIndex + 1].key);
-};
+  const goNextSection = () => {
+    if (activeIndex < SECTIONS.length - 1)
+      setActiveSection(SECTIONS[activeIndex + 1].key);
+  };
 
-// NOTE: abhi filled counts dummy (0). Later aap chaho to per-section real progress nikal denge.
-const getSectionProgress = (key: string) => {
-  const sec = SECTIONS.find((s) => s.key === key);
-  return { filled: 0, total: sec?.total ?? 0 };
-};
-
+  // NOTE: abhi filled counts dummy (0). Later aap chaho to per-section real progress nikal denge.
+  const getSectionProgress = (key: string) => {
+    const sec = SECTIONS.find((s) => s.key === key);
+    return { filled: 0, total: sec?.total ?? 0 };
+  };
 
   const handleEmpChange = async (name: string, value: string | number) => {
     try {
-      if (value?.toString().trim() == null && !value && value.toString().trim() == 'null') {
-        return
-      };
+      if (
+        value?.toString().trim() == null &&
+        !value &&
+        value.toString().trim() == "null"
+      ) {
+        return;
+      }
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/${value}`,
         {},
@@ -517,7 +563,7 @@ const getSectionProgress = (key: string) => {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       console.log(response.data.data, "response.data.data");
@@ -610,7 +656,6 @@ const getSectionProgress = (key: string) => {
   const [CHANEELOPTION, setChannelOption] = useState([]);
   const [CLUSTEROPTION, setClusterOption] = useState([]);
 
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith("image/")) {
@@ -647,7 +692,7 @@ const getSectionProgress = (key: string) => {
 
       // 🔥 If Employee Type = Apprentice => Force PFNO = "0"
       if (name === "EmpType" && value == "3") {
-        updated.EmpMst.PFNO = "0";        // NO
+        updated.EmpMst.PFNO = "0"; // NO
         updated.EmpMst.pfper = "";
         updated.EmpMst.PF_Date = "";
         updated.EmpMst.pfnumber = "";
@@ -656,9 +701,9 @@ const getSectionProgress = (key: string) => {
         updated.EmpMst.UAN_No = "";
         updated.EmpMst.LIN_NO = "";
         updated.EmpMst.BONUS = "";
-        updated.EmpMst.ESINO = "0";       // Clear PF%
-        updated.EmpMst.LWFNO = "0";     // Clear PF Date
-        updated.EmpMst.pro_tax = "0";    // Clear PF Number
+        updated.EmpMst.ESINO = "0"; // Clear PF%
+        updated.EmpMst.LWFNO = "0"; // Clear PF Date
+        updated.EmpMst.pro_tax = "0"; // Clear PF Number
       }
 
       return updated;
@@ -686,7 +731,7 @@ const getSectionProgress = (key: string) => {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/generateCode`,
         { branch: location },
-        { headers: { compcode: user?.Comp_Code } }
+        { headers: { compcode: user?.Comp_Code } },
       );
       if (result.status === 201) {
         await Swal.fire({
@@ -717,7 +762,6 @@ const getSectionProgress = (key: string) => {
     }
   };
 
-
   const handleUpdate = async () => {
     if (dobStr && domStr) {
       const dobDate = new Date(dobStr);
@@ -726,17 +770,17 @@ const getSectionProgress = (key: string) => {
       if (isNaN(dobDate.getTime()) || isNaN(domDate.getTime())) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
 
       // Convert both to YYYY-MM-DD string for safe string comparison
       const dobFormatted = `${dobDate.getFullYear()}-${String(
-        dobDate.getMonth() + 1
+        dobDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(dobDate.getDate()).padStart(2, "0")}`;
       const domFormatted = `${domDate.getFullYear()}-${String(
-        domDate.getMonth() + 1
+        domDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(domDate.getDate()).padStart(2, "0")}`;
 
       console.log("dobFormatted", dobFormatted);
@@ -745,7 +789,7 @@ const getSectionProgress = (key: string) => {
       if (domFormatted < dobFormatted) {
         showSideAlert(
           "Date of Anniversary cannot be before Date of Birth",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -758,7 +802,7 @@ const getSectionProgress = (key: string) => {
       if (isNaN(interviewDate) || isNaN(preJoiningDate)) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
@@ -766,7 +810,7 @@ const getSectionProgress = (key: string) => {
       if (preJoiningDate < interviewDate) {
         showSideAlert(
           "Joining date cannot be before interview date",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -779,7 +823,7 @@ const getSectionProgress = (key: string) => {
       if (isNaN(preJoiningDate.getTime()) || isNaN(resignationDate.getTime())) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
@@ -787,7 +831,7 @@ const getSectionProgress = (key: string) => {
       if (preJoiningDate >= resignationDate) {
         showSideAlert(
           "Joining date must be after the resignation submission date.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -804,7 +848,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidMobile) {
         showSideAlert(
           "Invalid Mobile number. It should be 10 digits starting with 6, 7, 8, or 9.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -820,7 +864,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidMobile) {
         showSideAlert(
           "Invalid Contract Mobile number. It should be 10 digits starting with 6, 7, 8, or 9.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -837,7 +881,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidPAN) {
         showSideAlert(
           "Invalid PAN Card No. Format should be ABCDE1234F",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -869,7 +913,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidPassport) {
         showSideAlert(
           "Invalid Passport number. Format should be A1234567",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -896,7 +940,7 @@ const getSectionProgress = (key: string) => {
     if (formData.EmpMst.Father_Mob && formData.EmpMst.Father_Mob.length < 10) {
       showSideAlert(
         "Father's Mobile Number must be at least 10 digits.",
-        "error"
+        "error",
       );
       return; // stop save
     }
@@ -912,7 +956,7 @@ const getSectionProgress = (key: string) => {
     ) {
       showSideAlert(
         "Mother's Mobile Number must be at least 10 digits.",
-        "error"
+        "error",
       );
       return; // stop save
     }
@@ -930,7 +974,10 @@ const getSectionProgress = (key: string) => {
     if (compdata?.EMP_LASTWOR_DATE_VALD == 1) {
       if (lastWorDate && lastWorDate.toString().trim() !== "") {
         const separationMandatoryFields = [
-          { key: "RESIGNATION_SUBMISSION_DATE", label: "Resignation Submission Date" },
+          {
+            key: "RESIGNATION_SUBMISSION_DATE",
+            label: "Resignation Submission Date",
+          },
           { key: "NOTICEPERIOD", label: "Notice Period" },
           { key: "REASON_FOR_RESIGNATION", label: "Reason for Resignation" },
           { key: "SEPARATION_MODE", label: "Separation Mode" },
@@ -941,10 +988,14 @@ const getSectionProgress = (key: string) => {
 
         for (const field of separationMandatoryFields) {
           const value = formData?.EmpMst?.[field.key];
-          if (value === null || value === undefined || value.toString().trim() === "") {
+          if (
+            value === null ||
+            value === undefined ||
+            value.toString().trim() === ""
+          ) {
             showSideAlert(
               `${field.label} is required when Last Working Date is entered.`,
-              "warning"
+              "warning",
             );
             return;
           }
@@ -952,7 +1003,7 @@ const getSectionProgress = (key: string) => {
       }
     }
 
-    // add code 
+    // add code
     for (const field of MandatoryFieldsOption) {
       if (!validateMandatoryField(field.value, field.label)) {
         return;
@@ -984,7 +1035,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           "profile",
           profileSrc1,
-          `${fileName}.${fileType}`
+          `${fileName}.${fileType}`,
         );
       }
 
@@ -993,7 +1044,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           "adhar",
           formData.EmpMst.adhar,
-          `${fileName}.${formData.EmpMst.adhar.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.adhar.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.pan instanceof Blob) {
@@ -1001,7 +1052,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `pan`,
           formData.EmpMst.pan,
-          `${fileName}.${formData.EmpMst.pan.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.pan.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.salary instanceof Blob) {
@@ -1009,7 +1060,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `salary`,
           formData.EmpMst.salary,
-          `${fileName}.${formData.EmpMst.salary.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.salary.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.other1 instanceof Blob) {
@@ -1017,7 +1068,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other1`,
           formData.EmpMst.other1,
-          `${fileName}.${formData.EmpMst.other1.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other1.type?.split("/")[1]}`,
         );
       }
 
@@ -1026,7 +1077,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other2`,
           formData.EmpMst.other2,
-          `${fileName}.${formData.EmpMst.other2.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other2.type?.split("/")[1]}`,
         );
       }
 
@@ -1035,7 +1086,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other3`,
           formData.EmpMst.other3,
-          `${fileName}.${formData.EmpMst.other3.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other3.type?.split("/")[1]}`,
         );
       }
 
@@ -1044,7 +1095,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other4`,
           formData.EmpMst.other4,
-          `${fileName}.${formData.EmpMst.other4.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other4.type?.split("/")[1]}`,
         );
       }
       console.log(formData.EmpMst.otherpdf, "formData.EmpMst.otherpdf");
@@ -1053,7 +1104,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `otherpdf`,
           formData.EmpMst.otherpdf,
-          `${fileName}.${formData.EmpMst.otherpdf.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.otherpdf.type?.split("/")[1]}`,
         );
       }
 
@@ -1062,7 +1113,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `Separation1`,
           formData.EmpMst.Separation1,
-          `${fileName}.${formData.EmpMst.Separation1.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.Separation1.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.Separation2 instanceof Blob) {
@@ -1070,7 +1121,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `Separation2`,
           formData.EmpMst.Separation2,
-          `${fileName}.${formData.EmpMst.Separation2.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.Separation2.type?.split("/")[1]}`,
         );
       }
       // const isEmptyObject = (obj: any) =>
@@ -1110,9 +1161,9 @@ const getSectionProgress = (key: string) => {
           headers: {
             compcode: user?.Comp_Code,
             name: user?.name,
-            user_id: user?.id
+            user_id: user?.id,
           },
-        }
+        },
       );
 
       // Assuming you want to handle the response here
@@ -1353,7 +1404,7 @@ const getSectionProgress = (key: string) => {
       } else {
         showSideAlert("Error UPDATING DATA", "warning");
       }
-    } catch (error) { 
+    } catch (error) {
       showSideAlert(`${error?.response?.data?.errors}`, "error");
     } finally {
       setIsLoading(false);
@@ -1372,19 +1423,16 @@ const getSectionProgress = (key: string) => {
   const dobStr = formData?.EmpMst?.DOB;
   const domStr = formData?.EmpMst?.DOM;
 
-
   const validateMandatoryField = (fieldName, label) => {
-    const key = fieldName.toString()
+    const key = fieldName.toString();
     const value = formData?.EmpMst?.[key];
-    console.log(value, "value", key, "key")
+    console.log(value, "value", key, "key");
     if (mandatorySet.has(key) && (!value || value.toString().trim() === "")) {
       showSideAlert(`${label} is mandatory`, "warning");
       return false;
     }
     return true;
   };
-
-
 
   const handleSave = async () => {
     if (dobStr && domStr) {
@@ -1394,17 +1442,17 @@ const getSectionProgress = (key: string) => {
       if (isNaN(dobDate.getTime()) || isNaN(domDate.getTime())) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
 
       // Convert both to YYYY-MM-DD string for safe string comparison
       const dobFormatted = `${dobDate.getFullYear()}-${String(
-        dobDate.getMonth() + 1
+        dobDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(dobDate.getDate()).padStart(2, "0")}`;
       const domFormatted = `${domDate.getFullYear()}-${String(
-        domDate.getMonth() + 1
+        domDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(domDate.getDate()).padStart(2, "0")}`;
 
       console.log("dobFormatted", dobFormatted);
@@ -1413,7 +1461,7 @@ const getSectionProgress = (key: string) => {
       if (domFormatted < dobFormatted) {
         showSideAlert(
           "Date of Anniversary cannot be before Date of Birth",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1426,7 +1474,7 @@ const getSectionProgress = (key: string) => {
       if (isNaN(interviewDate) || isNaN(preJoiningDate)) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
@@ -1434,7 +1482,7 @@ const getSectionProgress = (key: string) => {
       if (preJoiningDate < interviewDate) {
         showSideAlert(
           "Joining date cannot be before interview date",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1447,7 +1495,7 @@ const getSectionProgress = (key: string) => {
       if (isNaN(preJoiningDate.getTime()) || isNaN(resignationDate.getTime())) {
         showSideAlert(
           "Invalid date format. Please enter valid dates.",
-          "error"
+          "error",
         );
         return;
       }
@@ -1455,7 +1503,7 @@ const getSectionProgress = (key: string) => {
       if (preJoiningDate >= resignationDate) {
         showSideAlert(
           "Joining date must be after the resignation submission date.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1472,7 +1520,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidMobile) {
         showSideAlert(
           "Invalid Mobile number. It should be 10 digits starting with 6, 7, 8, or 9.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1488,7 +1536,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidMobile) {
         showSideAlert(
           "Invalid Contract Mobile number. It should be 10 digits starting with 6, 7, 8, or 9.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1505,7 +1553,7 @@ const getSectionProgress = (key: string) => {
       if (!isValidPAN) {
         showSideAlert(
           "Invalid PAN Card No. Format should be ABCDE1234F",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1537,12 +1585,11 @@ const getSectionProgress = (key: string) => {
       if (!isValidPassport) {
         showSideAlert(
           "Invalid Passport number. Format should be A1234567",
-          "warning"
+          "warning",
         );
         return;
       }
     }
-
 
     if (!formData?.EmpMst.EMPCODE) {
       showSideAlert("Please Enter a EmpCode", "warning");
@@ -1562,7 +1609,7 @@ const getSectionProgress = (key: string) => {
     if (formData.EmpMst.Father_Mob && formData.EmpMst.Father_Mob.length < 10) {
       showSideAlert(
         "Father's Mobile Number must be at least 10 digits.",
-        "error"
+        "error",
       );
       return; // stop save
     }
@@ -1578,7 +1625,7 @@ const getSectionProgress = (key: string) => {
     ) {
       showSideAlert(
         "Mother's Mobile Number must be at least 10 digits.",
-        "error"
+        "error",
       );
       return; // stop save
     }
@@ -1593,15 +1640,20 @@ const getSectionProgress = (key: string) => {
 
     if (cnfAccNo || accNo) {
       if (accNo.length < 10 || cnfAccNo.length < 10) {
-        showSideAlert("Account numbers and Confirm Account No must be at least 10 digits long.", "warning");
+        showSideAlert(
+          "Account numbers and Confirm Account No must be at least 10 digits long.",
+          "warning",
+        );
         return;
       }
       if (accNo != cnfAccNo) {
-        showSideAlert("Account No and Confirm Account No do not match", "warning");
+        showSideAlert(
+          "Account No and Confirm Account No do not match",
+          "warning",
+        );
         return;
       }
     }
-
 
     if (formData?.EmpMst?.IsiphoneUser == "1") {
       if (
@@ -1610,7 +1662,7 @@ const getSectionProgress = (key: string) => {
       ) {
         showSideAlert(
           "Please enter valid iPhone username and password",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -1635,7 +1687,10 @@ const getSectionProgress = (key: string) => {
     if (compdata?.EMP_LASTWOR_DATE_VALD == 1) {
       if (lastWorDate && lastWorDate.toString().trim() !== "") {
         const separationMandatoryFields = [
-          { key: "RESIGNATION_SUBMISSION_DATE", label: "Resignation Submission Date" },
+          {
+            key: "RESIGNATION_SUBMISSION_DATE",
+            label: "Resignation Submission Date",
+          },
           { key: "NOTICEPERIOD", label: "Notice Period" },
           { key: "REASON_FOR_RESIGNATION", label: "Reason for Resignation" },
           { key: "SEPARATION_MODE", label: "Separation Mode" },
@@ -1646,10 +1701,14 @@ const getSectionProgress = (key: string) => {
 
         for (const field of separationMandatoryFields) {
           const value = formData?.EmpMst?.[field.key];
-          if (value === null || value === undefined || value.toString().trim() === "") {
+          if (
+            value === null ||
+            value === undefined ||
+            value.toString().trim() === ""
+          ) {
             showSideAlert(
               `${field.label} is required when Last Working Date is entered.`,
-              "warning"
+              "warning",
             );
             return;
           }
@@ -1671,7 +1730,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           "profile",
           profileSrc1,
-          `${fileName}.${fileType}`
+          `${fileName}.${fileType}`,
         );
       }
       console.log(formData.EmpMst.adhar, "formData.EmpMst.adhar");
@@ -1681,7 +1740,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `adhar`,
           formData.EmpMst.adhar,
-          `${fileName}.${formData.EmpMst.adhar.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.adhar.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.pan instanceof Blob) {
@@ -1689,7 +1748,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `pan`,
           formData.EmpMst.pan,
-          `${fileName}.${formData.EmpMst.pan.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.pan.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.salary instanceof Blob) {
@@ -1697,7 +1756,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `salary`,
           formData.EmpMst.salary,
-          `${fileName}.${formData.EmpMst.salary.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.salary.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.other1 instanceof Blob) {
@@ -1705,7 +1764,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other1`,
           formData.EmpMst.other1,
-          `${fileName}.${formData.EmpMst.other1.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other1.type?.split("/")[1]}`,
         );
       }
 
@@ -1714,7 +1773,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other2`,
           formData.EmpMst.other2,
-          `${fileName}.${formData.EmpMst.other2.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other2.type?.split("/")[1]}`,
         );
       }
 
@@ -1723,7 +1782,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other3`,
           formData.EmpMst.other3,
-          `${fileName}.${formData.EmpMst.other3.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other3.type?.split("/")[1]}`,
         );
       }
 
@@ -1732,7 +1791,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `other4`,
           formData.EmpMst.other4,
-          `${fileName}.${formData.EmpMst.other4.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.other4.type?.split("/")[1]}`,
         );
       }
 
@@ -1741,7 +1800,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `otherpdf`,
           formData.EmpMst.otherpdf,
-          `${fileName}.${formData.EmpMst.otherpdf.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.otherpdf.type?.split("/")[1]}`,
         );
       }
 
@@ -1750,7 +1809,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `Separation1`,
           formData.EmpMst.Separation1,
-          `${fileName}.${formData.EmpMst.Separation1.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.Separation1.type?.split("/")[1]}`,
         );
       }
       if (formData.EmpMst.Separation2 instanceof Blob) {
@@ -1758,7 +1817,7 @@ const getSectionProgress = (key: string) => {
         formDataToSend.append(
           `Separation2`,
           formData.EmpMst.Separation2,
-          `${fileName}.${formData.EmpMst.Separation2.type?.split("/")[1]}`
+          `${fileName}.${formData.EmpMst.Separation2.type?.split("/")[1]}`,
         );
       }
 
@@ -1771,9 +1830,9 @@ const getSectionProgress = (key: string) => {
           headers: {
             compcode: user?.Comp_Code,
             name: user?.name,
-            user_id: user?.id
+            user_id: user?.id,
           },
-        }
+        },
       );
       console.log(response.data, "response.data");
 
@@ -2534,7 +2593,7 @@ const getSectionProgress = (key: string) => {
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
 
       console.log(result, "ViewData");
@@ -2604,13 +2663,12 @@ const getSectionProgress = (key: string) => {
   const [showLogModal, setShowLogModal] = useState(false);
   const [policyLogs, setPolicyLogs] = useState<any[]>([]);
   const fetchEmployeeLogs = async () => {
-
-    const salaryChangeView = user?.role1.includes("1.1.17")
+    const salaryChangeView = user?.role1.includes("1.1.17");
     if (UpdateDisable) {
       Swal.fire({
-        icon: 'warning',
-        title: 'No Policy Selected',
-        text: 'Please select a policy to view logs',
+        icon: "warning",
+        title: "No Policy Selected",
+        text: "Please select a policy to view logs",
       });
       return;
     }
@@ -2620,27 +2678,27 @@ const getSectionProgress = (key: string) => {
         `${process.env.NEXT_PUBLIC_URL}/employee/getEmployeeHistory`,
         {
           SRNO: formData.EmpMst?.SRNO,
-          IsSalaryView: salaryChangeView
+          IsSalaryView: salaryChangeView,
         },
         {
           headers: {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       if (response.data.success) {
         setPolicyLogs(response.data.data || []);
         setShowLogModal(true);
       } else {
-        console.log(response.data.message || 'Failed to load history');
+        console.log(response.data.message || "Failed to load history");
       }
     } catch (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error?.response?.data?.message || 'Unable to load history',
+        icon: "error",
+        title: "Error",
+        text: error?.response?.data?.message || "Unable to load history",
       });
     } finally {
       setIsLoading(false);
@@ -2648,95 +2706,104 @@ const getSectionProgress = (key: string) => {
   };
 
   return (
-  <div className="h-[100dvh] overflow-hidden flex flex-col bg-[#F6F7FB] dark:bg-black -mt-4">
-    {/* ===== ONE MAIN HEADER (Back + Breadcrumb + Actions) ===== */}
-    <header className=" shrink-0 border-b border-[#E6E8EF] dark:border-[#2A2F3A] ">
-      <div className="  w-full h-14  flex items-center justify-between gap-3">
-        {/* Left: Brand (optional) + Back + Breadcrumb */}
-        <div className="flex items-center gap-2 min-w-0">
-          {/* Optional small brand like screenshot (HS) */}
-          <div className="hidden sm:flex h-10 w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-semibold">
-            HS
-          </div>
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-[#F6F7FB] dark:bg-black -mt-4">
+      {/* ===== ONE MAIN HEADER (Back + Breadcrumb + Actions) ===== */}
+      <header className=" shrink-0 border-b border-[#E6E8EF] dark:border-[#2A2F3A] ">
+        <div className="  w-full h-14  flex items-center justify-between gap-3">
+          {/* Left: Brand (optional) + Back + Breadcrumb */}
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Optional small brand like screenshot (HS) */}
+            <div className="hidden sm:flex h-10 w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-semibold">
+              HS
+            </div>
 
-          <Button variant="outline" size="md" shape="pill" onClick={handleBack} className="h-10  rounded-xl ">
-            <ArrowLeft className="h-6 w-6 mr-2" />
-            Back
-          </Button>
-
-          {/* Breadcrumb */}
-          
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {user?.role1.includes("1.1.2") && SaveDisable && (
             <Button
               variant="outline"
-              onClick={handleAddEmp}
-              size="md" shape="pill"
-              className="h-10 rounded-xl gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New record
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            onClick={() => {}}
-            size="md"
-            className="h-10  rounded-xl gap-2"
-            title="Help"
-          >
-            <HelpCircle className="h-4 w-4" />
-            Help
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={handleReset}
-             size="md" shape="pill"
-            className="h-10 rounded-xl gap-2"
-          >
-            <X className="h-4 w-4" />
-            Discard
-          </Button>
-
-          {user?.role1.includes("1.1.2") && !SaveDisable && (
-            <Button
-              variant="primary"
-              size="md" shape="pill" className=""
-              onClick={handleSave}
-              className="h-10 rounded-xl gap-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Save employee
-            </Button>
-          )}
-
-          {user?.role1.includes("1.1.3") && SaveDisable && (
-            <Button
-              variant="primary"
-              onClick={handleUpdate}
               size="md"
-              disabled={UpdateDisable}
-              className="h-10 rounded-xl"
+              shape="pill"
+              onClick={handleBack}
+              className="h-10  rounded-xl "
             >
-              Update employee
+              <ArrowLeft className="h-6 w-6 mr-2" />
+              Back
             </Button>
-          )}
-        </div>
-      </div>
-    </header>
 
-    <div
-      className={`${
-        isLoading ? "blur-[2px] pointer-events-none select-none" : ""
-      }`}
-    >
-      {/* ===== TOP FORM CARD (no extra header inside) ===== */}
-      {/* ===== TOP MINI HEADER (DEFAULT) ===== */}
+            {/* Breadcrumb */}
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {user?.role1.includes("1.1.2") && SaveDisable && (
+              <Button
+                variant="outline"
+                onClick={handleAddEmp}
+                size="md"
+                shape="pill"
+                className="h-10 rounded-xl gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New record
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={() => {}}
+              size="md"
+              className="h-10  rounded-xl gap-2"
+              title="Help"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Help
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              size="md"
+              shape="pill"
+              className="h-10 rounded-xl gap-2"
+            >
+              <X className="h-4 w-4" />
+              Discard
+            </Button>
+
+            {user?.role1.includes("1.1.2") && !SaveDisable && (
+              <Button
+                variant="primary"
+                size="md"
+                shape="pill"
+                className=""
+                onClick={handleSave}
+                className="h-10 rounded-xl gap-2"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Save employee
+              </Button>
+            )}
+
+            {user?.role1.includes("1.1.3") && SaveDisable && (
+              <Button
+                variant="primary"
+                onClick={handleUpdate}
+                size="md"
+                disabled={UpdateDisable}
+                className="h-10 rounded-xl"
+              >
+                Update employee
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div
+        className={`${
+          isLoading ? "blur-[2px] pointer-events-none select-none" : ""
+        }`}
+      >
+        {/* ===== TOP FORM CARD (no extra header inside) ===== */}
+        {/* ===== TOP MINI HEADER (DEFAULT) ===== */}
         <EmployeeMiniHeader
           canSearchEmployee={user?.role1.includes("1.1.1")}
           empcodeOptions={empcode}
@@ -2746,19 +2813,19 @@ const getSectionProgress = (key: string) => {
           handleInputChange={handleInputChange}
           Generatecode={Generatecode}
           recordCompletion={recordCompletion}
-          profileSrc={profileSrc}                 // ✅ add
+          profileSrc={profileSrc} // ✅ add
           handleFileChange={handleFileChange}
         />
 
-      {/* ===== LOWER LAYOUT: SECTIONS + CONTENT ===== */}
-      <div className="py-3">
-        <div className="grid grid-cols-12 gap-4">
-          {/* Sidebar */}
-           <aside className="col-span-12 xl:col-span-2 min-w-0">
-            <div className="w-full dark:bg-black dark:border-[#2A2F3A] rounded-2xl">
-              <div className="text-s font-semibold tracking-wider text-[#667085] dark:text-[#A0A7B4]">
-                SECTIONS
-              </div>
+        {/* ===== LOWER LAYOUT: SECTIONS + CONTENT ===== */}
+        <div className="py-3">
+          <div className="grid grid-cols-12 gap-4">
+            {/* Sidebar */}
+            <aside className="col-span-12 xl:col-span-2 min-w-0">
+              <div className="w-full dark:bg-black dark:border-[#2A2F3A] rounded-2xl">
+                <div className="text-s font-semibold tracking-wider text-[#667085] dark:text-[#A0A7B4]">
+                  SECTIONS
+                </div>
 
                 <div className="mt-3 space-y-2">
                   {SECTIONS.map((sec, idx) => {
@@ -2770,26 +2837,31 @@ const getSectionProgress = (key: string) => {
                         key={sec.key}
                         type="button"
                         onClick={() => setActiveSection(sec.key)}
-                       className={`w-full flex items-center gap-4 rounded-xl border px-3 py-1.5 text-left transition
-          ${active
-            ? "bg-[#E0E7FF] border-[#1E40AF] dark:bg-[#0B1220] dark:border-[#1E40AF]"
-            : "bg-transparent border-transparent hover:bg-[#F2F4F7] hover:border-[#D0D5DD] dark:hover:bg-[#0B1220] dark:hover:border-[#2A2F3A]"
+                        className={`w-full flex items-center gap-4 rounded-xl border px-3 py-1.5 text-left transition
+          ${
+            active
+              ? "bg-[#E0E7FF] border-[#1E40AF] dark:bg-[#0B1220] dark:border-[#1E40AF]"
+              : "bg-transparent border-transparent hover:bg-[#F2F4F7] hover:border-[#D0D5DD] dark:hover:bg-[#0B1220] dark:hover:border-[#2A2F3A]"
           }`}
                       >
                         <div
                           className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold border
-            ${active
-                              ? "border-[#1E40AF] text-[#1E40AF] bg-white dark:bg-black"
-                              : "border-[#D0D5DD] dark:border-[#2A2F3A] text-[#475467] dark:text-[#A0A7B4]"
-                            }`}
+            ${
+              active
+                ? "border-[#1E40AF] text-[#1E40AF] bg-white dark:bg-black"
+                : "border-[#D0D5DD] dark:border-[#2A2F3A] text-[#475467] dark:text-[#A0A7B4]"
+            }`}
                         >
                           {idx + 1}
                         </div>
 
                         <div className="flex-1">
                           <div
-                            className={`font-semibold ${active ? "text-[#1E40AF]" : "text-[#475467] dark:text-[#A0A7B4]"
-                              }`}
+                            className={`font-semibold ${
+                              active
+                                ? "text-[#1E40AF]"
+                                : "text-[#475467] dark:text-[#A0A7B4]"
+                            }`}
                           >
                             {sec.label}
                           </div>
@@ -2797,10 +2869,11 @@ const getSectionProgress = (key: string) => {
 
                         <div
                           className={`text-[11px] px-2 py-0.5 rounded-full font-semibold
-            ${active
-                              ? "bg-[#FEE4E2] text-[#B42318]"
-                              : "bg-[#EAECF0] text-[#475467] dark:bg-[#111827] dark:text-[#A0A7B4]"
-                            }`}
+            ${
+              active
+                ? "bg-[#FEE4E2] text-[#B42318]"
+                : "bg-[#EAECF0] text-[#475467] dark:bg-[#111827] dark:text-[#A0A7B4]"
+            }`}
                         >
                           {prog.filled}/{prog.total}
                         </div>
@@ -2812,7 +2885,7 @@ const getSectionProgress = (key: string) => {
             </aside>
 
             {/* Content */}
-           <main className="col-span-12 xl:col-span-10 min-w-0">
+            <main className="col-span-12 xl:col-span-10 min-w-0">
               <div className=" dark:bg-black  rounded-xl">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                   <div>
@@ -2823,14 +2896,14 @@ const getSectionProgress = (key: string) => {
                       {activeMeta.desc}
                     </p>
                   </div>
-
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 p-4 ">
                     <Button
                       variant="outline"
                       onClick={goPrevSection}
                       size="md"
+                      shape="pill"
                       disabled={activeIndex <= 0}
-                      className="h-10 rounded-xl gap-2"
+                      className="h-8 px-3 rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
                     >
                       <ArrowLeft className="h-4 w-4" />
                       Previous
@@ -2839,9 +2912,10 @@ const getSectionProgress = (key: string) => {
                     <Button
                       variant="outlineBrand"
                       onClick={goNextSection}
-                      size="md" shape="pill"
+                      size="md"
+                      shape="pill"
                       disabled={activeIndex >= SECTIONS.length - 1}
-                      className="h-10 rounded-xl gap-2"
+                      className="h-8 px-3 rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
                     >
                       Save & next
                       <ArrowRight className="h-4 w-4" />
@@ -2889,12 +2963,16 @@ const getSectionProgress = (key: string) => {
                           ...prev,
                           EmpMst: {
                             ...prev.EmpMst,
-                            ...(docType === "aadhaar" && { AADHAR_CARD_VER: true }),
+                            ...(docType === "aadhaar" && {
+                              AADHAR_CARD_VER: true,
+                            }),
                             ...(docType === "pan" && {
                               PAN_CARD_VER: true,
                               PAN_NAME_MATCH_VER: true,
                             }),
-                            ...(docType === "driving_license" && { DRIVING_VER: true }),
+                            ...(docType === "driving_license" && {
+                              DRIVING_VER: true,
+                            }),
                           },
                         }));
                       }}
@@ -2913,165 +2991,169 @@ const getSectionProgress = (key: string) => {
         </div>
       </div>
 
-    {/* DigiLocker + loaders + Logs modal (same as your existing code) */}
-    <DigiLockerVerification
-      isOpen={isDigiOpen}
-      mobileNumber={formData.EmpMst?.MOBILENO}
-      adhar={formData?.EmpMst?.UID_NO}
-      pan={formData?.EmpMst?.PANNO}
-      DrivingLicense={formData?.EmpMst?.DRIVINGLIC_ISSUEPALACE}
-      Name={formData.EmpMst?.EMPFIRSTNAME}
-      onVerificationComplete={({ type, data }) => {
-        setDocumentData((prev: any) => ({ ...prev, [type]: data }));
-        setIsDigiOpen(false);
-      }}
-      onAadharVerified={(docType: string, photo?: string) => {
-        setFormData((prev) => ({
-          ...prev,
-          EmpMst: {
-            ...prev.EmpMst,
-            ...(docType === "aadhaar" && {
-              AADHAR_CARD_VER: true,
-              photo: prev.EmpMst?.photo == null ? photo : prev.EmpMst.photo,
-            }),
-            ...(docType === "pan" && {
-              PAN_CARD_VER: true,
-              PAN_NAME_MATCH_VER: true,
-            }),
-            ...(docType === "driving_license" && { DRIVING_VER: true }),
-          },
-        }));
-      }}
-      onClose={() => setIsDigiOpen(false)}
-    />
+      {/* DigiLocker + loaders + Logs modal (same as your existing code) */}
+      <DigiLockerVerification
+        isOpen={isDigiOpen}
+        mobileNumber={formData.EmpMst?.MOBILENO}
+        adhar={formData?.EmpMst?.UID_NO}
+        pan={formData?.EmpMst?.PANNO}
+        DrivingLicense={formData?.EmpMst?.DRIVINGLIC_ISSUEPALACE}
+        Name={formData.EmpMst?.EMPFIRSTNAME}
+        onVerificationComplete={({ type, data }) => {
+          setDocumentData((prev: any) => ({ ...prev, [type]: data }));
+          setIsDigiOpen(false);
+        }}
+        onAadharVerified={(docType: string, photo?: string) => {
+          setFormData((prev) => ({
+            ...prev,
+            EmpMst: {
+              ...prev.EmpMst,
+              ...(docType === "aadhaar" && {
+                AADHAR_CARD_VER: true,
+                photo: prev.EmpMst?.photo == null ? photo : prev.EmpMst.photo,
+              }),
+              ...(docType === "pan" && {
+                PAN_CARD_VER: true,
+                PAN_NAME_MATCH_VER: true,
+              }),
+              ...(docType === "driving_license" && { DRIVING_VER: true }),
+            },
+          }));
+        }}
+        onClose={() => setIsDigiOpen(false)}
+      />
 
-    <HashloaderComponent isLoading={isLoading} />
+      <HashloaderComponent isLoading={isLoading} />
 
-    {showLogModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        {/* ... (same code as your current logs modal) ... */}
-        <div className="bg-white dark:bg-dark rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-primary/20 flex flex-col">
-          <div className="bg-gradient-to-r from-header to-header/80 dark:from-dark dark:to-dark/60 px-6 py-5 flex justify-between items-center border-b border-borderColor dark:border-borderColor-dark">
-            <div>
-              <h2 className="text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <FileText className="w-6 h-6" />
-                Employee Change History
-              </h2>
-              <p className="text-white/70 text-sm mt-1">
-                View all modifications made to this Employee Creation
-              </p>
-            </div>
-            <button
-              onClick={() => setShowLogModal(false)}
-              className="p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <div className="overflow-auto flex-1 p-6">
-            {policyLogs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-12 h-12 text-gray-300 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">
-                  No history available for this Employee Creation
+      {showLogModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          {/* ... (same code as your current logs modal) ... */}
+          <div className="bg-white dark:bg-dark rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-primary/20 flex flex-col">
+            <div className="bg-gradient-to-r from-header to-header/80 dark:from-dark dark:to-dark/60 px-6 py-5 flex justify-between items-center border-b border-borderColor dark:border-borderColor-dark">
+              <div>
+                <h2 className="text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <FileText className="w-6 h-6" />
+                  Employee Change History
+                </h2>
+                <p className="text-white/70 text-sm mt-1">
+                  View all modifications made to this Employee Creation
                 </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {policyLogs.map((log, index) => (
-                  <div
-                    key={index}
-                    className="border-2 border-borderColor dark:border-borderColor-dark rounded-xl p-5 hover:border-primary/50 transition-all duration-300 hover:shadow-md dark:hover:shadow-primary/10"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                          <CheckCircle className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-black dark:text-white text-lg">
-                            {log.updated_at ? log.updated_at : "Date Not Available"}
-                          </p>
+              <button
+                onClick={() => setShowLogModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="overflow-auto flex-1 p-6">
+              {policyLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <FileText className="w-12 h-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">
+                    No history available for this Employee Creation
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {policyLogs.map((log, index) => (
+                    <div
+                      key={index}
+                      className="border-2 border-borderColor dark:border-borderColor-dark rounded-xl p-5 hover:border-primary/50 transition-all duration-300 hover:shadow-md dark:hover:shadow-primary/10"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-primary/10 rounded-lg">
+                            <CheckCircle className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-black dark:text-white text-lg">
+                              {log.updated_at
+                                ? log.updated_at
+                                : "Date Not Available"}
+                            </p>
+                          </div>
                         </div>
                       </div>
+
+                      {Object.entries(log.changes || {}).length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b-2 text-base border-borderColor dark:border-borderColor-dark">
+                                <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
+                                  Field
+                                </th>
+                                <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
+                                  Previous Value
+                                </th>
+                                <th className="text-left px-3 text-base py-2 font-bold text-header dark:text-white">
+                                  New Value
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(log.changes).map(
+                                ([field, values]: any, rowIndex) => (
+                                  <tr
+                                    key={rowIndex}
+                                    className="border-b border-borderColor/30 dark:border-borderColor-dark/30 hover:bg-primary/5 transition-colors"
+                                  >
+                                    <td className="px-3 py-3">
+                                      <span className="font-semibold text-black text-lg dark:text-white bg-gray-100 dark:bg-dark/50 px-2 py-1 rounded inline-block">
+                                        {field}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <span
+                                        className="text-exit font-bold text-lg bg-exit/10 px-2 py-1 rounded block max-w-xs truncate"
+                                        title={String(values.old)}
+                                      >
+                                        {values.old}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <span
+                                        className="text-green font-bold text-lg bg-green/10 px-2 py-1 rounded block max-w-xs truncate"
+                                        title={String(values.new)}
+                                      >
+                                        {values.new}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 text-sm italic">
+                          No changes recorded
+                        </p>
+                      )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                    {Object.entries(log.changes || {}).length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b-2 text-base border-borderColor dark:border-borderColor-dark">
-                              <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
-                                Field
-                              </th>
-                              <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
-                                Previous Value
-                              </th>
-                              <th className="text-left px-3 text-base py-2 font-bold text-header dark:text-white">
-                                New Value
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(log.changes).map(
-                              ([field, values]: any, rowIndex) => (
-                                <tr
-                                  key={rowIndex}
-                                  className="border-b border-borderColor/30 dark:border-borderColor-dark/30 hover:bg-primary/5 transition-colors"
-                                >
-                                  <td className="px-3 py-3">
-                                    <span className="font-semibold text-black text-lg dark:text-white bg-gray-100 dark:bg-dark/50 px-2 py-1 rounded inline-block">
-                                      {field}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-3">
-                                    <span
-                                      className="text-exit font-bold text-lg bg-exit/10 px-2 py-1 rounded block max-w-xs truncate"
-                                      title={String(values.old)}
-                                    >
-                                      {values.old}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-3">
-                                    <span
-                                      className="text-green font-bold text-lg bg-green/10 px-2 py-1 rounded block max-w-xs truncate"
-                                      title={String(values.new)}
-                                    >
-                                      {values.new}
-                                    </span>
-                                  </td>
-                                </tr>
-                              )
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm italic">
-                        No changes recorded
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="px-6 py-4 border-t border-borderColor dark:border-borderColor-dark bg-off dark:bg-dark/30 flex justify-between items-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Total revisions:{" "}
-              <span className="font-bold text-primary">{policyLogs.length}</span>
-            </p>
-            <Button variant="outline" onClick={() => setShowLogModal(false)}>
-              Close
-            </Button>
+            <div className="px-6 py-4 border-t border-borderColor dark:border-borderColor-dark bg-off dark:bg-dark/30 flex justify-between items-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total revisions:{" "}
+                <span className="font-bold text-primary">
+                  {policyLogs.length}
+                </span>
+              </p>
+              <Button variant="outline" onClick={() => setShowLogModal(false)}>
+                Close
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 }
 export default function Home() {
   return (
