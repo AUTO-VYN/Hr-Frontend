@@ -312,48 +312,52 @@ function EmployeeMasterContent() {
   const searchParams = useSearchParams();
   const Empcode = searchParams.get("UTD");
 
+
   useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
+    if (!user?.Comp_Code) {
+      return;
+    }
+
+    try {
       const data = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
         {},
         {
           headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
+            compcode: user.Comp_Code,
+            name: user.name,
           },
-        },
+        }
       );
+
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
         {
-          branch: user?.branch,
+          branch: user.branch,
         },
         {
           headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
+            compcode: user.Comp_Code,
+            name: user.name,
           },
-        },
+        }
       );
 
       const convertValuesToString = (array) => {
-        return array.map((obj) => {
-          return {
-            label: obj.label,
-            value: String(obj.value),
-          };
-        });
+        return array.map((obj) => ({
+          label: obj.label,
+          value: String(obj.value),
+        }));
       };
+
       const masters = data.data.data;
-      console.log(masters, "data");
-      console.log(result.data?.data, "result.data?.data");
 
       setMasterData(masters);
       setCityoption(convertValuesToString(masters.CITY));
       setDivisionoption(convertValuesToString(masters.DIVISION));
       setEMPLOYEEDESIGNATIONoption(
-        convertValuesToString(masters.EMPLOYEEDESIGNATION),
+        convertValuesToString(masters.EMPLOYEEDESIGNATION)
       );
       setEmpshiftoption(convertValuesToString(masters.EMP_SHIFT));
       setlocationnoption(convertValuesToString(masters.LOCATION));
@@ -363,11 +367,22 @@ function EmployeeMasterContent() {
       setEmpcode(result.data?.data);
       setChannelOption(convertValuesToString(masters.CHANNEL1));
       setClusterOption(convertValuesToString(masters.CLUSTER1));
-    };
-    fetchData();
-  }, [empDataRefresh]);
+    } catch (error) {
+      console.error(
+        "Employee master API error:",
+        error?.response?.data || error
+      );
+    }
+  };
+
+  fetchData();
+}, [user?.Comp_Code, user?.name, user?.branch, empDataRefresh]);
 
   useEffect(() => {
+      if (!user?.Comp_Code) {
+      return;
+    }
+
     const fetchDataforMandatory = async () => {
       const data = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/GetMandtoryFieldsName`,
@@ -392,7 +407,7 @@ function EmployeeMasterContent() {
       setMandatoryFieldsOption(convertValuesToString(masters));
     };
     fetchDataforMandatory();
-  }, [empDataRefresh]);
+  }, [user?.Comp_Code, user?.name, user?.branch, empDataRefresh]);
 
   //start add code
 
@@ -718,6 +733,7 @@ function EmployeeMasterContent() {
     }
   };
 
+
   const Generatecodeforlocation = async (location) => {
     try {
       if (!location) {
@@ -731,14 +747,18 @@ function EmployeeMasterContent() {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/generateCode`,
         { branch: location },
-        { headers: { compcode: user?.Comp_Code } },
+        { headers: 
+          { compcode: user?.Comp_Code } },
       );
+      
       if (result.status === 201) {
         await Swal.fire({
           icon: "error",
           title: result.data.message,
         });
         return;
+
+        
       }
 
       const code = result?.data?.code;
@@ -2587,13 +2607,19 @@ function EmployeeMasterContent() {
     });
     try {
       const result = await axios.post(
+        
         `${process.env.NEXT_PUBLIC_URL}/employee/generateCode`,
         {
-          branch: user?.branch,
+          branch: user?.branch
         },
+        
         {
-          headers: { compcode: user?.Comp_Code },
+          headers:
+           { 
+            compcode: user?.Comp_Code 
+          },
         },
+        
       );
 
       console.log(result, "ViewData");

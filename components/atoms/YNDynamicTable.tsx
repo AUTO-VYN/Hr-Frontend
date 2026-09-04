@@ -9,6 +9,7 @@ export default function YNDynamicTable({
   tableData,
   setTableData,
   constraints = {},
+  addLabel = "Add nominee", // ✅ dynamic label (default same as before)
 }: any) {
   const safeData: any[] = Array.isArray(tableData) ? tableData : [];
 
@@ -98,7 +99,7 @@ export default function YNDynamicTable({
                   {idx + 1}
                 </td>
 
-                {/* CELLS (visible fields with border/background) */}
+                {/* CELLS */}
                 {columns?.map((colKey: string, cIdx: number) => (
                   <td
                     key={colKey + cIdx}
@@ -150,7 +151,7 @@ export default function YNDynamicTable({
                   className="inline-flex items-center gap-2 text-[15px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   <Plus size={18} />
-                  Add nominee
+                  {addLabel}
                 </button>
               </td>
             </tr>

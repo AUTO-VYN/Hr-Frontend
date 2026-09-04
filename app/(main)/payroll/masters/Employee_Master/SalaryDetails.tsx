@@ -1,5 +1,15 @@
 "use client";
-import { SlidersHorizontal, Landmark, Wallet, Save, Lock, LockOpen, RotateCw, ScanLine, History } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Landmark,
+  Wallet,
+  Save,
+  Lock,
+  LockOpen,
+  RotateCw,
+  ScanLine,
+  History,
+} from "lucide-react";
 import SelectSearch from "@/components/atoms/Select";
 import { useFormData } from "./Context/FormDataContext";
 import { Button } from "@/components/ui/button";
@@ -23,7 +33,12 @@ import { useSecureStorage } from "@/app/hooks/comp-key-data";
 import { useToast } from "@/app/hooks/useToast";
 import Einput from "@/components/atoms/Einput";
 
-const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData }) => {
+const SalaryDetails = ({
+  disapleForSalary,
+  isActiveTab,
+  isMandatory,
+  masterData,
+}) => {
   function showSideAlert(message, type) {
     const Toast = Swal.mixin({
       toast: true,
@@ -155,15 +170,23 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
   const [showAccountTooltip, setshowAccountTooltip] = useState(false);
   const [AccountData, setAccountData] = useState(null);
   const [accountStatusCode, setAccountStatusCode] = useState(null);
-  const [accountButtonVariant, setAccountButtonVariant] = useState<"save" | "update">("save");
-  const [accountButtonLabel, setAccountButtonLabel] = useState<"Verify" | "Verified">("Verify");
+  const [accountButtonVariant, setAccountButtonVariant] = useState<
+    "save" | "update"
+  >("save");
+  const [accountButtonLabel, setAccountButtonLabel] = useState<
+    "Verify" | "Verified"
+  >("Verify");
 
   const [IsVerifyIFSCApi, setIsVerifyIFSCApi] = useState(false);
   const [ViewIFSCData, setViewIFSCData] = useState(false);
   const [showIFSCTooltip, setshowIFSCTooltip] = useState(false);
   const [IFSCData, setIFSCData] = useState(null);
-  const [IFSCButtonVariant, setIFSCButtonVariant] = useState<"save" | "update">("save");
-  const [IFSCButtonLabel, setIFSCButtonLabel] = useState<"Verify" | "Verified">("Verify");
+  const [IFSCButtonVariant, setIFSCButtonVariant] = useState<"save" | "update">(
+    "save",
+  );
+  const [IFSCButtonLabel, setIFSCButtonLabel] = useState<"Verify" | "Verified">(
+    "Verify",
+  );
   const [isBankLocked, setIsBankLocked] = useState(false);
   const [confirmAccountDisabled, setConfirmAccountDisabled] = useState(false);
 
@@ -262,15 +285,20 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
   const SALARY_COMPONENT_FIELDS = [...META_FIELDS, ...BREAKUP_AMOUNT_FIELDS];
 
   const hasMeaningfulValue = (v) =>
-    v !== null && v !== undefined && v.toString().trim() !== "" && Number(v) !== 0;
+    v !== null &&
+    v !== undefined &&
+    v.toString().trim() !== "" &&
+    Number(v) !== 0;
 
   const handleInputChange = (name: string, value: any) => {
     if (name === "Daily_Wages") {
-      if (hasMeaningfulValue(value) &&
-        BREAKUP_AMOUNT_FIELDS.some((f) => hasMeaningfulValue(formData1?.[f]))) {
+      if (
+        hasMeaningfulValue(value) &&
+        BREAKUP_AMOUNT_FIELDS.some((f) => hasMeaningfulValue(formData1?.[f]))
+      ) {
         showSideAlert(
           "Please clear the salary breakup fields before entering Daily Wages.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -286,7 +314,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       if (hasMeaningfulValue(formData1?.Daily_Wages)) {
         showSideAlert(
           "Please clear Daily Wages before entering the salary breakup fields.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -421,7 +449,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const ratioData = response.data.Result[0];
@@ -456,7 +484,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const { status, message } = response.data;
@@ -466,19 +494,15 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       if (status === 2) {
         setsalarystatus(2);
         setSalaryMessage(message);
-      }
-      else if (status === 0) {
+      } else if (status === 0) {
         setsalarystatus(0);
         setSalaryMessage(message);
-      }
-      else if (status === 3) {
+      } else if (status === 3) {
         setsalarystatus(3);
         setSalaryMessage(message);
-      }
-      else {
+      } else {
         setSalaryMessage(message || "");
       }
-
     } catch (error) {
       console.error("Error Response:", error);
     }
@@ -512,11 +536,11 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
       const a = response.data.Message;
       if (response.status == 201) {
-        await handleUnLockBankDetails()
+        await handleUnLockBankDetails();
         Swal.fire({
           icon: "warning",
           title: "Warning!",
@@ -563,7 +587,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       showSideAlert("Wrong OTP Typed", "info");
       return;
     } else {
-      await handleUnLockBankDetails()
+      await handleUnLockBankDetails();
       setIsDialogOpen1(false);
       setFormData1((prevData) => ({
         ...prevData,
@@ -573,12 +597,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
   };
 
   const handleUnLockBankDetails = async () => {
-
     const emp = formData?.EmpMst;
 
-    const requiredFields = [
-      { key: "EMPCODE", label: "Employee Code" }
-    ];
+    const requiredFields = [{ key: "EMPCODE", label: "Employee Code" }];
 
     for (const field of requiredFields) {
       if (!emp?.[field.key]) {
@@ -606,7 +627,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       if (result.data.success) {
@@ -646,7 +667,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       if (response?.data?.Result?.length > 0) {
@@ -661,7 +682,8 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
         const LWF = Number(empData?.LWF || 0);
         const PFSALARY_LIMIT = Number(empData?.PFSALARY_LIMIT || 0);
         const Gratuity = Number(empData?.Gratuity || 0);
-        const ctc = annualGross + BONUS_AMOUNT + LWF + PFSALARY_LIMIT + Gratuity;
+        const ctc =
+          annualGross + BONUS_AMOUNT + LWF + PFSALARY_LIMIT + Gratuity;
 
         const updatedData = {
           ...empData,
@@ -722,7 +744,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       if (grossCTC !== calculatedGross) {
         showSideAlert(
           `Gross CTC (${grossCTC}) must match total monthly components (${calculatedGross}).`,
-          "warning"
+          "warning",
         );
         return;
       }
@@ -738,24 +760,29 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       if (joinDate && selectedDate < joinDate) {
         showSideAlert(
           `Effective date cannot be before employee's join date (${joinDate.toLocaleDateString("en-GB")}).`,
-          "warning"
+          "warning",
         );
         return;
       }
     } else if (
       SALARY_COMPONENT_FIELDS.filter(
-        (f) => f !== "Salary_Type" && f !== "Effective_date"
+        (f) => f !== "Salary_Type" && f !== "Effective_date",
       ).some((f) => hasMeaningfulValue(formData1?.[f]))
     ) {
       showSideAlert(
         "Please clear salary breakup fields when Daily Wages is entered.",
-        "warning"
+        "warning",
       );
       return;
     }
     const pfLimit = formData1.PFSALARY_LIMIT;
 
-    if (pfLimit !== null && pfLimit !== undefined && pfLimit !== "" && Number(pfLimit) !== 0) {
+    if (
+      pfLimit !== null &&
+      pfLimit !== undefined &&
+      pfLimit !== "" &&
+      Number(pfLimit) !== 0
+    ) {
       const pfValue = Number(pfLimit);
       if (Number.isNaN(pfValue)) {
         showSideAlert("Please enter a valid PF Salary Limit.", "warning");
@@ -765,7 +792,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       if (pfValue < 15000) {
         showSideAlert(
           "PF Salary Limit must be 15000 or greater, or leave it blank.",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -787,7 +814,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
       setIsDialogOpen2(false);
       Swal.fire({
@@ -821,7 +848,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           compcode: user?.Comp_Code,
           name: user?.name,
         },
-      }
+      },
     );
     setEmpShift(response.data.data.EMP_SHIFT);
     setBankoption(response.data.data.BANK);
@@ -846,21 +873,21 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
-      const processedData = result.data.Result.map(item => {
+      const processedData = result.data.Result.map((item) => {
         if (!item.MODIFIED_USER && item.Mod_User) {
           return {
             ...item,
-            MODIFIED_USER: item.Mod_User || 'System'
+            MODIFIED_USER: item.Mod_User || "System",
           };
         }
         return item;
       });
 
       const sortedData = processedData.sort(
-        (a, b) => new Date(a.Effective_date) - new Date(b.Effective_date)
+        (a, b) => new Date(a.Effective_date) - new Date(b.Effective_date),
       );
       setSalaryData(sortedData);
     } catch (error) {
@@ -885,7 +912,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       return;
     }
     const skipBankValidation = ["Cash", "Salary Hold"].includes(
-      formData?.EmpMst?.PAYMENTMODE
+      formData?.EmpMst?.PAYMENTMODE,
     );
 
     if (!skipBankValidation) {
@@ -972,7 +999,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       toast({ title: result.data.Message, variant: "default" });
@@ -1013,7 +1040,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           { empcode },
           {
             headers: { compcode: user?.Comp_Code },
-          }
+          },
         );
 
         const msg = res?.data?.Message;
@@ -1052,7 +1079,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
               compcode: user?.Comp_Code,
               name: user?.name,
             },
-          }
+          },
         );
 
         const reupdate = result.data?.Reupdate;
@@ -1142,8 +1169,10 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
     const calculatedGratuity = +(basicVal * 0.0481).toFixed(2);
     const calculatedBonus = +(basicVal * 0.0833).toFixed(2);
 
-    const gratuityChanged = Number(formData1?.Gratuity || 0) !== calculatedGratuity;
-    const bonusChanged = Number(formData1?.BONUS_AMOUNT || 0) !== calculatedBonus;
+    const gratuityChanged =
+      Number(formData1?.Gratuity || 0) !== calculatedGratuity;
+    const bonusChanged =
+      Number(formData1?.BONUS_AMOUNT || 0) !== calculatedBonus;
 
     if (gratuityChanged || bonusChanged) {
       setFormData1((prev) => ({
@@ -1174,7 +1203,10 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
       }
 
       if (!cnfAccNo) {
-        toast({ title: "Please Enter Confirm Account No.", variant: "destructive" });
+        toast({
+          title: "Please Enter Confirm Account No.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -1198,12 +1230,18 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
     }
 
     if (option === 13 && compdata?.Banking_AccountNo_Verify !== 1) {
-      showSideAlert("Verify Button Is Not Enabled, Please Contact Autovyn Team!.", "error");
+      showSideAlert(
+        "Verify Button Is Not Enabled, Please Contact Autovyn Team!.",
+        "error",
+      );
       return;
     }
 
     if (option === 12 && compdata?.Banking_IFSC_Verfy !== 1) {
-      showSideAlert("Verify Button Is Not Enabled, Please Contact Autovyn Team!.", "error");
+      showSideAlert(
+        "Verify Button Is Not Enabled, Please Contact Autovyn Team!.",
+        "error",
+      );
       return;
     }
 
@@ -1222,7 +1260,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
     };
 
@@ -1236,7 +1274,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
     };
 
@@ -1263,7 +1301,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           throw new Error("Primary API returned invalid response");
         }
       } catch (primaryError) {
-        setBankMode("secondary")
+        setBankMode("secondary");
         result = await callSecondaryApi();
       }
 
@@ -1273,9 +1311,11 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           const isSuccess =
             data?.data?.status === "success" ||
             data?.data?.account_exists === true ||
-            data?.result?.account_status == "VALID"
+            data?.result?.account_status == "VALID";
           if (isSuccess) {
-            const accountDataResult = await ShowAccountVerifyData(formData?.EmpMst);
+            const accountDataResult = await ShowAccountVerifyData(
+              formData?.EmpMst,
+            );
             if (accountDataResult?.exists) {
               setAccountData(accountDataResult.data);
               setFormData((prev) => ({
@@ -1297,7 +1337,11 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
 
         if (option === 12) {
           const ifscDetails =
-            data?.data?.result?.ifsc_details || data?.data?.result || data?.data || data || {};
+            data?.data?.result?.ifsc_details ||
+            data?.data?.result ||
+            data?.data ||
+            data ||
+            {};
           setIFSCData(ifscDetails);
 
           setFormData((prev) => ({
@@ -1309,12 +1353,12 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           }));
         }
       }
-
     } catch (error) {
-      showSideAlert(error?.response?.data?.error ||
-        error?.response?.data?.error?.detail?.message ||
-        "Both verification APIs failed.",
-        "error"
+      showSideAlert(
+        error?.response?.data?.error ||
+          error?.response?.data?.error?.detail?.message ||
+          "Both verification APIs failed.",
+        "error",
       );
     } finally {
       setIsVerifyAccountApi(false);
@@ -1334,7 +1378,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           headers: {
             compcode: user?.Comp_Code,
           },
-        }
+        },
       );
       if (result?.data?.Status === "true" && result?.data?.Result?.[0]) {
         return { exists: true, data: result.data.Result[0] };
@@ -1382,7 +1426,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           headers: {
             compcode: user?.Comp_Code,
           },
-        }
+        },
       );
       if (result?.data?.Status === "true" && result?.data?.Result?.[0]) {
         return { exists: true, data: result.data.Result[0] };
@@ -1415,7 +1459,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
   const handleLockBankDetails = async () => {
     const emp = formData?.EmpMst;
 
-    const skipBankValidation = ["Cash", "Salary Hold"].includes(emp?.PAYMENTMODE);
+    const skipBankValidation = ["Cash", "Salary Hold"].includes(
+      emp?.PAYMENTMODE,
+    );
 
     const requiredFields = [
       { key: "EMPCODE", label: "Employee Code" },
@@ -1429,7 +1475,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
         { key: "BRANCH", label: "Branch Name" },
         { key: "Emp_Ac_Name", label: "Employee Account Name" },
         { key: "ACCOUNT_TYPE", label: "Account Type" },
-        { key: "PAYMENTMODE", label: "Payment Mode" }
+        { key: "PAYMENTMODE", label: "Payment Mode" },
       );
     }
 
@@ -1478,7 +1524,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       if (result.data.success) {
@@ -1516,7 +1562,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
           headers: {
             compcode: user?.Comp_Code,
           },
-        }
+        },
       );
 
       if (result.data.locked) {
@@ -1544,12 +1590,12 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
 
   const isDailyWagesActive = hasMeaningfulValue(formData1?.Daily_Wages);
   const isSalaryBreakupActive = BREAKUP_AMOUNT_FIELDS.some((f) =>
-    hasMeaningfulValue(formData1?.[f])
+    hasMeaningfulValue(formData1?.[f]),
   );
 
   useEffect(() => {
-    isDalyWages()
-  }, [])
+    isDalyWages();
+  }, []);
   const [DalyWagescompKeyData, setDalyWagescompKeyData] = useState(false);
   const isDalyWages = async () => {
     try {
@@ -1561,7 +1607,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
             compcode: user.Comp_Code,
             name: user.name,
           },
-        }
+        },
       );
 
       if (res.data.success) {
@@ -1582,12 +1628,12 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
     "rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm overflow-hidden w-full";
   const cardHeaderClass =
     "flex items-center justify-between gap-2 px-1 py-3.5 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19]";
-  const 
-  cardTitleWrapClass = "flex items-center gap-5 h-7";
+  const cardTitleWrapClass = "flex items-center gap-5 h-7";
   const cardTitleClass =
     "text-[12px] tracking-wide font-semibold uppercase text-[#0F172A] dark:text-white";
   const cardBodyClass = "p-5";
-  const fieldGridClass = "grid grid-cols-1 md:grid-cols-2 gap-x-4 fluid-gap-md gap-y-4";
+  const fieldGridClass =
+    "grid grid-cols-1 md:grid-cols-2 gap-x-4 fluid-gap-md gap-y-4";
   const pillBtnClass =
     "h-9 px-4 rounded-full text-s font-semibold border border-[#D0D5DD] dark:border-[#2A2F3A] bg-white dark:bg-black text-[#344054] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
   const pillBtnPrimaryClass =
@@ -1596,13 +1642,15 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
   return (
     <div className="h-full w-full overflow-y-auto overflow-x-hidden pr-1.5 light-scroll">
       <div className="grid grid-cols-12 gap-4 fluid-gap-md pb-6">
-        
         {/* ===================== LEFT COLUMN - SALARY DETAIL FORM ===================== */}
         <div className="col-span-12 xl:col-span-6">
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
-                <SlidersHorizontal className="h-7 w-5 text-[#4F46E5]" strokeWidth={3} />
+                <SlidersHorizontal
+                  className="h-7 w-5 text-[#4F46E5]"
+                  strokeWidth={3}
+                />
                 <span className={cardTitleClass}>Salary Detail Form</span>
               </div>
             </div>
@@ -1624,7 +1672,11 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                   title="PF%"
                   name="pfper"
                   options={PFPERCoption}
-                  selectedValue={formData?.EmpMst?.pfper ? formData?.EmpMst?.pfper?.toString() : ""}
+                  selectedValue={
+                    formData?.EmpMst?.pfper
+                      ? formData?.EmpMst?.pfper?.toString()
+                      : ""
+                  }
                   handleInputChange={handleInputChange}
                   disabled={Pfdisabled || disapleForSalary}
                   ShortName={true}
@@ -1827,7 +1879,7 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
-                    variant= "save"
+                    variant="save"
                     className={pillBtnClass}
                     onClick={() => OutServiceView(formData.EmpMst.EMPCODE)}
                     disabled={disapleForSalary}
@@ -1843,7 +1895,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                       onClick={handleChangeSalaryDetails}
                     >
                       <Save className="h-3.5 w-3.5" />
-                      {isSalarySaved ? "Change salary details" : "Save salary details"}
+                      {isSalarySaved
+                        ? "Change salary details"
+                        : "Save salary details"}
                     </button>
                   )}
                 </div>
@@ -1978,7 +2032,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                     title="Bonus:"
                     name="BONUS_AMOUNT"
                     handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive || GratuityCompKeyData}
+                    disabled={
+                      falg1 || isDailyWagesActive || GratuityCompKeyData
+                    }
                     value={formData1?.BONUS_AMOUNT?.toString()}
                   />
 
@@ -2088,7 +2144,6 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
 
             <div className={cardBodyClass}>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-3">
-
                 {/* Row 1 */}
                 <SelectSearch
                   title="Bank Name:"
@@ -2113,37 +2168,75 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                   redlabel={isMandatory("BANKACCOUNTNO") ? "*" : ""}
                 />
 
-                <Einput
-                  title="Confirm Account No."
-                  type="text"
-                  name="Cnf_BANKACCOUNTNO"
-                  value={formData?.EmpMst.Cnf_BANKACCOUNTNO}
-                  disabled={(confirmAccountDisabled || ViewAccountData) && isBankLocked}
-                  handleInputChange={handleInputChange}
-                  onCopy={(e) => e.preventDefault()}
-                  onPaste={(e) => e.preventDefault()}
-                  onCut={(e) => e.preventDefault()}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Tab" &&
-                      formData?.EmpMst.BANKACCOUNTNO &&
-                      formData?.EmpMst.Cnf_BANKACCOUNTNO &&
-                      formData?.EmpMst.BANKACCOUNTNO !==
-                      formData?.EmpMst.Cnf_BANKACCOUNTNO
-                    ) {
-                      e.preventDefault();
-                      showSideAlert(
-                        "Account No is Not Matched with Confirm Account No.",
-                        "info"
-                      );
-                    }
-                  }}
-                  redlabel={isMandatory("Cnf_BANKACCOUNTNO") ? "*" : ""}
-                />
+                <div className="flex items-end gap-2">
+                  {/* Confirm Account No. */}
+                  <div className="flex-[2]">
+                    <Einput
+                      title="Confirm Account No."
+                      type="text"
+                      name="Cnf_BANKACCOUNTNO"
+                      value={formData?.EmpMst.Cnf_BANKACCOUNTNO}
+                      disabled={
+                        (confirmAccountDisabled || ViewAccountData) &&
+                        isBankLocked
+                      }
+                      handleInputChange={handleInputChange}
+                      onCopy={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onCut={(e) => e.preventDefault()}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Tab" &&
+                          formData?.EmpMst.BANKACCOUNTNO &&
+                          formData?.EmpMst.Cnf_BANKACCOUNTNO &&
+                          formData?.EmpMst.BANKACCOUNTNO !==
+                            formData?.EmpMst.Cnf_BANKACCOUNTNO
+                        ) {
+                          e.preventDefault();
+
+                          showSideAlert(
+                            "Account No is Not Matched with Confirm Account No.",
+                            "info",
+                          );
+                        }
+                      }}
+                      redlabel={isMandatory("Cnf_BANKACCOUNTNO") ? "*" : ""}
+                    />
+                  </div>
+
+                  {/* Verify Button */}
+                  <div className="flex-[1]">
+                    <button
+                      type="button"
+                      onClick={() => VerifyAccountNo(13)}
+                      disabled={
+                        IsVerifyAccountApi || ViewAccountData || isBankLocked
+                      }
+                      className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold
+                    flex items-center justify-center gap-1.5 transition
+                    ${ 
+                  accountButtonVariant === "update"
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+        }
+                 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {IsVerifyAccountApi ? (
+                        <span className="animate-spin">⏳</span>
+                      ) : (
+                        <ScanLine className="h-3.5 w-3.5" />
+                      )}
+
+                      {accountButtonLabel}
+                    </button>
+                  </div>
+                </div>
 
                 {/* ✅ IFSC + Verify - Side by side (width kam) */}
                 <div className="flex items-end gap-2 relative">
-                  <div className="flex-[2]">  {/* ✅ IFSC input ko 2/3 width */}
+                  <div className="flex-[2]">
+                    {" "}
+                    {/* ✅ IFSC input ko 2/3 width */}
                     <Einput
                       type="text"
                       ShortName
@@ -2156,16 +2249,21 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                     />
                   </div>
 
-                  <div className="flex-[1]">  {/* ✅ Verify button ko 1/3 width */}
+                  <div className="flex-[1]">
+                    {" "}
+                    {/* ✅ Verify button ko 1/3 width */}
                     <button
                       type="button"
                       onClick={() => VerifyAccountNo(12)}
-                      disabled={(IsVerifyIFSCApi || ViewIFSCData) && isBankLocked}
+                      disabled={
+                        (IsVerifyIFSCApi || ViewIFSCData) && isBankLocked
+                      }
                       className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition 
-                ${IFSCButtonVariant === "update"
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
-                        }
+                ${
+                  IFSCButtonVariant === "update"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+                }
                 disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {IsVerifyIFSCApi ? (
@@ -2189,19 +2287,36 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                         <div className="absolute top-full mt-2 right-0 w-[420px] bg-white border rounded shadow p-2 z-50 text-xs dark:bg-input">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p><strong>Address:</strong> {IFSCData.address}</p>
-                              <p><strong>Bank:</strong> {IFSCData.bank}</p>
-                              <p><strong>Branch:</strong> {IFSCData.branch}</p>
-                              <p><strong>City:</strong> {IFSCData.city}</p>
-                              <p><strong>State:</strong> {IFSCData.state}</p>
-                              <p><strong>IFSC:</strong> {IFSCData.ifsc}</p>
-                              <p><strong>MICR:</strong> {IFSCData.micr}</p>
+                              <p>
+                                <strong>Address:</strong> {IFSCData.address}
+                              </p>
+                              <p>
+                                <strong>Bank:</strong> {IFSCData.bank}
+                              </p>
+                              <p>
+                                <strong>Branch:</strong> {IFSCData.branch}
+                              </p>
+                              <p>
+                                <strong>City:</strong> {IFSCData.city}
+                              </p>
+                              <p>
+                                <strong>State:</strong> {IFSCData.state}
+                              </p>
+                              <p>
+                                <strong>IFSC:</strong> {IFSCData.ifsc}
+                              </p>
+                              <p>
+                                <strong>MICR:</strong> {IFSCData.micr}
+                              </p>
                             </div>
                             <div className="flex items-center pl-2">
                               {accountStatusCode === "VALID" ? (
                                 <LottieAnimation width="60px" height="50px" />
                               ) : (
-                                <AiOutlineCloseCircle size={18} className="text-exit" />
+                                <AiOutlineCloseCircle
+                                  size={18}
+                                  className="text-exit"
+                                />
                               )}
                             </div>
                           </div>
@@ -2257,7 +2372,10 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
               <label
                 htmlFor="Sal_Hold"
                 onClick={() => {
-                  handleInputChange("Sal_Hold", formData1?.Sal_Hold === 1 ? 0 : 1);
+                  handleInputChange(
+                    "Sal_Hold",
+                    formData1?.Sal_Hold === 1 ? 0 : 1,
+                  );
                 }}
                 className="mt-4 flex items-center gap-2 rounded-xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] px-3 py-2 cursor-pointer w-fit"
               >
@@ -2383,7 +2501,8 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                         />
                       </div>
 
-                      {(salaryType === "1" || formData1?.Salary_Type === "1") && (
+                      {(salaryType === "1" ||
+                        formData1?.Salary_Type === "1") && (
                         <div className="col-span-6">
                           <Einput
                             type="text"
@@ -2655,17 +2774,22 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
 
                         <h3 className="text-lg font-extrabold mb-3 uppercase whitespace-nowrap text-ellipsis">
                           {item.STATUS === "PENDING" ? (
-                            <span className="text-yellow-500 font-bold">PENDING</span>
+                            <span className="text-yellow-500 font-bold">
+                              PENDING
+                            </span>
                           ) : index < SalaryData.length - 1 ? (
                             <>
-                              {new Date(item.Effective_date).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}{" "}
+                              {new Date(item.Effective_date).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}{" "}
                               -{" "}
                               {new Date(
-                                SalaryData[index + 1].Effective_date
+                                SalaryData[index + 1].Effective_date,
                               ).toLocaleDateString("en-GB", {
                                 day: "numeric",
                                 month: "long",
@@ -2674,11 +2798,14 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                             </>
                           ) : (
                             <>
-                              {new Date(item.Effective_date).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}{" "}
+                              {new Date(item.Effective_date).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}{" "}
                               - Ongoing
                             </>
                           )}
@@ -2699,7 +2826,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                                     : "border-green"
                                 }`}
                               >
-                                <span className="font-semibold">Daily Wages:</span>{" "}
+                                <span className="font-semibold">
+                                  Daily Wages:
+                                </span>{" "}
                                 {item.Daily_Wages}
                               </p>
                             </>
@@ -2712,7 +2841,9 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                                     : "border-green"
                                 }`}
                               >
-                                <span className="font-semibold">Gross Salary:</span>{" "}
+                                <span className="font-semibold">
+                                  Gross Salary:
+                                </span>{" "}
                                 {item.Gross_Salary}
                               </p>
 
@@ -2726,11 +2857,15 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                               </p>
 
                               <p className="text-sm">
-                                <span className="font-semibold">Conveyance:</span>{" "}
+                                <span className="font-semibold">
+                                  Conveyance:
+                                </span>{" "}
                                 {item.Conveyance}
                               </p>
                               <p className="text-sm">
-                                <span className="font-semibold">Washing Allowance:</span>{" "}
+                                <span className="font-semibold">
+                                  Washing Allowance:
+                                </span>{" "}
                                 {item.Washing}
                               </p>
                               <p className="text-sm">
@@ -2745,11 +2880,15 @@ const SalaryDetails = ({ disapleForSalary, isActiveTab, isMandatory, masterData 
                           )}
 
                           <p className="text-sm">
-                            <span className="font-semibold">Modified User:</span>{" "}
+                            <span className="font-semibold">
+                              Modified User:
+                            </span>{" "}
                             {item.MODIFIED_USER}
                           </p>
                           <p className="text-sm">
-                            <span className="font-semibold">Modified Date:</span>{" "}
+                            <span className="font-semibold">
+                              Modified Date:
+                            </span>{" "}
                             {item.MOD_DATE
                               ? item.MOD_DATE.split("-").reverse().join("-")
                               : ""}

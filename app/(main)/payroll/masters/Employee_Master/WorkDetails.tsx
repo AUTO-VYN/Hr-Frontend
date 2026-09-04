@@ -53,7 +53,7 @@ const Page: React.FC = () => {
     "To",
     "Settlement Done",
     "Salary (CTC)",
-    "Reason of leaving",
+    "Reason for leaving",
   ];
 
   const columns = [
@@ -98,6 +98,7 @@ const Page: React.FC = () => {
           tableData={tableData}
           setTableData={setTableData}
           constraints={constraints}
+           addLabel="Add Work Experience"
         />
       </div>
 

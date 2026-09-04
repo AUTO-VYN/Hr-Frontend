@@ -215,7 +215,7 @@ export default function Page() {
             name: (user as any)?.name,
             user_id: (user as any)?.id,
           },
-        }
+        },
       );
 
       if (!res.data.success) {
@@ -258,7 +258,7 @@ export default function Page() {
             name: (user as any)?.name,
             token: (user as any)?.email,
           },
-        }
+        },
       );
       SetGeoOffenceLocation(response.data.Result);
     } catch (error) {
@@ -286,7 +286,7 @@ export default function Page() {
           .map((key: string) => key.trim());
 
         const validKeys = selectedKeys.filter((key: string) =>
-          GeoOffenceLocation.some((loc: any) => loc.value.toString() === key)
+          GeoOffenceLocation.some((loc: any) => loc.value.toString() === key),
         );
 
         setCheckedKeys(validKeys);
@@ -310,7 +310,7 @@ export default function Page() {
         splRem: item.splRem,
         children: [],
       })),
-    [GeoOffenceLocation]
+    [GeoOffenceLocation],
   );
 
   const isLocationSelectable = (location: any) => {
@@ -321,7 +321,7 @@ export default function Page() {
     if (!isLocationSelectable(location)) {
       showSideAlert(
         `Geo location is not set for ${location.title} — cannot select it`,
-        "warning"
+        "warning",
       );
       return;
     }
@@ -337,7 +337,7 @@ export default function Page() {
   const filteredLocations = useMemo(() => {
     const t = searchTerm.toLowerCase();
     return transformedGeoData.filter((location: any) =>
-      location.title.toLowerCase().includes(t)
+      location.title.toLowerCase().includes(t),
     );
   }, [transformedGeoData, searchTerm]);
 
@@ -347,13 +347,13 @@ export default function Page() {
 
     const selectableFiltered = filteredLocations.filter(isLocationSelectable);
     const skippedLocations = filteredLocations.filter(
-      (loc: any) => !isLocationSelectable(loc)
+      (loc: any) => !isLocationSelectable(loc),
     );
 
     if (checked) {
       const filteredKeys = selectableFiltered.map((item: any) => item.key);
       const otherSelectedKeys = checkedKeys.filter(
-        (key) => !filteredLocations.some((loc: any) => loc.key === key)
+        (key) => !filteredLocations.some((loc: any) => loc.key === key),
       );
 
       onCheck([...otherSelectedKeys, ...filteredKeys], { checked: true });
@@ -367,7 +367,7 @@ export default function Page() {
       }
     } else {
       const remainingKeys = checkedKeys.filter(
-        (key) => !filteredLocations.some((loc: any) => loc.key === key)
+        (key) => !filteredLocations.some((loc: any) => loc.key === key),
       );
       onCheck(remainingKeys, { checked: false });
     }
@@ -377,7 +377,7 @@ export default function Page() {
     const selectableFiltered = filteredLocations.filter(isLocationSelectable);
     if (selectableFiltered.length > 0) {
       const allFilteredSelected = selectableFiltered.every((loc: any) =>
-        checkedKeys.includes(loc.key)
+        checkedKeys.includes(loc.key),
       );
       setIsAllSelected(allFilteredSelected);
     } else {
@@ -525,7 +525,8 @@ export default function Page() {
                   />
 
                   <SelectSearch
-                    title="HR team"
+                    title="HR Team"
+                    {...({ ShortName: true } as any)}
                     name="Reporting_3"
                     options={[]}
                     selectedValue={formData?.EmpMst?.Reporting_3}
@@ -571,7 +572,10 @@ export default function Page() {
                 </div>
               </Card>
 
-              <Card title="Use iPhone" icon={<Smartphone className="h-5 w-5" />}>
+              <Card
+                title="Use iPhone"
+                icon={<Smartphone className="h-5 w-5" />}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-3">
                     <SelectSearch
@@ -682,16 +686,16 @@ export default function Page() {
                         {[
                           filteredLocations.slice(
                             0,
-                            Math.ceil(filteredLocations.length / 2)
+                            Math.ceil(filteredLocations.length / 2),
                           ),
                           filteredLocations.slice(
-                            Math.ceil(filteredLocations.length / 2)
+                            Math.ceil(filteredLocations.length / 2),
                           ),
                         ].map((col, colIdx) => (
                           <div key={colIdx} className="space-y-3">
                             {col.map((location: any) => {
                               const checked = checkedKeys.includes(
-                                location.key
+                                location.key,
                               );
                               const selectable = isLocationSelectable(location);
 

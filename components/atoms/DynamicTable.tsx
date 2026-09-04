@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { MdDelete, MdAdd } from "react-icons/md";
+import { MdAdd } from "react-icons/md";
 import "tailwindcss/tailwind.css";
 import Swal from "sweetalert2";
 import Eselect from "./Eselect";
@@ -185,34 +185,37 @@ const TableComponent: React.FC<TableComponentProps> = ({
   return (
     <>
       <table className="min-w-full text-sm">
-        <thead className="sticky top-0 z-10 bg-[#F9FAFB] dark:bg-primary dark:bg-opacity-10">
+        <thead className="sticky top-0 z-10 bg-[#F9FAFB] dark:bg-[#0F1A2D]">
           <tr>
-            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0]">
+            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0] dark:text-slate-400 dark:border-slate-800">
               Sr.
             </th>
 
             {columnsShow?.map((column, index) => (
               <th
                 key={index}
-                className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0]"
+                className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0] dark:text-slate-400 dark:border-slate-800"
               >
                 {column}
               </th>
             ))}
 
-            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0] w-[120px]">
+            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0] w-[120px] dark:text-slate-400 dark:border-slate-800">
               Actions
             </th>
           </tr>
         </thead>
 
-        <tbody>
+        <tbody className="bg-white dark:bg-[#0B1220]">
           {tableData?.map((item, rowIndex) => {
             const disabled = isRowDisabled(item);
 
             return (
-              <tr key={rowIndex} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-[#667085] border-b border-[#EAECF0]">
+              <tr
+                key={rowIndex}
+                className="hover:bg-gray-50 dark:hover:bg-white/5"
+              >
+                <td className="px-6 py-4 text-[#667085] border-b border-[#EAECF0] dark:text-slate-300 dark:border-slate-800">
                   {rowIndex + 1}
                 </td>
 
@@ -220,7 +223,10 @@ const TableComponent: React.FC<TableComponentProps> = ({
                   const isSelect = constraints[column]?.type === "Select";
 
                   return (
-                    <td key={columnIndex} className="px-6 py-3 border-b border-[#EAECF0]">
+                    <td
+                      key={columnIndex}
+                      className="px-6 py-3 border-b border-[#EAECF0] dark:border-slate-800"
+                    >
                       {isSelect ? (
                         <Eselect
                           option={DropDownOp[column]}
@@ -273,7 +279,12 @@ const TableComponent: React.FC<TableComponentProps> = ({
                           }
                           className={`flex ${
                             Height ? "h-full py-1" : "h-9 py-1"
-                          } w-full dark:bg-input bg-white px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300`}
+                          } w-full rounded-lg border px-3 text-sm shadow-sm transition-colors
+                          bg-white border-slate-200 text-slate-900 placeholder:text-slate-500
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400
+                          disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50
+                          dark:bg-[#0F1A2D] dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
+                          dark:focus-visible:ring-indigo-400/20 dark:disabled:bg-[#0B1220]`}
                           disabled={
                             constraints[column].disabled && disabled ? true : false
                           }
@@ -283,11 +294,13 @@ const TableComponent: React.FC<TableComponentProps> = ({
                   );
                 })}
 
-                <td className="px-6 py-3 border-b border-[#EAECF0]">
+                <td className="px-6 py-3 border-b border-[#EAECF0] dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => !disabled && handleDeleteRow(rowIndex)}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-lg border border-[#D0D5DD] bg-white hover:bg-[#F9FAFB]
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-lg border
+                      border-[#D0D5DD] bg-white hover:bg-[#F9FAFB]
+                      dark:border-slate-700 dark:bg-[#0B1220] dark:hover:bg-[#0F1A2D]
                       ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                     aria-label="Delete row"
                   >
@@ -302,11 +315,13 @@ const TableComponent: React.FC<TableComponentProps> = ({
 
       {/* ✅ Screenshot jaisa Add button (inside table component) */}
       {AddBtn && (
-        <div className="px-6 pt-3 pb-5">
+        <div className="px-6 pt-3 pb-5 bg-white dark:bg-[#0B1220]">
           <button
             type="button"
             onClick={() => addNewRow()}
-            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#D0D5DD] bg-white px-4 py-2 text-sm font-semibold text-[#5B5EF7] hover:bg-[#F3F4FF]"
+            className="inline-flex items-center gap-2 rounded-lg border border-dashed
+              border-[#D0D5DD] bg-white px-4 py-2 text-sm font-semibold text-[#5B5EF7] hover:bg-[#F3F4FF]
+              dark:border-slate-700 dark:bg-[#0B1220] dark:text-indigo-400 dark:hover:bg-[#0F1A2D]"
           >
             <MdAdd className="h-5 w-5" />
             {inferredAddText}

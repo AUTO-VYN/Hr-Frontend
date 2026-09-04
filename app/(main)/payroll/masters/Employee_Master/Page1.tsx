@@ -9,7 +9,12 @@ import axios from "axios";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import Swal from "sweetalert2";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
-import { ScanLine,CalendarCheck2,CalendarClock, ShieldCheck } from "lucide-react";
+import {
+  ScanLine,
+  CalendarCheck2,
+  CalendarClock,
+  ShieldCheck,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,12 +45,11 @@ const VerifyRow = ({
         variant="primary"
         size="sm"
         onClick={onVerify}
-         className="rounded-xl shadow-md h-10 flex items-center justify-center gap-2"
-       
+        className="rounded-xl shadow-md h-10 flex items-center justify-center gap-2"
         disabled={disabled}
       >
-         <ScanLine className="h-4 w-4" />
-         <span>Verify</span>
+        <ScanLine className="h-4 w-4" />
+        <span>Verify</span>
       </Button>
     </div>
   );
@@ -73,30 +77,30 @@ const Page1 = ({
   const [varifiyDis, setVarifiyDis] = useState(false);
 
   // ✅ dynamic viewport-fit height for the two-card row
-const wrapRef = useRef<HTMLDivElement>(null);
-const [rowHeight, setRowHeight] = useState<number | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [rowHeight, setRowHeight] = useState<number | null>(null);
 
-useEffect(() => {
-  const el = wrapRef.current;
-  if (!el) return;
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
 
-  const compute = () => {
-    const top = el.getBoundingClientRect().top;
-    const bottomGap = 16;
-    const h = window.innerHeight - top - bottomGap;
-    setRowHeight(Math.max(h, 340));
-  };
+    const compute = () => {
+      const top = el.getBoundingClientRect().top;
+      const bottomGap = 16;
+      const h = window.innerHeight - top - bottomGap;
+      setRowHeight(Math.max(h, 340));
+    };
 
-  compute();
-  window.addEventListener("resize", compute);
-  const ro = new ResizeObserver(compute);
-  ro.observe(document.body);
+    compute();
+    window.addEventListener("resize", compute);
+    const ro = new ResizeObserver(compute);
+    ro.observe(document.body);
 
-  return () => {
-    window.removeEventListener("resize", compute);
-    ro.disconnect();
-  };
-}, []);
+    return () => {
+      window.removeEventListener("resize", compute);
+      ro.disconnect();
+    };
+  }, []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDialogOpen2, setIsDialogOpen2] = useState(false);
   const [MobileData, setMobileData] = useState([]);
@@ -161,153 +165,160 @@ useEffect(() => {
   };
 
   // ✅ FIX 3: useCallback se handleInputChange stable reference
- const handleInputChange = useCallback((name: string, value: FieldValue) => {
-  let isValid = true;
+  const handleInputChange = useCallback((name: string, value: FieldValue) => {
+    let isValid = true;
 
-  const toStr = (v: FieldValue) => (v ?? "").toString();
+    const toStr = (v: FieldValue) => (v ?? "").toString();
 
-  // ✅ Probation period (days) -> only digits
-  if (name === "PROBATIONPERIOD") {
-    const str = toStr(value);
-    value = str.replace(/\D/g, "");
-  }
+    // ✅ OTP with Aadhaar -> only digits, max 6
+if (name === "OTP_With_Aadhaar") {
+  const str = (value ?? "").toString().replace(/\D/g, "");
+  if (str.length > 6) return;   // ✅ 6 digit limit
+  value = str;
+}
 
-  // ✅ Emergency mobile -> only digits, max 10
-  if (name === "EMERGENCYNO") {
-    const str = toStr(value).replace(/\D/g, "");
-    if (str.length > 10) return;
-    value = str;
-  }
-
-  // ✅ Skills -> only letters/spaces
-  if (name === "SKILLS") {
-    const str = toStr(value);
-    value = str.replace(/[^a-zA-Z\s]/g, "");
-  }
-
-  // ✅ Mobile number (personal) -> digits only, max 10
-  if (name === "MOBILE_NO") {
-    const str = toStr(value);
-    if (!/^\d{0,10}$/.test(str)) return;
-    value = str.replace(/\D/g, "");
-  }
-
-  // ✅ Official mobile -> digits only, max 10 + debounced existing check
-  if (name === "MOBILENO") {
-    const str = toStr(value).replace(/\D/g, "");
-    if (str.length > 10) return;
-    value = str;
-
-    if (str.length === 10) {
-      if (mobileDebounceRef.current) clearTimeout(mobileDebounceRef.current);
-      mobileDebounceRef.current = setTimeout(() => {
-        MobileNumberpreviousDeatils(str);
-      }, 300);
+    // ✅ Probation period (days) -> only digits
+    if (name === "PROBATIONPERIOD") {
+      const str = toStr(value);
+      value = str.replace(/\D/g, "");
     }
-  }
 
-  // ✅ Official email -> validate + debounced existing check
-  if (name === "CORPORATEMAILID") {
-    const str = toStr(value);
-    isValid = validateEmail(str);
-
-    const trimmedEmail = str.trim();
-    if (validateEmail(trimmedEmail)) {
-      if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
-      emailDebounceRef.current = setTimeout(() => {
-        EmailpreviousDeatils(trimmedEmail);
-      }, 500);
+    // ✅ Emergency mobile -> only digits, max 10
+    if (name === "EMERGENCYNO") {
+      const str = toStr(value).replace(/\D/g, "");
+      if (str.length > 10) return;
+      value = str;
     }
-    value = str;
-  }
 
-  // ✅ PAN -> uppercase + reset flags when <10
-  if (name === "PANNO") {
-    let str = toStr(value).toUpperCase();
-    if (str.length > 10) return;
+    // ✅ Skills -> only letters/spaces
+    if (name === "SKILLS") {
+      const str = toStr(value);
+      value = str.replace(/[^a-zA-Z\s]/g, "");
+    }
 
-    isValid = validatePAN(str);
-    value = str;
+    // ✅ Mobile number (personal) -> digits only, max 10
+    if (name === "MOBILE_NO") {
+      const str = toStr(value);
+      if (!/^\d{0,10}$/.test(str)) return;
+      value = str.replace(/\D/g, "");
+    }
 
-    if (str.length < 10) {
-      setVarifiyDis(false);
-      setFormData((prev) => ({
-        ...prev,
-        EmpMst: {
-          ...prev.EmpMst,
-          PANNO: str,
-          PAN_CARD_VER: false,
-          PAN_NAME_MATCH_VER: false,
-          AADHAAR_LINKED_VER: false,
-        },
-      }));
+    // ✅ Official mobile -> digits only, max 10 + debounced existing check
+    if (name === "MOBILENO") {
+      const str = toStr(value).replace(/\D/g, "");
+      if (str.length > 10) return;
+      value = str;
 
+      if (str.length === 10) {
+        if (mobileDebounceRef.current) clearTimeout(mobileDebounceRef.current);
+        mobileDebounceRef.current = setTimeout(() => {
+          MobileNumberpreviousDeatils(str);
+        }, 300);
+      }
+    }
+
+    // ✅ Official email -> validate + debounced existing check
+    if (name === "CORPORATEMAILID") {
+      const str = toStr(value);
+      isValid = validateEmail(str);
+
+      const trimmedEmail = str.trim();
+      if (validateEmail(trimmedEmail)) {
+        if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
+        emailDebounceRef.current = setTimeout(() => {
+          EmailpreviousDeatils(trimmedEmail);
+        }, 500);
+      }
+      value = str;
+    }
+
+    // ✅ PAN -> uppercase + reset flags when <10
+    if (name === "PANNO") {
+      let str = toStr(value).toUpperCase();
+      if (str.length > 10) return;
+
+      isValid = validatePAN(str);
+      value = str;
+
+      if (str.length < 10) {
+        setVarifiyDis(false);
+        setFormData((prev) => ({
+          ...prev,
+          EmpMst: {
+            ...prev.EmpMst,
+            PANNO: str,
+            PAN_CARD_VER: false,
+            PAN_NAME_MATCH_VER: false,
+            AADHAAR_LINKED_VER: false,
+          },
+        }));
+
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          PANNO: str.trim() ? !isValid : true,
+        }));
+        return;
+      }
+    }
+
+    // ✅ Aadhaar -> digits only + reset flags when <12
+    if (name === "UID_NO") {
+      let str = toStr(value).replace(/\D/g, "");
+      if (str.length > 12) return;
+
+      value = str;
+
+      if (str.length < 12) {
+        setVarifiyDis1(false);
+        setFormData((prev) => ({
+          ...prev,
+          EmpMst: {
+            ...prev.EmpMst,
+            UID_NO: str,
+            photo: null,
+            full_addressAadhaar: "",
+            AADHAR_CARD_VER: false,
+          },
+        }));
+
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          UID_NO: str.trim() ? false : true,
+        }));
+        return;
+      }
+    }
+
+    // ✅ Passport -> uppercase + max 8 + validate format
+    if (name === "PASSPORTNO") {
+      let str = toStr(value).toUpperCase();
+      if (str.length > 8) return;
+      isValid = validatePassport(str);
+      value = str;
+    }
+
+    // ✅ finally update state
+    setFormData((prevData) => ({
+      ...prevData,
+      EmpMst: {
+        ...prevData.EmpMst,
+        [name]: value,
+      },
+    }));
+
+    // ✅ set errors only for string inputs
+    if (typeof value === "string") {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        PANNO: str.trim() ? !isValid : true,
+        [name]: value.trim() ? !isValid : true,
       }));
-      return;
-    }
-  }
-
-  // ✅ Aadhaar -> digits only + reset flags when <12
-  if (name === "UID_NO") {
-    let str = toStr(value).replace(/\D/g, "");
-    if (str.length > 12) return;
-
-    value = str;
-
-    if (str.length < 12) {
-      setVarifiyDis1(false);
-      setFormData((prev) => ({
-        ...prev,
-        EmpMst: {
-          ...prev.EmpMst,
-          UID_NO: str,
-          photo: null,
-          full_addressAadhaar: "",
-          AADHAR_CARD_VER: false,
-        },
-      }));
-
+    } else {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        UID_NO: str.trim() ? false : true,
+        [name]: false,
       }));
-      return;
     }
-  }
-
-  // ✅ Passport -> uppercase + max 8 + validate format
-  if (name === "PASSPORTNO") {
-    let str = toStr(value).toUpperCase();
-    if (str.length > 8) return;
-    isValid = validatePassport(str);
-    value = str;
-  }
-
-  // ✅ finally update state
-  setFormData((prevData) => ({
-    ...prevData,
-    EmpMst: {
-      ...prevData.EmpMst,
-      [name]: value,
-    },
-  }));
-
-  // ✅ set errors only for string inputs
-  if (typeof value === "string") {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: value.trim() ? !isValid : true,
-    }));
-  } else {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: false,
-    }));
-  }
-}, []);
+  }, []);
 
   const verifiyPan = async () => {
     const panNo = formData?.EmpMst?.PANNO;
@@ -349,7 +360,7 @@ useEffect(() => {
             panNo: formData.EmpMst?.PANNO,
             Empcode: formData.EmpMst?.EMPCODE,
           },
-          { headers: { compcode: user?.Comp_Code, name: user?.name } }
+          { headers: { compcode: user?.Comp_Code, name: user?.name } },
         );
         setIsLoading(false);
 
@@ -384,7 +395,7 @@ useEffect(() => {
         if (!isValidPAN) {
           showSideAlert(
             "Invalid PAN Card No. Format should be ABCDE1234F",
-            "warning"
+            "warning",
           );
           return;
         }
@@ -420,7 +431,7 @@ useEffect(() => {
             },
             refresh: false,
           },
-          { headers: { compcode: user?.Comp_Code, name: user?.name } }
+          { headers: { compcode: user?.Comp_Code, name: user?.name } },
         );
         setIsLoading(false);
 
@@ -456,7 +467,7 @@ useEffect(() => {
         if (error?.response?.data?.error?.detail) {
           showSideAlert(
             `${error?.response?.data?.error?.detail?.details}`,
-            "error"
+            "error",
           );
         }
       }
@@ -469,7 +480,7 @@ useEffect(() => {
       if (!isValidPAN) {
         showSideAlert(
           "Invalid PAN Card No. Format should be ABCDE1234F",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -489,7 +500,7 @@ useEffect(() => {
           date_of_birth: formData.EmpMst?.DOB,
           option: "10",
         },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
       setIsLoading(false);
 
@@ -555,7 +566,7 @@ useEffect(() => {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/panAndAdharApi/validate`,
         { value: formData.EmpMst?.UID_NO, option: "8" },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
 
       const res = result?.data?.data;
@@ -598,7 +609,7 @@ useEffect(() => {
               redirect_url: `${
                 process.env.NEXT_PUBLIC_URL
               }/panAndAdharApi/digilocker/callback/${btoa(
-                `${user?.Comp_Code}__${formData.EmpMst?.UID_NO}`
+                `${user?.Comp_Code}__${formData.EmpMst?.UID_NO}`,
               )}`,
               consent_purpose: "true",
               consent: "true",
@@ -606,7 +617,7 @@ useEffect(() => {
             mobile: formData.EmpMst?.MOBILENO,
             aadhaar_number: formData.EmpMst?.UID_NO,
           },
-          { headers: { compcode: user?.Comp_Code, name: user?.name } }
+          { headers: { compcode: user?.Comp_Code, name: user?.name } },
         );
 
         const digilockerUrl = digiRes?.data?.data?.url;
@@ -653,7 +664,7 @@ useEffect(() => {
           Url: documentData.digilockerUrl,
           MobileNo: formData.EmpMst?.MOBILENO,
         },
-        { headers: { compcode: user?.Comp_Code } }
+        { headers: { compcode: user?.Comp_Code } },
       );
 
       toast({ title: `${response?.data?.Message}`, variant: "default" });
@@ -682,7 +693,7 @@ useEffect(() => {
           DrivingLicense: formData.EmpMst?.DRIVINGLIC_ISSUEPALACE,
           Empcode: formData.EmpMst?.EMPCODE,
         },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
       setIsLoading(false);
 
@@ -722,7 +733,7 @@ useEffect(() => {
           otp: formData.EmpMst?.OTP_With_Aadhaar,
           option: "9",
         },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
 
       const res = result?.data?.data;
@@ -737,8 +748,7 @@ useEffect(() => {
           ...prev,
           EmpMst: {
             ...prev.EmpMst,
-            photo:
-              formData.EmpMst.profile == null ? photo : prev.EmpMst.photo,
+            photo: formData.EmpMst.profile == null ? photo : prev.EmpMst.photo,
             full_addressAadhaar: full_address,
             PERMANENTADDRESS1: full_address,
             AADHAR_CARD_VER: AADHAR_CARD_VER,
@@ -801,7 +811,7 @@ useEffect(() => {
           value2: formData.EmpMst?.UID_NO,
           option: "11",
         },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
 
       const res = result?.data?.data;
@@ -831,7 +841,7 @@ useEffect(() => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/ExistingEmpDetailsByNo`,
         { MOBILENO: mobile, Loc_code: user?.branch },
-        { headers: { compcode: user?.Comp_Code } }
+        { headers: { compcode: user?.Comp_Code } },
       );
 
       if (response?.data?.message == "Customer Data fetched successfully") {
@@ -851,7 +861,7 @@ useEffect(() => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/ExistingEmpDetailsByEmail`,
         { Email: email, Loc_code: user?.branch },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
 
       if (response?.data?.message == "Customer Data fetched successfully") {
@@ -870,7 +880,7 @@ useEffect(() => {
     const result = await axios.post(
       `${process.env.NEXT_PUBLIC_URL}/panAndAdharApi/validate`,
       { value: formData.EmpMst?.UID_NO, option: "8" },
-      { headers: { compcode: user?.Comp_Code, name: user?.name } }
+      { headers: { compcode: user?.Comp_Code, name: user?.name } },
     );
 
     const res = result?.data?.data;
@@ -891,7 +901,7 @@ useEffect(() => {
             },
             refresh: false,
           },
-          { headers: { compcode: user?.Comp_Code, name: user?.name } }
+          { headers: { compcode: user?.Comp_Code, name: user?.name } },
         );
         setIsLoading(false);
         const res = result?.data?.data;
@@ -905,7 +915,7 @@ useEffect(() => {
             date_of_birth: formData.EmpMst?.DOB,
             option: "10",
           },
-          { headers: { compcode: user?.Comp_Code, name: user?.name } }
+          { headers: { compcode: user?.Comp_Code, name: user?.name } },
         );
         const res = result?.data?.data;
         setPanInfo(res);
@@ -915,7 +925,7 @@ useEffect(() => {
       if (error?.response?.data?.error?.detail) {
         showSideAlert(
           `${error?.response?.data?.error?.detail?.details}`,
-          "error"
+          "error",
         );
       }
     }
@@ -950,7 +960,7 @@ useEffect(() => {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/quotation/dropdown`,
         { loc_code: user?.branch },
-        { headers: { compcode: user?.Comp_Code, name: user?.name } }
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
       );
       setSource(result.data.data.source);
     } catch (error) {
@@ -959,7 +969,7 @@ useEffect(() => {
   };
 
   // --- UI helper classes ---
-const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
+  const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
   const cardClass =
     "rounded-2xl -mx-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col min-h-0";
 
@@ -974,7 +984,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
   const fieldGridClass = "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6";
 
   const toggleTileClass = (checked: boolean, disabled = false) =>
-  `w-full h-9 flex items-center gap-3 px-3 rounded-xl border shadow-sm text-[12px] font-medium transition
+    `w-full h-9 flex items-center gap-3 px-3 rounded-xl border shadow-sm text-[12px] font-medium transition
   ${
     checked
       ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-200 dark:border-indigo-900"
@@ -987,58 +997,61 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
   }`;
 
   const TileCheckbox = ({
-  checked,
-  disabled,
-  label,
-  onToggle,
-  className = "",
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  label: React.ReactNode;
-  onToggle: (next: boolean) => void;
-  className?: string;
-}) => {
-  return (
-    <div
-      className={`${toggleTileClass(checked, !!disabled)} ${className}`}
-      onClick={() => {
-        if (!disabled) onToggle(!checked);
-      }}
-    >
-      <Checkbox
-        checked={checked}
-        disabled={disabled}
-        onClick={(e) => e.stopPropagation()}          // ✅ stops double toggle
-        onChange={(e) => onToggle(e.target.checked)}  // ✅ single source of truth
-      />
-      <span className="text-[13px] font-semibold text-slate-900 min-w-0 flex-1 truncate">
-        {label}
-      </span>
-    </div>
-  );
-};
+    checked,
+    disabled,
+    label,
+    onToggle,
+    className = "",
+  }: {
+    checked: boolean;
+    disabled?: boolean;
+    label: React.ReactNode;
+    onToggle: (next: boolean) => void;
+    className?: string;
+  }) => {
+    return (
+      <div
+        className={`${toggleTileClass(checked, !!disabled)} ${className}`}
+        onClick={() => {
+          if (!disabled) onToggle(!checked);
+        }}
+      >
+        <Checkbox
+          checked={checked}
+          disabled={disabled}
+          onClick={(e) => e.stopPropagation()} // ✅ stops double toggle
+          onChange={(e) => onToggle(e.target.checked)} // ✅ single source of truth
+        />
+        <span className="text-[13px] font-semibold text-slate-900 min-w-0 flex-1 truncate">
+          {label}
+        </span>
+      </div>
+    );
+  };
 
-   const DrivingVerifiedTile = (
-  <TileCheckbox
-    checked={!!formData.EmpMst?.DRIVING_VER}
-    disabled={false} // keep read-only like old logic when isDisabled=true
-    label="Driving lic. verified"
-    onToggle={(next) => handleInputChange("DRIVING_VER", next)}
-  />
-);
+  const DrivingVerifiedTile = (
+    <TileCheckbox
+      checked={!!formData.EmpMst?.DRIVING_VER}
+      disabled={false} // keep read-only like old logic when isDisabled=true
+      label="Driving lic. verified"
+      onToggle={(next) => handleInputChange("DRIVING_VER", next)}
+    />
+  );
 
   return (
     <div className={pageWrap}>
-         <div
-          ref={wrapRef}
-          className="grid -mx-7 -mt-6 w-[calc(100%+3rem)] px-6 grid-cols-1 lg:grid-cols-2 gap-6 min-h-0"
-          style={{ height: rowHeight ? `${rowHeight}px` : undefined }}
-        >
+      <div
+        ref={wrapRef}
+        className="grid -mx-7 -mt-6 w-[calc(100%+3rem)] px-6 grid-cols-1 lg:grid-cols-2 gap-6 min-h-0"
+        style={{ height: rowHeight ? `${rowHeight}px` : undefined }}
+      >
         {/* ===================== BASIC JOINING DETAILS ===================== */}
         <div className={cardClass}>
           <div className={cardHeaderClass}>
-            <CalendarClock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" strokeWidth={2} />
+            <CalendarClock
+              className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+              strokeWidth={2}
+            />
             <div className={cardTitleClass}>Basic Joining Details</div>
           </div>
 
@@ -1073,10 +1086,11 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     : null
                 }
                 type="date"
-                title="Date of joining"
+                title="Date of joining" // ✅ 'of' small
                 name="CURRENTJOINDATE"
                 required
                 handleInputChange={handleInputChange}
+                ShortName={true} // ✅ title ko as-it-is show karega (toTitleCase apply nahi hoga)
                 redlabel={isMandatory("CURRENTJOINDATE") ? "*" : ""}
               />
 
@@ -1086,9 +1100,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 title="Date of birth (DOB)"
                 name="DOB"
                 value={
-                  formData.EmpMst.DOB
-                    ? formData.EmpMst.DOB.slice(0, 10)
-                    : ""
+                  formData.EmpMst.DOB ? formData.EmpMst.DOB.slice(0, 10) : ""
                 }
                 handleInputChange={handleInputChange}
                 redlabel={isMandatory("DOB") ? "*" : ""}
@@ -1172,7 +1184,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                   type="text"
                   title="Official email"
                   ShortName={true}
-                  placeholder = "name@autovyn.com"
+                  placeholder="name@autovyn.com"
                   name="CORPORATEMAILID"
                   handleInputChange={handleInputChange}
                   errorMessage={
@@ -1186,7 +1198,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 type="text"
                 title="Official mobile number"
                 ShortName={true}
-                placeholder = "+91"
+                placeholder="+91"
                 name="MOBILENO"
                 value={formData.EmpMst?.MOBILENO}
                 handleInputChange={handleInputChange}
@@ -1198,7 +1210,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 type="text"
                 title="Mobile number"
                 ShortName={true}
-                placeholder = "+91"
+                placeholder="+91"
                 name="MOBILE_NO"
                 value={formData.EmpMst?.MOBILE_NO}
                 handleInputChange={handleInputChange}
@@ -1210,7 +1222,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 type="text"
                 title="Emergency mob. no."
                 ShortName={true}
-                placeholder = "+91"
+                placeholder="+91"
                 name="EMERGENCYNO"
                 value={formData.EmpMst?.EMERGENCYNO}
                 handleInputChange={handleInputChange}
@@ -1222,13 +1234,12 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 title="Skills"
                 ShortName={true}
                 name="SKILLS"
-                placeholder = "Comma seperated"
+                placeholder="Comma seperated"
                 value={formData.EmpMst?.SKILLS}
                 handleInputChange={handleInputChange}
                 redlabel={isMandatory("SKILLS") ? "*" : ""}
               />
             </div>
-
 
             <div className="mt-6">
               <TileCheckbox
@@ -1238,17 +1249,18 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 onToggle={(next) => handleInputChange("Induction_Done", next)}
               />
             </div>
-
           </div>
         </div>
 
         {/* ===================== EMPLOYEE IDENTITY ===================== */}
         <div className={cardClass}>
           <div className={cardHeaderClass}>
-            <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" strokeWidth={2} />
+            <ShieldCheck
+              className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+              strokeWidth={2}
+            />
             <div className={cardTitleClass}>Employee Identity</div>
           </div>
-
 
           <div
             className={`${cardBodyClass} max-h-[calc(100vh-300px)] overflow-y-auto light-scroll pr-2`}
@@ -1262,7 +1274,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       type="text"
                       title="PAN card no."
                       name="PANNO"
-                      placeholder = "ABCDE1234F"
+                      placeholder="ABCDE1234F"
                       value={formData.EmpMst?.PANNO}
                       handleInputChange={handleInputChange}
                       disabled={varifiyDis}
@@ -1281,8 +1293,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     {showPanTooltip && documentData?.pan && (
                       <div className="absolute top-full left-0 w-80 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl shadow p-3 mt-2 z-50 text-xs">
                         <p>
-                          <strong>Name:</strong>{" "}
-                          {documentData.pan.person_name}
+                          <strong>Name:</strong> {documentData.pan.person_name}
                         </p>
                         <p>
                           <strong>DOB:</strong> {documentData.pan.person_dob}
@@ -1304,8 +1315,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                           {documentData.pan.pan_verified_on}
                         </p>
                         <p>
-                          <strong>Category:</strong>{" "}
-                          {documentData.pan.category}
+                          <strong>Category:</strong> {documentData.pan.category}
                         </p>
                       </div>
                     )}
@@ -1315,7 +1325,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     <label
                       htmlFor="PAN_CARD_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.PAN_CARD_VER
+                        !!formData.EmpMst?.PAN_CARD_VER,
                       )}
                     >
                       <Checkbox
@@ -1325,7 +1335,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                           if (!isDisabled) {
                             handleInputChange(
                               "PAN_CARD_VER",
-                              formData.EmpMst?.PAN_CARD_VER ? false : true
+                              formData.EmpMst?.PAN_CARD_VER ? false : true,
                             );
                           }
                         }}
@@ -1337,15 +1347,13 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     <label
                       htmlFor="AADHAAR_LINKED_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.AADHAAR_LINKED_VER
+                        !!formData.EmpMst?.AADHAAR_LINKED_VER,
                       )}
                       onClick={() => {
                         if (!isDisabled) {
                           handleInputChange(
                             "AADHAAR_LINKED_VER",
-                            formData.EmpMst?.AADHAAR_LINKED_VER
-                              ? false
-                              : true
+                            formData.EmpMst?.AADHAAR_LINKED_VER ? false : true,
                           );
                         }
                       }}
@@ -1359,7 +1367,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "AADHAAR_LINKED_VER",
                               formData.EmpMst?.AADHAAR_LINKED_VER
                                 ? false
-                                : true
+                                : true,
                             );
                           }
                         }}
@@ -1373,15 +1381,13 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     <label
                       htmlFor="PAN_NAME_MATCH_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.PAN_NAME_MATCH_VER
+                        !!formData.EmpMst?.PAN_NAME_MATCH_VER,
                       )}
                       onClick={() => {
                         if (!isDisabled) {
                           handleInputChange(
                             "PAN_NAME_MATCH_VER",
-                            formData.EmpMst?.PAN_NAME_MATCH_VER
-                              ? false
-                              : true
+                            formData.EmpMst?.PAN_NAME_MATCH_VER ? false : true,
                           );
                         }
                       }}
@@ -1395,7 +1401,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "PAN_NAME_MATCH_VER",
                               formData.EmpMst?.PAN_NAME_MATCH_VER
                                 ? false
-                                : true
+                                : true,
                             );
                           }
                         }}
@@ -1416,7 +1422,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       type="text"
                       title="PAN card no."
                       ShortName={true}
-                      placeholder = "ABCDE1234F"
+                      placeholder="ABCDE1234F"
                       name="PANNO"
                       value={formData.EmpMst?.PANNO}
                       handleInputChange={handleInputChange}
@@ -1457,7 +1463,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     <label
                       htmlFor="PAN_CARD_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.PAN_CARD_VER
+                        !!formData.EmpMst?.PAN_CARD_VER,
                       )}
                     >
                       <Checkbox
@@ -1467,28 +1473,24 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                           if (!isDisabled)
                             handleInputChange(
                               "PAN_CARD_VER",
-                              formData.EmpMst?.PAN_CARD_VER ? false : true
+                              formData.EmpMst?.PAN_CARD_VER ? false : true,
                             );
                         }}
                         disabled={isDisabled}
                       />
-                      <span className="min-w-0 flex-1 truncate">
-                        Verified
-                      </span>
+                      <span className="min-w-0 flex-1 truncate">Verified</span>
                     </label>
 
                     <label
                       htmlFor="AADHAAR_LINKED_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.AADHAAR_LINKED_VER
+                        !!formData.EmpMst?.AADHAAR_LINKED_VER,
                       )}
                       onClick={() => {
                         if (!isDisabled)
                           handleInputChange(
                             "AADHAAR_LINKED_VER",
-                            formData.EmpMst?.AADHAAR_LINKED_VER
-                              ? false
-                              : true
+                            formData.EmpMst?.AADHAAR_LINKED_VER ? false : true,
                           );
                       }}
                     >
@@ -1501,7 +1503,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "AADHAAR_LINKED_VER",
                               formData.EmpMst?.AADHAAR_LINKED_VER
                                 ? false
-                                : true
+                                : true,
                             );
                         }}
                         disabled={isDisabled}
@@ -1514,15 +1516,13 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                     <label
                       htmlFor="PAN_NAME_MATCH_VER"
                       className={toggleTileClass(
-                        !!formData.EmpMst?.PAN_NAME_MATCH_VER
+                        !!formData.EmpMst?.PAN_NAME_MATCH_VER,
                       )}
                       onClick={() => {
                         if (!isDisabled)
                           handleInputChange(
                             "PAN_NAME_MATCH_VER",
-                            formData.EmpMst?.PAN_NAME_MATCH_VER
-                              ? false
-                              : true
+                            formData.EmpMst?.PAN_NAME_MATCH_VER ? false : true,
                           );
                       }}
                     >
@@ -1535,7 +1535,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "PAN_NAME_MATCH_VER",
                               formData.EmpMst?.PAN_NAME_MATCH_VER
                                 ? false
-                                : true
+                                : true,
                             );
                         }}
                         disabled={isDisabled}
@@ -1556,7 +1556,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                         type="text"
                         title="PAN card no."
                         name="PANNO"
-                        placeholder = "ABCDE1234F"
+                        placeholder="ABCDE1234F"
                         ShortName={true}
                         value={formData.EmpMst?.PANNO}
                         handleInputChange={handleInputChange}
@@ -1601,7 +1601,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       <label
                         htmlFor="PAN_CARD_VER"
                         className={toggleTileClass(
-                          !!formData.EmpMst?.PAN_CARD_VER
+                          !!formData.EmpMst?.PAN_CARD_VER,
                         )}
                       >
                         <Checkbox
@@ -1611,7 +1611,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                             if (!isDisabled)
                               handleInputChange(
                                 "PAN_CARD_VER",
-                                formData.EmpMst?.PAN_CARD_VER ? false : true
+                                formData.EmpMst?.PAN_CARD_VER ? false : true,
                               );
                           }}
                           disabled={isDisabled}
@@ -1624,7 +1624,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       <label
                         htmlFor="AADHAAR_LINKED_VER"
                         className={toggleTileClass(
-                          !!formData.EmpMst?.AADHAAR_LINKED_VER
+                          !!formData.EmpMst?.AADHAAR_LINKED_VER,
                         )}
                         onClick={() => {
                           if (!isDisabled)
@@ -1632,7 +1632,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "AADHAAR_LINKED_VER",
                               formData.EmpMst?.AADHAAR_LINKED_VER
                                 ? false
-                                : true
+                                : true,
                             );
                         }}
                       >
@@ -1645,7 +1645,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                                 "AADHAAR_LINKED_VER",
                                 formData.EmpMst?.AADHAAR_LINKED_VER
                                   ? false
-                                  : true
+                                  : true,
                               );
                           }}
                           disabled={isDisabled}
@@ -1658,7 +1658,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       <label
                         htmlFor="PAN_NAME_MATCH_VER"
                         className={toggleTileClass(
-                          !!formData.EmpMst?.PAN_NAME_MATCH_VER
+                          !!formData.EmpMst?.PAN_NAME_MATCH_VER,
                         )}
                         onClick={() => {
                           if (!isDisabled)
@@ -1666,7 +1666,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                               "PAN_NAME_MATCH_VER",
                               formData.EmpMst?.PAN_NAME_MATCH_VER
                                 ? false
-                                : true
+                                : true,
                             );
                         }}
                       >
@@ -1679,7 +1679,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                                 "PAN_NAME_MATCH_VER",
                                 formData.EmpMst?.PAN_NAME_MATCH_VER
                                   ? false
-                                  : true
+                                  : true,
                               );
                           }}
                           disabled={isDisabled}
@@ -1697,15 +1697,12 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 aadhaarMode === "digilocker" ||
                 aadhaarMode === "primary") && (
                 <>
-                  <VerifyRow
-                    onVerify={verifiyAadhaar}
-                    disabled={varifiyDis1}
-                  >
+                  <VerifyRow onVerify={verifiyAadhaar} disabled={varifiyDis1}>
                     <Einput
                       type="text"
                       title="Aadhar card no."
                       ShortName={true}
-                      placeholder = "12 digits"
+                      placeholder="12 digits"
                       name="UID_NO"
                       id="UID_NO"
                       value={formData.EmpMst?.UID_NO}
@@ -1732,8 +1729,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                             <strong>Name:</strong> {aadhaarInfo.name}
                           </p>
                           <p>
-                            <strong>DOB:</strong>{" "}
-                            {aadhaarInfo.date_of_birth}
+                            <strong>DOB:</strong> {aadhaarInfo.date_of_birth}
                           </p>
                           <p>
                             <strong>Gender:</strong> {aadhaarInfo.gender}
@@ -1742,8 +1738,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                             <strong>Care Of:</strong> {aadhaarInfo.care_of}
                           </p>
                           <p>
-                            <strong>Address:</strong>{" "}
-                            {aadhaarInfo.full_address}
+                            <strong>Address:</strong> {aadhaarInfo.full_address}
                           </p>
                           {aadhaarInfo.photo && (
                             <img
@@ -1772,7 +1767,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                                   className="px-3 py-1.5 text-xs border rounded-lg hover:bg-slate-50 dark:hover:bg-white/5"
                                   onClick={() =>
                                     navigator.clipboard.writeText(
-                                      documentData.digilockerUrl
+                                      documentData.digilockerUrl,
                                     )
                                   }
                                 >
@@ -1784,7 +1779,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                                     window.open(
                                       documentData.digilockerUrl,
                                       "_blank",
-                                      "width=500,height=700"
+                                      "width=500,height=700",
                                     )
                                   }
                                 >
@@ -1833,7 +1828,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                         type="number"
                         ShortName={true}
                         title="OTP with Aadhaar"
-                        placeholder = "6 digits"
+                        placeholder="6 digits"
                         name="OTP_With_Aadhaar"
                         id="OTP_With_Aadhaar"
                         value={
@@ -1848,15 +1843,13 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       <label
                         htmlFor="AADHAR_CARD_VER"
                         className={toggleTileClass(
-                          !!formData.EmpMst?.AADHAR_CARD_VER
+                          !!formData.EmpMst?.AADHAR_CARD_VER,
                         )}
                         onClick={() => {
                           if (!isDisabled) {
                             handleInputChange(
                               "AADHAR_CARD_VER",
-                              formData.EmpMst?.AADHAR_CARD_VER
-                                ? false
-                                : true
+                              formData.EmpMst?.AADHAR_CARD_VER ? false : true,
                             );
                           }
                         }}
@@ -1868,9 +1861,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                             if (!isDisabled) {
                               handleInputChange(
                                 "AADHAR_CARD_VER",
-                                formData.EmpMst?.AADHAR_CARD_VER
-                                  ? false
-                                  : true
+                                formData.EmpMst?.AADHAR_CARD_VER ? false : true,
                               );
                             }
                           }}
@@ -1930,7 +1921,7 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
               </div>
 
               {/* Driving License */}
-             
+
               {compdata?.Digilocker_Linked === "1" ? (
                 <>
                   {/* Row-1: DL No + DL Type + (FileViewer) + Verify */}
@@ -1946,7 +1937,9 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                         value={formData.EmpMst?.DRIVINGLIC_ISSUEPALACE}
                         handleInputChange={handleInputChange}
                         className="pr-8"
-                        redlabel={isMandatory("DRIVINGLIC_ISSUEPALACE") ? "*" : ""}
+                        redlabel={
+                          isMandatory("DRIVINGLIC_ISSUEPALACE") ? "*" : ""
+                        }
                       />
 
                       {formData.EmpMst?.DRIVING_VER && (
@@ -1954,40 +1947,46 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                           size={18}
                           className="absolute right-2 top-7 text-gray-500 cursor-pointer"
                           onClick={() =>
-                            setShowDrivingLicenseTooltip(!showDrivingLicenseTooltip)
+                            setShowDrivingLicenseTooltip(
+                              !showDrivingLicenseTooltip,
+                            )
                           }
                         />
                       )}
 
-                      {showDrivingLicenseTooltip && documentData?.driving_license && (
-                        <div className="absolute top-full mt-2 left-0 w-80 p-3 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-lg text-xs rounded-xl z-50">
-                          <p>
-                            <strong>Name:</strong> {documentData.driving_license.person_name}
-                          </p>
-                          <p>
-                            <strong>DOB:</strong> {documentData.driving_license.person_dob}
-                          </p>
-                          <p>
-                            <strong>Gender:</strong>{" "}
-                            {documentData.driving_license.person_gender}
-                          </p>
-                          <p>
-                            <strong>Certificate Number:</strong>{" "}
-                            {documentData.driving_license.certificate_number}
-                          </p>
-                          <p>
-                            <strong>Certificate Status:</strong>{" "}
-                            {documentData.driving_license.certificate_status}
-                          </p>
-                          <p>
-                            <strong>Issue Date:</strong> {documentData.driving_license.issue_date}
-                          </p>
-                          <p>
-                            <strong>Expiry Date:</strong>{" "}
-                            {documentData.driving_license.expiry_date}
-                          </p>
-                        </div>
-                      )}
+                      {showDrivingLicenseTooltip &&
+                        documentData?.driving_license && (
+                          <div className="absolute top-full mt-2 left-0 w-80 p-3 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-lg text-xs rounded-xl z-50">
+                            <p>
+                              <strong>Name:</strong>{" "}
+                              {documentData.driving_license.person_name}
+                            </p>
+                            <p>
+                              <strong>DOB:</strong>{" "}
+                              {documentData.driving_license.person_dob}
+                            </p>
+                            <p>
+                              <strong>Gender:</strong>{" "}
+                              {documentData.driving_license.person_gender}
+                            </p>
+                            <p>
+                              <strong>Certificate Number:</strong>{" "}
+                              {documentData.driving_license.certificate_number}
+                            </p>
+                            <p>
+                              <strong>Certificate Status:</strong>{" "}
+                              {documentData.driving_license.certificate_status}
+                            </p>
+                            <p>
+                              <strong>Issue Date:</strong>{" "}
+                              {documentData.driving_license.issue_date}
+                            </p>
+                            <p>
+                              <strong>Expiry Date:</strong>{" "}
+                              {documentData.driving_license.expiry_date}
+                            </p>
+                          </div>
+                        )}
                     </div>
 
                     <Eselect
@@ -1996,7 +1995,9 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       ShortName={true}
                       name="Dlv_Type"
                       initialValue={
-                        formData.EmpMst?.Dlv_Type ? formData.EmpMst?.Dlv_Type.toString() : null
+                        formData.EmpMst?.Dlv_Type
+                          ? formData.EmpMst?.Dlv_Type.toString()
+                          : null
                       }
                       handleInputChange={handleInputChange}
                       redlabel={isMandatory("Dlv_Type") ? "*" : ""}
@@ -2071,7 +2072,9 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       id="DRIVINGLIC_ISSUEPALACE"
                       value={formData.EmpMst?.DRIVINGLIC_ISSUEPALACE}
                       handleInputChange={handleInputChange}
-                      redlabel={isMandatory("DRIVINGLIC_ISSUEPALACE") ? "*" : ""}
+                      redlabel={
+                        isMandatory("DRIVINGLIC_ISSUEPALACE") ? "*" : ""
+                      }
                     />
 
                     <Eselect
@@ -2080,7 +2083,9 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                       ShortName={true}
                       name="Dlv_Type"
                       initialValue={
-                        formData.EmpMst?.Dlv_Type ? formData.EmpMst?.Dlv_Type.toString() : null
+                        formData.EmpMst?.Dlv_Type
+                          ? formData.EmpMst?.Dlv_Type.toString()
+                          : null
                       }
                       handleInputChange={handleInputChange}
                       redlabel={isMandatory("Dlv_Type") ? "*" : ""}
@@ -2124,7 +2129,6 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                   <div className="mt-3">{DrivingVerifiedTile}</div>
                 </>
               )}
-              
             </div>
           </div>
         </div>
@@ -2190,8 +2194,8 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 </div>
 
                 <div className="mt-2 text-sm font-medium text-exit dark:text-exit text-center">
-                  This Employee Data Already Exists in Enquiry Databases
-                  with Above Details, Kindly Check Before Proceeding.
+                  This Employee Data Already Exists in Enquiry Databases with
+                  Above Details, Kindly Check Before Proceeding.
                 </div>
               </div>
             </DialogDescription>
@@ -2258,8 +2262,8 @@ const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
                 </div>
 
                 <div className="mt-2 text-sm font-medium text-exit dark:text-exit text-center">
-                  This Employee Data Already Exists in Enquiry Databases
-                  with Above Details, Kindly Check Before Proceeding.
+                  This Employee Data Already Exists in Enquiry Databases with
+                  Above Details, Kindly Check Before Proceeding.
                 </div>
               </div>
             </DialogDescription>

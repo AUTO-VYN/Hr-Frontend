@@ -24,16 +24,28 @@ export interface ButtonProps
 
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   // Backward compatible
-  default: "bg-brand text-white hover:brightness-105",
-  "": "bg-brand text-white hover:brightness-105",
-  print: "bg-brand text-white hover:brightness-105",
+  default: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
+  "": "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
+  print: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
 
   // New
-  primary: "bg-brand text-white hover:brightness-105",
-  outline: "border border-line bg-white text-fg hover:bg-hoverbg",
-  outlineBrand: "border border-brand/30 bg-white text-brand hover:bg-brand/5",
-  ghost: "bg-transparent text-fg hover:bg-hoverbg",
-  icon: "border border-line bg-white text-fg hover:bg-hoverbg",
+  primary: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
+
+  outline:
+    "border border-line bg-white text-fg hover:bg-hoverbg " +
+    "dark:border-slate-700 dark:bg-[#0B1220] dark:text-slate-100 dark:hover:bg-[#0F1A2D]",
+
+  outlineBrand:
+    "border border-brand/30 bg-white text-brand hover:bg-brand/5 " +
+    "dark:border-brand/40 dark:bg-[#0B1220] dark:text-brand dark:hover:bg-brand/10",
+
+  ghost:
+    "bg-transparent text-fg hover:bg-hoverbg " +
+    "dark:text-slate-100 dark:hover:bg-[#0F1A2D]",
+
+  icon:
+    "border border-line bg-white text-fg hover:bg-hoverbg " +
+    "dark:border-slate-700 dark:bg-[#0B1220] dark:text-slate-100 dark:hover:bg-[#0F1A2D]",
 };
 
 const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
@@ -63,7 +75,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       type = "button",
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <button
@@ -76,12 +88,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           shapeStyles[shape],
           variantStyles[variant ?? "default"],
           sizeStyles[size ?? "default"],
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 
 Button.displayName = "Button";
