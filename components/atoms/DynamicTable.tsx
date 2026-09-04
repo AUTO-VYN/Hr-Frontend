@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import { MdDelete, MdNoteAdd } from "react-icons/md";
+import React, { useEffect, useRef } from "react";
+import { MdDelete, MdAdd } from "react-icons/md";
 import "tailwindcss/tailwind.css";
 import Swal from "sweetalert2";
 import Eselect from "./Eselect";
+import { Trash2 } from "lucide-react";
 
 interface TableComponentProps {
   columns: string[];
@@ -14,6 +15,9 @@ interface TableComponentProps {
   DropDownOp?: Record<string, any[]>;
   Height?: number;
   AddBtn?: boolean;
+
+  // ✅ UI only (optional). If not passed, text auto-infer ho jayega.
+  AddBtnText?: string;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -26,10 +30,11 @@ const TableComponent: React.FC<TableComponentProps> = ({
   DropDownOp = {},
   Height = 0,
   AddBtn = false,
+  AddBtnText,
 }) => {
   const inputRefs = useRef({});
 
-  function showSideAlert(message, type) {
+  function showSideAlert(message: string, type: any) {
     const Toast = Swal.mixin({
       toast: true,
       position: "top-end",
@@ -50,39 +55,41 @@ const TableComponent: React.FC<TableComponentProps> = ({
     });
   }
 
-  const handleInputChange = (rowIndex, field, value, inputIndex) => {
+  const handleInputChange = (
+    rowIndex: number,
+    field: string,
+    value: any,
+    inputIndex: any
+  ) => {
     const constraint = constraints[field].type;
     const maxLength = constraints[field].max;
 
     if (constraint === "NUMBER") {
-      if (isNaN(value)) {
-        return;
-      }
+      if (isNaN(value)) return;
     }
-    if (maxLength !== undefined && value.length > maxLength) {
+
+    if (maxLength !== undefined && value?.length > maxLength) {
       value = value.substring(0, maxLength);
     }
+
     const newData = tableData.map((item, index) => {
-      if (index === rowIndex) {
-        return { ...item, [field]: value || "" };
-      }
+      if (index === rowIndex) return { ...item, [field]: value || "" };
       return item;
     });
+
     setTableData(newData);
   };
 
-  const handleDeleteRow = (rowIndex) => {
-    const newData = tableData.filter((_, index) => index !== rowIndex);
+  const handleDeleteRow = (rowIndex: number) => {
+    const newData = tableData.filter((_: any, index: number) => index !== rowIndex);
     setTableData(newData);
   };
 
-  const handleKeyDown = (e, rowIndex, columnIndex) => {
+  const handleKeyDown = (e: any, rowIndex: number, columnIndex: number) => {
     if (e.key === "Tab") {
       if (e.shiftKey) {
-        // If Shift + Tab is pressed, do the default behavior
         return;
       } else {
-        const lastRow = tableData[tableData.length - 1];
         if (
           rowIndex === tableData.length - 1 &&
           columnIndex === columns.length - 1
@@ -112,13 +119,12 @@ const TableComponent: React.FC<TableComponentProps> = ({
         return;
       }
 
-      // Check if all required fields are filled
       let allRequiredFieldsFilled = true;
 
       for (const [field, constraint] of Object.entries(constraints)) {
-        const value = lastRow[field];
+        const value = (lastRow as any)[field];
         if (
-          constraint.required &&
+          (constraint as any).required &&
           (value === null ||
             value === undefined ||
             value?.toString()?.trim() === "")
@@ -132,10 +138,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
         }
       }
 
-      // If any required fields are missing, do not add a new row
-      if (!allRequiredFieldsFilled) {
-        return;
-      }
+      if (!allRequiredFieldsFilled) return;
     }
 
     const newRow = {};
@@ -143,73 +146,88 @@ const TableComponent: React.FC<TableComponentProps> = ({
   };
 
   useEffect(() => {
-    console.log(tableData);
+    // keep same behavior
     if (tableData.length === 0) {
-      addNewRow(); // Add a new row if tableData is empty
+      addNewRow();
     } else {
-      // Create a copy of tableData excluding the last row
       const rowsBeforeLast = tableData.slice(0, -1);
       const lastRow = tableData[tableData.length - 1];
 
-      // Check each row before the last row to see if it's empty
-      const newData = rowsBeforeLast.filter((row) => {
-        // Keeps rows that have at least one non-empty value
+      const newData = rowsBeforeLast.filter((row: any) => {
         return Object.values(row).some((value) => value !== "");
       });
 
-      // Append the last row back into the data
       newData.push(lastRow);
 
-      // Update the state if there are any changes
       if (newData.length !== tableData.length) {
         setTableData(newData);
       }
     }
   }, [tableData]);
 
-  const isRowDisabled = (row) => {
+  const isRowDisabled = (row: any) => {
     if ((row.UTD && row.UTD != null && row.UTD != undefined) || disabledProp) {
       return true;
-    } else {
-      return false;
     }
+    return false;
   };
+
+  // ✅ Auto label like screenshot
+  const inferredAddText =
+    AddBtnText ||
+    (columnsShow?.[0]?.toLowerCase().includes("degree")
+      ? "Add qualification"
+      : columnsShow?.[0]?.toLowerCase().includes("technology") ||
+        columnsShow?.[0]?.toLowerCase().includes("tools")
+      ? "Add technology"
+      : "Add");
 
   return (
     <>
-      <table className="border table-auto w-full text-sm shadow-md">
-        <thead className="sticky top-0  bg-white border dark:bg-primary dark dark:bg-opacity-10 z-1">
-          <tr className="sticky top-0 z-10">
-            <th className="border py-2 px-4 text-center uppercase">Sr.</th>
+      <table className="min-w-full text-sm">
+        <thead className="sticky top-0 z-10 bg-[#F9FAFB] dark:bg-primary dark:bg-opacity-10">
+          <tr>
+            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0]">
+              Sr.
+            </th>
+
             {columnsShow?.map((column, index) => (
               <th
                 key={index}
-                className="border py-2 px-4 text-center uppercase"
+                className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0]"
               >
                 {column}
               </th>
             ))}
-            <th className="border py-2 px-4 text-center uppercase">Actions</th>
+
+            <th className="px-6 py-3 text-left text-[12px] font-semibold tracking-[0.06em] text-[#667085] uppercase border-b border-[#EAECF0] w-[120px]">
+              Actions
+            </th>
           </tr>
         </thead>
+
         <tbody>
           {tableData?.map((item, rowIndex) => {
             const disabled = isRowDisabled(item);
 
             return (
-              <tr key={rowIndex} className={`hover:bg-gray-100`}>
-                <td className="border text-center h-4">{rowIndex + 1}</td>
+              <tr key={rowIndex} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-[#667085] border-b border-[#EAECF0]">
+                  {rowIndex + 1}
+                </td>
+
                 {columns?.map((column, columnIndex) => {
                   const isSelect = constraints[column]?.type === "Select";
+
                   return (
-                    <td key={columnIndex} className="border h-4">
+                    <td key={columnIndex} className="px-6 py-3 border-b border-[#EAECF0]">
                       {isSelect ? (
                         <Eselect
                           option={DropDownOp[column]}
                           name={item[column]}
                           mb={"0"}
                           initialValue={item[column]?.toString() || ""}
-                          handleInputChange={(label, value) =>
+                          handleInputChange={(label: any, value: any) =>
                             handleInputChange(
                               rowIndex,
                               column,
@@ -218,9 +236,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
                             )
                           }
                           disabled={
-                            constraints[column].disabled && disabled
-                              ? true
-                              : false
+                            constraints[column].disabled && disabled ? true : false
                           }
                         />
                       ) : (
@@ -229,25 +245,23 @@ const TableComponent: React.FC<TableComponentProps> = ({
                             constraints[column].type === "DOC"
                               ? "file"
                               : constraints[column].type === "DATE"
-                                ? "date"
-                                : "text"
+                              ? "date"
+                              : "text"
                           }
                           value={
                             constraints[column].type === "DOC"
                               ? undefined
                               : item[column]
-                                ? item[column]
-                                : ""
+                              ? item[column]
+                              : ""
                           }
                           accept={
                             constraints[column].type === "DOC"
                               ? "image/*,application/pdf"
                               : undefined
                           }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, rowIndex, columnIndex)
-                          }
-                          onChange={(e) =>
+                          onKeyDown={(e) => handleKeyDown(e, rowIndex, columnIndex)}
+                          onChange={(e: any) =>
                             handleInputChange(
                               rowIndex,
                               column,
@@ -257,36 +271,46 @@ const TableComponent: React.FC<TableComponentProps> = ({
                               `${rowIndex}-${columnIndex}`
                             )
                           }
-                          className={`flex ${Height ? "h-full py-1" : "h-9 py-1"
-                            } w-full dark:bg-input bg-white px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300`}
+                          className={`flex ${
+                            Height ? "h-full py-1" : "h-9 py-1"
+                          } w-full dark:bg-input bg-white px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300`}
                           disabled={
-                            constraints[column].disabled && disabled
-                              ? true
-                              : false
+                            constraints[column].disabled && disabled ? true : false
                           }
                         />
                       )}
                     </td>
                   );
                 })}
-                <td className="border px-4 h-4 text-center">
-                  <MdDelete
-                    className={`h-4 w-5 mx-auto text-red-500 hover:cursor-pointer text-exit ${disabled ? "opacity-50" : ""
-                      }`}
+
+                <td className="px-6 py-3 border-b border-[#EAECF0]">
+                  <button
+                    type="button"
                     onClick={() => !disabled && handleDeleteRow(rowIndex)}
-                  />
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-lg border border-[#D0D5DD] bg-white hover:bg-[#F9FAFB]
+                      ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    aria-label="Delete row"
+                  >
+                    <Trash2 className="h-5 w-5 text-red-500" />
+                  </button>
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+
+      {/* ✅ Screenshot jaisa Add button (inside table component) */}
       {AddBtn && (
-        <div className="w-full flex justify-end">
-          <MdNoteAdd
-            className="h-7 w-7 text-green-500 hover:cursor-pointer "
+        <div className="px-6 pt-3 pb-5">
+          <button
+            type="button"
             onClick={() => addNewRow()}
-          />
+            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#D0D5DD] bg-white px-4 py-2 text-sm font-semibold text-[#5B5EF7] hover:bg-[#F3F4FF]"
+          >
+            <MdAdd className="h-5 w-5" />
+            {inferredAddText}
+          </button>
         </div>
       )}
     </>

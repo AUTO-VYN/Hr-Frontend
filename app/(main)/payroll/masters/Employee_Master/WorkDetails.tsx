@@ -1,8 +1,9 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
 import YNDynamicTable from "@/components/atoms/YNDynamicTable";
-import { Box, Plus, Briefcase } from "lucide-react";
+import { BriefcaseBusiness } from "lucide-react";
 
 interface RowData {
   Emp_Company: string;
@@ -17,10 +18,10 @@ interface RowData {
 
 // Function to format date
 const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return ""; // Handle empty date
+  if (!dateString) return "";
   const date = new Date(dateString);
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
@@ -28,25 +29,21 @@ const formatDate = (dateString: string | undefined) => {
 const Page: React.FC = () => {
   const { formData, setFormData } = useFormData();
 
-  // ✅ Default mein ek empty row set ki hai - always show at least one row
-  const [tableData, setTableData] = useState<RowData[]>(() => {
-    if (formData.EmpExperience && formData.EmpExperience.length > 0) {
-      return formData.EmpExperience.map((row: RowData) => ({
-        ...row,
-        Emp_From_Date: formatDate(row.Emp_From_Date),
-        Emp_To_Date: formatDate(row.Emp_To_Date),
-      }));
-    }
-    // ✅ Always return at least one empty row as default
-    return [{}];
-  });
+  // Process the table data to format dates
+  const [tableData, setTableData] = useState<RowData[]>(
+    formData.EmpExperience?.map((row: RowData) => ({
+      ...row,
+      Emp_From_Date: formatDate(row.Emp_From_Date),
+      Emp_To_Date: formatDate(row.Emp_To_Date),
+    })) || ([{}] as any),
+  );
 
   useEffect(() => {
     setFormData((prevData: any) => ({
       ...prevData,
       EmpExperience: tableData,
     }));
-  }, [tableData]);
+  }, [tableData, setFormData]);
 
   const columnsShow = [
     "Company",
@@ -81,52 +78,31 @@ const Page: React.FC = () => {
     Emp_Leaving_Reason: { type: "TEXT" },
   };
 
-  // ✅ Add new row functionality
-  const handleAddRow = () => {
-    setTableData((prev) => [...prev, {}]);
-  };
-
   return (
-    <div className="w-full bg-[#F8FAFC] dark:bg-[#1E293B] p-4 rounded-xl border border-[#E2E8F0] dark:border-[#334155] shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-[#0B1220]">
+      {/* Header (like screenshot) */}
+      <div className="flex items-center gap-3 px-6 py-4 bg-white border-b border-slate-200 dark:bg-[#0B1220] dark:border-slate-800">
+        <div className="text-violet-600 dark:text-violet-400">
+          <BriefcaseBusiness size={18} />
+        </div>
+        <div className="text-[13px] font-semibold tracking-[0.12em] text-slate-900 uppercase dark:text-slate-100">
+          WORK DETAILS
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="work-details-table">
+        <YNDynamicTable
+          columnsShow={columnsShow}
+          columns={columns}
+          tableData={tableData}
+          setTableData={setTableData}
+          constraints={constraints}
+        />
+      </div>
+
+      {/* Only UI overrides for this page (no functionality change) */}
       
-      {/* ✅ Header Section - Asset Details jaisa */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md">
-            <Briefcase className="h-6 w-6 text-[#4F46E5] dark:text-[#818CF8]" />
-          </div>
-          <h1 className="font-bold text-[13px] text-[#1E293B] dark:text-[#E2E8F0] tracking-wide uppercase">
-            Work Details
-          </h1>
-        </div>
-      </div>
-
-      {/* ✅ Table Wrapper - Asset Details jaisa */}
-      <div className="w-full border border-[#EAECF0] dark:border-[#334155] rounded-lg overflow-hidden bg-white dark:bg-[#0F172A]">
-        
-        {/* Original YNDynamicTable - Same functionality */}
-        <div className="[&_th]:!text-[10px] [&_th]:!tracking-[0.08em] [&_th]:!bg-[#F8FAFC] dark:[&_th]:!bg-[#1E293B] [&_th]:!text-[#475569] dark:[&_th]:!text-[#94A3B8] [&_tbody_tr]:!bg-white dark:[&_tbody_tr]:!bg-[#0F172A] [&_tbody_td]:!text-[#334155] dark:[&_tbody_td]:!text-[#E2E8F0] [&_tbody_tr:last-child]:!hidden [&_tbody_tr:last-child]:!pointer-events-none">
-          <YNDynamicTable
-            columnsShow={columnsShow}
-            columns={columns}
-            tableData={tableData}
-            setTableData={setTableData}
-            constraints={constraints}
-          />
-        </div>
-
-        {/* ✅ "+ Add Experience" button */}
-        <div className="px-6 py-4 border-t border-[#EAECF0] dark:border-[#334155] bg-white dark:bg-[#0F172A]">
-          <button
-            type="button"
-            onClick={handleAddRow}
-            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#D0D5DD] dark:border-[#475569] bg-white dark:bg-[#0F172A] px-4 py-2 text-sm font-medium text-[#4F46E5] dark:text-[#818CF8] hover:bg-[#F3F4FF] dark:hover:bg-[#1E293B] hover:border-[#A5B4FC] dark:hover:border-[#6366F1] transition-colors"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} />
-            Add Experience
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
