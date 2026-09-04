@@ -89,23 +89,25 @@ const Ainput: FC<AinputProps> = ({
           {...rest}
           placeholder={placeholder}
           className={cn(
-            "h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-slate-900 shadow-sm outline-none",
-            "border-slate-200 placeholder:text-slate-400",
+            // base
+            "h-9 w-full rounded-xl border px-3 text-[13px] shadow-sm outline-none",
+            // light
+            "bg-white text-slate-900 border-slate-200 placeholder:text-slate-400",
             "focus-visible:ring-4 focus-visible:ring-indigo-100 focus-visible:border-indigo-400",
             "disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed",
-            "dark:bg-black dark:text-white dark:border-slate-800 dark:placeholder:text-slate-500",
-            "dark:focus-visible:ring-indigo-950/40",
-
-            // ✅ date input: keep room + class for moving native icon to end
+            // dark (✅ fixed)
+            "dark:bg-[#0F1A2D] dark:text-slate-100 dark:border-slate-700 dark:placeholder:text-slate-500",
+            "dark:focus-visible:ring-indigo-500/20 dark:focus-visible:border-indigo-400",
+            "dark:disabled:bg-[#0B1220] dark:disabled:text-slate-500",
+            // date input: keep room + class for moving native icon to end
             isDate ? "date-end-icon pr-10" : "",
-
-            // ✅ right attached element: override padding (more space)
+            // right attached element: override padding (more space)
             rightElement ? "pr-[112px]" : "",
-
+            // error
             errorMessage
-              ? "border-red-400 focus-visible:ring-red-100 focus-visible:border-red-400"
+              ? "border-red-400 focus-visible:ring-red-100 focus-visible:border-red-400 dark:border-red-500/70 dark:focus-visible:ring-red-500/15 dark:focus-visible:border-red-500"
               : "",
-            className
+            className,
           )}
           type={type}
           name={name}

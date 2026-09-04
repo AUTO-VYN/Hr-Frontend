@@ -30,7 +30,7 @@ interface RowData3 {
 }
 
 const columnsShow = [
-  "Degree/Certification",
+  "Degree / Certification",
   "Board/University",
   "School/College",
   "Year of passing",
@@ -273,6 +273,7 @@ const YourComponent: React.FC = () => {
                   setTableData={setTableData2}
                   constraints={constraints2}
                   columnsShow={columnsShow2}
+                   addLabel="Add Language"
                 />
               </div>
             </SectionCard>

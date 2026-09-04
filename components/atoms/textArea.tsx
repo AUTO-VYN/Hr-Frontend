@@ -1,8 +1,9 @@
 import React, {
   ChangeEvent,
   FunctionComponent,
-  TextareaHTMLAttributes, useState,
-} from 'react';
+  TextareaHTMLAttributes,
+  useState,
+} from "react";
 
 // Define the props for the ATextArea component
 interface ATextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -36,8 +37,8 @@ const ATextArea: FunctionComponent<ATextAreaProps> = ({
   className,
   max,
 }) => {
-
   const [maxError, setMaxError] = useState("");
+
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const inputValue = event.target.value;
 
@@ -55,11 +56,22 @@ const ATextArea: FunctionComponent<ATextAreaProps> = ({
 
   return (
     <div className="relative w-full ">
-      <div className='flex mb-1'>
-        <label className="flex text-xs font-bold mt-1 text-[#193A69] dark:text-[#E2E8F0]" htmlFor={name}>
-          {title}{redlabel && <p className="text-exit text-xs -mt-[3px] ml-2 ">{redlabel}</p>}
+      <div className="flex mb-1">
+        {/* ✅ title font size increased (only UI change) */}
+        <label
+          className="flex text-sm font-bold mt-1 text-[#193A69] dark:text-[#E2E8F0]"
+          htmlFor={name}
+        >
+          {title}
+          {redlabel && (
+            <p className="text-exit text- -mt-[3px] ml-2 ">{redlabel}</p>
+          )}
         </label>
-        <label className="block text-exit text-xs font-bold ml-2 mt-1" htmlFor={name}>
+
+        <label
+          className="block text-exit text-lg font-bold ml-2 mt-1"
+          htmlFor={name}
+        >
           {error}
         </label>
       </div>
@@ -69,13 +81,14 @@ const ATextArea: FunctionComponent<ATextAreaProps> = ({
           {maxError}
         </p>
       )}
+
       <textarea
         rows={rows}
         className={`border border-[#b5bfcb] dark:border-[#D0D5DD] px-1.5 py-1.5 dark:bg-input rounded text-base shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150 ${className}`}
         name={name}
         onChange={handleChange}
         required={required}
-        value={value || ''}
+        value={value || ""}
         onKeyDown={onKeyDown}
         disabled={disabled}
         placeholder={placeholder}

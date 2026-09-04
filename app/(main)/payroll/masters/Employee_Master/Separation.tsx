@@ -268,7 +268,7 @@ function Separation({ masterData }) {
                       />
                     </div>
 
-                    <div className="col-span-12">
+                    <div className="col-span-12  ">
                       <ATextArea
                         title="Exit interview remarks"
                         name="INTERVIEWREMAKS"
@@ -278,6 +278,13 @@ function Separation({ masterData }) {
                         className={fieldDarkClass}
                       />
                     </div>
+
+                    <style jsx global>{`
+                      .exit-remarks-title-big label {
+                        font-size: 20px !important; /* increase/decrease as needed */
+                        font-weight: 500 !important; /* optional */
+                      }
+                    `}</style>
                   </div>
                 </div>
               </div>

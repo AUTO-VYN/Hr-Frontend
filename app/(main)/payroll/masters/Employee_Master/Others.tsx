@@ -87,8 +87,9 @@ export default function page({ masterData, isMandatory }: any) {
   const cardTitleClass =
     "text-[13px] font-semibold tracking-wide uppercase text-slate-900 dark:text-slate-100";
 
+  // ✅ FIX: dark class typo removed + consistent dark bg/border/text
   const fieldDarkClass =
-    "dark:bg-[#0F1A2D] dark:text-slate-100 dark:border-[#243244] dark:placeholder:text-slate-500";
+    "text-[14px] dark:bg-[#0F1A2D] dark:text-slate-100 dark:border-[#243244] dark:placeholder:text-slate-500";
 
   return (
     <div className="w-full">
@@ -363,14 +364,23 @@ export default function page({ masterData, isMandatory }: any) {
                 </div>
 
                 <div className="md:col-span-2">
-                  <ATextArea
-                    title="Roles and responsibilities"
-                    name="ROLE"
-                    value={formData.EmpMst.ROLE}
-                    handleInputChange={handleInputChange}
-                    redlabel={isMandatory("ROLE") ? "*" : ""}
-                    className={fieldDarkClass}
-                  />
+                  <div className="role-title-big">
+                    <ATextArea
+                      title="Roles and responsibilities"
+                      name="ROLE"
+                      value={formData.EmpMst.ROLE}
+                      handleInputChange={handleInputChange}
+                      redlabel={isMandatory("ROLE") ? "*" : ""}
+                      className={fieldDarkClass}
+                    />
+                  </div>
+
+                  <style jsx global>{`
+                    .role-title-big label {
+                      font-size: 14px !important;
+                      font-weight: 400 !important;
+                    }
+                  `}</style>
                 </div>
               </div>
             </div>

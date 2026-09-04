@@ -103,7 +103,7 @@ const Docupload = () => {
   const getUploadLabel = (fieldName: string) => {
     switch (fieldName) {
       case "adhar":
-        return "Upload Aadhar Image";
+        return "Upload Aadhaar Image";
       case "pan":
         return "Upload PAN Image";
       case "salary":
