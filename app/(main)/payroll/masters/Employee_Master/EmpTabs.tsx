@@ -10,6 +10,7 @@ import EmployeeAcc from "./EmployeeAcc";
 import Asset from "./Asset";
 import Docupload from "./DocUpload";
 import WorkDetails from "./WorkDetails";
+import employeview from "../employee-view/page"
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import{button} from "@/components/ui/button";
 
@@ -248,6 +249,7 @@ const EmpTabs = ({
           {activeTab === 8 && <Asset />}
           {activeTab === 9 && <Docupload />}
           {activeTab === 10 && <WorkDetails />}
+          
         </div>
       </div>
     </div>

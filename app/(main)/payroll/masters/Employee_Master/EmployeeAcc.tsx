@@ -429,8 +429,8 @@ export default function Page() {
                   />
 
                   <Ainput
-                    title="Mobile IMEI number"
-                    label="Mobile IMEI number"
+                    title="Mobile IEMI number"
+                    label="Mobile IEMI number"
                     type="text"
                     name="IEMI"
                     value={formData?.EmpMst?.IEMI}

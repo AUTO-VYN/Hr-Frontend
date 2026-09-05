@@ -140,9 +140,24 @@ function IconTools(props: React.SVGProps<SVGSVGElement>) {
 function IconLanguage(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M4 5H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 9H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 19H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M4 5H12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 9H10"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 19H12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
       <path
         d="M14 21C16.5 18.5 18 15.5 18 12"
         stroke="currentColor"
@@ -155,7 +170,12 @@ function IconLanguage(props: React.SVGProps<SVGSVGElement>) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path d="M20 21L16 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M20 21L16 21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -195,7 +215,9 @@ const YourComponent: React.FC = () => {
   const [tableData, setTableData] = useState(formData.EmpEdu || [{}]);
   const [tableData1, setTableData1] = useState(formData.EmpItSkill || [{}]);
   const [tableData2, setTableData2] = useState(formData.EmpLang || [{}]);
-  const [certificates, setCertificates] = useState<any>(formData.EmpCertificates || {});
+  const [certificates, setCertificates] = useState<any>(
+    formData.EmpCertificates || {},
+  );
 
   useEffect(() => {
     setFormData((prevData: any) => ({ ...prevData, EmpEdu: tableData }));
@@ -210,18 +232,26 @@ const YourComponent: React.FC = () => {
   }, [tableData2]);
 
   useEffect(() => {
-    setFormData((prevData: any) => ({ ...prevData, EmpCertificates: certificates }));
+    setFormData((prevData: any) => ({
+      ...prevData,
+      EmpCertificates: certificates,
+    }));
   }, [certificates]);
 
   // ✅ Language auto-scroll (UI only)
   const languagesCardRef = useRef<HTMLDivElement | null>(null);
   const languagesScrollWrapRef = useRef<HTMLDivElement | null>(null);
-  const prevLangLenRef = useRef<number>(Array.isArray(tableData2) ? tableData2.length : 0);
+  const prevLangLenRef = useRef<number>(
+    Array.isArray(tableData2) ? tableData2.length : 0,
+  );
   const langLen = Array.isArray(tableData2) ? tableData2.length : 0;
 
   useEffect(() => {
     if (langLen > prevLangLenRef.current) {
-      languagesCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      languagesCardRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
 
       requestAnimationFrame(() => {
         const wrap = languagesScrollWrapRef.current;
@@ -253,7 +283,6 @@ const YourComponent: React.FC = () => {
                 AddBtn={true}
               />
             </SectionCard>
-
             <SectionCard title="TECHNOLOGY / TOOLS" icon={<IconTools />}>
               <TableComponent
                 columns={columns1}
@@ -264,22 +293,60 @@ const YourComponent: React.FC = () => {
                 AddBtn={true}
               />
             </SectionCard>
-
-            <SectionCard title="LANGUAGES" icon={<IconLanguage />} cardRef={languagesCardRef}>
-              <div ref={languagesScrollWrapRef} className="max-h-[320px] overflow-y-auto">
+            <SectionCard
+              title="LANGUAGES"
+              icon={<IconLanguage />}
+              cardRef={languagesCardRef}
+            >
+              <div
+                ref={languagesScrollWrapRef}
+                className="max-h-[320px] overflow-y-auto"
+              >
                 <YNDynamicTable
                   columns={columns2}
                   tableData={tableData2}
                   setTableData={setTableData2}
                   constraints={constraints2}
                   columnsShow={columnsShow2}
-                   addLabel="Add Language"
+                  addLabel="Add Language"
                 />
               </div>
             </SectionCard>
-
             {/* ✅ CERTIFICATES */}
-            <CertificatesUpload value={certificates} onChange={setCertificates} />
+            <CertificatesUpload
+              headerTitle="CERTIFICATES"
+              label="Upload certificates"
+              accept="application/pdf,image/jpeg,image/jpg,image/png"
+              items={[
+                {
+                  name: "DegreeCert",
+                  title: "Degree certificate",
+                  subtitle: "Optional · PDF/JPG",
+                },
+                {
+                  name: "SkillCert",
+                  title: "Skill / technical certificate",
+                  subtitle: "Optional · PDF/JPG",
+                },
+                {
+                  name: "LangCert",
+                  title: "Language proficiency",
+                  subtitle: "Optional · PDF/JPG",
+                },
+                {
+                  name: "OtherCert",
+                  title: "Other certificate",
+                  subtitle: "Optional · PDF/JPG",
+                },
+              ]}
+              value={{
+                DegreeCert: certificates?.DegreeCert ?? null,
+                SkillCert: certificates?.SkillCert ?? null,
+                LangCert: certificates?.LangCert ?? null,
+                OtherCert: certificates?.OtherCert ?? null,
+              }}
+              onChange={(next) => setCertificates(next)}
+            />{" "}
           </div>
         </div>
       </div>

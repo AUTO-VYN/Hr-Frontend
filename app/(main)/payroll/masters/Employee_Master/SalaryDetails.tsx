@@ -1,6 +1,7 @@
 "use client";
 import {
   SlidersHorizontal,
+  IndianRupee ,
   Landmark,
   Wallet,
   Save,
@@ -1889,7 +1890,7 @@ const SalaryDetails = ({
                   </Button>
 
                   {user?.role1.includes("1.1.13") && (
-                    <button
+                    <Button
                       type="button"
                       className={pillBtnPrimaryClass}
                       onClick={handleChangeSalaryDetails}
@@ -1898,7 +1899,7 @@ const SalaryDetails = ({
                       {isSalarySaved
                         ? "Change salary details"
                         : "Save salary details"}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -2475,257 +2476,314 @@ const SalaryDetails = ({
         </Dialog>
 
         {/* Update Salary Details Dialog */}
-        <Dialog open={isDialogOpen2} onOpenChange={setIsDialogOpen2}>
-          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-primaryop bg-off">
-            <DialogHeader>
-              <DialogTitle className="mt-2 ml-3 flex">
-                <DialogTitle>Update Salary Details</DialogTitle>
-              </DialogTitle>
-              <hr className="bg-body-color mx-2" />
-              <DialogDescription>
-                <div className="grid grid-cols-12 gap-2 p-4">
-                  <div className="flex col-span-12 justify-between">
-                    <div className="col-span-12 text-exit">{Error}</div>
-                  </div>
-                  <div className="col-span-12">
-                    <div className="grid grid-cols-12 gap-x-2 p-2 m-2 rounded-b shadow dark:bg-primary dark:bg-opacity-10">
-                      <div className="col-span-6">
-                        <SelectSearch
-                          title="Salary Type"
-                          name="Salary_Type"
-                          options={SLTY}
-                          selectedValue={formData1?.Salary_Type}
-                          handleInputChange={handleInputChange}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
+    <Dialog open={isDialogOpen2} onOpenChange={setIsDialogOpen2}>
+  <DialogContent
+    className="
+      w-[95vw] max-w-[760px]
+      max-h-[90vh] overflow-y-auto
+      p-0 overflow-hidden
+      bg-white dark:bg-[#0B1220]
+      border border-slate-200 dark:border-slate-800
+      rounded-2xl
+    "
+  >
+    <DialogHeader className="p-0">
+      {/* ===== HEADER (like screenshot) ===== */}
+      <div className="flex items-start justify-between gap-4 px-6 py-4 bg-gradient-to-b from-[#0E2A57] to-[#132A55] text-white">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 grid h-10 w-10 place-items-center rounded-xl bg-[#2e4069] ring-1 ring-white/10">
+            <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+  <IndianRupee className="h-8 w-8" />
+</span>
+          </div>
 
-                      {(salaryType === "1" ||
-                        formData1?.Salary_Type === "1") && (
-                        <div className="col-span-6">
-                          <Einput
-                            type="text"
-                            title="Proposed salary"
-                            name="Proposed_Salary"
-                            handleInputChange={handleInputChange}
-                            value={formData1?.Proposed_Salary}
-                            className="text-right"
-                          />
-                        </div>
-                      )}
+          <div className="min-w-0">
+            <DialogTitle className="text-[14px] font-semibold tracking-[0.12em] uppercase text-white">
+              Update Salary Details
+            </DialogTitle>
 
-                      <div className="col-span-6">
-                        <Einput
-                          type="date"
-                          title="Effective from (date)"
-                          name="Effective_date"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Effective_date}
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Monthly Gross:"
-                          name="Gross_Salary"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Gross_Salary?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="EMP Basic:"
-                          name="Basic"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Basic?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="HRA:"
-                          name="HRA"
-                          id="HRA"
-                          ShortName={true}
-                          handleInputChange={handleInputChange}
-                          value={formData1?.HRA?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Conveyance:"
-                          name="Conveyance"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Conveyance?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Medical:"
-                          name="Medical"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Medical?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="DA:"
-                          name="Other"
-                          ShortName={true}
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Other?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Washing:"
-                          name="Washing"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Washing?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Uniform Amt:"
-                          name="Uniform"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Uniform?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
+            <div className="mt-1 text-[12px] text-white/70 truncate">
+              {(formData?.EmpMst?.EMPFIRSTNAME || "").toString()}{" "}
+              {(formData?.EmpMst?.EMPLASTNAME || "").toString()}
+              {formData?.EmpMst?.EMPCODE
+                ? ` · Emp code ${formData.EmpMst.EMPCODE}`
+                : ""}
+              {formData?.EmpMst?.DIVISION
+                ? ` · ${formData.EmpMst.DIVISION}`
+                : ""}
+            </div>
+          </div>
+        </div>
 
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Annual Gross:"
-                          name="ANNUAL_CTC"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.ANNUAL_CTC?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="EMP Salary:"
-                          name="Gross_Salary"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.Gross_Salary?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
+        <button
+          type="button"
+          onClick={() => setIsDialogOpen2(false)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 ring-1 ring-white/10"
+          aria-label="Close"
+        >
+          <span className="text-lg leading-none">×</span>
+        </button>
+      </div>
 
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="PF Salary Limit:"
-                          name="PFSALARY_LIMIT"
-                          ShortName={true}
-                          handleInputChange={handleInputChange}
-                          value={formData1?.PFSALARY_LIMIT?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="Bonus:"
-                          name="BONUS_AMOUNT"
-                          handleInputChange={handleInputChange}
-                          value={formData1?.BONUS_AMOUNT?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive || GratuityCompKeyData}
-                        />
-                      </div>
+      <DialogDescription className="p-0">
+        <div className="px-6 py-5">
+          {Error ? (
+            <div className="mb-4 text-sm font-medium text-red-600">
+              {Error}
+            </div>
+          ) : null}
 
-                      {GratuityCompKeyData && (
-                        <div className="col-span-6">
-                          <Einput
-                            type="number"
-                            title="Gratuity:"
-                            name="Gratuity"
-                            handleInputChange={handleInputChange}
-                            value={formData1?.Gratuity?.toString()}
-                            className="text-right"
-                            disabled={true}
-                          />
-                        </div>
-                      )}
+          {/* ===== BASIS ===== */}
+          <div className="pt-1">
+            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+              BASIS
+            </div>
 
-                      <div className="col-span-6">
-                        <Einput
-                          type="number"
-                          title="CTC:"
-                          name="CTC"
-                          ShortName={true}
-                          handleInputChange={handleInputChange}
-                          value={formData1?.CTC?.toString()}
-                          className="text-right"
-                          disabled={isDailyWagesActive}
-                        />
-                      </div>
-                      {DalyWagescompKeyData && (
-                        <div className="col-span-12 mt-3 border-t pt-3">
-                          <div className="text-exit font-bold text-lg mb-2">
-                            Daily Wages (Alternative Salary Mode)
-                          </div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectSearch
+                title="Salary Type"
+                name="Salary_Type"
+                options={SLTY}
+                selectedValue={formData1?.Salary_Type}
+                handleInputChange={handleInputChange}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
 
-                          <div className="col-span-6">
-                            <Einput
-                              type="number"
-                              title="Daily Wages"
-                              name="Daily_Wages"
-                              handleInputChange={handleInputChange}
-                              value={formData1?.Daily_Wages?.toString()}
-                              disabled={isSalaryBreakupActive}
-                              className="text-right"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      <div className="col-span-6 mt-5 gap-y-2">
-                        <Button
-                          className="mr-1 mt-1"
-                          variant={"save"}
-                          onClick={saveData}
-                        >
-                          save salary Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+              <Einput
+                type="date"
+                title="Effective From"
+                ShortName={true}
+                name="Effective_date"
+                handleInputChange={handleInputChange}
+                value={formData1?.Effective_date}
+                disabled={isDailyWagesActive}
+              />
+
+              {(salaryType === "1" || formData1?.Salary_Type === "1") && (
+                <Einput
+                  type="text"
+                  title="Proposed salary"
+                  name="Proposed_Salary"
+                  handleInputChange={handleInputChange}
+                  value={formData1?.Proposed_Salary}
+                  className="text-right"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
+
+          {/* ===== EARNINGS — MONTHLY ===== */}
+          <div>
+            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+              EARNINGS — MONTHLY
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <Einput
+                type="number"
+                title="Emp Basic"
+                name="Basic"
+                handleInputChange={handleInputChange}
+                value={formData1?.Basic?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="HRA"
+                name="HRA"
+                ShortName={true}
+                handleInputChange={handleInputChange}
+                value={formData1?.HRA?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Conveyance"
+                name="Conveyance"
+                handleInputChange={handleInputChange}
+                value={formData1?.Conveyance?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Medical"
+                name="Medical"
+                handleInputChange={handleInputChange}
+                value={formData1?.Medical?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="DA"
+                name="Other"
+                ShortName={true}
+                handleInputChange={handleInputChange}
+                value={formData1?.Other?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Washing"
+                name="Washing"
+                handleInputChange={handleInputChange}
+                value={formData1?.Washing?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Uniform Amt"
+                name="Uniform"
+                handleInputChange={handleInputChange}
+                value={formData1?.Uniform?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Monthly Gross"
+                name="Gross_Salary"
+                handleInputChange={handleInputChange}
+                value={formData1?.Gross_Salary?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+            </div>
+          </div>
+
+          <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
+
+          {/* ===== STATUTORY ===== */}
+          <div>
+            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+              STATUTORY
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Einput
+                type="number"
+                title="PF Salary Limit"
+                name="PFSALARY_LIMIT"
+                ShortName={true}
+                handleInputChange={handleInputChange}
+                value={formData1?.PFSALARY_LIMIT?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive}
+              />
+
+              <Einput
+                type="number"
+                title="Bonus (annual)"
+                name="BONUS_AMOUNT"
+                handleInputChange={handleInputChange}
+                value={formData1?.BONUS_AMOUNT?.toString()}
+                className="text-right"
+                disabled={isDailyWagesActive || GratuityCompKeyData}
+              />
+
+              {GratuityCompKeyData && (
+                <Einput
+                  type="number"
+                  title="Gratuity"
+                  name="Gratuity"
+                  handleInputChange={handleInputChange}
+                  value={formData1?.Gratuity?.toString()}
+                  className="text-right"
+                  disabled={true}
+                />
+              )}
+
+              {DalyWagescompKeyData && (
+                <Einput
+                  type="number"
+                  title="Daily Wages"
+                  name="Daily_Wages"
+                  handleInputChange={handleInputChange}
+                  value={formData1?.Daily_Wages?.toString()}
+                  className="text-right"
+                  disabled={isSalaryBreakupActive}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ===== SUMMARY STRIP (like screenshot) ===== */}
+          <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F3F6FF] dark:bg-[#0F1A2D] p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                  MONTHLY GROSS
                 </div>
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+                <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
+                  ₹{Number(formData1?.Gross_Salary || 0).toLocaleString("en-IN")}
+                </div>
+              </div>
 
+              <div>
+                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                  ANNUAL GROSS
+                </div>
+                <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
+                  ₹{Number(formData1?.ANNUAL_CTC || 0).toLocaleString("en-IN")}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                  TOTAL CTC
+                </div>
+                <div className="mt-1 text-[18px] font-bold text-indigo-700 dark:text-indigo-300">
+                  ₹{Number(formData1?.CTC || 0).toLocaleString("en-IN")}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FOOTER (note + actions) */}
+          <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              Annual gross + bonus = CTC. Values auto-calculate as you type.
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDialogOpen2(false)}
+                className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50
+                           dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 dark:hover:bg-[#0F1A2D]"
+              >
+                Cancel
+              </button>
+
+              <Button
+                className="h-10 rounded-xl px-5 bg-[#4F46E5] text-white font-large hover:bg-[#433df0] dark:bg-[#4F46E5] dark:hover:bg-[#433df0]"
+                variant={"save"}
+                onClick={saveData}
+              >
+                Save Salary Details
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogDescription>
+    </DialogHeader>
+  </DialogContent>
+</Dialog>
         {/* See History Dialog */}
         <Dialog open={isDialogOpen3} onOpenChange={setIsDialogOpen3}>
           <DialogContent className="w-full max-w-screen-lg h-[650px] overflow-y-auto dark:bg-primaryop bg-off">

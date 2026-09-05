@@ -312,74 +312,73 @@ function EmployeeMasterContent() {
   const searchParams = useSearchParams();
   const Empcode = searchParams.get("UTD");
 
-
   useEffect(() => {
-  const fetchData = async () => {
-    if (!user?.Comp_Code) {
-      return;
-    }
-
-    try {
-      const data = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
-        {},
-        {
-          headers: {
-            compcode: user.Comp_Code,
-            name: user.name,
-          },
-        }
-      );
-
-      const result = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
-        {
-          branch: user.branch,
-        },
-        {
-          headers: {
-            compcode: user.Comp_Code,
-            name: user.name,
-          },
-        }
-      );
-
-      const convertValuesToString = (array) => {
-        return array.map((obj) => ({
-          label: obj.label,
-          value: String(obj.value),
-        }));
-      };
-
-      const masters = data.data.data;
-
-      setMasterData(masters);
-      setCityoption(convertValuesToString(masters.CITY));
-      setDivisionoption(convertValuesToString(masters.DIVISION));
-      setEMPLOYEEDESIGNATIONoption(
-        convertValuesToString(masters.EMPLOYEEDESIGNATION)
-      );
-      setEmpshiftoption(convertValuesToString(masters.EMP_SHIFT));
-      setlocationnoption(convertValuesToString(masters.LOCATION));
-      setSECTIONoption(convertValuesToString(masters.SECTION));
-      setSTATEoption(convertValuesToString(masters.STATE));
-      setSalRegionoption(convertValuesToString(masters.Sal_Region));
-      setEmpcode(result.data?.data);
-      setChannelOption(convertValuesToString(masters.CHANNEL1));
-      setClusterOption(convertValuesToString(masters.CLUSTER1));
-    } catch (error) {
-      console.error(
-        "Employee master API error:",
-        error?.response?.data || error
-      );
-    }
-  };
-
-  fetchData();
-}, [user?.Comp_Code, user?.name, user?.branch, empDataRefresh]);
-
-  useEffect(() => {
+    const fetchData = async () => {
       if (!user?.Comp_Code) {
+        return;
+      }
+
+      try {
+        const data = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
+          {},
+          {
+            headers: {
+              compcode: user.Comp_Code,
+              name: user.name,
+            },
+          },
+        );
+
+        const result = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
+          {
+            branch: user.branch,
+          },
+          {
+            headers: {
+              compcode: user.Comp_Code,
+              name: user.name,
+            },
+          },
+        );
+
+        const convertValuesToString = (array) => {
+          return array.map((obj) => ({
+            label: obj.label,
+            value: String(obj.value),
+          }));
+        };
+
+        const masters = data.data.data;
+
+        setMasterData(masters);
+        setCityoption(convertValuesToString(masters.CITY));
+        setDivisionoption(convertValuesToString(masters.DIVISION));
+        setEMPLOYEEDESIGNATIONoption(
+          convertValuesToString(masters.EMPLOYEEDESIGNATION),
+        );
+        setEmpshiftoption(convertValuesToString(masters.EMP_SHIFT));
+        setlocationnoption(convertValuesToString(masters.LOCATION));
+        setSECTIONoption(convertValuesToString(masters.SECTION));
+        setSTATEoption(convertValuesToString(masters.STATE));
+        setSalRegionoption(convertValuesToString(masters.Sal_Region));
+        setEmpcode(result.data?.data);
+        setChannelOption(convertValuesToString(masters.CHANNEL1));
+        setClusterOption(convertValuesToString(masters.CLUSTER1));
+      } catch (error) {
+        console.error(
+          "Employee master API error:",
+          error?.response?.data || error,
+        );
+      }
+    };
+
+    fetchData();
+  }, [user?.Comp_Code, user?.name, user?.branch, empDataRefresh]);
+
+  useEffect(() => {
+    if (!user?.Comp_Code) {
       return;
     }
 
@@ -449,7 +448,7 @@ function EmployeeMasterContent() {
         key: "identity",
         label: "Basic Info",
         desc: "Employee master header fields and photo upload.",
-        total: 20,
+        total: 11,
       },
       {
         key: "info",
@@ -473,13 +472,13 @@ function EmployeeMasterContent() {
         key: "education",
         label: "Education/Skills",
         desc: "Education, language, skills and experience.",
-        total: 30,
+        total: 8,
       },
       {
         key: "work",
         label: "Work Details",
         desc: "Work profile, department, reporting etc.",
-        total: 9,
+        total: 1,
       },
       {
         key: "mobile",
@@ -491,7 +490,7 @@ function EmployeeMasterContent() {
         key: "asset",
         label: "Asset Issue",
         desc: "Assets issued to employee.",
-        total: 8,
+        total: 1,
       },
       {
         key: "doc",
@@ -509,12 +508,330 @@ function EmployeeMasterContent() {
         key: "separation",
         label: "Separation",
         desc: "Resignation/separation details.",
-        total: 19,
+        total: 18,
       },
     ],
     [],
   );
 
+  const SECTION_FIELDS: Record<string, string[]> = {
+    // ✅ BASIC INFO (key: identity) total: 20
+    // NOTE: agar aapke actual keys thode different hain (EMP_CODE vs EMPCODE etc.)
+    // to bas yahin string change kar dena (name="..." wale same).
+    identity: [
+      "EmpMst.EMPCODE",
+      "EmpMst.TITLE",
+      "EmpMst.GENDER",
+      "EmpMst.EmpType",
+      "EmpMst.EMPLOYEEDESIGNATION",
+      "EmpMst.Sal_Region",
+      "EmpMst.CHANNEL",
+      "EmpMst.CLUSTER",
+      "EmpMst.LOCATION",
+      "EmpMst.SECTION",
+      "EmpMst.DIVISION",
+    ],
+    // ✅ EMPLOYEE IDENTITY (key: info) total: 30
+    info: [
+      "EmpMst.Interview_Date",
+      "EmpMst.EMP_STATUS",
+      "EmpMst.CURRENTJOINDATE",
+      "EmpMst.DOB",
+      "EmpMst.Apprentice_Date_From",
+      "EmpMst.Apprentice_Date_To",
+      "EmpMst.PROBATIONPERIOD",
+      "EmpMst.Source_Code",
+      "EmpMst.Prob_period",
+      "EmpMst.Confirmation_Date",
+      "EmpMst.CORPORATEMAILID",
+      "EmpMst.MOBILENO",
+      "EmpMst.MOBILE_NO",
+      "EmpMst.EMERGENCYNO",
+      "EmpMst.SKILLS",
+      "EmpMst.Induction_Done",
+
+      "EmpMst.PANNO",
+      "EmpMst.PAN_CARD_VER",
+      "EmpMst.AADHAAR_LINKED_VER",
+      "EmpMst.PAN_NAME_MATCH_VER",
+
+      "EmpMst.UID_NO",
+      "EmpMst.OTP_With_Aadhaar",
+      "EmpMst.AADHAR_CARD_VER",
+
+      "EmpMst.PASSPORTNO",
+      "EmpMst.PASSEXPIRYDATE",
+      "EmpMst.PASSPORT_VER",
+
+      "EmpMst.DRIVINGLIC_ISSUEPALACE",
+      "EmpMst.Dlv_Type",
+      "EmpMst.DRIVINGLIC_ISSUEDATE",
+      "EmpMst.DRIVINGLIC_EXPDATE",
+      "EmpMst.DRIVING_VER",
+
+      // optional (only if you want to count these too)
+      "EmpMst.photo",
+      "EmpMst.full_addressAadhaar",
+      "EmpMst.PERMANENTADDRESS1",
+    ],
+    // ✅ PERSONAL INFO (key: personal) total: 25
+    personal: [
+      // Family Detail
+      "EmpMst.FATHERNAME",
+      "EmpMst.Father_Mob",
+      "EmpMst.SPOUSENAME",
+      "EmpMst.MOTHERNAME",
+      "EmpMst.MOTHERCONTACTNO",
+      "EmpMst.SPOUSECONTACTNO",
+      "EmpMst.RELCODE",
+      "EmpMst.ALTERNET_MAIL",
+      "EmpMst.DOM",
+      "EmpMst.Marital_Status",
+      "EmpMst.BLOODGROUP",
+      "EmpMst.EMPHEIGHT",
+      "EmpMst.EMPWEIGHT",
+
+      // Address Information
+      "EmpMst.PERMANENTADDRESS1",
+      "EmpMst.PCITY",
+      "EmpMst.PPINCODE",
+      "EmpMst.PSTATE",
+      "EmpMst.PDIST",
+      "EmpMst.CopytoCurrentAddress", // (agar aap isko count karna chahte ho)
+      "EmpMst.CURRENTADDRESS1",
+      "EmpMst.CCITY",
+      "EmpMst.CPINCODE",
+      "EmpMst.CSTATE",
+      "EmpMst.CDIST",
+
+      // Nominee table (at least one row filled => filled)
+      "EmpFamily",
+    ],
+
+    // ✅ SALARY DETAILS (key: salary) total: 41
+    salary: [
+      // Salary Detail Form
+      "EmpMst.PFNO",
+      "EmpMst.pfper",
+      "EmpMst.PF_Date",
+      "EmpMst.pfnumber",
+      "EmpMst.ESINO",
+      "EmpMst.esinumber",
+      "EmpMst.ESI_Date",
+      "EmpMst.UAN_No",
+      "EmpMst.LWFNO",
+      "EmpMst.WEEKLYOFF",
+      "EmpMst.BONUS",
+      "EmpMst.pro_tax",
+      "EmpMst.EMP_SHIFT",
+      "EmpMst.LIN_NO",
+      "EmpMst.GRADE",
+      "EmpMst.Sal_Region",
+      "EmpMst.Punch_Type",
+      "EmpMst.CONTRACT_NUMBER",
+      "EmpMst.DD_CLUB",
+
+      // Salary Breakup
+      "EmpMst.Effective_date",
+      "EmpMst.Gross_Salary",
+      "EmpMst.Basic",
+      "EmpMst.HRA",
+      "EmpMst.Conveyance",
+      "EmpMst.Medical",
+      "EmpMst.Other",
+      "EmpMst.Washing",
+      "EmpMst.Uniform",
+      "EmpMst.ANNUAL_CTC",
+      "EmpMst.LWF",
+      "EmpMst.PFSALARY_LIMIT",
+      "EmpMst.BONUS_AMOUNT",
+      "EmpMst.Gratuity",
+      "EmpMst.CTC",
+      "EmpMst.Daily_Wages",
+
+      // Bank Details
+      "EmpMst.BANKNAME",
+      "EmpMst.BANKACCOUNTNO",
+      "EmpMst.Cnf_BANKACCOUNTNO",
+      "EmpMst.ifsc_code",
+      "EmpMst.BRANCH",
+      "EmpMst.Emp_Ac_Name",
+      "EmpMst.ACCOUNT_TYPE",
+      "EmpMst.PAYMENTMODE",
+      "EmpMst.Sal_Hold",
+
+      // OTP
+      "EmpMst.OTP",
+    ],
+    // ✅ EDUCATION/SKILLS (key: education) total: 30
+    education: ["EmpEdu", "EmpItSkill", "EmpLang", "EmpCertificates"],
+    // ✅ WORK DETAILS (key: work) total: 9
+    work: [
+      "EmpMst.DEPARTMENT",
+      "EmpMst.DESIGNATION",
+      "EmpMst.CLUSTER",
+      "EmpMst.CHANNEL",
+      "EmpMst.COSTCENTRE",
+      "EmpMst.CATEGORY",
+      "EmpMst.Reporting_1",
+      "EmpMst.Reporting_2",
+      "EmpExperience", // table (your Work Details page)
+    ],
+
+    // ✅ MOBILE APP ACCESS (key: mobile) total: 24
+    mobile: [
+      "EmpMst.App_Attendance",
+      "EmpMst.mMispunch",
+      "EmpMst.IEMI",
+      "EmpMst.mApprove",
+      "EmpMst.Android_ID",
+      "EmpMst.mLeave",
+      "EmpMst.mPunch",
+      "EmpMst.mCalender",
+      "EmpMst.MOBILE_RIGHTS",
+
+      "EmpMst.Reporting_1",
+      "EmpMst.Reporting_2",
+      "EmpMst.Reporting_3",
+
+      "EmpMst.empcode2",
+      "EmpMst.empcode3",
+      "EmpMst.empcode4",
+
+      "EmpMst.IsiphoneUser",
+      "EmpMst.userNameIphone",
+      "EmpMst.userPassIphone",
+
+      "EmpMst.GEOOFFENCELOC",
+
+      "EmpMst.ShiftIn_Relaxation",
+      "EmpMst.ShiftOut_Relaxation",
+      "EmpMst.Relaxation_Type",
+
+      "EmpMst.MSPIN",
+      "EmpMst.MSPN_Id",
+      "EmpMst.IsMSPN",
+      "EmpMst.MSPN_DTL",
+    ],
+
+    // ✅ ASSET ISSUE (key: asset) total: 8
+    asset: ["AssetIssue"],
+
+    // ✅ DOC UPLOAD (total 8) - confirm keys
+    doc: [
+      "EmpMst.adhar",
+      "EmpMst.pan",
+      "EmpMst.salary",
+      "EmpMst.other1",
+      "EmpMst.other2",
+      "EmpMst.other3",
+      "EmpMst.other4",
+      "EmpMst.otherpdf",
+    ],
+
+    // ✅ OTHERS (total 17) - confirm keys
+    others: [
+      "EmpMst.CATEGORY",
+      "EmpMst.COSTCENTRE",
+      "EmpMst.PREVIOUSCOMPANYNAME",
+      "EmpMst.BASICQUALIFICATION",
+      "EmpMst.EXP_IN_YEAR",
+      "EmpMst.CNATIONALITY",
+      "EmpMst.PRECOMPCITY",
+      "EmpMst.PREDESIGNATION",
+      "EmpMst.Acnt_Loc",
+      "EmpMst.USR_NAME",
+      "EmpMst.APPLICATION_ID",
+      "EmpMst.BIOMETRIC_ID",
+      "EmpMst.LEVEL",
+      "EmpMst.EXT_NO",
+      "EmpMst.PROPOSEDRETIRE_DATE",
+      "EmpMst.AX_EMP_CODE",
+      "EmpMst.ROLE",
+    ],
+
+    // ✅ SEPARATION (confirm keys)
+    separation: [
+      "EmpMst.RESIGNATION_SUBMISSION_DATE",
+      "EmpMst.NOTICEPERIOD",
+      "EmpMst.REASON_FOR_RESIGNATION",
+      "EmpMst.TEN_LEAVE_DATE",
+      "EmpMst.SEPERATIONREMARKS",
+      "EmpMst.SEPARATION_MODE",
+      "EmpMst.ExitInterview_Done",
+      "EmpMst.RESIGNED_STATUS",
+      "EmpMst.SEPRATION_CATE",
+      "EmpMst.LASTWOR_DATE",
+      "EmpMst.DATE_OF_EXIT_INTERVIEW",
+      "EmpMst.DATE_OF_SETTLEMENT",
+      "EmpMst.INTERVIEWREMAKS",
+      "EmpMst.Separation1",
+      "EmpMst.Separation2",
+      "EmpMst.Separation3",
+      "EmpMst.Separation4",
+    ],
+  };
+  console.log("EmpMst keys:", Object.keys(formData?.EmpMst || {}));
+  console.log("IEMI value:", formData?.EmpMst?.IEMI);
+
+  console.log(
+    "Identity-like keys:",
+    Object.keys(formData?.EmpMst || {}).filter((k) => {
+      const u = k.toUpperCase();
+      return (
+        u.includes("EMP") ||
+        u.includes("NAME") ||
+        u.includes("DOB") ||
+        u.includes("GENDER") ||
+        u.includes("DEPT") ||
+        u.includes("DESIG") ||
+        u.includes("JOIN") ||
+        u.includes("PHOTO")
+      );
+    }),
+  );
+  const getByPath = (obj: any, path: string) =>
+    path.split(".").reduce((acc, k) => (acc ? acc[k] : undefined), obj);
+
+  const isFilled = (v: any) => {
+    if (v === null || v === undefined) return false;
+
+    // File uploads
+    if (typeof File !== "undefined" && v instanceof File) return true;
+
+    // boolean
+    if (typeof v === "boolean") return v === true;
+
+    // number
+    if (typeof v === "number") return !Number.isNaN(v);
+
+    // string
+    if (typeof v === "string") return v.trim().length > 0;
+
+    // arrays / tables
+    if (Array.isArray(v)) return v.some((row) => isFilled(row));
+
+    // object (e.g. select option object)
+    if (typeof v === "object") return Object.keys(v).length > 0;
+
+    return false;
+  };
+
+  const progressMap = useMemo(() => {
+    const res: Record<string, { filled: number; total: number }> = {};
+
+    SECTIONS.forEach((sec) => {
+      const fields = SECTION_FIELDS[sec.key] ?? [];
+      const filled = fields.reduce((count, path) => {
+        const val = getByPath(formData, path);
+        return count + (isFilled(val) ? 1 : 0);
+      }, 0);
+
+      res[sec.key] = { filled, total: sec.total ?? 0 };
+    });
+
+    return res;
+  }, [formData, SECTIONS]);
   // ✅ EmpTabs tab mapping: "info" section will open EmpTabs tab 1 (Basic Info Page1)
   const TAB_MAP: Record<string, number> = {
     info: 1,
@@ -558,7 +875,7 @@ function EmployeeMasterContent() {
   // NOTE: abhi filled counts dummy (0). Later aap chaho to per-section real progress nikal denge.
   const getSectionProgress = (key: string) => {
     const sec = SECTIONS.find((s) => s.key === key);
-    return { filled: 0, total: sec?.total ?? 0 };
+    return progressMap[key] || { filled: 0, total: sec?.total ?? 0 };
   };
 
   const handleEmpChange = async (name: string, value: string | number) => {
@@ -733,7 +1050,6 @@ function EmployeeMasterContent() {
     }
   };
 
-
   const Generatecodeforlocation = async (location) => {
     try {
       if (!location) {
@@ -747,18 +1063,15 @@ function EmployeeMasterContent() {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/generateCode`,
         { branch: location },
-        { headers: 
-          { compcode: user?.Comp_Code } },
+        { headers: { compcode: user?.Comp_Code } },
       );
-      
+
       if (result.status === 201) {
         await Swal.fire({
           icon: "error",
           title: result.data.message,
         });
         return;
-
-        
       }
 
       const code = result?.data?.code;
@@ -2607,19 +2920,16 @@ function EmployeeMasterContent() {
     });
     try {
       const result = await axios.post(
-        
         `${process.env.NEXT_PUBLIC_URL}/employee/generateCode`,
         {
-          branch: user?.branch
+          branch: user?.branch,
         },
-        
+
         {
-          headers:
-           { 
-            compcode: user?.Comp_Code 
+          headers: {
+            compcode: user?.Comp_Code,
           },
         },
-        
       );
 
       console.log(result, "ViewData");
@@ -2922,16 +3232,16 @@ function EmployeeMasterContent() {
                       {activeMeta.desc}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 p-4 ">
+                  <div className="flex items-center gap-3 p-4">
                     <Button
                       variant="outline"
                       onClick={goPrevSection}
                       size="md"
                       shape="pill"
                       disabled={activeIndex <= 0}
-                      className="h-8 px-3 rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
+                      className="h-10 px-4 text-md rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
                     >
-                      <ArrowLeft className="h-4 w-4" />
+                      <ArrowLeft className="h-5 w-5" />
                       Previous
                     </Button>
 
@@ -2941,10 +3251,10 @@ function EmployeeMasterContent() {
                       size="md"
                       shape="pill"
                       disabled={activeIndex >= SECTIONS.length - 1}
-                      className="h-8 px-3 rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
+                      className="h-10 px-4 text-md rounded-lg gap-2 dark:bg-black dark:border-[#2A2F3A] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-[#4F46E5]"
                     >
                       Save & next
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>
