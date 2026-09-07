@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Eselect from "@/components/atoms/Eselect";
 import Einput from "@/components/atoms/Einput";
 import { RotateCw, Upload } from "lucide-react";
+
+
 
 type Props = {
   canSearchEmployee: boolean;
@@ -31,11 +33,12 @@ type Props = {
   handleFileChange: (e: any) => void;
 };
 
+
+
 export default function EmployeeMiniHeader({
   canSearchEmployee,
   empcodeOptions,
   SaveDisable,
-  IsGenerate,
   formData,
   handleEmpChange,
   handleInputChange,
@@ -50,6 +53,14 @@ export default function EmployeeMiniHeader({
     ? `data:image/jpeg;base64,${formData.EmpMst.photo}`
     : null);
 
+   const [IsGenerate, setIsGenerate] = useState(false);
+
+// wrapper
+const handleGenerateCode = async () => {
+  await Generatecode();      // aapka existing function
+  setIsGenerate(true);       // ✅ generate ke baad field disable
+}; 
+
   return (
     <div className="bg-white dark:bg-black border-b border-[#E6E8EF] dark:border-[#2A2F3A]">
       <div className="px-6 py-3  ">
@@ -59,14 +70,14 @@ export default function EmployeeMiniHeader({
             {/* TOP ROW (spacing tuned like screenshot) */}
             <div
               className="
-                grid items-start min-w-0
-                gap-x-4 gap-y-3
+                grid items-end min-w-0
+                gap-x-3 sm:gap-x-4 gap-y-3
                 grid-cols-1 md:grid-cols-2
-                xl:grid-cols-[minmax(18rem,1.25fr)_minmax(10rem,.75fr)_2.75rem_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(14rem,1fr)]
+                xl:grid-cols-[minmax(13rem,1.1fr)_minmax(8rem,0.7fr)_auto_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(10rem,1fr)]
               "
             >
               {/* Employee code */}
-              <div className="min-w-0 ]">
+              <div className="min-w-0">
                 {canSearchEmployee ? (
                   <Eselect
                     title="Employee code"
@@ -90,21 +101,20 @@ export default function EmployeeMiniHeader({
                   title="Empcode"
                   value={formData?.EmpMst?.EMPCODE}
                   handleInputChange={handleInputChange}
-                  disabled={IsGenerate}
+                  disabled={IsGenerate || SaveDisable}
                 />
               </div>
 
-              {/* Generate icon */}
+              {/* Generate Button */}
               <div className="min-w-0 flex items-end">
                 <Button
                   variant="outline"
-                  onClick={Generatecode}
+                  onClick={handleGenerateCode}
                   disabled={SaveDisable}
-                  className="h-11 w-11 rounded-xl mt-5"
-                  title="Generate new code"
+                  className="h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-md font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-xs"
                 >
-                  
-                  <RotateCw className="h-4 w-4  " />
+                  <RotateCw className="h-3.5 w-3.5" />
+                  <span>Generate new code</span>
                 </Button>
               </div>
 

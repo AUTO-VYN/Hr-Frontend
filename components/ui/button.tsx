@@ -8,6 +8,7 @@ export interface ButtonProps
   variant?:
     | "default"
     | "primary"
+    | "save"
     | "outline"
     | "outlineBrand"
     | "ghost"
@@ -27,6 +28,7 @@ const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   default: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
   "": "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
   print: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
+  save: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",
 
   // New
   primary: "bg-brand text-white hover:brightness-105 dark:hover:brightness-110",

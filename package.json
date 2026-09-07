@@ -18,6 +18,8 @@
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
     "crypto-js": "^4.2.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "highcharts": "^11.4.1",
     "highcharts-react-official": "^3.2.1",
     "lucide-react": "^0.376.0",

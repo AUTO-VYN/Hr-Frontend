@@ -2,24 +2,22 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 import Ainput from "@/components/atoms/Input";
 import AButton from "@/components/atoms/Button";
 import SelectSearch from "@/components/atoms/Select";
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
+import CardView from "@/components/Templates/card";
 
 import {
   ArrowLeft,
-  Download,
   LayoutGrid,
   Table2,
   Plus,
   Columns3,
-  Search,
-  Moon,
   Sparkles,
-  GitBranch,
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -32,10 +30,20 @@ const renderDash = () => (
 );
 
 const formatCellText = (val: any) => {
-  if (val === null || val === undefined || val === "" || val === "null" || val === "—") {
+  if (
+    val === null ||
+    val === undefined ||
+    val === "" ||
+    val === "null" ||
+    val === "—"
+  ) {
     return renderDash();
   }
-  return <span className="text-slate-600 dark:text-slate-300 font-normal">{String(val)}</span>;
+  return (
+    <span className="text-slate-600 dark:text-slate-300 font-normal">
+      {String(val)}
+    </span>
+  );
 };
 
 const formatCellDate = (val: any) => {
@@ -67,20 +75,25 @@ const formatCellDate = (val: any) => {
       );
     }
   } catch { }
-  return <span className="text-slate-600 dark:text-slate-300 font-normal">{String(val)}</span>;
+  return (
+    <span className="text-slate-600 dark:text-slate-300 font-normal">
+      {String(val)}
+    </span>
+  );
 };
 
 export default function Page() {
   const user = useCurrentUser();
+  const router = useRouter();
 
   // =========================
   // UI State
   // =========================
   const [view, setView] = useState<"table" | "cards">("table");
-  const [tab, setTab] = useState<"active" | "left" | "all">("active");
+  const [tab, setTab] = useState<"ACTIVE" | "LEFT" | "ALL">("ACTIVE");
 
-  // API expects empView
-  const [empView, setEmpView] = useState<any>("active");
+  // API expects empView: "ACTIVE" | "LEFT" | "ALL"
+  const [empView, setEmpView] = useState<"ACTIVE" | "LEFT" | "ALL">("ACTIVE");
 
   // filters in your API body: dashbord.*
   const [dashbord, setDashbord] = useState({
@@ -103,6 +116,11 @@ export default function Page() {
   // data
   const [data, setData] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  // counts
+  const [activeCount, setActiveCount] = useState<number>(0);
+  const [leftCount, setLeftCount] = useState<number>(0);
+  const [allCount, setAllCount] = useState<number>(0);
 
   // dropdown master options (PreData)
   const [Br_Location, setBr_Location] = useState<Option[]>([]);
@@ -145,11 +163,18 @@ export default function Page() {
     }
   };
 
+  // Helper to ensure array format for backend (e.g. Cluster.map)
+  const toArrayParam = (val: any) => {
+    if (!val || val === "") return [];
+    if (Array.isArray(val)) return val;
+    return [val];
+  };
+
   // =========================
   // API: showapi (table data)
   // =========================
   const showapi = async (
-    targetView = empView,
+    targetView: "ACTIVE" | "LEFT" | "ALL" = empView,
     targetPage = currentPage,
     targetPageSize = pageSize,
     filters: any = {},
@@ -162,18 +187,13 @@ export default function Page() {
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
           Loc_code: user?.branch,
-          Cluster: dashbord.Br_Location,
-          Section: dashbord.Section,
-          Location: dashbord.Location,
-          Channel: dashbord.Channel,
-          Joining_DateFROM: dashbord.Joining_DateFROM,
-          Joining_DateTO: dashbord.Joining_DateTO,
+          Cluster: toArrayParam(dashbord.Br_Location),
+          Section: toArrayParam(dashbord.Section),
+          Location: toArrayParam(dashbord.Location),
+          Channel: toArrayParam(dashbord.Channel),
+          Joining_DateFROM: dashbord.Joining_DateFROM || null,
+          Joining_DateTO: dashbord.Joining_DateTO || null,
           empView: targetView,
-          EmpView: targetView,
-          status: targetView,
-          type: targetView,
-          view: targetView,
-          tab: targetView,
           search: debouncedSearch,
           filters: filters,
           pageSize: targetPageSize === -1 ? 1000000 : targetPageSize,
@@ -191,10 +211,66 @@ export default function Page() {
 
       setData(rows);
       setTotalCount(count);
+
+      // update count for current view we loaded
+      if (targetView === "ACTIVE") setActiveCount(count);
+      if (targetView === "LEFT") setLeftCount(count);
+      if (targetView === "ALL") setAllCount(count);
     } catch (error) {
       console.error("Error fetching employee data:", error);
     } finally {
       if (showLoader) setIsLoading(false);
+    }
+  };
+
+  // =========================
+  // Fetch ONLY counts for all tabs (no data change)
+  // =========================
+  const fetchCountOnly = async (targetView: "ACTIVE" | "LEFT" | "ALL") => {
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
+        {
+          Loc_code: user?.branch,
+          Cluster: toArrayParam(dashbord.Br_Location),
+          Section: toArrayParam(dashbord.Section),
+          Location: toArrayParam(dashbord.Location),
+          Channel: toArrayParam(dashbord.Channel),
+          Joining_DateFROM: dashbord.Joining_DateFROM || null,
+          Joining_DateTO: dashbord.Joining_DateTO || null,
+          empView: targetView,
+          search: debouncedSearch,
+          filters: {},
+          pageSize: 1,
+          pageNo: 1,
+        },
+        {
+          headers: { compcode: user?.Comp_Code, name: user?.name },
+        }
+      );
+
+      const rows = res.data.Result || res.data.data || [];
+      const count = Number(res.data.TotalCount ?? res.data.total ?? rows.length);
+      return count;
+    } catch (err) {
+      console.error("Error in fetchCountOnly:", err);
+      return 0;
+    }
+  };
+
+  const refreshTabCounts = async () => {
+    if (!user?.Comp_Code) return;
+    try {
+      const [ac, lc, alc] = await Promise.all([
+        fetchCountOnly("ACTIVE"),
+        fetchCountOnly("LEFT"),
+        fetchCountOnly("ALL"),
+      ]);
+      setActiveCount(ac);
+      setLeftCount(lc);
+      setAllCount(alc);
+    } catch (e) {
+      console.log("Error fetching counts:", e);
     }
   };
 
@@ -208,11 +284,29 @@ export default function Page() {
   }, [user?.Comp_Code]);
 
   // =========================
-  // Auto refresh on deps
+  // Auto refresh on deps (data for current tab)
   // =========================
   useEffect(() => {
     if (!user?.Comp_Code) return;
+
     showapi(empView, currentPage, pageSize, {}, true);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    user?.Comp_Code,
+    dashbord.Br_Location,
+    dashbord.Section,
+    dashbord.Location,
+    dashbord.Channel,
+    dashbord.Joining_DateFROM,
+    dashbord.Joining_DateTO,
+    debouncedSearch,
+  ]);
+
+  // ✅ refresh counts on filters/search change
+  useEffect(() => {
+    if (!user?.Comp_Code) return;
+    refreshTabCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     user?.Comp_Code,
@@ -226,7 +320,7 @@ export default function Page() {
   ]);
 
   // =========================
-  // Columns for table (Ordered exact as in Screenshot)
+  // Columns
   // =========================
   const columns = useMemo(
     () => [
@@ -234,7 +328,11 @@ export default function Page() {
         Header: "Employee name",
         accessor: "EMPLOYEENAME",
         Cell: ({ value, row }: any) => {
-          const val = value || row.original?.EMPLOYEENAME || row.original?.Employee_Name || row.original?.name;
+          const val =
+            value ||
+            row.original?.EMPLOYEENAME ||
+            row.original?.Employee_Name ||
+            row.original?.name;
           if (!val) return renderDash();
           return (
             <span className="font-bold text-slate-900 dark:text-slate-100">
@@ -243,63 +341,18 @@ export default function Page() {
           );
         },
       },
-      {
-        Header: "Gender",
-        accessor: "GENDER",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Employee type",
-        accessor: "EmployeeType",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Region",
-        accessor: "region1",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Location",
-        accessor: "Location",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Department",
-        accessor: "Department",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Employee designation",
-        accessor: "EMPLOYEEDESIGNATION",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Joining date",
-        accessor: "JOININGDATE",
-        Cell: ({ value }: any) => formatCellDate(value),
-      },
-      {
-        Header: "Punch code",
-        accessor: "PUNCHCODE",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Payment mode",
-        accessor: "PAYMENTMODE",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
+      { Header: "Gender", accessor: "GENDER", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Employee type", accessor: "EmployeeType", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Region", accessor: "region1", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Location", accessor: "Location", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Department", accessor: "Department", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Employee designation", accessor: "EMPLOYEEDESIGNATION", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Joining date", accessor: "JOININGDATE", Cell: ({ value }: any) => formatCellDate(value) },
+      { Header: "Punch code", accessor: "PUNCHCODE", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Payment mode", accessor: "PAYMENTMODE", Cell: ({ value }: any) => formatCellText(value) },
 
-      // Additional columns
-      {
-        Header: "Empcode",
-        accessor: "EMPCODE",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
-      {
-        Header: "Section",
-        accessor: "SECTION",
-        Cell: ({ value }: any) => formatCellText(value),
-      },
+      { Header: "Empcode", accessor: "EMPCODE", Cell: ({ value }: any) => formatCellText(value) },
+      { Header: "Section", accessor: "SECTION", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Mobile no", accessor: "MOBILENO", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Corporate mail id", accessor: "CORPORATEMAILID", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Alternate mail", accessor: "ALTERNET_MAIL", Cell: ({ value }: any) => formatCellText(value) },
@@ -424,10 +477,15 @@ export default function Page() {
     setCurrentPage(1);
   };
 
-  const handleTab = (next: "active" | "left" | "all") => {
+  const handleTab = (next: "ACTIVE" | "LEFT" | "ALL") => {
     setTab(next);
     setEmpView(next);
     setCurrentPage(1);
+    setDashbord((prev) => ({
+      ...prev,
+      Joining_DateFROM: "",
+      Joining_DateTO: "",
+    }));
     showapi(next, 1, pageSize, {}, true);
   };
 
@@ -435,87 +493,20 @@ export default function Page() {
     <div className="min-h-screen bg-[#F6F8FC] dark:bg-[#07101F]">
       <HashloaderComponent isLoading={isLoading} />
 
-      {/* TOP BAR */}
-      <div className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-[#0B1220]/90">
-        <div className="mx-auto max-w-[1380px] px-6 py-3 flex items-center gap-4">
-          <AButton
-            variant="outline"
-            size="md"
-            className="h-10 rounded-xl px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => history.back()}
-          >
-            Back
-          </AButton>
-
-          <div className="text-sm text-slate-500 dark:text-slate-400 hidden md:flex items-center">
-            <span>Payroll</span>
-            <span className="mx-2 text-slate-300">/</span>
-            <span>Core HR</span>
-            <span className="mx-2 text-slate-300">/</span>
-            <span className="text-slate-900 dark:text-slate-100 font-bold">
-              Employee Records
-            </span>
-          </div>
-
-          <div className="ml-auto flex items-center gap-3">
-            {/* Search */}
-            <div className="topbar-search relative w-[340px] max-w-[45vw]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
-              <Ainput
-                title=" "
-                ShortName
-                type="text"
-                name="topSearch"
-                value={searchInput}
-                handleInputChange={(_, v) => {
-                  setSearchInput(String(v));
-                  setCurrentPage(1);
-                }}
-                placeholder="Search employees..."
-                className="h-10 pl-10 rounded-xl border-slate-200 bg-white text-sm"
-              />
-            </div>
-
-            <AButton
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-xl border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-2xs"
-              icon={<Moon className="h-4 w-4" />}
-              aria-label="Theme"
-              onClick={() => { }}
-            />
-
-            <button
-              type="button"
-              className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 shadow-2xs"
-            >
-              <GitBranch className="h-3.5 w-3.5 text-slate-500" />
-              <span>Branch - {user?.branch ?? "4 +3"}</span>
-            </button>
-
-            <div className="h-10 w-10 rounded-full bg-[#4338CA] text-white flex items-center justify-center text-xs font-bold shadow-2xs">
-              AK
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* BODY */}
-      <div className="mx-auto max-w-[1380px] px-6 py-6 space-y-5">
+      <div className="mx-auto max-w-[1380px] px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {/* Title + actions */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            {/* AI Pill */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/90 text-[#4338CA] mb-2 shadow-2xs">
-              <Sparkles className="h-3.5 w-3.5 text-[#4338CA]" />
+              <Sparkles className="h-3.5 w-3.5 text-[#4338CA] shrink-0" />
               <span>What can AI do here?</span>
             </div>
 
-            <h1 className="text-[26px] font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-[26px] font-bold py-2 text-slate-900 dark:text-slate-100 tracking-tight leading-tight truncate">
               Employee records
             </h1>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <div className="text-md text-slate-500 dark:text-slate-400 mt-0.5">
               Manage your employee records ·{" "}
               <span className="font-bold text-slate-700 dark:text-slate-200">
                 {totalCount}
@@ -524,14 +515,13 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Table / Cards toggle */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs">
               <button
                 type="button"
                 onClick={() => setView("table")}
                 className={[
-                  "h-9 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-2 transition-all",
+                  "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 sm:gap-2 transition-all",
                   view === "table"
                     ? "bg-[#4338CA] text-white shadow-2xs"
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
@@ -544,7 +534,7 @@ export default function Page() {
                 type="button"
                 onClick={() => setView("cards")}
                 className={[
-                  "h-9 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-2 transition-all",
+                  "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 sm:gap-2 transition-all",
                   view === "cards"
                     ? "bg-[#4338CA] text-white shadow-2xs"
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
@@ -556,30 +546,30 @@ export default function Page() {
             </div>
 
             <AButton
-              variant="outline"
-              size="md"
-              className="h-10 rounded-xl px-4 text-xs font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs flex items-center gap-2"
-              icon={<Download className="h-3.5 w-3.5 text-slate-600" />}
-              onClick={() => { }}
-            >
-              Export to Excel
-            </AButton>
-
-            <AButton
               variant="primary"
               size="md"
-              className="h-10 rounded-xl px-4 text-xs font-semibold bg-[#4338CA] hover:bg-[#3730A3] text-white shadow-2xs flex items-center gap-1.5"
+              className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 text-xs font-semibold bg-[#4338CA] hover:bg-[#3730A3] text-white shadow-2xs flex items-center gap-1.5"
               icon={<Plus className="h-4 w-4" />}
               onClick={() => { }}
             >
               Add employee
             </AButton>
+
+            <AButton
+              variant="outline"
+              size="md"
+              className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-xs"
+              icon={<ArrowLeft className="h-4 w-4" />}
+              onClick={() => history.back()}
+            >
+              Back
+            </AButton>
           </div>
         </div>
 
         {/* Filters card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220]">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 items-end">
             <SelectSearch
               title="CLUSTER"
               name="Br_Location"
@@ -591,7 +581,7 @@ export default function Page() {
               }}
               placeholder="All cluster"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs"
+              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
             />
 
             <SelectSearch
@@ -605,7 +595,7 @@ export default function Page() {
               }}
               placeholder="All branch"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs"
+              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
             />
 
             <SelectSearch
@@ -619,7 +609,7 @@ export default function Page() {
               }}
               placeholder="All section"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs"
+              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
             />
 
             <SelectSearch
@@ -633,82 +623,77 @@ export default function Page() {
               }}
               placeholder="All channel"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs"
+              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
             />
 
             <Ainput
-              title="JOINING FROM"
+              title={empView === "LEFT" ? "LEFT FROM" : "JOINING FROM"}
               ShortName
               type="date"
               name="Joining_DateFROM"
-              value={dashbord.Joining_DateFROM ? String(dashbord.Joining_DateFROM).slice(0, 10) : ""}
+              label={empView === "LEFT" ? "Left Date From" : "Joining Date From"}
+              value={
+                dashbord.Joining_DateFROM
+                  ? String(dashbord.Joining_DateFROM).slice(0, 10)
+                  : ""
+              }
               handleInputChange={(_, v) => {
                 const next = v ? String(v).slice(0, 10) : "";
                 setDashbord((p) => ({ ...p, Joining_DateFROM: next }));
                 setCurrentPage(1);
               }}
-              className="h-10 rounded-xl text-xs"
+              className="h-10 rounded-xl text-xs w-full"
             />
 
-            <div className="flex gap-2.5 items-end">
-              <div className="flex-1">
-                <Ainput
-                  title="JOINING TO"
-                  ShortName
-                  type="date"
-                  name="Joining_DateTO"
-                  value={dashbord.Joining_DateTO ? String(dashbord.Joining_DateTO).slice(0, 10) : ""}
-                  handleInputChange={(_, v) => {
-                    const next = v ? String(v).slice(0, 10) : "";
-                    setDashbord((p) => ({ ...p, Joining_DateTO: next }));
-                    setCurrentPage(1);
-                  }}
-                  className="h-10 rounded-xl text-xs"
-                />
-              </div>
+            <Ainput
+              title={empView === "LEFT" ? "LEFT TO" : "JOINING TO"}
+              ShortName
+              type="date"
+              name="Joining_DateTO"
+              label={empView === "LEFT" ? "Left Date To" : "Joining Date To"}
+              value={
+                dashbord.Joining_DateTO
+                  ? String(dashbord.Joining_DateTO).slice(0, 10)
+                  : ""
+              }
+              handleInputChange={(_, v) => {
+                const next = v ? String(v).slice(0, 10) : "";
+                setDashbord((p) => ({ ...p, Joining_DateTO: next }));
+                setCurrentPage(1);
+              }}
+              className="h-10 rounded-xl text-xs w-full"
+            />
+          </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentPage(1);
-                  showapi({}, true);
-                }}
-                className="h-10 px-5 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-xs shadow-2xs transition-all"
-              >
-                Show
-              </button>
+          <div className="flex items-center justify-end gap-2.5 mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentPage(1);
+                showapi(empView, 1, pageSize, {}, true);
+              }}
+              className="h-9 px-5 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-xs shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+            >
+              Show
+            </button>
 
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition-all"
-              >
-                Reset
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
+            >
+              Reset
+            </button>
           </div>
         </div>
 
-        {/* Tabs + Columns & Entries Controls */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pt-1">
-          {/* Tabs */}
-          <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs">
+        {/* Tabs + Columns */}
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1">
+          <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs overflow-x-auto">
             {[
-              {
-                key: "active" as const,
-                label: "Active employees",
-                count: tab === "active" ? (totalCount) : totalCount,
-              },
-              {
-                key: "left" as const,
-                label: "Left employees",
-                count: tab === "left" ? totalCount : totalCount,
-              },
-              {
-                key: "all" as const,
-                label: "All employees",
-                count: tab === "all" ? totalCount : totalCount,
-              },
+              { key: "ACTIVE" as const, label: "Active employees", count: activeCount },
+              { key: "LEFT" as const, label: "Left employees", count: leftCount },
+              { key: "ALL" as const, label: "All employees", count: allCount },
             ].map((t) => {
               const isActive = tab === t.key;
               return (
@@ -717,7 +702,7 @@ export default function Page() {
                   type="button"
                   onClick={() => handleTab(t.key)}
                   className={[
-                    "h-8 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all",
+                    "h-8 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-all whitespace-nowrap",
                     isActive
                       ? "bg-[#4338CA] text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
@@ -739,42 +724,22 @@ export default function Page() {
             })}
           </div>
 
-          {/* Right Controls: Columns & Show Entries */}
-          <div className="flex items-center gap-3 justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end">
             <button
               type="button"
               className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold inline-flex items-center gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200"
             >
               <Columns3 className="h-3.5 w-3.5 text-slate-500" />
               <span>
-                Columns{" "}
-                <span className="text-slate-400 font-semibold">11/25</span>
+                Columns <span className="text-slate-400 font-semibold">11/25</span>
               </span>
             </button>
-
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <span>Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span>entries</span>
-            </div>
           </div>
         </div>
 
         {/* TABLE */}
         {view === "table" ? (
-          <div className="rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden dark:border-slate-800 dark:bg-[#0B1220]">
+          <div className="rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden dark:border-slate-800 dark:bg-[#0B1220] w-full">
             <ServiceTablePagination
               title=""
               columns={columns}
@@ -782,6 +747,14 @@ export default function Page() {
               height={580}
               serverMode={true}
               serverPagination={serverPagination}
+              showPageSizeInFooter={true}
+              showTopSearch={true}
+              searchValue={searchInput}
+              onSearchChange={(val) => {
+                setSearchInput(val);
+                setCurrentPage(1);
+              }}
+              searchPlaceholder="Search by name or code..."
               onServerPageChange={(p) => {
                 setCurrentPage(p);
                 showapi(empView, p, pageSize, {}, true);
@@ -791,19 +764,31 @@ export default function Page() {
                 setCurrentPage(1);
                 showapi(empView, 1, s, {}, true);
               }}
-              onRowDoubleClick={(row) => {
-                console.log("double click row:", row);
-              }}
             />
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-400">
-            Cards view (placeholder)
-          </div>
+          <CardView
+            data={data}
+            totalCount={totalCount}
+            onCardDoubleClick={(employee) => {
+              router.push(
+                `/autovyn/payroll/Master/Employee_Master?UTD=${employee?.EMPCODE}`
+              );
+            }}
+            empView={empView}
+            setEmpView={(newView) => {
+              handleTab(newView as "ACTIVE" | "LEFT" | "ALL");
+            }}
+            globalSearch={searchInput}
+            setGlobalSearch={(value) => {
+              setSearchInput(value);
+              setCurrentPage(1);
+            }}
+            isLoading={isLoading}
+          />
         )}
       </div>
 
-      {/* Global CSS tweaks */}
       <style jsx global>{`
         .topbar-search label {
           display: none !important;
