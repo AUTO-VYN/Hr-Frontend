@@ -984,17 +984,17 @@ if (name === "OTP_With_Aadhaar") {
   const fieldGridClass = "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6";
 
   const toggleTileClass = (checked: boolean, disabled = false) =>
-    `w-full h-9 flex items-center gap-3 px-3 rounded-xl border shadow-sm text-[12px] font-medium transition
-  ${
-    checked
-      ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-200 dark:border-indigo-900"
-      : "border-slate-200 bg-white text-slate-700 dark:bg-black dark:text-slate-200 dark:border-slate-800"
-  }
-  ${
-    disabled
-      ? "opacity-60 cursor-not-allowed"
-      : "cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5"
-  }`;
+    `w-full h-9 flex items-center gap-3 px-3 rounded-xl border shadow-xs text-[12px] font-medium transition-colors
+    ${
+      checked
+        ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-950/40 dark:text-indigo-200"
+        : "border-slate-200 bg-white text-slate-700 dark:border-[#2A2F3A] dark:bg-black dark:text-slate-200"
+    }
+    ${
+      disabled
+        ? "opacity-50 cursor-not-allowed"
+        : "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900"
+    }`;
 
   const TileCheckbox = ({
     checked,
@@ -1022,7 +1022,16 @@ if (name === "OTP_With_Aadhaar") {
           onClick={(e) => e.stopPropagation()} // ✅ stops double toggle
           onChange={(e) => onToggle(e.target.checked)} // ✅ single source of truth
         />
-        <span className="text-[13px] font-semibold text-slate-900 min-w-0 flex-1 truncate">
+
+        <span
+          className={[
+            "text-[13px] font-semibold min-w-0 flex-1 truncate transition-colors",
+            checked
+              ? "text-indigo-900 dark:text-indigo-200"
+              : "text-slate-900 dark:text-slate-100",
+            disabled ? "text-slate-400 dark:text-slate-500" : "",
+          ].join(" ")}
+        >
           {label}
         </span>
       </div>
@@ -1917,6 +1926,7 @@ if (name === "OTP_With_Aadhaar") {
                   disabled={false}
                   label="Passport doc. verified"
                   onToggle={(next) => handleInputChange("PASSPORT_VER", next)}
+                  className="dark:bg-black"
                 />
               </div>
 

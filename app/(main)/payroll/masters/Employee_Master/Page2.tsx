@@ -30,6 +30,7 @@ const RELIGION = [
   { value: "6", label: "BUDDHA" },
   { value: "7", label: "PERSIANS" },
 ];
+
 interface Dropdownoption {
   Cityoption: Array<{ value: string; label: string }>;
   Stateoption: Array<{ value: string; label: string }>;
@@ -42,6 +43,7 @@ interface RowData3 {
   Emp_Family_Profession: string;
   Emp_Family_Gender: string;
 }
+
 const Page2 = ({ masterData, isMandatory }) => {
   const { formData, setFormData } = useFormData();
   const [isChecked, setIsChecked] = useState(false);
@@ -53,6 +55,7 @@ const Page2 = ({ masterData, isMandatory }) => {
     masterData.District || [],
   );
   const [cityNewoption, setcityNewoption] = useState(masterData.CITY || []);
+
   const handleSelectChange = (name, selectedOption) => {
     const value = selectedOption;
     setFormData((prevData) => ({
@@ -119,7 +122,6 @@ const Page2 = ({ masterData, isMandatory }) => {
   };
 
   //Table
-
   const [EmpFamily, setEmpFamily] = useState<RowData3[]>([]);
   const [currentRow2, setCurrentRow2] = useState<RowData3>({
     Emp_Family_name: "",
@@ -130,12 +132,14 @@ const Page2 = ({ masterData, isMandatory }) => {
   });
 
   const [tableData, setTableData] = useState(formData.EmpFamily || [{}]);
+
   useEffect(() => {
     setFormData((prevData: any) => ({
       ...prevData,
       EmpFamily: tableData,
     }));
   }, [tableData]);
+
   const columnsShow = [
     "Nominee For",
     "Member Name",
@@ -181,7 +185,8 @@ const Page2 = ({ masterData, isMandatory }) => {
   };
 
   return (
-    <div className="w-full fluid-p-xs max-w-full overflow-x-hidden">
+    // ✅ same page scroll use hoga, bas bottom space increase kiya (aur niche tak jayega)
+    <div className="w-full fluid-p-xs max-w-full overflow-x-hidden pb-24 min-h-screen">
       {/* Title */}
 
       <div className="grid grid-cols-12 fluid-gap-sm  max-w-full">
@@ -347,8 +352,8 @@ const Page2 = ({ masterData, isMandatory }) => {
               <div className="col-span-12 md:col-span-6 min-w-0">
                 <Einput
                   type="date"
-                  ShortName={true} // ✅ title ko as-it-is show karega
-                  title="Date of Anniversary" // ✅ 'of' small
+                  ShortName={true}
+                  title="Date of Anniversary"
                   name="DOM"
                   value={
                     formData.EmpMst.DOM ? formData.EmpMst.DOM.slice(0, 10) : ""
@@ -611,9 +616,11 @@ const Page2 = ({ masterData, isMandatory }) => {
               </div>
             </div>
 
-            {/* IMPORTANT: no overflow-x-auto, no light-scroll */}
             <div className="p-4 max-w-full">
-              <div className="max-w-full min-w-0 yn-table-wrap">
+              <div
+                className="max-w-full min-w-0 yn-table-wrap"
+                style={{ overflow: "visible", maxHeight: "none", height: "auto" }}
+              >
                 <YNDynamicTable
                   columns={columns}
                   tableData={tableData}
@@ -626,6 +633,14 @@ const Page2 = ({ masterData, isMandatory }) => {
           </div>
         </section>
       </div>
+
+      <style jsx global>{`
+        .yn-table-wrap {
+          overflow: visible !important;
+          max-height: none !important;
+          height: auto !important;
+        }
+      `}</style>
     </div>
   );
 };

@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { KeyRound, LogOut } from "lucide-react";
+import Swal from "sweetalert2";
 
 export const RAIL_WIDTH = 68;
 export const EXPANDED_WIDTH = 258;
@@ -32,6 +33,7 @@ export default function Sidebar() {
   const [userState, setUserState] = useState(user);
   const [pinned, setPinned] = useState(false); // persistent expand
   const [hovering, setHovering] = useState(false);
+  const [isMultiLocation, setIsMultiLocation] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const expanded = pinned || hovering;
   const initials = (user?.name || "U")
@@ -43,7 +45,53 @@ export default function Sidebar() {
 
   useEffect(() => {
     setUserState(user);
+    if (user?.branch && String(user.branch).includes(",")) {
+      setIsMultiLocation(true);
+    }
   }, [user]);
+
+  const checkAndWarnMultiLocation = () => {
+    const isMulti =
+      isMultiLocation ||
+      (userState?.branch ? String(userState.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You can't fill employee in multilocation. Please choose single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/dashboard");
+        }
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const handleItemClick = (
+    e: React.MouseEvent,
+    item: { name: string; slug: string }
+  ) => {
+    const isEmployeeMaster =
+      item.slug === "Employee_Master" ||
+      item.slug === "employee-master-with-basic-info" ||
+      item.slug === "employee-master-mini";
+
+    if (isEmployeeMaster) {
+      const isMulti =
+        isMultiLocation ||
+        (userState?.branch ? String(userState.branch).includes(",") : false);
+
+      if (isMulti) {
+        e.preventDefault();
+        checkAndWarnMultiLocation();
+      }
+    }
+  };
 
 
   return (
@@ -127,6 +175,7 @@ export default function Sidebar() {
                         <Link
                           key={item.slug}
                           href={href}
+                          onClick={(e) => handleItemClick(e, item)}
                           className="truncate rounded-md px-2 py-1.5 text-[12.5px] hover:bg-hoverbg hover:text-fg"
                           style={{
                             background: isActive ? "var(--brand-soft)" : "transparent",
@@ -147,20 +196,20 @@ export default function Sidebar() {
 
         {/* footer: branch + profile */}
         <div className="flex flex-col gap-1.5 border-t border-line px-2.5 py-3">
-          <button className="flex w-full items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-[12.5px] font-medium text-fg hover:bg-hoverbg">
+          <button
+            type="button"
+            onClick={() => setIsMultiLocation((prev) => !prev)}
+            className="flex w-full items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-[12.5px] font-medium text-fg hover:bg-hoverbg"
+          >
             <GitBranch className="h-4 w-4 shrink-0 text-muted" />
+
             {expanded && (
-              // <span className="min-w-0 flex-1 truncate">
-              //   {user?.branchName || "Branch"}
-              // </span>
-
-              <>
-                {String(userState?.branch).includes(',') ? "MultiLocation"
-                  : ` ${userState?.branchName?.slice(0, 20)}`}
-              </>
+              <span className="min-w-0 flex-1 truncate">
+                {isMultiLocation
+                  ? "MultiLocation"
+                  : userState?.branchName?.slice(0, 20) || "Branch"}
+              </span>
             )}
-
-
           </button>
 
           <DropdownMenu>
@@ -181,15 +230,20 @@ export default function Sidebar() {
                 )}
               </button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent side="top" align="start">
               <Link href="/change">
                 <DropdownMenuItem>
-                  <KeyRound className="h-4 w-4" /> Change Password
+                  <KeyRound className="h-4 w-4" />
+                  Change Password
                 </DropdownMenuItem>
               </Link>
+
               <DropdownMenuSeparator />
+
               <DropdownMenuItem onClick={() => logoutAction()}>
-                <LogOut className="h-4 w-4" /> Logout
+                <LogOut className="h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

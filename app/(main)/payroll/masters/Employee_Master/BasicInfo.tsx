@@ -87,6 +87,7 @@ export default function EmployeeIdentitySection({
                       title="Empcode"
                       value={formData?.EmpMst?.EMPCODE || ""}
                       handleInputChange={handleInputChange}
+                      disabled={IsGenerate || SaveDisable}
                     />
                   </div>
                 </div>
