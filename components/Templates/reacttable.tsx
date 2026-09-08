@@ -306,7 +306,8 @@ export default function ServiceTablePagination({
   };
 
   const handleExport = async () => {
-    if (onExportAll) {
+    // ✅ Sirf All mode me hone par sara data export hoga
+    if (allMode && onExportAll) {
       try {
         const fullData = await onExportAll();
         if (fullData && Array.isArray(fullData) && fullData.length > 0) {
@@ -317,7 +318,9 @@ export default function ServiceTablePagination({
         console.error("Export all data failed, fallback to table data:", err);
       }
     }
-    const exportData = allRows.map((r: any) => r.original);
+
+    // ✅ Normal page size (10, 20, 50, 100) me sirf table me dikh rhi rows hi export hongi
+    const exportData = rowsToRender.map((r: any) => r.original);
     handleExcelDownload(columnsDownload || columns, exportData);
   };
 
@@ -380,7 +383,7 @@ export default function ServiceTablePagination({
                 type="button"
                 onClick={handleExport}
                 disabled={isExcelLoading}
-                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold
+                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 text-md font-semibold
                            hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed
                            dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
                            inline-flex items-center gap-2 shrink-0 shadow-2xs"

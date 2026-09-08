@@ -48,18 +48,33 @@ export default function EmployeeMiniHeader({
   handleFileChange,
 }: Props) {
   const imgSrc =
-  profileSrc ||
-  (formData?.EmpMst?.photo
-    ? `data:image/jpeg;base64,${formData.EmpMst.photo}`
-    : null);
+    profileSrc ||
+    (formData?.EmpMst?.photo
+      ? `data:image/jpeg;base64,${formData.EmpMst.photo}`
+      : null);
 
-   const [IsGenerate, setIsGenerate] = useState(false);
+  const [IsGenerate, setIsGenerate] = useState(false);
 
-// wrapper
-const handleGenerateCode = async () => {
-  await Generatecode();      // aapka existing function
-  setIsGenerate(true);       // ✅ generate ke baad field disable
-}; 
+  // wrapper for selecting employee from dropdown
+  const handleEmpSelectChange = (name: string, value: any) => {
+    handleEmpChange(name, value);
+    if (value) {
+      setIsGenerate(true);
+    }
+  };
+
+  // wrapper
+  const handleGenerateCode = async () => {
+    await Generatecode();      // aapka existing function
+    setIsGenerate(true);       // ✅ generate ke baad field readonly
+  };
+
+  const isEmpCodeReadOnly = Boolean(
+    IsGenerate ||
+    formData?.EmpMst?.EMPCODE ||
+    formData?.EmpMst?.UTD ||
+    formData?.EmpMst?.SrNo
+  );
 
   return (
     <div className="bg-white dark:bg-black border-b border-[#E6E8EF] dark:border-[#2A2F3A]">
@@ -83,7 +98,7 @@ const handleGenerateCode = async () => {
                     title="Employee code"
                     redlabel="*"
                     name="SrNo"
-                    handleInputChange={handleEmpChange}
+                    handleInputChange={handleEmpSelectChange}
                     option={empcodeOptions}
                     disabled={SaveDisable}
                     initialValue=""
@@ -101,7 +116,7 @@ const handleGenerateCode = async () => {
                   title="Empcode"
                   value={formData?.EmpMst?.EMPCODE}
                   handleInputChange={handleInputChange}
-                  disabled={IsGenerate || SaveDisable}
+                  readOnly={isEmpCodeReadOnly} // ✅ readonly when employee chosen or generated
                 />
               </div>
 
@@ -191,7 +206,7 @@ const handleGenerateCode = async () => {
           </div>
 
           {/* RIGHT: photo upload (height smaller + proportions like screenshot) */}
-            <div className="col-span-12 xl:col-span-2 xl:col-start-11 ">
+          <div className="col-span-12 xl:col-span-2 xl:col-start-11 ">
             <div className="flex xl:justify-end " >
               {/* screenshot-like width */}
               <div className="w-[140px] sm:w-[160px] xl:w-[120px]">
@@ -215,15 +230,15 @@ const handleGenerateCode = async () => {
                       </div>
                     </div>
                   ) : (
-                      <Image
-                        width={600}
-                        height={600}
-                        src={imgSrc}
-                        alt="Employee photo"
-                        className="w-full h-full object-cover pointer-events-none"
-                        unoptimized
-                        key={imgSrc}
-                      />
+                    <Image
+                      width={600}
+                      height={600}
+                      src={imgSrc}
+                      alt="Employee photo"
+                      className="w-full h-full object-cover pointer-events-none"
+                      unoptimized
+                      key={imgSrc}
+                    />
                   )}
 
                   <input
