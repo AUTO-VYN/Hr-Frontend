@@ -58,6 +58,13 @@ export default function EmployeeIdentitySection({
   handleLocationChange,
   Generatecode,
 }: Props) {
+  const isEmpCodeReadOnly = Boolean(
+    IsGenerate ||
+    formData?.EmpMst?.EMPCODE ||
+    formData?.EmpMst?.UTD ||
+    formData?.EmpMst?.SrNo
+  );
+
   return (
     <div className="grid grid-cols-12 gap-6">
       {/* IDENTIFICATION CARD */}
@@ -87,7 +94,7 @@ export default function EmployeeIdentitySection({
                       title="Empcode"
                       value={formData?.EmpMst?.EMPCODE || ""}
                       handleInputChange={handleInputChange}
-                      disabled={IsGenerate || SaveDisable}
+                      readOnly={isEmpCodeReadOnly}
                     />
                   </div>
                 </div>

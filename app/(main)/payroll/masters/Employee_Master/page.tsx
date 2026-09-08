@@ -1732,7 +1732,7 @@ function EmployeeMasterContent() {
           EmpFamily: [],
         });
         setProfileSrc(null);
-        router.push("/autovyn/payroll/Master/Employee_Master_View");
+        router.push("/payroll/masters/employee-View");
         router.refresh();
       } else {
         showSideAlert("Error UPDATING DATA", "warning");
@@ -3084,7 +3084,18 @@ function EmployeeMasterContent() {
 
             <Button
               variant="outline"
-              onClick={() => {}}
+              onClick={fetchEmployeeLogs}   // ✅ open modal on click
+              size="md"
+              className="h-10  rounded-xl gap-2"
+              title="Help"
+            >
+              <HelpCircle className="h-4 w-4" />
+              History
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => { }}
               size="md"
               className="h-10  rounded-xl gap-2"
               title="Help"
@@ -3134,9 +3145,8 @@ function EmployeeMasterContent() {
       </header>
 
       <div
-        className={`${
-          isLoading ? "blur-[2px] pointer-events-none select-none" : ""
-        }`}
+        className={`${isLoading ? "blur-[2px] pointer-events-none select-none" : ""
+          }`}
       >
         {/* ===== TOP FORM CARD (no extra header inside) ===== */}
         {/* ===== TOP MINI HEADER (DEFAULT) ===== */}
@@ -3174,30 +3184,27 @@ function EmployeeMasterContent() {
                         type="button"
                         onClick={() => setActiveSection(sec.key)}
                         className={`w-full flex items-center gap-4 rounded-xl border px-3 py-1.5 text-left transition
-          ${
-            active
-              ? "bg-[#E0E7FF] border-[#1E40AF] dark:bg-[#0B1220] dark:border-[#1E40AF]"
-              : "bg-transparent border-transparent hover:bg-[#F2F4F7] hover:border-[#D0D5DD] dark:hover:bg-[#0B1220] dark:hover:border-[#2A2F3A]"
-          }`}
+          ${active
+                            ? "bg-[#E0E7FF] border-[#1E40AF] dark:bg-[#0B1220] dark:border-[#1E40AF]"
+                            : "bg-transparent border-transparent hover:bg-[#F2F4F7] hover:border-[#D0D5DD] dark:hover:bg-[#0B1220] dark:hover:border-[#2A2F3A]"
+                          }`}
                       >
                         <div
                           className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold border
-            ${
-              active
-                ? "border-[#1E40AF] text-[#1E40AF] bg-white dark:bg-black"
-                : "border-[#D0D5DD] dark:border-[#2A2F3A] text-[#475467] dark:text-[#A0A7B4]"
-            }`}
+            ${active
+                              ? "border-[#1E40AF] text-[#1E40AF] bg-white dark:bg-black"
+                              : "border-[#D0D5DD] dark:border-[#2A2F3A] text-[#475467] dark:text-[#A0A7B4]"
+                            }`}
                         >
                           {idx + 1}
                         </div>
 
                         <div className="flex-1">
                           <div
-                            className={`font-semibold ${
-                              active
+                            className={`font-semibold ${active
                                 ? "text-[#1E40AF]"
                                 : "text-[#475467] dark:text-[#A0A7B4]"
-                            }`}
+                              }`}
                           >
                             {sec.label}
                           </div>
@@ -3205,11 +3212,10 @@ function EmployeeMasterContent() {
 
                         <div
                           className={`text-[11px] px-2 py-0.5 rounded-full font-semibold
-            ${
-              active
-                ? "bg-[#FEE4E2] text-[#B42318]"
-                : "bg-[#EAECF0] text-[#475467] dark:bg-[#111827] dark:text-[#A0A7B4]"
-            }`}
+            ${active
+                              ? "bg-[#FEE4E2] text-[#B42318]"
+                              : "bg-[#EAECF0] text-[#475467] dark:bg-[#111827] dark:text-[#A0A7B4]"
+                            }`}
                         >
                           {prog.filled}/{prog.total}
                         </div>
@@ -3361,133 +3367,148 @@ function EmployeeMasterContent() {
 
       <HashloaderComponent isLoading={isLoading} />
 
-      {showLogModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          {/* ... (same code as your current logs modal) ... */}
-          <div className="bg-white dark:bg-dark rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-primary/20 flex flex-col">
-            <div className="bg-gradient-to-r from-header to-header/80 dark:from-dark dark:to-dark/60 px-6 py-5 flex justify-between items-center border-b border-borderColor dark:border-borderColor-dark">
-              <div>
-                <h2 className="text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <FileText className="w-6 h-6" />
-                  Employee Change History
-                </h2>
-                <p className="text-white/70 text-sm mt-1">
-                  View all modifications made to this Employee Creation
-                </p>
-              </div>
-              <button
-                onClick={() => setShowLogModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="overflow-auto flex-1 p-6">
-              {policyLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <FileText className="w-12 h-12 text-gray-300 mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">
-                    No history available for this Employee Creation
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {policyLogs.map((log, index) => (
-                    <div
-                      key={index}
-                      className="border-2 border-borderColor dark:border-borderColor-dark rounded-xl p-5 hover:border-primary/50 transition-all duration-300 hover:shadow-md dark:hover:shadow-primary/10"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 bg-primary/10 rounded-lg">
-                            <CheckCircle className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-black dark:text-white text-lg">
-                              {log.updated_at
-                                ? log.updated_at
-                                : "Date Not Available"}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {Object.entries(log.changes || {}).length > 0 ? (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b-2 text-base border-borderColor dark:border-borderColor-dark">
-                                <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
-                                  Field
-                                </th>
-                                <th className="text-left text-base px-3 py-2 font-bold text-header dark:text-white">
-                                  Previous Value
-                                </th>
-                                <th className="text-left px-3 text-base py-2 font-bold text-header dark:text-white">
-                                  New Value
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(log.changes).map(
-                                ([field, values]: any, rowIndex) => (
-                                  <tr
-                                    key={rowIndex}
-                                    className="border-b border-borderColor/30 dark:border-borderColor-dark/30 hover:bg-primary/5 transition-colors"
-                                  >
-                                    <td className="px-3 py-3">
-                                      <span className="font-semibold text-black text-lg dark:text-white bg-gray-100 dark:bg-dark/50 px-2 py-1 rounded inline-block">
-                                        {field}
-                                      </span>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <span
-                                        className="text-exit font-bold text-lg bg-exit/10 px-2 py-1 rounded block max-w-xs truncate"
-                                        title={String(values.old)}
-                                      >
-                                        {values.old}
-                                      </span>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <span
-                                        className="text-green font-bold text-lg bg-green/10 px-2 py-1 rounded block max-w-xs truncate"
-                                        title={String(values.new)}
-                                      >
-                                        {values.new}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                ),
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 dark:text-gray-400 text-sm italic">
-                          No changes recorded
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-borderColor dark:border-borderColor-dark bg-off dark:bg-dark/30 flex justify-between items-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total revisions:{" "}
-                <span className="font-bold text-primary">
-                  {policyLogs.length}
-                </span>
-              </p>
-              <Button variant="outline" onClick={() => setShowLogModal(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
+    {showLogModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-6">
+    <div className="bg-white dark:bg-dark rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border border-primary/20 flex flex-col">
+      {/* Header (match SS) */}
+      <div className="bg-gradient-to-r from-[#234B78] to-[#6C88A8] dark:from-dark dark:to-dark/60 px-6 py-5 flex justify-between items-center">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <FileText className="w-6 h-6" />
+            Employee Change History
+          </h2>
+          <p className="text-white/80 text-sm mt-1">
+            View all modifications made to this Employee Creation
+          </p>
         </div>
-      )}
+
+        <button
+          onClick={() => setShowLogModal(false)}
+          className="p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="overflow-auto flex-1 p-6 bg-white dark:bg-dark">
+        {policyLogs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <FileText className="w-12 h-12 text-gray-300 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
+              No history available for this Employee Creation
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {policyLogs.map((log, index) => (
+              <div
+                key={index}
+                className="rounded-2xl border-2 border-indigo-200/80 dark:border-borderColor-dark bg-white dark:bg-dark shadow-sm"
+              >
+                {/* Card header row */}
+                <div className="flex items-center gap-4 p-6">
+                  <div className="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-white/10 flex items-center justify-center">
+                    <CheckCircle className="w-7 h-7 text-indigo-600 dark:text-indigo-300" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="text-xl font-bold text-slate-900 dark:text-white">
+                      {log.updated_at ? log.updated_at : "Date Not Available"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Changes table */}
+                {Object.entries(log.changes || {}).length > 0 ? (
+                  <div className="px-6 pb-6">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b-2 border-slate-200 dark:border-borderColor-dark">
+                            <th className="text-left px-3 py-3 font-bold text-header dark:text-white text-base">
+                              Field
+                            </th>
+                            <th className="text-left px-3 py-3 font-bold text-header dark:text-white text-base">
+                              Previous Value
+                            </th>
+                            <th className="text-left px-3 py-3 font-bold text-header dark:text-white text-base">
+                              New Value
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {Object.entries(log.changes).map(
+                            ([field, values]: any, rowIndex) => (
+                              <tr
+                                key={rowIndex}
+                                className="border-b border-slate-100 dark:border-borderColor-dark/40"
+                              >
+                                <td className="px-3 py-4">
+                                  <span className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">
+                                    {field}
+                                  </span>
+                                </td>
+
+                                <td className="px-3 py-4">
+                                  <span
+                                    className="block w-full max-w-[420px] rounded-md bg-rose-50 dark:bg-rose-500/10 px-3 py-2 font-bold text-rose-600 dark:text-rose-300 truncate"
+                                    title={String(values?.old ?? "")}
+                                  >
+                                    {values?.old ?? "—"}
+                                  </span>
+                                </td>
+
+                                <td className="px-3 py-4">
+                                  <span
+                                    className="block w-full max-w-[420px] rounded-md bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600 dark:text-emerald-300 truncate"
+                                    title={String(values?.new ?? "")}
+                                  >
+                                    {values?.new ?? "—"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-6 pb-6">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm italic">
+                      No changes recorded
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer (match SS) */}
+      <div className="px-6 py-4 border-t border-slate-200 dark:border-borderColor-dark bg-white dark:bg-dark flex justify-between items-center">
+        <p className="text-sm text-slate-700 dark:text-gray-300">
+          Total revisions:{" "}
+          <span className="font-bold text-indigo-600 dark:text-indigo-300">
+            {policyLogs.length}
+          </span>
+        </p>
+
+        <Button
+          variant="outline"
+          onClick={() => setShowLogModal(false)}
+          className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-400/40 dark:text-indigo-200 dark:hover:bg-white/5"
+        >
+          Close
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
