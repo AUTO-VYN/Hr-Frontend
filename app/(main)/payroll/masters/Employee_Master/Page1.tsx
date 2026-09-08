@@ -1879,7 +1879,40 @@ if (name === "OTP_With_Aadhaar") {
                         <span className="min-w-0 flex-1  truncate">
                           Aadhaar verified
                         </span>
+                      
                       </label>
+                       <label
+                        htmlFor="AADHAR_CARD_VER"
+                        className={toggleTileClass(
+                          !!formData.EmpMst?.AADHAAR_LINKED_VER,
+                        )}
+                        onClick={() => {
+                          if (!isDisabled) {
+                            handleInputChange(
+                              "AADHAR_CARD_VER",
+                              formData.EmpMst?.AADHAAR_LINKED_VER ? false : true,
+                            );
+                          }
+                        }}
+                      >
+
+                        <Checkbox
+                          checked={!!formData.EmpMst?.AADHAAR_LINKED_VER}
+                          name="AADHAR_CARD_VER"
+                          onChange={() => {
+                            if (!isDisabled) {
+                              handleInputChange(
+                                "AADHAR_CARD_VER",
+                                formData.EmpMst?.AADHAAR_LINKED_VER ? false : true,
+                              );
+                            }
+                          }}
+                          disabled={isDisabled}
+                        />
+                        <span className="min-w-0 flex-1  truncate">
+                          linked with pan card
+                        </span>
+                        </label>
                     </div>
                   )}
                 </>

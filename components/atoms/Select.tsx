@@ -275,7 +275,7 @@ const CustomSelectSearch = ({
       {(title || uppertitle || redlabel) && (
         <label
           className={cn(
-            "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300",
+            "flex items-center gap-2 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider leading-none text-slate-600 dark:text-slate-300 mb-1",
             labelClass
           )}
           htmlFor={name}
@@ -290,8 +290,8 @@ const CustomSelectSearch = ({
       <div
         tabIndex={isDisabledUI ? -1 : 0}
         className={cn(
-          "relative h-9 w-full rounded-xl border bg-white px-3 shadow-sm",
-          "border-slate-200 text-[13px] text-slate-900",
+          "relative h-10 w-full rounded-xl border bg-white px-3 shadow-2xs",
+          "border-slate-200 text-[13px] sm:text-sm font-medium text-slate-700",
           "dark:bg-black dark:text-white dark:border-slate-800",
           "flex items-center justify-between cursor-pointer",
           isDisabledUI && "opacity-60 cursor-not-allowed",
