@@ -760,36 +760,49 @@ export default function Page() {
               >
                 {isRelaxationOpen ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Ainput
-                      title="In time relaxation (hrs)"
-                      label="In time relaxation (hrs)"
-                      type="text"
-                      name="ShiftIn_Relaxation"
-                      value={formData?.EmpMst?.ShiftIn_Relaxation}
-                      handleInputChange={handleInputChange}
-                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-                    />
-
-                    <Ainput
-                      title="Out time relaxation (hrs)"
-                      label="Out time relaxation (hrs)"
-                      type="text"
-                      value={formData?.EmpMst?.ShiftOut_Relaxation}
-                      name="ShiftOut_Relaxation"
-                      handleInputChange={handleInputChange}
-                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-                    />
-
-                    <div className="md:col-span-2">
+                       <div className="md:col-span-2">
                       <SelectSearch
                         options={type}
-                        title="Apply on"
+                        title="Relaxation Type"
                         selectedValue={formData?.EmpMst?.Relaxation_Type?.toString()}
                         name="Relaxation_Type"
                         handleInputChange={handleInputChange}
                         className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       />
                     </div>
+                    <Ainput
+                      title="In time relaxation (hrs)"
+                      label="In time relaxation (hrs)"
+                      type="text"
+                      name="ShiftIn_Relaxation"
+                      value={formData?.EmpMst?.EMP_SHIFT}
+                      handleInputChange={handleInputChange}
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
+                    />
+
+                    
+
+                    <Ainput
+                      title="Out time relaxation (hrs)"
+                      label="Out time relaxation (hrs)"
+                      type="text"
+                      value={formData?.EmpMst?.EMP_SHIFT}
+                      name="ShiftOut_Relaxation"
+                      handleInputChange={handleInputChange}
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
+                    />
+
+                      <Ainput
+                      title="Cumulative Shift Relation"
+                      label="Cumulative Shift Relation"
+                      type="text"
+                      name="ShiftIn_Relaxation"
+                      value={formData?.EmpMst?.Cumulative_Relaxation}
+                      handleInputChange={handleInputChange}
+                      className="h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
+                    />
+
+                 
                   </div>
                 ) : (
                   <div className="text-sm text-slate-500 dark:text-slate-400">

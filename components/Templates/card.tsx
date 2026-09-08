@@ -1,61 +1,76 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import EmployeeProfileDialog from "./EmployeeProfileDialog";
 
 const formatDate = (dateString: any) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = date.toLocaleString("en-US", { month: "short" });
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
+  if (!dateString || dateString === "null" || dateString === "—") return "";
+  try {
+    const d = new Date(dateString);
+    if (!isNaN(d.getTime())) {
+      const day = d.getDate().toString().padStart(2, "0");
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}`;
+    }
+  } catch {}
+  return String(dateString);
 };
 
 type CardViewProps = {
   data: any[];
   onCardDoubleClick: (employee: any) => void;
-  empView: "ALL" | "ACTIVE" | "LEFT" | string;
-  totalCount: number;
-  setEmpView: (newView: "ALL" | "ACTIVE" | "LEFT" | string) => void;
-  globalSearch: string;
-  setGlobalSearch: (value: string) => void;
-  isLoading: boolean;
+  empView?: "ALL" | "ACTIVE" | "LEFT" | string;
+  totalCount?: number;
+  setEmpView?: (newView: "ALL" | "ACTIVE" | "LEFT" | string) => void;
+  globalSearch?: string;
+  setGlobalSearch?: (value: string) => void;
+  isLoading?: boolean;
 };
 
 const CardView = ({
-  data,
+  data = [],
   onCardDoubleClick,
-  empView,
+  empView = "ACTIVE",
   totalCount,
-  setEmpView,
   globalSearch,
   setGlobalSearch,
-  isLoading,
+  isLoading = false,
 }: CardViewProps) => {
-  console.log(totalCount, "totalCount");
-
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const getAvatarColors = (name: any) => {
     if (!name || name === "N/A") {
-      return { bg: "#E8F0FE", text: "#1A56DB" };
+      return { bg: "#EEF2FF", text: "#4338CA" };
     }
     const palettes = [
-      { bg: "#E8F0FE", text: "#1A56DB" },
-      { bg: "#ECFDF5", text: "#059669" },
-      { bg: "#FEF3C7", text: "#D97706" },
-      { bg: "#FEE2E2", text: "#DC2626" },
-      { bg: "#E0E7FF", text: "#4F46E5" },
-      { bg: "#F3E8FF", text: "#7C3AED" },
-      { bg: "#FCE7F3", text: "#DB2777" },
-      { bg: "#CCFBF1", text: "#0D9488" },
-      { bg: "#FFEDD5", text: "#EA580C" },
-      { bg: "#E4E4E7", text: "#52525B" },
-      { bg: "#DBEAFE", text: "#2563EB" },
-      { bg: "#D1FAE5", text: "#15803D" },
+      { bg: "#EEF2FF", text: "#4F46E5" }, // Indigo / Blue
+      { bg: "#ECFDF5", text: "#059669" }, // Emerald / Green
+      { bg: "#FEF3C7", text: "#D97706" }, // Amber / Yellow
+      { bg: "#FEE2E2", text: "#DC2626" }, // Rose / Red
+      { bg: "#F3E8FF", text: "#7C3AED" }, // Purple
+      { bg: "#E0F2FE", text: "#0284C7" }, // Sky
+      { bg: "#FCE7F3", text: "#DB2777" }, // Pink
+      { bg: "#EDE9FE", text: "#6366F1" }, // Violet
+      { bg: "#CCFBF1", text: "#0D9488" }, // Teal
+      { bg: "#FFEDD5", text: "#EA580C" }, // Orange
     ];
     const hash = String(name)
       .split("")
@@ -64,10 +79,11 @@ const CardView = ({
   };
 
   const getInitials = (name: any) => {
-    if (!name || name === "N/A") return "??";
+    if (!name || name === "N/A" || name === "—") return "??";
     const parts = String(name).trim().split(/\s+/);
-    if (parts.length >= 2)
+    if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
     return String(name).substring(0, 2).toUpperCase();
   };
 
@@ -83,12 +99,12 @@ const CardView = ({
 
   return (
     <div>
-      {/* Filter Buttons and Active Filter Info */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 mb-4">
+      {/* Top Bar: Showing Badge + Search Filter */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
         {/* Active Filter Badge */}
         <div
           className={[
-            "flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow-md",
+            "inline-flex items-center gap-2 text-white px-4 py-2 rounded-xl shadow-2xs text-sm font-medium w-fit",
             empView === "ALL"
               ? "bg-[#4338CA]"
               : empView === "ACTIVE"
@@ -96,28 +112,28 @@ const CardView = ({
               : "bg-gradient-to-r from-[#B91C1C] to-[#EF4444]",
           ].join(" ")}
         >
-          <span className="text-sm opacity-90">Showing:</span>
-          <span className="font-bold text-lg">
+          <span className="opacity-90">Showing:</span>
+          <span className="font-bold text-base">
             {empView === "ALL" ? "All" : empView === "ACTIVE" ? "Active" : "Left"}
           </span>
-          <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold min-w-[28px] text-center">
-            {data?.length || 0}
+          <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold min-w-[24px] text-center">
+            {totalCount !== undefined ? totalCount : data?.length || 0}
           </span>
-          <span className="text-sm opacity-90"> Employee</span>
+          <span className="opacity-90">Employee</span>
         </div>
 
         {/* Search Input */}
-        <div className="ml-auto w-full sm:w-64 mt-2 sm:mt-0">
-          <div className="relative">
+        {setGlobalSearch !== undefined && (
+          <div className="relative w-full sm:w-72 sm:ml-auto">
             <input
               type="text"
               placeholder="Search by name or code..."
-              value={globalSearch}
+              value={globalSearch || ""}
               onChange={(e) => setGlobalSearch(e.target.value)}
-              className="w-full px-4 py-2 pl-10 border border-[#D0D5DD] dark:border-gray-600 rounded-lg bg-white dark:bg-black text-[#1A1A1A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1A56DB]"
+              className="w-full h-10 px-4 pl-10 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#0B1220] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] text-sm shadow-2xs"
             />
             <svg
-              className="absolute left-3 top-3 w-4 h-4 text-gray-400"
+              className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -130,131 +146,203 @@ const CardView = ({
               />
             </svg>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Employee Cards Grid */}
-      {data?.length === 0 ? (
-        <div className="text-center py-12 text-[#757575] dark:text-gray-400">
+      {!data || data.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-12 text-center text-slate-400 dark:border-slate-800 dark:bg-[#0B1220] font-medium text-sm">
           No employees found
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        /* Employee Cards Grid */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {data.map((employee, index) => {
-            const colors = getAvatarColors(employee?.EMPLOYEENAME);
-            const initials = getInitials(employee?.EMPLOYEENAME);
+            const name =
+              employee?.EMPLOYEENAME ||
+              employee?.Employee_Name ||
+              employee?.name ||
+              "N/A";
+            const empCode =
+              employee?.EMPCODE ||
+              employee?.EmpCode ||
+              employee?.empcode ||
+              employee?.UTD ||
+              "—";
+            const designation =
+              employee?.EMPLOYEEDESIGNATION ||
+              employee?.designation ||
+              employee?.Designation ||
+              "";
+            const department =
+              employee?.Department ||
+              employee?.department ||
+              employee?.SECTION ||
+              "";
+            const location =
+              employee?.Location ||
+              employee?.location ||
+              employee?.region1 ||
+              "";
+            const joinedDate = formatDate(
+              employee?.JOININGDATE || employee?.Joining_Date
+            );
+
+            const isLeft =
+              Boolean(employee?.LASTWOR_NEWDATE) &&
+              employee?.LASTWOR_NEWDATE !== "null" &&
+              employee?.LASTWOR_NEWDATE !== "—";
+            const isActive = !isLeft;
+
+            const colors = getAvatarColors(name);
+            const initials = getInitials(name);
+            const isSelected = selectedCardId === (empCode || index);
 
             return (
               <div
-                key={index}
-                className="bg-white dark:bg-black rounded-lg border border-[#E5E7EB] dark:border-gray-700 p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-                onDoubleClick={() => onCardDoubleClick(employee)}
+                key={empCode || index}
+                onClick={() => setSelectedCardId(empCode || index)}
+                onDoubleClick={() => onCardDoubleClick?.(employee)}
+                className={[
+                  "group relative rounded-2xl border bg-white p-5 shadow-2xs transition-all cursor-pointer flex flex-col justify-between",
+                  "dark:bg-[#0B1220]",
+                  isSelected
+                    ? "border-[#6366F1] ring-1 ring-[#6366F1]/50 shadow-sm"
+                    : "border-slate-200/90 hover:border-indigo-300 dark:border-slate-800 dark:hover:border-slate-700 hover:shadow-sm",
+                ].join(" ")}
               >
-                {/* Top Section */}
-                <div className="flex justify-between items-start mb-3">
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 ${
-                      !employee?.LASTWOR_NEWDATE
-                        ? "bg-[#D1FAE5] text-[#065F46]"
-                        : "bg-[#FEE2E2] text-[#DC2626]"
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        !employee?.LASTWOR_NEWDATE
-                          ? "bg-green-500"
-                          : "bg-red-500"
-                      }`}
-                    />
-                    {!employee?.LASTWOR_NEWDATE ? "Active" : "Left"}
-                  </span>
-
-                  {/* Avatar */}
-                  <div className="w-20 h-20 rounded-full overflow-hidden">
-                    {employee?.photoUrl ? (
-                      <img
-                        src={employee.photoUrl}
-                        alt={employee?.EMPLOYEENAME}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
+                <div>
+                  {/* Top Row: Avatar + Name/Code + Status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Avatar Circle with Initials */}
                       <div
-                        className="w-full h-full flex items-center justify-center text-xl font-bold"
-                        style={{
-                          backgroundColor: colors.bg,
-                          color: colors.text,
-                        }}
+                        className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 select-none shadow-2xs"
+                        style={{ backgroundColor: colors.bg, color: colors.text }}
                       >
                         {initials}
                       </div>
-                    )}
+
+                      {/* Name & EmpCode */}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-900 dark:text-slate-100 text-[15px] leading-snug truncate">
+                          {name}
+                        </h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5 tracking-wide truncate">
+                          {empCode}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <span
+                      className={[
+                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0 select-none",
+                        isActive
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-100/90 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40"
+                          : "bg-red-50 text-red-600 border border-red-100/90 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800/40",
+                      ].join(" ")}
+                    >
+                      {isActive ? "Active" : "Left"}
+                    </span>
                   </div>
 
-                  {/* Employee Type */}
-                  <span
-                    className={`px-2.5 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
-                      employee?.EmployeeType?.toUpperCase() === "REGULAR"
-                        ? "bg-[#D1FAE5] text-[#065F46] dark:bg-[#064E3B] dark:text-[#6EE7B7]"
-                        : employee?.EmployeeType?.toUpperCase() === "APPRENTICE"
-                        ? "bg-[#FEF3C7] text-[#92400E] dark:bg-[#78350F] dark:text-[#FCD34D]"
-                        : "bg-[#E5E7EB] text-[#374151] dark:bg-gray-700 dark:text-gray-300"
-                    }`}
-                  >
-                    {employee?.EmployeeType || "Regular"}
-                  </span>
+                  {/* Divider */}
+                  <div className="border-t border-slate-100 dark:border-slate-800/80 my-4" />
+
+                  {/* Details List */}
+                  <div className="space-y-2 text-sm">
+                    {/* Designation */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 dark:text-slate-500 font-normal shrink-0">
+                        Designation
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-right">
+                        {designation ? (
+                          designation
+                        ) : (
+                          <span className="text-slate-400 font-normal select-none">
+                            —
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Department */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 dark:text-slate-500 font-normal shrink-0">
+                        Department
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-right">
+                        {department ? (
+                          department
+                        ) : (
+                          <span className="text-slate-400 font-normal select-none">
+                            —
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Location */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 dark:text-slate-500 font-normal shrink-0">
+                        Location
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-right">
+                        {location ? (
+                          location
+                        ) : (
+                          <span className="text-slate-400 font-normal select-none">
+                            —
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Joined */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 dark:text-slate-500 font-normal shrink-0">
+                        Joined
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-right">
+                        {joinedDate ? (
+                          joinedDate
+                        ) : (
+                          <span className="text-slate-400 font-normal select-none">
+                            —
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Name & Designation */}
-                <div className="text-center mb-3">
-                  <h3 className="font-bold text-[#1A1A1A] dark:text-white text-base truncate">
-                    {employee?.EMPLOYEENAME || "N/A"}
-                  </h3>
-                  <p className="text-sm text-[#6B7280] dark:text-gray-300 mt-1 truncate">
-                    {employee?.EMPLOYEEDESIGNATION || "N/A"}
-                  </p>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-1.5 mb-3">
-                  <p className="text-sm text-[#6B7280] dark:text-gray-400 truncate flex items-center gap-1.5">
-                    <span className="text-[#9CA3AF]">📍</span>
-                    {employee?.Location || "N/A"}
-                  </p>
-                  <p className="text-sm text-[#6B7280] dark:text-gray-400 truncate flex items-center gap-1.5">
-                    <span className="text-[#9CA3AF]">🏢</span>
-                    {employee?.Department || "Account"}
-                  </p>
-                  <p className="text-sm text-[#6B7280] dark:text-gray-400 flex items-center gap-1.5">
-                    <span className="text-[#9CA3AF]">📅</span>
-                    Joined {formatDate(employee?.JOININGDATE)}
-                  </p>
-                </div>
-
-                <div className="border-t border-[#E5E7EB] dark:border-gray-700 mb-3"></div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
+                {/* Action Button: Open Record */}
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleViewProfile(employee);
                   }}
-                  className="text-[#2563EB] border-[#2563EB] hover:bg-[#EFF6FF] dark:hover:bg-[#172554] w-full"
+                  className="mt-5 w-full h-10 rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-white dark:bg-slate-900/40 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 text-[#4338CA] dark:text-indigo-400 font-semibold text-sm inline-flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer group-hover:border-indigo-200 dark:group-hover:border-indigo-900"
                 >
-                  <span className="mr-1">👤</span> View profile
-                </Button>
+                  <span>Open record</span>
+                  <ArrowRight className="h-4 w-4 text-[#4338CA] dark:text-indigo-400 transition-transform group-hover:translate-x-0.5" />
+                </button>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Dialog */}
-      <EmployeeProfileDialog
-        isOpen={isDialogOpen}
-        onClose={handleCloseDialog}
-        employee={selectedEmployee}
-      />
+      {/* Profile Dialog */}
+      {isDialogOpen && (
+        <EmployeeProfileDialog
+          isOpen={isDialogOpen}
+          onClose={handleCloseDialog}
+          employee={selectedEmployee}
+        />
+      )}
     </div>
   );
 };

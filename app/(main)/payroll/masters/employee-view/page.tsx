@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
@@ -26,7 +26,7 @@ type Option = { value: any; label: string };
 
 // Helper formatters
 const renderDash = () => (
-  <span className="text-slate-400 font-normal select-none">—</span>
+  <span className="text-slate-400 font-normal select-none text-[14px]">—</span>
 );
 
 const formatCellText = (val: any) => {
@@ -40,7 +40,7 @@ const formatCellText = (val: any) => {
     return renderDash();
   }
   return (
-    <span className="text-slate-600 dark:text-slate-300 font-normal">
+    <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
       {String(val)}
     </span>
   );
@@ -69,14 +69,14 @@ const formatCellDate = (val: any) => {
       const month = months[d.getMonth()];
       const year = d.getFullYear();
       return (
-        <span className="text-slate-600 dark:text-slate-300 font-normal">
+        <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
           {`${day} ${month} ${year}`}
         </span>
       );
     }
   } catch { }
   return (
-    <span className="text-slate-600 dark:text-slate-300 font-normal">
+    <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
       {String(val)}
     </span>
   );
@@ -178,7 +178,8 @@ export default function Page() {
     targetPage = currentPage,
     targetPageSize = pageSize,
     filters: any = {},
-    showLoader = true
+    showLoader = true,
+    dash = dashbord
   ) => {
     if (showLoader) setIsLoading(true);
 
@@ -187,12 +188,12 @@ export default function Page() {
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
           Loc_code: user?.branch,
-          Cluster: toArrayParam(dashbord.Br_Location),
-          Section: toArrayParam(dashbord.Section),
-          Location: toArrayParam(dashbord.Location),
-          Channel: toArrayParam(dashbord.Channel),
-          Joining_DateFROM: dashbord.Joining_DateFROM || null,
-          Joining_DateTO: dashbord.Joining_DateTO || null,
+          Cluster: toArrayParam(dash.Br_Location),
+          Section: toArrayParam(dash.Section),
+          Location: toArrayParam(dash.Location),
+          Channel: toArrayParam(dash.Channel),
+          Joining_DateFROM: dash.Joining_DateFROM || null,
+          Joining_DateTO: dash.Joining_DateTO || null,
           empView: targetView,
           search: debouncedSearch,
           filters: filters,
@@ -226,18 +227,21 @@ export default function Page() {
   // =========================
   // Fetch ONLY counts for all tabs (no data change)
   // =========================
-  const fetchCountOnly = async (targetView: "ACTIVE" | "LEFT" | "ALL") => {
+  const fetchCountOnly = async (
+    targetView: "ACTIVE" | "LEFT" | "ALL",
+    dash = dashbord
+  ) => {
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
           Loc_code: user?.branch,
-          Cluster: toArrayParam(dashbord.Br_Location),
-          Section: toArrayParam(dashbord.Section),
-          Location: toArrayParam(dashbord.Location),
-          Channel: toArrayParam(dashbord.Channel),
-          Joining_DateFROM: dashbord.Joining_DateFROM || null,
-          Joining_DateTO: dashbord.Joining_DateTO || null,
+          Cluster: toArrayParam(dash.Br_Location),
+          Section: toArrayParam(dash.Section),
+          Location: toArrayParam(dash.Location),
+          Channel: toArrayParam(dash.Channel),
+          Joining_DateFROM: dash.Joining_DateFROM || null,
+          Joining_DateTO: dash.Joining_DateTO || null,
           empView: targetView,
           search: debouncedSearch,
           filters: {},
@@ -258,13 +262,13 @@ export default function Page() {
     }
   };
 
-  const refreshTabCounts = async () => {
+  const refreshTabCounts = async (dash = dashbord) => {
     if (!user?.Comp_Code) return;
     try {
       const [ac, lc, alc] = await Promise.all([
-        fetchCountOnly("ACTIVE"),
-        fetchCountOnly("LEFT"),
-        fetchCountOnly("ALL"),
+        fetchCountOnly("ACTIVE", dash),
+        fetchCountOnly("LEFT", dash),
+        fetchCountOnly("ALL", dash),
       ]);
       setActiveCount(ac);
       setLeftCount(lc);
@@ -280,50 +284,65 @@ export default function Page() {
   useEffect(() => {
     if (!user?.Comp_Code) return;
     PreData();
+    showapi("ACTIVE", 1, pageSize, {}, true);
+    refreshTabCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.Comp_Code]);
 
   // =========================
-  // Auto refresh on deps (data for current tab)
+  // Search filter: Auto fetch on typing
   // =========================
+  const isInitialSearch = useRef(true);
   useEffect(() => {
     if (!user?.Comp_Code) return;
-
-    showapi(empView, currentPage, pageSize, {}, true);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    user?.Comp_Code,
-    dashbord.Br_Location,
-    dashbord.Section,
-    dashbord.Location,
-    dashbord.Channel,
-    dashbord.Joining_DateFROM,
-    dashbord.Joining_DateTO,
-    debouncedSearch,
-  ]);
-
-  // ✅ refresh counts on filters/search change
-  useEffect(() => {
-    if (!user?.Comp_Code) return;
+    if (isInitialSearch.current) {
+      isInitialSearch.current = false;
+      return;
+    }
+    setCurrentPage(1);
+    showapi(empView, 1, pageSize, {}, true);
     refreshTabCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    user?.Comp_Code,
-    dashbord.Br_Location,
-    dashbord.Section,
-    dashbord.Location,
-    dashbord.Channel,
-    dashbord.Joining_DateFROM,
-    dashbord.Joining_DateTO,
-    debouncedSearch,
-  ]);
+  }, [debouncedSearch]);
+
+  // =========================
+  // Navigation / Redirection
+  // =========================
+  const doubleclick = (employee: any) => {
+    const empCode =
+      employee?.EMPCODE ||
+      employee?.EmpCode ||
+      employee?.empcode ||
+      employee?.UTD;
+    if (empCode) {
+      router.push(`/payroll/masters/Employee_Master?UTD=${empCode}`);
+    }
+  };
 
   // =========================
   // Columns
   // =========================
   const columns = useMemo(
     () => [
+      {
+        Header: "Empcode",
+        accessor: "EMPCODE",
+        Cell: ({ value, row }: any) => {
+          const val = value || row.original?.EMPCODE;
+          if (!val) return renderDash();
+          return (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                doubleclick(row.original);
+              }}
+              className="text-slate-600 dark:text-slate-300 font-normal hover:text-[#4338CA] dark:hover:text-indigo-400 hover:underline cursor-pointer"
+            >
+              {String(val)}
+            </span>
+          );
+        },
+      },
       {
         Header: "Employee name",
         accessor: "EMPLOYEENAME",
@@ -335,7 +354,13 @@ export default function Page() {
             row.original?.name;
           if (!val) return renderDash();
           return (
-            <span className="font-bold text-slate-900 dark:text-slate-100">
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                doubleclick(row.original);
+              }}
+              className="font-bold text-[14px] text-slate-900 dark:text-slate-100 hover:text-[#4338CA] dark:hover:text-indigo-400 hover:underline cursor-pointer"
+            >
               {String(val)}
             </span>
           );
@@ -350,8 +375,6 @@ export default function Page() {
       { Header: "Joining date", accessor: "JOININGDATE", Cell: ({ value }: any) => formatCellDate(value) },
       { Header: "Punch code", accessor: "PUNCHCODE", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Payment mode", accessor: "PAYMENTMODE", Cell: ({ value }: any) => formatCellText(value) },
-
-      { Header: "Empcode", accessor: "EMPCODE", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Section", accessor: "SECTION", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Mobile no", accessor: "MOBILENO", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Corporate mail id", accessor: "CORPORATEMAILID", Cell: ({ value }: any) => formatCellText(value) },
@@ -465,16 +488,51 @@ export default function Page() {
   // Handlers
   // =========================
   const resetFilters = () => {
-    setDashbord({
+    const emptyDash = {
       Br_Location: "",
       Section: "",
       Location: "",
       Channel: "",
       Joining_DateFROM: "",
       Joining_DateTO: "",
-    });
+    };
+    setDashbord(emptyDash);
     setSearchInput("");
     setCurrentPage(1);
+    showapi(empView, 1, pageSize, {}, true, emptyDash);
+    refreshTabCounts(emptyDash);
+  };
+
+  const fetchAllForExport = async () => {
+    try {
+      setIsLoading(true);
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
+        {
+          Loc_code: user?.branch,
+          Cluster: toArrayParam(dashbord.Br_Location),
+          Section: toArrayParam(dashbord.Section),
+          Location: toArrayParam(dashbord.Location),
+          Channel: toArrayParam(dashbord.Channel),
+          Joining_DateFROM: dashbord.Joining_DateFROM || null,
+          Joining_DateTO: dashbord.Joining_DateTO || null,
+          empView: empView,
+          search: debouncedSearch,
+          filters: {},
+          pageSize: 1000000,
+          pageNo: 1,
+        },
+        {
+          headers: { compcode: user?.Comp_Code, name: user?.name },
+        }
+      );
+      return result.data.Result || result.data.data || [];
+    } catch (error) {
+      console.error("Error exporting all data:", error);
+      return data;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTab = (next: "ACTIVE" | "LEFT" | "ALL") => {
@@ -550,7 +608,7 @@ export default function Page() {
               size="md"
               className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 text-xs font-semibold bg-[#4338CA] hover:bg-[#3730A3] text-white shadow-2xs flex items-center gap-1.5"
               icon={<Plus className="h-4 w-4" />}
-              onClick={() => { }}
+              onClick={() => router.push("/payroll/masters/Employee_Master")}
             >
               Add employee
             </AButton>
@@ -568,8 +626,8 @@ export default function Page() {
         </div>
 
         {/* Filters card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 items-end">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-4 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.1fr_1.1fr_auto] gap-2.5 sm:gap-3 items-end">
             <SelectSearch
               title="CLUSTER"
               name="Br_Location"
@@ -577,11 +635,10 @@ export default function Page() {
               selectedValue={dashbord.Br_Location}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Br_Location: v }));
-                setCurrentPage(1);
               }}
               placeholder="All cluster"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
+              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
             />
 
             <SelectSearch
@@ -591,11 +648,10 @@ export default function Page() {
               selectedValue={dashbord.Location}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Location: v }));
-                setCurrentPage(1);
               }}
               placeholder="All branch"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
+              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
             />
 
             <SelectSearch
@@ -605,11 +661,10 @@ export default function Page() {
               selectedValue={dashbord.Section}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Section: v }));
-                setCurrentPage(1);
               }}
               placeholder="All section"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
+              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
             />
 
             <SelectSearch
@@ -619,11 +674,10 @@ export default function Page() {
               selectedValue={dashbord.Channel}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Channel: v }));
-                setCurrentPage(1);
               }}
               placeholder="All channel"
               ShortName
-              className="h-10 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-xs w-full"
+              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
             />
 
             <Ainput
@@ -631,7 +685,7 @@ export default function Page() {
               ShortName
               type="date"
               name="Joining_DateFROM"
-              label={empView === "LEFT" ? "Left Date From" : "Joining Date From"}
+              label={empView === "LEFT" ? "LEFT FROM" : "JOINING FROM"}
               value={
                 dashbord.Joining_DateFROM
                   ? String(dashbord.Joining_DateFROM).slice(0, 10)
@@ -640,9 +694,8 @@ export default function Page() {
               handleInputChange={(_, v) => {
                 const next = v ? String(v).slice(0, 10) : "";
                 setDashbord((p) => ({ ...p, Joining_DateFROM: next }));
-                setCurrentPage(1);
               }}
-              className="h-10 rounded-xl text-xs w-full"
+              className="h-12 rounded-xl text-[15px] font-medium w-full"
             />
 
             <Ainput
@@ -650,7 +703,7 @@ export default function Page() {
               ShortName
               type="date"
               name="Joining_DateTO"
-              label={empView === "LEFT" ? "Left Date To" : "Joining Date To"}
+              label={empView === "LEFT" ? "LEFT TO" : "JOINING TO"}
               value={
                 dashbord.Joining_DateTO
                   ? String(dashbord.Joining_DateTO).slice(0, 10)
@@ -659,36 +712,36 @@ export default function Page() {
               handleInputChange={(_, v) => {
                 const next = v ? String(v).slice(0, 10) : "";
                 setDashbord((p) => ({ ...p, Joining_DateTO: next }));
-                setCurrentPage(1);
               }}
-              className="h-10 rounded-xl text-xs w-full"
+              className="h-12 rounded-xl text-[15px] font-medium w-full"
             />
-          </div>
 
-          <div className="flex items-center justify-end gap-2.5 mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentPage(1);
-                showapi(empView, 1, pageSize, {}, true);
-              }}
-              className="h-9 px-5 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-xs shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
-            >
-              Show
-            </button>
+            <div className="flex items-center gap-2 pb-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(1);
+                  showapi(empView, 1, pageSize, {}, true);
+                  refreshTabCounts();
+                }}
+                className="h-12 px-7 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-[15px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+              >
+                Show
+              </button>
 
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
-            >
-              Reset
-            </button>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="h-12 px-6 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[15px] shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Tabs + Columns */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1 font-[inherit]">
           <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs overflow-x-auto">
             {[
               { key: "ACTIVE" as const, label: "Active employees", count: activeCount },
@@ -702,19 +755,17 @@ export default function Page() {
                   type="button"
                   onClick={() => handleTab(t.key)}
                   className={[
-                    "h-8 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-all whitespace-nowrap",
+                    "h-10 px-3.5 sm:px-4 rounded-xl text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-all whitespace-nowrap font-[inherit]",
                     isActive
                       ? "bg-[#4338CA] text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
                   ].join(" ")}
                 >
-                  <span>{t.label}</span>
+                  <span className="font-[inherit]">{t.label}</span>
                   <span
                     className={[
-                      "text-[11px] font-bold",
-                      isActive
-                        ? "text-white/90"
-                        : "text-slate-400 dark:text-slate-500",
+                      "text-[14px] font-bold font-[inherit]",
+                      isActive ? "text-white/90" : "text-slate-400 dark:text-slate-500",
                     ].join(" ")}
                   >
                     {t.count}
@@ -724,14 +775,17 @@ export default function Page() {
             })}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end font-[inherit]">
             <button
               type="button"
-              className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold inline-flex items-center gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200"
+              className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-[15px] font-semibold inline-flex items-center gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 font-[inherit]"
             >
-              <Columns3 className="h-3.5 w-3.5 text-slate-500" />
-              <span>
-                Columns <span className="text-slate-400 font-semibold">11/25</span>
+              <Columns3 className="h-4 w-4 text-slate-500" />
+              <span className="font-[inherit]">
+                Columns{" "}
+                <span className="text-slate-400 font-semibold text-[14px] font-[inherit]">
+                  11/25
+                </span>
               </span>
             </button>
           </div>
@@ -755,9 +809,11 @@ export default function Page() {
                 setCurrentPage(1);
               }}
               searchPlaceholder="Search by name or code..."
-              onServerPageChange={(p) => {
+              onRowDoubleClick={doubleclick}
+              onExportAll={fetchAllForExport}
+              onServerPageChange={(p, showLoader = true) => {
                 setCurrentPage(p);
-                showapi(empView, p, pageSize, {}, true);
+                showapi(empView, p, pageSize, {}, showLoader);
               }}
               onServerPageSizeChange={(s) => {
                 setPageSize(s);
@@ -770,11 +826,7 @@ export default function Page() {
           <CardView
             data={data}
             totalCount={totalCount}
-            onCardDoubleClick={(employee) => {
-              router.push(
-                `/autovyn/payroll/Master/Employee_Master?UTD=${employee?.EMPCODE}`
-              );
-            }}
+            onCardDoubleClick={doubleclick}
             empView={empView}
             setEmpView={(newView) => {
               handleTab(newView as "ACTIVE" | "LEFT" | "ALL");

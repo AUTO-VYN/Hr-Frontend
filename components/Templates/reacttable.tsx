@@ -39,7 +39,7 @@ interface Props {
   // server-side pagination (optional)
   serverMode?: boolean;
   serverPagination?: ServerPagination;
-  onServerPageChange?: (page: number) => void; // 1-based
+  onServerPageChange?: (page: number, showLoader?: boolean) => void; // 1-based
   onServerPageSizeChange?: (size: number) => void;
 
   showTopSearch?: boolean;
@@ -51,6 +51,7 @@ interface Props {
 
   showExcelExport?: boolean; // default true
   columnsDownload?: any; // ✅ DataTable jaisa (optional)
+  onExportAll?: () => Promise<any[]> | any[];
 }
 
 const globalFilterFunction = (
@@ -92,6 +93,7 @@ export default function ServiceTablePagination({
 
   showExcelExport = true,
   columnsDownload,
+  onExportAll,
 }: Props) {
   const tableRef = useRef<HTMLTableElement | null>(null);
   const scrollWrapRef = useRef<HTMLDivElement | null>(null);
@@ -182,15 +184,22 @@ export default function ServiceTablePagination({
 
     const cp = serverPagination?.currentPage || 1;
 
+    // page 1 aaya => fresh start (filters, tab change or search)
+    if (cp === 1) {
+      setAllModeData(Array.isArray(data) ? [...data] : []);
+      loadedPagesRef.current = new Set([1]);
+      maxLoadedPageRef.current = 1;
+      isFetchingMoreRef.current = false;
+      return;
+    }
+
     // agar already loaded page hai to ignore
     if (loadedPagesRef.current.has(cp)) {
       isFetchingMoreRef.current = false;
       return;
     }
 
-    // page 1 aaya => fresh start
     setAllModeData((prev) => {
-      if (cp === 1) return Array.isArray(data) ? data : [];
       const next = Array.isArray(data) ? data : [];
       return prev.concat(next);
     });
@@ -214,7 +223,7 @@ export default function ServiceTablePagination({
   const handlePrev = () => {
     if (serverMode) {
       const curr = serverPagination?.currentPage || 1;
-      if (curr > 1) onServerPageChange?.(curr - 1);
+      if (curr > 1) onServerPageChange?.(curr - 1, true);
     } else {
       if (canPreviousPage) previousPage();
     }
@@ -224,7 +233,7 @@ export default function ServiceTablePagination({
     if (serverMode) {
       const curr = serverPagination?.currentPage || 1;
       const tp = serverPagination?.totalPages || 1;
-      if (curr < tp) onServerPageChange?.(curr + 1);
+      if (curr < tp) onServerPageChange?.(curr + 1, true);
     } else {
       if (canNextPage) nextPage();
     }
@@ -237,13 +246,15 @@ export default function ServiceTablePagination({
       if (serverMode) {
         // ✅ AllMode ON (lazy load). Do NOT request huge pageSize.
         setAllMode(true);
-        setAllModeData([]);
-        loadedPagesRef.current = new Set();
-        maxLoadedPageRef.current = 0;
+        setAllModeData(Array.isArray(data) ? [...data] : []);
+        loadedPagesRef.current = new Set([currentPage || 1]);
+        maxLoadedPageRef.current = currentPage || 1;
         isFetchingMoreRef.current = false;
 
-        // start from page 1
-        onServerPageChange?.(1);
+        // start from page 1 if not already
+        if (currentPage !== 1) {
+          onServerPageChange?.(1, false);
+        }
       } else {
         const total = allRows.length || data.length || 0;
         setPageSize(total || 1);
@@ -263,7 +274,7 @@ export default function ServiceTablePagination({
 
     if (serverMode) {
       onServerPageSizeChange?.(next);
-      onServerPageChange?.(1);
+      onServerPageChange?.(1, true);
     } else {
       setPageSize(next);
       gotoPage(0);
@@ -278,7 +289,7 @@ export default function ServiceTablePagination({
     const el = e.currentTarget;
 
     // near bottom
-    const threshold = 140;
+    const threshold = 160;
     const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
 
     if (!nearBottom) return;
@@ -291,10 +302,21 @@ export default function ServiceTablePagination({
     if (nextPageNum > tp) return;
 
     isFetchingMoreRef.current = true;
-    onServerPageChange(nextPageNum);
+    onServerPageChange(nextPageNum, false);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (onExportAll) {
+      try {
+        const fullData = await onExportAll();
+        if (fullData && Array.isArray(fullData) && fullData.length > 0) {
+          handleExcelDownload(columnsDownload || columns, fullData);
+          return;
+        }
+      } catch (err) {
+        console.error("Export all data failed, fallback to table data:", err);
+      }
+    }
     const exportData = allRows.map((r: any) => r.original);
     handleExcelDownload(columnsDownload || columns, exportData);
   };
@@ -389,9 +411,11 @@ export default function ServiceTablePagination({
                   <th
                     key={column.id}
                     {...column.getHeaderProps(column.getSortByToggleProps())}
-                    className={`px-4 py-3.5 text-left text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider select-none whitespace-nowrap ${
-                      headerClassName || ""
-                    }`}
+                    className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${
+                      colIdx === 0
+                        ? "text-[#4338CA] dark:text-indigo-400"
+                        : "text-slate-600 dark:text-slate-300"
+                    } ${headerClassName || ""}`}
                   >
                     <div className="flex items-center gap-1.5 justify-between">
                       <div className="flex items-center gap-1.5">
@@ -433,20 +457,13 @@ export default function ServiceTablePagination({
                   onDoubleClick={() => onRowDoubleClick?.(row.original)}
                 >
                   {row.cells.map((cell: any, cellIdx: number) => {
-                    const isFirstCol = cellIdx === 0;
                     return (
                       <td
                         key={cell.column.id}
                         {...cell.getCellProps()}
-                        className="px-4 py-3.5 whitespace-nowrap text-[13px] text-slate-600 dark:text-slate-300"
+                        className="px-4 py-3.5 whitespace-nowrap text-[14px] text-slate-600 dark:text-slate-300"
                       >
-                        <div
-                          className={
-                            isFirstCol
-                              ? "font-semibold text-slate-900 dark:text-slate-100"
-                              : "font-normal text-slate-600 dark:text-slate-300"
-                          }
-                        >
+                        <div className="font-normal text-slate-600 dark:text-slate-300 text-[14px]">
                           {cell.render("Cell")}
                         </div>
                       </td>
@@ -518,7 +535,7 @@ export default function ServiceTablePagination({
               disabled={
                 serverMode
                   ? (serverPagination?.currentPage || 1) >=
-                    (serverPagination?.totalPages || 1)
+                  (serverPagination?.totalPages || 1)
                   : !canNextPage
               }
               className="px-3.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
