@@ -46,38 +46,38 @@ export default function Employee_Master_Dashboard() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [selectedRange, selectedLocation, selectedMonth]);
+    }, [selectedRange, selectedLocation, selectedMonth,user?.Comp_Code]);
 
-    const fetchDashboardData = async () => {
-        setIsLoading(true);
-        try {
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_URL}/employee/getDashboardData`,
-                {
-                    range: selectedRange,
-                    location: selectedLocation,
-                    month: selectedMonth,
-                    login_loc: (user as any)?.branch
-                },
-                {
-                    headers: {
-                        compcode: (user as any)?.Comp_Code,
-                        name: user?.name,
-                    }
-                });
-            console.log(response.data, "response.data");
-            if (response.data.success) {
-                setDashboardData(response.data.data);
-            } else {
-                showSideAlert(response.data.message, "warning");
-            }
-        } catch (err) {
-            console.error("Error fetching dashboard data:", err);
-            showSideAlert("Failed to load dashboard data", "warning");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const fetchDashboardData = async () => {
+         
+
+  setIsLoading(true);
+  try {
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/employee/getDashboardData`,
+      {
+        range: selectedRange,
+        location: selectedLocation,
+        month: selectedMonth,
+        login_loc: (user as any)?.branch,
+      },
+      {
+        headers: {
+          compcode: user.Comp_Code,     // ✅ ensure not undefined
+          name: user?.name,
+        },
+      }
+    );
+
+    if (response.data.success) setDashboardData(response.data.data);
+    else showSideAlert(response.data.message, "warning");
+  } catch (err) {
+    console.error("Error fetching dashboard data:", err);
+    showSideAlert("Failed to load dashboard data", "warning");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     const handleFilterChange = (type, value) => {
         if (type === 'location') {
