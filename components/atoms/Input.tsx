@@ -8,6 +8,7 @@ export type InputVariant = "filled" | "outline" | "underline";
 export interface AInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  title?: string;
   error?: string;
   variant?: InputVariant;
   icon?: React.ReactNode;
@@ -22,20 +23,21 @@ export interface AInputProps
 
 const variantStyles: Record<InputVariant, string> = {
   filled:
-    "bg-ink/5 border border-transparent focus:border-accent focus:bg-white rounded-xl " +
-    "dark:bg-white/5 dark:border-transparent dark:focus:border-accent dark:focus:bg-white/10",
+    "bg-slate-100 border border-transparent focus:border-[#4338CA] focus:bg-white rounded-xl " +
+    "dark:bg-slate-800/80 dark:border-transparent dark:focus:border-indigo-400 dark:focus:bg-slate-800",
   outline:
-    "bg-white border border-ink/15 focus:border-accent rounded-xl " +
-    "dark:bg-black dark:border-slate-800 dark:focus:border-accent",
+    "bg-white border border-slate-200 focus:border-[#4338CA] rounded-xl " +
+    "dark:bg-[#0B1220] dark:border-slate-800 dark:focus:border-indigo-400",
   underline:
-    "bg-transparent border-0 border-b-2 border-ink/15 focus:border-accent rounded-none px-0 " +
-    "dark:border-slate-700 dark:focus:border-accent",
+    "bg-transparent border-0 border-b-2 border-slate-200 focus:border-[#4338CA] rounded-none px-0 " +
+    "dark:border-slate-700 dark:focus:border-indigo-400",
 };
 
 const AInput = React.forwardRef<HTMLInputElement, AInputProps>(
   (
     {
       label,
+      title,
       error,
       variant = "outline",
       icon,
@@ -49,15 +51,16 @@ const AInput = React.forwardRef<HTMLInputElement, AInputProps>(
     ref,
   ) => {
     const inputId = id || props.name;
+    const displayLabel = label || title;
 
     return (
       <div className={clsx("w-full", containerClassName)}>
-        {label && (
+        {displayLabel && (
           <label
             htmlFor={inputId}
             className="mb-1 block text-[11px] sm:text-[12px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
           >
-            {label}
+            {displayLabel}
           </label>
         )}
 
@@ -72,7 +75,7 @@ const AInput = React.forwardRef<HTMLInputElement, AInputProps>(
             ref={ref}
             id={inputId}
             className={clsx(
-              "h-11 w-full text-sm text-ink placeholder:text-muted/70 outline-none transition-colors duration-150 px-3",
+              "h-11 w-full text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-colors duration-150 px-3",
               "dark:text-slate-100 dark:placeholder:text-slate-400/70",
               icon && "pl-9",
               variantStyles[variant],
