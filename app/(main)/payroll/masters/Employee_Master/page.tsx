@@ -3042,10 +3042,10 @@ function EmployeeMasterContent() {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col bg-[#F6F7FB] dark:bg-black -mt-4">
+    <div className="min-h-full w-full flex flex-col bg-[#F6F7FB] dark:bg-black pb-20">
       {/* ===== ONE MAIN HEADER (Back + Breadcrumb + Actions) ===== */}
-      <header className=" shrink-0 border-b border-[#E6E8EF] dark:border-[#2A2F3A] ">
-        <div className="  w-full h-14  flex items-center justify-between gap-3">
+      <header className="w-full shrink-0 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F6F7FB] dark:bg-black">
+        <div className="w-full min-h-[56px] py-2 px-2 sm:px-4 flex flex-wrap items-center justify-between gap-2.5">
           {/* Left: Brand (optional) + Back + Breadcrumb */}
           <div className="flex items-center gap-2 min-w-0">
             {/* Optional small brand like screenshot (HS) */}

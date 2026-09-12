@@ -50,6 +50,7 @@ interface Props {
 
   showTopSearch?: boolean;
   showPageSizeInFooter?: boolean;
+  initialPageSize?: number;
 
   searchValue?: string;
   onSearchChange?: (val: string) => void;
@@ -104,6 +105,7 @@ export default function ServiceTablePagination({
   onServerPageSizeChange,
   showTopSearch = false,
   showPageSizeInFooter = false,
+  initialPageSize,
 
   searchValue,
   onSearchChange,
@@ -250,6 +252,8 @@ export default function ServiceTablePagination({
     return [checkboxColumn, ...columns];
   }, [check, columns, isAllSelected, isIndeterminate, internalSelected, tableData, selectValue]);
 
+  const defaultClientPageSize = initialPageSize || 10;
+
   const tableInstance = useTable(
     {
       columns: tableColumns,
@@ -257,7 +261,7 @@ export default function ServiceTablePagination({
       globalFilter: globalFilterFunction,
 
       initialState: {
-        pageSize: serverMode ? serverPagination?.pageSize || 50 : 50,
+        pageSize: serverMode ? serverPagination?.pageSize || initialPageSize || 50 : defaultClientPageSize,
         pageIndex: serverMode
           ? Math.max(0, (serverPagination?.currentPage || 1) - 1)
           : 0,
@@ -265,7 +269,7 @@ export default function ServiceTablePagination({
 
       manualPagination: serverMode,
       pageCount: serverMode ? serverPagination?.totalPages || 1 : undefined,
-      autoResetPage: !serverMode,
+      autoResetPage: false,
     },
     useGlobalFilter,
     useSortBy,
@@ -292,6 +296,13 @@ export default function ServiceTablePagination({
   } = tableInstance as any;
 
   const { globalFilter, pageIndex, pageSize } = state as any;
+
+  // Sync client initialPageSize if provided
+  useEffect(() => {
+    if (!serverMode && initialPageSize && pageSize !== initialPageSize) {
+      setPageSize(initialPageSize);
+    }
+  }, [initialPageSize, serverMode, pageSize, setPageSize]);
 
   // ✅ sync react-table internal page with serverPagination (as before)
   useEffect(() => {
@@ -639,19 +650,19 @@ export default function ServiceTablePagination({
         )}
       </div>
 
-      <div className="flex flex-wrap justify-between items-center px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400 font-normal">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-5 py-3 sm:py-3.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
+        <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal whitespace-nowrap">
           Showing {displayedCount} of {totalRecordsCount} rows
         </div>
 
-        <div className="flex items-center gap-4 ml-auto">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto">
           {showPageSizeInFooter && (
-            <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">
               <span>Show</span>
               <select
                 value={pageSizeSelectValue}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="h-8.5 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm font-semibold focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs cursor-pointer"
+                className="h-8.5 px-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs sm:text-sm font-semibold focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs cursor-pointer"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -663,20 +674,21 @@ export default function ServiceTablePagination({
             </div>
           )}
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap ml-auto sm:ml-0">
             <button
+              type="button"
               onClick={handlePrev}
               disabled={
                 serverMode
                   ? (serverPagination?.currentPage || 1) <= 1
                   : !canPreviousPage
               }
-              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
               Previous
             </button>
 
-            <span className="text-sm text-slate-600 dark:text-slate-400 font-normal px-1">
+            <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal px-1 whitespace-nowrap">
               Page{" "}
               <strong className="font-semibold text-slate-900 dark:text-slate-100">
                 {currentPageLabel}
@@ -688,6 +700,7 @@ export default function ServiceTablePagination({
             </span>
 
             <button
+              type="button"
               onClick={handleNext}
               disabled={
                 serverMode
@@ -695,7 +708,7 @@ export default function ServiceTablePagination({
                   (serverPagination?.totalPages || 1)
                   : !canNextPage
               }
-              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
               Next
             </button>
