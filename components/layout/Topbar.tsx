@@ -42,11 +42,11 @@ export default function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-3 border-b border-line bg-card px-4">
-      <div className="hidden min-w-0 flex-1 items-center gap-1.5 text-[12.5px] text-muted sm:flex">
+      <div className="hidden lg:flex min-w-0 flex-1 items-center gap-1.5 text-[12.5px] text-muted overflow-hidden whitespace-nowrap">
         {crumbs.map((c, i) => (
           <React.Fragment key={i}>
-            {i > 0 && <span className="text-muted/50">/</span>}
-            <span className={i === crumbs.length - 1 ? "font-semibold text-fg" : ""}>
+            {i > 0 && <span className="text-muted/50 shrink-0">/</span>}
+            <span className={`truncate ${i === crumbs.length - 1 ? "font-semibold text-fg" : ""}`}>
               {c}
             </span>
           </React.Fragment>

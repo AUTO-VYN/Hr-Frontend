@@ -78,8 +78,8 @@ export default function EmployeeMiniHeader({
 
   return (
     <div className="bg-white dark:bg-black border-b border-[#E6E8EF] dark:border-[#2A2F3A]">
-      <div className="px-6 py-3  ">
-        <div className="grid grid-cols-12 gap-6 items-start">
+      <div className="px-3 sm:px-6 py-3">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6 items-start">
           {/* LEFT: inputs + record completion */}
           <div className="col-span-12 xl:col-span-10 min-w-0">
             {/* TOP ROW (spacing tuned like screenshot) */}
@@ -87,7 +87,7 @@ export default function EmployeeMiniHeader({
               className="
                 grid items-end min-w-0
                 gap-x-3 sm:gap-x-4 gap-y-3
-                grid-cols-1 md:grid-cols-2
+                grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
                 xl:grid-cols-[minmax(13rem,1.1fr)_minmax(8rem,0.7fr)_auto_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(10rem,1fr)]
               "
             >
@@ -126,7 +126,7 @@ export default function EmployeeMiniHeader({
                   variant="outline"
                   onClick={handleGenerateCode}
                   disabled={SaveDisable}
-                  className="h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-md font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-xs"
+                  className="w-full sm:w-auto h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap shadow-xs"
                 >
                   <RotateCw className="h-3.5 w-3.5" />
                   <span>Generate new code</span>

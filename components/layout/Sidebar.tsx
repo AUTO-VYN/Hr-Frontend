@@ -97,18 +97,29 @@ export default function Sidebar() {
   return (
     <>
       {/* spacer so page content doesn't sit under the fixed rail */}
-      <div style={{ width: RAIL_WIDTH }} className="hidden shrink-0 sm:block" />
+      <div style={{ width: RAIL_WIDTH }} className="shrink-0" />
+
+      {/* backdrop on mobile when sidebar is expanded */}
+      {expanded && (
+        <div
+          onClick={() => {
+            setPinned(false);
+            setHovering(false);
+          }}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-[1px] sm:hidden"
+        />
+      )}
 
       <aside
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
         style={{ width: expanded ? EXPANDED_WIDTH : RAIL_WIDTH }}
-        className="fixed left-0 top-0 z-40 hidden h-screen flex-col overflow-hidden border-r border-line bg-card transition-[width] duration-150 ease-out sm:flex"
+        className="fixed left-0 top-0 z-40 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden border-r border-line bg-card transition-[width] duration-150 ease-out shadow-md sm:shadow-none"
       >
         {/* brand */}
         <div
           className={
-            "flex items-center gap-2.5 px-3 py-4 " +
+            "shrink-0 flex items-center gap-2.5 px-3 py-4 " +
             (expanded ? "flex-row" : "flex-col")
           }
         >
@@ -129,14 +140,14 @@ export default function Sidebar() {
           <button
             onClick={() => setPinned((p) => !p)}
             title="Collapse / expand"
-            className="hidden h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg border border-line text-muted hover:bg-hoverbg hover:text-fg sm:flex"
+            className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg border border-line text-muted hover:bg-hoverbg hover:text-fg"
           >
-            {pinned ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
+            {pinned ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-4 w-4" />}
           </button>
         </div>
 
         {/* modules */}
-        <nav className="flex-1 overflow-y-auto px-2.5 pb-3 light-scroll">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 pb-20 overscroll-contain touch-pan-y light-scroll custom-scrollbar">
           {PAYROLL_MODULES.map((group) => {
             const isOpen = openGroup === group.slug;
             const holdsActive = pathname?.includes(`/payroll/${group.slug}/`);
@@ -152,8 +163,8 @@ export default function Sidebar() {
                     fontWeight: isOpen || holdsActive ? 600 : 500,
                   }}
                 >
-                  <span className="grid h-[18px] w-[18px] shrink-0 place-items-center">
-                    <GroupIcon name={group.icon} className="h-4 w-4" />
+                  <span className="grid h-7 w-7 shrink-0 place-items-center">
+                    <GroupIcon name={group.icon} className="h-6 w-6" />
                   </span>
                   {expanded && (
                     <>
@@ -195,13 +206,13 @@ export default function Sidebar() {
         </nav>
 
         {/* footer: branch + profile */}
-        <div className="flex flex-col gap-1.5 border-t border-line px-2.5 py-3">
+        <div className="shrink-0 flex flex-col gap-1.5 border-t border-line bg-card px-2.5 py-3">
           <button
             type="button"
             onClick={() => setIsMultiLocation((prev) => !prev)}
             className="flex w-full items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-[12.5px] font-medium text-fg hover:bg-hoverbg"
           >
-            <GitBranch className="h-4 w-4 shrink-0 text-muted" />
+            <GitBranch className="h-6 w-6 shrink-0 text-muted" />
 
             {expanded && (
               <span className="min-w-0 flex-1 truncate">
@@ -215,7 +226,7 @@ export default function Sidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left hover:bg-hoverbg">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line bg-brand-soft text-[11px] font-semibold text-brand">
+                <span className="grid h-7.5 w-7.5 shrink-0 place-items-center rounded-full border border-line bg-brand-soft text-[11.5px] font-semibold text-brand">
                   {initials}
                 </span>
 
@@ -225,7 +236,7 @@ export default function Sidebar() {
                       {user?.name}
                     </span>
 
-                    <LogOut className="ml-auto h-4 w-4" />
+                    <LogOut className="ml-auto h-4.5 w-4.5" />
                   </span>
                 )}
               </button>

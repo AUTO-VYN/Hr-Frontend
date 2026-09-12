@@ -987,18 +987,18 @@ export default function SalaryApproverGridPage() {
       {/* ========================================================================= */}
       {/* 5. SALARY INFORMATION */}
       {/* ========================================================================= */}
-       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
+      <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <span className="text-[#4338CA] font-bold text-xl leading-none">
+          <span className="text-[#4338CA] dark:text-indigo-400 font-bold text-xl leading-none">
             <IndianRupee/>
           </span>
-          <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900">
+          <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
             SALARY INFORMATION
           </h3>
         </div>
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-600 dark:text-slate-400">
           Read-only · from Employee Master
         </span>
       </div>
@@ -1007,10 +1007,10 @@ export default function SalaryApproverGridPage() {
         {/* Section 1 */}
         <div className="text-sm sm:text-base">
           {/* Row 1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 border-b border-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">PF effective from</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">PF effective from</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {SalaryInfo[0]?.PF_Date
                   ? new Date(SalaryInfo[0].PF_Date)
                       .toLocaleDateString("en-GB")
@@ -1020,25 +1020,25 @@ export default function SalaryApproverGridPage() {
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">PF no.</span>
-              <span className="font-semibold text-slate-900 font-mono">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">PF no.</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
                 {SalaryInfo[0]?.pfnumber || "—"}
               </span>
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">UAN no.</span>
-              <span className="font-semibold text-slate-900 font-mono">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">UAN no.</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
                 {SalaryInfo[0]?.UAN_No || "—"}
               </span>
             </div>
           </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 border-b border-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">ESIC effective from</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC effective from</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {SalaryInfo[0]?.ESI_Date
                   ? new Date(SalaryInfo[0].ESI_Date)
                       .toLocaleDateString("en-GB")
@@ -1048,39 +1048,39 @@ export default function SalaryApproverGridPage() {
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">ESIC no.</span>
-              <span className="font-semibold text-slate-900 font-mono">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC no.</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
                 {SalaryInfo[0]?.esinumber || "—"}
               </span>
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">LWF</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">LWF</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {SalaryInfo[0]?.LWFNO || "Applicable"}
               </span>
             </div>
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800">
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">Bank name</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Bank name</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {SalaryInfo[0]?.BANKNAME || "—"}
               </span>
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">Account number</span>
-              <span className="font-semibold text-slate-900 font-mono">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Account number</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
                 {SalaryInfo[0]?.BANKACCOUNTNO || "—"}
               </span>
             </div>
 
             <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 font-medium">IFSC code</span>
-              <span className="font-semibold text-slate-900 font-mono">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">IFSC code</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
                 {SalaryInfo[0]?.ifsc_code || "—"}
               </span>
             </div>
@@ -1088,13 +1088,13 @@ export default function SalaryApproverGridPage() {
         </div>
 
         {/* Section 2: Salary Breakup */}
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
-            <h4 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-700">
+          <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+            <h4 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-700 dark:text-slate-200">
               SALARY BREAKUP
             </h4>
-            <span className="font-semibold text-slate-900">
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
               Gross ₹
               {SalaryInfo[0]?.Gross_Salary
                 ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN")
@@ -1103,64 +1103,64 @@ export default function SalaryApproverGridPage() {
           </div>
 
           {/* Rows */}
-          <div className="divide-y divide-slate-200">
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {/* Row 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Emp. basic</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Emp. basic</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Basic ? Number(SalaryInfo[0].Basic).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">HRA</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">HRA</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.HRA ? Number(SalaryInfo[0].HRA).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Conveyance</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Conveyance</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Conveyance ? Number(SalaryInfo[0].Conveyance).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Medical</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Medical</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Medical ? Number(SalaryInfo[0].Medical).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
             </div>
 
             {/* Row 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Other</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Other</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Other ? Number(SalaryInfo[0].Other).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Washing</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Washing</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Washing ? Number(SalaryInfo[0].Washing).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Gross salary</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Gross salary</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   ₹{SalaryInfo[0]?.Gross_Salary ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN") : "0"}
                 </div>
               </div>
 
               <div className="px-6 py-5">
-                <div className="text-slate-600 font-medium text-sm">Annual CTC</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900">
+                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Annual CTC</div>
+                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
                   {SalaryInfo[0]?.Gross_Salary
                     ? `₹${((Number(SalaryInfo[0].Gross_Salary) * 12) / 100000).toFixed(2)} L`
                     : "—"}

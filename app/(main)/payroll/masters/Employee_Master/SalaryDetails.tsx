@@ -1,7 +1,7 @@
 "use client";
 import {
   SlidersHorizontal,
-  IndianRupee ,
+  IndianRupee,
   Landmark,
   Wallet,
   Save,
@@ -35,11 +35,17 @@ import { useToast } from "@/app/hooks/useToast";
 import Einput from "@/components/atoms/Einput";
 
 const SalaryDetails = ({
-  disapleForSalary,
-  isActiveTab,
-  isMandatory,
-  masterData,
-}) => {
+  disapleForSalary = false,
+  isActiveTab = true,
+  isMandatory: isMandatoryProp,
+  masterData = {},
+}: any) => {
+  const isMandatory = (field: string) => {
+    if (typeof isMandatoryProp === "function") {
+      return isMandatoryProp(field);
+    }
+    return false;
+  };
   function showSideAlert(message, type) {
     const Toast = Swal.mixin({
       toast: true,
@@ -1357,8 +1363,8 @@ const SalaryDetails = ({
     } catch (error) {
       showSideAlert(
         error?.response?.data?.error ||
-          error?.response?.data?.error?.detail?.message ||
-          "Both verification APIs failed.",
+        error?.response?.data?.error?.detail?.message ||
+        "Both verification APIs failed.",
         "error",
       );
     } finally {
@@ -1636,7 +1642,7 @@ const SalaryDetails = ({
   const fieldGridClass =
     "grid grid-cols-1 md:grid-cols-2 gap-x-4 fluid-gap-md gap-y-4";
   const pillBtnClass =
-    "h-9 px-4 rounded-full text-s font-semibold border border-[#D0D5DD] dark:border-[#2A2F3A] bg-white dark:bg-black text-[#344054] dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
+    "h-9 px-4 rounded-full text-sm font-semibold border border-[#D0D5DD] dark:border-[#2A2F3A] bg-white dark:bg-black text-slate-900 dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
   const pillBtnPrimaryClass =
     "h-9 px-4 rounded-full text-s font-semibold bg-[#4F46E5] text-white hover:bg-[#433df0] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
 
@@ -1880,7 +1886,7 @@ const SalaryDetails = ({
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
-                    variant="save"
+                    variant="outline"
                     className={pillBtnClass}
                     onClick={() => OutServiceView(formData.EmpMst.EMPCODE)}
                     disabled={disapleForSalary}
@@ -2081,9 +2087,8 @@ const SalaryDetails = ({
                 {/* Approval Status */}
                 <div className="mt-5 flex text-left justify-center">
                   <p
-                    className={`text-[15px] font-semibold ${
-                      salarystatus == 2 ? "text-save" : "text-exit"
-                    }`}
+                    className={`text-[15px] font-semibold ${salarystatus == 2 ? "text-save" : "text-exit"
+                      }`}
                   >
                     {salaryMessage}
                   </p>
@@ -2191,7 +2196,7 @@ const SalaryDetails = ({
                           formData?.EmpMst.BANKACCOUNTNO &&
                           formData?.EmpMst.Cnf_BANKACCOUNTNO &&
                           formData?.EmpMst.BANKACCOUNTNO !==
-                            formData?.EmpMst.Cnf_BANKACCOUNTNO
+                          formData?.EmpMst.Cnf_BANKACCOUNTNO
                         ) {
                           e.preventDefault();
 
@@ -2215,11 +2220,10 @@ const SalaryDetails = ({
                       }
                       className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold
                     flex items-center justify-center gap-1.5 transition
-                    ${ 
-                  accountButtonVariant === "update"
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
-        }
+                    ${accountButtonVariant === "update"
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+                        }
                  disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {IsVerifyAccountApi ? (
@@ -2260,11 +2264,10 @@ const SalaryDetails = ({
                         (IsVerifyIFSCApi || ViewIFSCData) && isBankLocked
                       }
                       className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition 
-                ${
-                  IFSCButtonVariant === "update"
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
-                }
+                ${IFSCButtonVariant === "update"
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+                        }
                 disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {IsVerifyIFSCApi ? (
@@ -2476,9 +2479,9 @@ const SalaryDetails = ({
         </Dialog>
 
         {/* Update Salary Details Dialog */}
-    <Dialog open={isDialogOpen2} onOpenChange={setIsDialogOpen2}>
-  <DialogContent
-    className="
+        <Dialog open={isDialogOpen2} onOpenChange={setIsDialogOpen2}>
+          <DialogContent
+            className="
       w-[95vw] max-w-[760px]
       max-h-[90vh] overflow-y-auto
       p-0 overflow-hidden
@@ -2486,482 +2489,417 @@ const SalaryDetails = ({
       border border-slate-200 dark:border-slate-800
       rounded-2xl
     "
-  >
-    <DialogHeader className="p-0">
-      {/* ===== HEADER (like screenshot) ===== */}
-      <div className="flex items-start justify-between gap-4 px-6 py-4 bg-gradient-to-b from-[#0E2A57] to-[#132A55] text-white">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 grid h-10 w-10 place-items-center rounded-xl bg-[#2e4069] ring-1 ring-white/10">
-            <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-  <IndianRupee className="h-8 w-8" />
-</span>
-          </div>
+          >
+            <DialogHeader className="p-0">
+              {/* ===== HEADER (like screenshot) ===== */}
+              <div className="flex items-start justify-between gap-4 px-6 py-4 bg-gradient-to-b from-[#0E2A57] to-[#132A55] text-white">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 grid h-10 w-10 place-items-center rounded-xl bg-[#2e4069] ring-1 ring-white/10">
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                      <IndianRupee className="h-8 w-8" />
+                    </span>
+                  </div>
 
-          <div className="min-w-0">
-            <DialogTitle className="text-[14px] font-semibold tracking-[0.12em] uppercase text-white">
-              Update Salary Details
-            </DialogTitle>
+                  <div className="min-w-0">
+                    <DialogTitle className="text-[14px] font-semibold tracking-[0.12em] uppercase text-white">
+                      Update Salary Details
+                    </DialogTitle>
 
-            <div className="mt-1 text-[12px] text-white/70 truncate">
-              {(formData?.EmpMst?.EMPFIRSTNAME || "").toString()}{" "}
-              {(formData?.EmpMst?.EMPLASTNAME || "").toString()}
-              {formData?.EmpMst?.EMPCODE
-                ? ` · Emp code ${formData.EmpMst.EMPCODE}`
-                : ""}
-              {formData?.EmpMst?.DIVISION
-                ? ` · ${formData.EmpMst.DIVISION}`
-                : ""}
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsDialogOpen2(false)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 ring-1 ring-white/10"
-          aria-label="Close"
-        >
-          <span className="text-lg leading-none">×</span>
-        </button>
-      </div>
-
-      <DialogDescription className="p-0">
-        <div className="px-6 py-5">
-          {Error ? (
-            <div className="mb-4 text-sm font-medium text-red-600">
-              {Error}
-            </div>
-          ) : null}
-
-          {/* ===== BASIS ===== */}
-          <div className="pt-1">
-            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-              BASIS
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SelectSearch
-                title="Salary Type"
-                name="Salary_Type"
-                options={SLTY}
-                selectedValue={formData1?.Salary_Type}
-                handleInputChange={handleInputChange}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="date"
-                title="Effective From"
-                ShortName={true}
-                name="Effective_date"
-                handleInputChange={handleInputChange}
-                value={formData1?.Effective_date}
-                disabled={isDailyWagesActive}
-              />
-
-              {(salaryType === "1" || formData1?.Salary_Type === "1") && (
-                <Einput
-                  type="text"
-                  title="Proposed salary"
-                  name="Proposed_Salary"
-                  handleInputChange={handleInputChange}
-                  value={formData1?.Proposed_Salary}
-                  className="text-right"
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
-
-          {/* ===== EARNINGS — MONTHLY ===== */}
-          <div>
-            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-              EARNINGS — MONTHLY
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <Einput
-                type="number"
-                title="Emp Basic"
-                name="Basic"
-                handleInputChange={handleInputChange}
-                value={formData1?.Basic?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="HRA"
-                name="HRA"
-                ShortName={true}
-                handleInputChange={handleInputChange}
-                value={formData1?.HRA?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Conveyance"
-                name="Conveyance"
-                handleInputChange={handleInputChange}
-                value={formData1?.Conveyance?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Medical"
-                name="Medical"
-                handleInputChange={handleInputChange}
-                value={formData1?.Medical?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="DA"
-                name="Other"
-                ShortName={true}
-                handleInputChange={handleInputChange}
-                value={formData1?.Other?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Washing"
-                name="Washing"
-                handleInputChange={handleInputChange}
-                value={formData1?.Washing?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Uniform Amt"
-                name="Uniform"
-                handleInputChange={handleInputChange}
-                value={formData1?.Uniform?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Monthly Gross"
-                name="Gross_Salary"
-                handleInputChange={handleInputChange}
-                value={formData1?.Gross_Salary?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-            </div>
-          </div>
-
-          <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
-
-          {/* ===== STATUTORY ===== */}
-          <div>
-            <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-              STATUTORY
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Einput
-                type="number"
-                title="PF Salary Limit"
-                name="PFSALARY_LIMIT"
-                ShortName={true}
-                handleInputChange={handleInputChange}
-                value={formData1?.PFSALARY_LIMIT?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive}
-              />
-
-              <Einput
-                type="number"
-                title="Bonus (annual)"
-                name="BONUS_AMOUNT"
-                handleInputChange={handleInputChange}
-                value={formData1?.BONUS_AMOUNT?.toString()}
-                className="text-right"
-                disabled={isDailyWagesActive || GratuityCompKeyData}
-              />
-
-              {GratuityCompKeyData && (
-                <Einput
-                  type="number"
-                  title="Gratuity"
-                  name="Gratuity"
-                  handleInputChange={handleInputChange}
-                  value={formData1?.Gratuity?.toString()}
-                  className="text-right"
-                  disabled={true}
-                />
-              )}
-
-              {DalyWagescompKeyData && (
-                <Einput
-                  type="number"
-                  title="Daily Wages"
-                  name="Daily_Wages"
-                  handleInputChange={handleInputChange}
-                  value={formData1?.Daily_Wages?.toString()}
-                  className="text-right"
-                  disabled={isSalaryBreakupActive}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* ===== SUMMARY STRIP (like screenshot) ===== */}
-          <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F3F6FF] dark:bg-[#0F1A2D] p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-                  MONTHLY GROSS
+                    <div className="mt-1 text-[12px] text-white/70 truncate">
+                      {(formData?.EmpMst?.EMPFIRSTNAME || "").toString()}{" "}
+                      {(formData?.EmpMst?.EMPLASTNAME || "").toString()}
+                      {formData?.EmpMst?.EMPCODE
+                        ? ` · Emp code ${formData.EmpMst.EMPCODE}`
+                        : ""}
+                      {formData?.EmpMst?.DIVISION
+                        ? ` · ${formData.EmpMst.DIVISION}`
+                        : ""}
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
-                  ₹{Number(formData1?.Gross_Salary || 0).toLocaleString("en-IN")}
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDialogOpen2(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 ring-1 ring-white/10"
+                  aria-label="Close"
+                >
+                  <span className="text-lg leading-none">×</span>
+                </button>
               </div>
 
-              <div>
-                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-                  ANNUAL GROSS
-                </div>
-                <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
-                  ₹{Number(formData1?.ANNUAL_CTC || 0).toLocaleString("en-IN")}
-                </div>
-              </div>
+              <DialogDescription className="p-0">
+                <div className="px-6 py-5">
+                  {Error ? (
+                    <div className="mb-4 text-sm font-medium text-red-600">
+                      {Error}
+                    </div>
+                  ) : null}
 
-              <div>
-                <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
-                  TOTAL CTC
-                </div>
-                <div className="mt-1 text-[18px] font-bold text-indigo-700 dark:text-indigo-300">
-                  ₹{Number(formData1?.CTC || 0).toLocaleString("en-IN")}
-                </div>
-              </div>
-            </div>
-          </div>
+                  {/* ===== BASIS ===== */}
+                  <div className="pt-1">
+                    <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                      BASIS
+                    </div>
 
-          {/* FOOTER (note + actions) */}
-          <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Annual gross + bonus = CTC. Values auto-calculate as you type.
-            </div>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <SelectSearch
+                        title="Salary Type"
+                        name="Salary_Type"
+                        options={SLTY}
+                        selectedValue={formData1?.Salary_Type}
+                        handleInputChange={handleInputChange}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
 
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsDialogOpen2(false)}
-                className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50
-                           dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 dark:hover:bg-[#0F1A2D]"
-              >
-                Cancel
-              </button>
+                      <Einput
+                        type="date"
+                        title="Effective From"
+                        ShortName={true}
+                        name="Effective_date"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Effective_date}
+                        disabled={isDailyWagesActive}
+                      />
 
-              <Button
-                className="h-10 rounded-xl px-5 bg-[#4F46E5] text-white font-large hover:bg-[#433df0] dark:bg-[#4F46E5] dark:hover:bg-[#433df0]"
-                variant={"save"}
-                onClick={saveData}
-              >
-                Save Salary Details
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DialogDescription>
-    </DialogHeader>
-  </DialogContent>
-</Dialog>
-        {/* See History Dialog */}
-        <Dialog open={isDialogOpen3} onOpenChange={setIsDialogOpen3}>
-          <DialogContent className="w-full max-w-screen-lg h-[650px] overflow-y-auto dark:bg-primaryop bg-off">
-            <DialogHeader className="rounded-t h-[60px] bg-header dark:bg-black px-6 py-2 border dark:border-borderColor-dark">
-              <DialogTitle className="text-lg font-semibold tracking-wide mt-2 text-white">
-                EMPLOYEE SALARY REVIEW
-              </DialogTitle>
-            </DialogHeader>
-            <DialogDescription className="w-full max-w-screen-lg h-[500px] gap-0 dark:bg-input overflow-y-auto">
-              <div className="container">
-                <div className="rounded">
-                  <div
-                    className="grid grid-cols-1 md:grid-cols-12 gap-2 dark:bg-primary dark:bg-opacity-10 pb-2 rounded p-2"
-                    id="pdfContent"
-                  >
-                    <div className="md:col-span-12">
-                      <div className="shadow rounded uppercase whitespace-nowrap text-ellipsis">
-                        <div className="bg-white dark:bg-primary dark:bg-opacity-10 col-span-12 h-9 flex items-center justify-between rounded px-3 font-medium shadow mt-1">
-                          {SalaryData.length > 0 && (
-                            <p className="font-bold text-gray-500 dark:text-white whitespace-nowrap text-ellipsis">
-                              {SalaryData[0].EMPLOYEEDESIGNATION} -{" "}
-                              {SalaryData[0].DEPARTMENT}{" "}
-                              {SalaryData[0].EMPLOYEENAME}
-                            </p>
-                          )}
+                      {(salaryType === "1" || formData1?.Salary_Type === "1") && (
+                        <Einput
+                          type="text"
+                          title="Proposed salary"
+                          name="Proposed_Salary"
+                          handleInputChange={handleInputChange}
+                          value={formData1?.Proposed_Salary}
+                          className="text-right"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
+
+                  {/* ===== EARNINGS — MONTHLY ===== */}
+                  <div>
+                    <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                      EARNINGS — MONTHLY
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                      <Einput
+                        type="number"
+                        title="Emp Basic"
+                        name="Basic"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Basic?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="HRA"
+                        name="HRA"
+                        ShortName={true}
+                        handleInputChange={handleInputChange}
+                        value={formData1?.HRA?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Conveyance"
+                        name="Conveyance"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Conveyance?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Medical"
+                        name="Medical"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Medical?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="DA"
+                        name="Other"
+                        ShortName={true}
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Other?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Washing"
+                        name="Washing"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Washing?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Uniform Amt"
+                        name="Uniform"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Uniform?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Monthly Gross"
+                        name="Gross_Salary"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.Gross_Salary?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="my-5 h-px bg-slate-200 dark:bg-slate-800" />
+
+                  {/* ===== STATUTORY ===== */}
+                  <div>
+                    <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                      STATUTORY
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Einput
+                        type="number"
+                        title="PF Salary Limit"
+                        name="PFSALARY_LIMIT"
+                        ShortName={true}
+                        handleInputChange={handleInputChange}
+                        value={formData1?.PFSALARY_LIMIT?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive}
+                      />
+
+                      <Einput
+                        type="number"
+                        title="Bonus (annual)"
+                        name="BONUS_AMOUNT"
+                        handleInputChange={handleInputChange}
+                        value={formData1?.BONUS_AMOUNT?.toString()}
+                        className="text-right"
+                        disabled={isDailyWagesActive || GratuityCompKeyData}
+                      />
+
+                      {GratuityCompKeyData && (
+                        <Einput
+                          type="number"
+                          title="Gratuity"
+                          name="Gratuity"
+                          handleInputChange={handleInputChange}
+                          value={formData1?.Gratuity?.toString()}
+                          className="text-right"
+                          disabled={true}
+                        />
+                      )}
+
+                      {DalyWagescompKeyData && (
+                        <Einput
+                          type="number"
+                          title="Daily Wages"
+                          name="Daily_Wages"
+                          handleInputChange={handleInputChange}
+                          value={formData1?.Daily_Wages?.toString()}
+                          className="text-right"
+                          disabled={isSalaryBreakupActive}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ===== SUMMARY STRIP (like screenshot) ===== */}
+                  <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F3F6FF] dark:bg-[#0F1A2D] p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                          MONTHLY GROSS
+                        </div>
+                        <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
+                          ₹{Number(formData1?.Gross_Salary || 0).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                          ANNUAL GROSS
+                        </div>
+                        <div className="mt-1 text-[18px] font-bold text-slate-900 dark:text-slate-100">
+                          ₹{Number(formData1?.ANNUAL_CTC || 0).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                          TOTAL CTC
+                        </div>
+                        <div className="mt-1 text-[18px] font-bold text-indigo-700 dark:text-indigo-300">
+                          ₹{Number(formData1?.CTC || 0).toLocaleString("en-IN")}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 px-3 mt-2">
-                    {SalaryData.map((item, index) => (
-                      <div
-                        key={index}
-                        className="relative bg-gradient-to-r from-purple-500 via-pink-500 to-red-500
-                          text-black dark:text-white p-4 rounded shadow transition-transform
-                          duration-300 hover:shadow bg-white dark:bg-primary dark:bg-opacity-10
-                          hover:translate-y-[-3px]"
+                  {/* FOOTER (note + actions) */}
+                  <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Annual gross + bonus = CTC. Values auto-calculate as you type.
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsDialogOpen2(false)}
+                        className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50
+                           dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 dark:hover:bg-[#0F1A2D]"
                       >
-                        <div className="relative">
-                          <FaEllipsisH
-                            className="absolute top-2 right-2 text-black dark:text-white"
-                            size={30}
-                          />
-                        </div>
+                        Cancel
+                      </button>
 
-                        <h3 className="text-lg font-extrabold mb-3 uppercase whitespace-nowrap text-ellipsis">
-                          {item.STATUS === "PENDING" ? (
-                            <span className="text-yellow-500 font-bold">
-                              PENDING
-                            </span>
-                          ) : index < SalaryData.length - 1 ? (
-                            <>
-                              {new Date(item.Effective_date).toLocaleDateString(
-                                "en-GB",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )}{" "}
-                              -{" "}
-                              {new Date(
-                                SalaryData[index + 1].Effective_date,
-                              ).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })}
-                            </>
-                          ) : (
-                            <>
-                              {new Date(item.Effective_date).toLocaleDateString(
-                                "en-GB",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )}{" "}
-                              - Ongoing
-                            </>
-                          )}
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-                          <p className="text-sm">
-                            <span className="font-semibold">Emp Code:</span>{" "}
-                            {item.Emp_Code}
-                          </p>
-
-                          {item.Daily_Wages ? (
-                            <>
-                              <p
-                                className={`text-sm p-1 border ${
-                                  item.STATUS === "PENDING"
-                                    ? "border-yellow"
-                                    : "border-green"
-                                }`}
-                              >
-                                <span className="font-semibold">
-                                  Daily Wages:
-                                </span>{" "}
-                                {item.Daily_Wages}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <p
-                                className={`text-sm p-1 border ${
-                                  item.STATUS === "PENDING"
-                                    ? "border-yellow"
-                                    : "border-green"
-                                }`}
-                              >
-                                <span className="font-semibold">
-                                  Gross Salary:
-                                </span>{" "}
-                                {item.Gross_Salary}
-                              </p>
-
-                              <p className="text-sm">
-                                <span className="font-semibold">Basic:</span>{" "}
-                                {item.Basic}
-                              </p>
-                              <p className="text-sm">
-                                <span className="font-semibold">HRA:</span>{" "}
-                                {item.HRA}
-                              </p>
-
-                              <p className="text-sm">
-                                <span className="font-semibold">
-                                  Conveyance:
-                                </span>{" "}
-                                {item.Conveyance}
-                              </p>
-                              <p className="text-sm">
-                                <span className="font-semibold">
-                                  Washing Allowance:
-                                </span>{" "}
-                                {item.Washing}
-                              </p>
-                              <p className="text-sm">
-                                <span className="font-semibold">Medical:</span>{" "}
-                                {item.Medical}
-                              </p>
-                              <p className="text-sm">
-                                <span className="font-semibold">Other:</span>{" "}
-                                {item.Other}
-                              </p>
-                            </>
-                          )}
-
-                          <p className="text-sm">
-                            <span className="font-semibold">
-                              Modified User:
-                            </span>{" "}
-                            {item.MODIFIED_USER}
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-semibold">
-                              Modified Date:
-                            </span>{" "}
-                            {item.MOD_DATE
-                              ? item.MOD_DATE.split("-").reverse().join("-")
-                              : ""}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 text-center font-bold text-lg text-black dark:text-white">
-                    TOTAL ROWS: {SalaryData.length}
+                      <Button
+                        className="h-10 rounded-xl px-5 bg-[#4F46E5] text-white font-large hover:bg-[#433df0] dark:bg-[#4F46E5] dark:hover:bg-[#433df0]"
+                        variant={"save"}
+                        onClick={saveData}
+                      >
+                        Save Salary Details
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        {/* See History Dialog */}
+        <Dialog open={isDialogOpen3} onOpenChange={setIsDialogOpen3}>
+          <DialogContent className="w-full max-w-5xl max-h-[88vh] overflow-y-auto rounded-2xl p-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] shadow-2xl">
+            <div className="sticky top-0 z-10 bg-slate-900 text-white px-7 py-5 rounded-t-2xl flex items-center justify-between border-b border-slate-800">
+              <div>
+                <h2 className="text-xl font-bold tracking-wide uppercase">
+                  EMPLOYEE SALARY REVIEW
+                </h2>
+                {SalaryData.length > 0 && (
+                  <p className="text-sm text-slate-300 font-medium mt-1">
+                    {SalaryData[0].EMPLOYEEDESIGNATION} · {SalaryData[0].DEPARTMENT} ·{" "}
+                    {SalaryData[0].EMPLOYEENAME} ({SalaryData[0].Emp_Code})
+                  </p>
+                )}
               </div>
-            </DialogDescription>
+            </div>
+
+            <div className="p-7 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {SalaryData.map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-slate-50/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                      <span className="text-sm sm:text-[15px] font-bold text-[#4338CA] dark:text-indigo-400 uppercase tracking-wide">
+                        {item.STATUS === "PENDING" ? (
+                          <span className="text-amber-500 font-bold">PENDING</span>
+                        ) : index < SalaryData.length - 1 ? (
+                          <>
+                            {new Date(item.Effective_date).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}{" "}
+                            —{" "}
+                            {new Date(
+                              SalaryData[index + 1].Effective_date
+                            ).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </>
+                        ) : (
+                          <>
+                            {new Date(item.Effective_date).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}{" "}
+                            — Ongoing
+                          </>
+                        )}
+                      </span>
+                      <span className="px-3.5 py-1.5 rounded-full text-sm font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-2xs">
+                        {item.Daily_Wages
+                          ? `Daily Wages: ₹${Number(item.Daily_Wages).toLocaleString("en-IN")}`
+                          : `Gross: ₹${item.Gross_Salary ? Number(item.Gross_Salary).toLocaleString("en-IN") : "0"}`}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      {item.Daily_Wages ? (
+                        <>
+                          <div className="col-span-2 text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Daily Wages: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{Number(item.Daily_Wages).toLocaleString("en-IN")}</strong>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Basic: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.Basic ? Number(item.Basic).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            HRA: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.HRA ? Number(item.HRA).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Conveyance: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.Conveyance ? Number(item.Conveyance).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Medical: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.Medical ? Number(item.Medical).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Washing: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.Washing ? Number(item.Washing).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                            Other: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">₹{item.Other ? Number(item.Other).toLocaleString("en-IN") : "0"}</strong>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium flex flex-wrap justify-between items-center">
+                      <span>User: <strong className="text-slate-700 dark:text-slate-200 font-semibold">{item.MODIFIED_USER || "—"}</strong></span>
+                      <span>Date: <strong className="text-slate-700 dark:text-slate-200 font-semibold font-mono">{item.MOD_DATE ? item.MOD_DATE.split("-").reverse().join("-") : "—"}</strong></span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {SalaryData.length === 0 && (
+                <div className="text-center py-12 text-base text-slate-400 font-medium">
+                  No past salary revision records found.
+                </div>
+              )}
+
+              {SalaryData.length > 0 && (
+                <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 text-center font-bold text-sm text-slate-600 dark:text-slate-300">
+                  Total Records: {SalaryData.length}
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 

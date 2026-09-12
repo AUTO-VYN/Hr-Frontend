@@ -1132,14 +1132,14 @@ export default function SalaryApproverGridPage() {
 
       {/* 1. History Modal Dialog */}
       <Dialog open={isDialogOpen1} onOpenChange={setIsDialogOpen1}>
-        <DialogContent className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl p-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220]">
-          <div className="sticky top-0 z-10 bg-slate-900 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+        <DialogContent className="w-full max-w-5xl max-h-[88vh] overflow-y-auto rounded-2xl p-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] shadow-2xl">
+          <div className="sticky top-0 z-10 bg-slate-900 text-white px-7 py-5 rounded-t-2xl flex items-center justify-between border-b border-slate-800">
             <div>
-              <h2 className="text-lg font-bold tracking-wide uppercase">
+              <h2 className="text-xl font-bold tracking-wide uppercase">
                 EMPLOYEE SALARY REVIEW
               </h2>
               {SalaryData.length > 0 && (
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="text-sm text-slate-300 font-medium mt-1">
                   {SalaryData[0].EMPLOYEEDESIGNATION} · {SalaryData[0].DEPARTMENT} ·{" "}
                   {SalaryData[0].EMPLOYEENAME} ({SalaryData[0].Emp_Code})
                 </p>
@@ -1147,15 +1147,15 @@ export default function SalaryApproverGridPage() {
             </div>
           </div>
 
-          <div className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-7 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {SalaryData.map((item, index) => (
                 <div
                   key={index}
-                  className="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4.5 space-y-3 hover:shadow-md transition-shadow"
+                  className="bg-slate-50/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 hover:shadow-lg transition-all"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2.5">
-                    <span className="text-xs font-bold text-[#4338CA] dark:text-indigo-400 uppercase tracking-wide">
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <span className="text-sm sm:text-[15px] font-bold text-[#4338CA] dark:text-indigo-400 uppercase tracking-wide">
                       {index < SalaryData.length - 1 ? (
                         <>
                           {new Date(item.Effective_date).toLocaleDateString("en-GB", {
@@ -1183,30 +1183,30 @@ export default function SalaryApproverGridPage() {
                         </>
                       )}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                    <span className="px-3.5 py-1.5 rounded-full text-sm font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-2xs">
                       Gross: {formatCurrency(item.Gross_Salary)}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                    <div className="text-slate-500">Basic: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.Basic)}</strong></div>
-                    <div className="text-slate-500">HRA: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.HRA)}</strong></div>
-                    <div className="text-slate-500">Conveyance: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.Conveyance)}</strong></div>
-                    <div className="text-slate-500">Medical: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.Medical)}</strong></div>
-                    <div className="text-slate-500">Washing: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.Washing)}</strong></div>
-                    <div className="text-slate-500">Other: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(item.Other)}</strong></div>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Basic: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.Basic)}</strong></div>
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">HRA: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.HRA)}</strong></div>
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Conveyance: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.Conveyance)}</strong></div>
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Medical: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.Medical)}</strong></div>
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Washing: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.Washing)}</strong></div>
+                    <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Other: <strong className="text-slate-900 dark:text-slate-100 font-bold font-mono text-base ml-1">{formatCurrency(item.Other)}</strong></div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-400 flex flex-wrap justify-between">
-                    <span>User: {item.MODIFIED_USER || "—"}</span>
-                    <span>Date: {item.MOD_DATE ? item.MOD_DATE.split("-").reverse().join("-") : "—"}</span>
+                  <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium flex flex-wrap justify-between items-center">
+                    <span>User: <strong className="text-slate-700 dark:text-slate-200 font-semibold">{item.MODIFIED_USER || "—"}</strong></span>
+                    <span>Date: <strong className="text-slate-700 dark:text-slate-200 font-semibold font-mono">{item.MOD_DATE ? item.MOD_DATE.split("-").reverse().join("-") : "—"}</strong></span>
                   </div>
                 </div>
               ))}
             </div>
 
             {SalaryData.length === 0 && (
-              <div className="text-center py-12 text-sm text-slate-400">
+              <div className="text-center py-12 text-base text-slate-400 font-medium">
                 No past salary revision records found.
               </div>
             )}
