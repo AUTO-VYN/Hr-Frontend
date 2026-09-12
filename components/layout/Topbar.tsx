@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { PAYROLL_MODULES } from "@/constant/modules";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -14,6 +14,10 @@ export default function Topbar() {
   const user = useCurrentUser() as any;
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+
+  const toggleMobileSidebar = () => {
+    window.dispatchEvent(new CustomEvent("toggle-mobile-sidebar"));
+  };
 
   const crumbs = useMemo(() => {
     if (!pathname || pathname === "/dashboard") return ["Home"];
@@ -41,7 +45,17 @@ export default function Topbar() {
   }, [q]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-3 border-b border-line bg-card px-4">
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-2.5 sm:gap-3 border-b border-line bg-card px-3 sm:px-4">
+      {/* Mobile Menu Hamburger Button */}
+      <button
+        type="button"
+        onClick={toggleMobileSidebar}
+        className="flex sm:hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-card text-muted hover:bg-hoverbg hover:text-fg shadow-2xs"
+        aria-label="Toggle navigation menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       <div className="hidden lg:flex min-w-0 flex-1 items-center gap-1.5 text-[12.5px] text-muted overflow-hidden whitespace-nowrap">
         {crumbs.map((c, i) => (
           <React.Fragment key={i}>
