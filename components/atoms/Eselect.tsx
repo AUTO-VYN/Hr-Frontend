@@ -268,10 +268,10 @@ const Eselect = ({
     mb === undefined
       ? undefined
       : typeof mb === "number"
-      ? `${mb}px`
-      : /^\d+$/.test(String(mb))
-      ? `${mb}px`
-      : String(mb);
+        ? `${mb}px`
+        : /^\d+$/.test(String(mb))
+          ? `${mb}px`
+          : String(mb);
 
   return (
     <div
@@ -325,67 +325,67 @@ const Eselect = ({
       {/* ✅ dropdown (PORTAL) */}
       {open && !disabled && mounted && typeof document !== "undefined"
         ? createPortal(
-            <div
-              ref={dropdownRef}
-              className={cn(
-                "fixed z-[99999] rounded-xl border border-slate-200 dark:border-slate-800",
-                "bg-white dark:bg-black shadow-lg overflow-hidden"
-              )}
-              style={{ top: pos.top, left: pos.left, width: `${pos.width}px` }}
-            >
-              {/* search */}
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
-                <AiOutlineSearch size={16} className="text-slate-400" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Search..."
-                  className={cn(
-                    "h-9 w-full rounded-lg bg-slate-50 dark:bg-slate-900/30 px-3 text-[13px] outline-none",
-                    "text-slate-900 dark:text-white placeholder:text-slate-400",
-                    "focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-950/40"
-                  )}
-                  onKeyDown={onKeyDown}
-                />
-              </div>
-
-              {/* list */}
-              <ul
-                ref={listRef}
+          <div
+            ref={dropdownRef}
+            className={cn(
+              "fixed z-[99999] rounded-xl border border-slate-200 dark:border-slate-800",
+              "bg-white dark:bg-black shadow-lg overflow-hidden"
+            )}
+            style={{ top: pos.top, left: pos.left, width: `${pos.width}px` }}
+          >
+            {/* search */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+              <AiOutlineSearch size={16} className="text-slate-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Search..."
                 className={cn(
-                  "max-h-60 overflow-y-auto py-1",
-                  "[scrollbar-width:thin] [scrollbar-color:rgb(203_213_225)_transparent]",
-                  "[&::-webkit-scrollbar]:w-[6px]",
-                  "[&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full",
-                  "dark:[&::-webkit-scrollbar-thumb]:bg-slate-700/60"
+                  "h-9 w-full rounded-lg bg-slate-50 dark:bg-slate-900/30 px-3 text-[13px] outline-none",
+                  "text-slate-900 dark:text-white placeholder:text-slate-400",
+                  "focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-950/40"
                 )}
-                onMouseDown={(e) => e.preventDefault()}
-              >
-                {filteredOptions.map((opt, index) => (
-                  <li
-                    key={String(opt.value)}
-                    ref={focusedIndex === index ? focusedItemRef : null}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleSelect(opt)}
-                    className={cn(
-                      "px-3 py-2 text-[13px] cursor-pointer",
-                      "text-slate-700 dark:text-slate-200",
-                      "hover:bg-slate-50 dark:hover:bg-white/5",
-                      focusedIndex === index && "bg-slate-50 dark:bg-white/5"
-                    )}
-                  >
-                    {opt.label}
-                  </li>
-                ))}
-                {!filteredOptions.length ? (
-                  <li className="px-3 py-2 text-[13px] text-slate-400">No results</li>
-                ) : null}
-              </ul>
-            </div>,
-            document.body
-          )
+                onKeyDown={onKeyDown}
+              />
+            </div>
+
+            {/* list */}
+            <ul
+              ref={listRef}
+              className={cn(
+                "max-h-60 overflow-y-auto py-1",
+                "[scrollbar-width:thin] [scrollbar-color:rgb(203_213_225)_transparent]",
+                "[&::-webkit-scrollbar]:w-[6px]",
+                "[&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full",
+                "dark:[&::-webkit-scrollbar-thumb]:bg-slate-700/60"
+              )}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {filteredOptions.map((opt, index) => (
+                <li
+                  key={String(opt.value)}
+                  ref={focusedIndex === index ? focusedItemRef : null}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSelect(opt)}
+                  className={cn(
+                    "px-3 py-2 text-[13px] cursor-pointer",
+                    "text-slate-700 dark:text-slate-200",
+                    "hover:bg-slate-50 dark:hover:bg-white/5",
+                    focusedIndex === index && "bg-slate-50 dark:bg-white/5"
+                  )}
+                >
+                  {opt.label}
+                </li>
+              ))}
+              {!filteredOptions.length ? (
+                <li className="px-3 py-2 text-[13px] text-slate-400">No results</li>
+              ) : null}
+            </ul>
+          </div>,
+          document.body
+        )
         : null}
     </div>
   );

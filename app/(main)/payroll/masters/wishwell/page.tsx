@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Check,
   Send,
+  ArrowLeft,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import SkeletonLoader from "@/components/atoms/SkeletonLoader";
@@ -730,6 +731,16 @@ export default function WishWellPage() {
             {counts["2"] || 0}
           </span>
         </AButton>
+
+        <AButton
+            variant="outline"
+            size="md"
+            className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => history.back()}
+          >
+            Back
+          </AButton>
       </div>
 
       {/* 3. Main Grid Layout (Left Table + Right Widgets) */}

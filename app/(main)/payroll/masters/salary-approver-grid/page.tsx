@@ -13,6 +13,7 @@ import {
   X,
   Check,
   Download,
+  ArrowLeft,
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -28,6 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import AButton from "@/components/atoms/Button";
+import Button from "@/components/ui/button";
 
 function getCurrentDate(monthsBack = 0) {
   const today = new Date();
@@ -738,11 +741,10 @@ export default function SalaryApproverGridPage() {
               </div>
               {diff !== 0 && (
                 <div
-                  className={`text-[12px] font-semibold mt-0.5 ${
-                    diff > 0
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-red-500"
-                  }`}
+                  className={`text-[12px] font-semibold mt-0.5 ${diff > 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-red-500"
+                    }`}
                 >
                   {diff > 0 ? `+${formatCurrency(diff)}` : formatCurrency(diff)} (
                   {diffPercent}%)
@@ -920,29 +922,39 @@ export default function SalaryApproverGridPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
+          <AButton
+            variant="outline"
+            size="md"
+            className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => history.back()}
+          >
+            Back
+          </AButton>
+          <Button
             onClick={() => setIsModalVisible1(true)}
-            className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold
-                       hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
-                       inline-flex items-center gap-2 shadow-xs transition-colors"
+            className="h-10 px-3.5 rounded-xl border border-slate-300 bg-black text-white text-lg font-semibold
+             hover:bg-indigo-500/90 hover:border-slate-400
+             dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-100 dark:hover:bg-slate-800/70 dark:hover:border-slate-600
+             inline-flex items-center gap-2 shadow-xs transition-colors"
             title="Approver List"
           >
-            <ListChecks className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            <ListChecks className="w-4 h-4 text-white dark:text-slate-200" />
             <span className="hidden sm:inline">Approver List</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={() => handleExcelDownload(columnsForDownload, filtereddata)}
             disabled={isExcelLoading}
-            className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold
-                       hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed
-                       dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
-                       inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            className="h-10 px-3.5 rounded-xl border border-slate-300 bg-indigo-500 text-slate-800 text-lg font-semibold
+             hover:bg-indigo-500/90 hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed
+             dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-100 dark:hover:bg-slate-800/70 dark:hover:border-slate-600
+             inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            <Download className="w-4 h-4 text-white dark:text-slate-200" />
             <span>{isExcelLoading ? "Exporting..." : "Export to Excel"}</span>
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -17,12 +17,16 @@ import {
   Search,
   ExternalLink,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import DataTable from "@/components/Templates/reacttable";
 import SelectSearch from "@/components/atoms/Select";
 import Button from "@/components/atoms/Button";
+import AButton from "@/components/atoms/Button";
+import { useRouter } from "next/navigation";
+
 
 export default function EmployeeMasterBasicInfoPage() {
   const user = useCurrentUser();
@@ -32,6 +36,8 @@ export default function EmployeeMasterBasicInfoPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const router = useRouter();
+
 
   // Form State
   const [formData, setFormData] = useState({
@@ -829,6 +835,15 @@ export default function EmployeeMasterBasicInfoPage() {
 
         {/* Tab Buttons */}
         <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs">
+          <AButton
+            variant="outline"
+            size="md"
+            className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => router.push("/dashboard")}
+          >
+            Back
+          </AButton>
           <button
             type="button"
             onClick={() => handleTabChange(1)}
@@ -894,11 +909,10 @@ export default function EmployeeMasterBasicInfoPage() {
                     value={formData.EMPCODE}
                     readOnly={Boolean(formData.EMPCODE || isEditMode)}
                     onChange={(e) => handleInputChange("EMPCODE", e.target.value)}
-                    className={`flex-1 h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 ${
-                      formData.EMPCODE
-                        ? "bg-slate-50/80 dark:bg-slate-900/60 text-slate-800 dark:text-slate-100 font-medium cursor-not-allowed select-all"
-                        : "bg-white dark:bg-black text-slate-900 dark:text-white"
-                    } placeholder:text-slate-400 text-base focus:outline-none focus:ring-2 focus:ring-[#4F46E5]`}
+                    className={`flex-1 h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 ${formData.EMPCODE
+                      ? "bg-slate-50/80 dark:bg-slate-900/60 text-slate-800 dark:text-slate-100 font-medium cursor-not-allowed select-all"
+                      : "bg-white dark:bg-black text-slate-900 dark:text-white"
+                      } placeholder:text-slate-400 text-base focus:outline-none focus:ring-2 focus:ring-[#4F46E5]`}
                   />
                   {!isEditMode && (
                     <Button

@@ -1377,7 +1377,7 @@ const SalaryDetails = ({
       }
     }
 
-    if (!formData?.EmpMst?.ifsc_code) {
+    if (!formData?.EmpMst?.ifsc_code) {F
       toast({ title: "Please Enter IFSC Code", variant: "destructive" });
       return;
     }
