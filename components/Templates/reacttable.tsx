@@ -205,13 +205,12 @@ export default function ServiceTablePagination({
           <div
             role="checkbox"
             aria-checked={isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"}
-            className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${
-              isAllSelected
+            className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isAllSelected
                 ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                 : isIndeterminate
-                ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
-                : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
-            }`}
+                  ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
+                  : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
+              }`}
           >
             {isAllSelected ? (
               <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
@@ -236,11 +235,10 @@ export default function ServiceTablePagination({
             <div
               role="checkbox"
               aria-checked={isChecked}
-              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${
-                isChecked
+              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isChecked
                   ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                   : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
-              }`}
+                }`}
             >
               {isChecked && <Check className="w-3.5 h-3.5 stroke-[3] text-white" />}
             </div>
@@ -558,13 +556,12 @@ export default function ServiceTablePagination({
                       {...column.getHeaderProps(
                         isSelectionCol ? {} : column.getSortByToggleProps()
                       )}
-                      className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${
-                        isSelectionCol
+                      className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${isSelectionCol
                           ? "w-12 text-center !px-3"
                           : isEmpNameCol
-                          ? "text-[#4F46E5] dark:text-indigo-400"
-                          : "text-slate-500 dark:text-slate-400"
-                      } ${headerClassName || ""}`}
+                            ? "text-[#4F46E5] dark:text-indigo-400"
+                            : "text-slate-500 dark:text-slate-400"
+                        } ${headerClassName || ""}`}
                     >
                       {isSelectionCol ? (
                         <div className="flex items-center justify-center">
@@ -611,11 +608,10 @@ export default function ServiceTablePagination({
                 <tr
                   key={row.id}
                   {...row.getRowProps()}
-                  className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${
-                    isRowSelected
+                  className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${isRowSelected
                       ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
                       : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
-                  }`}
+                    }`}
                   onDoubleClick={() => onRowDoubleClick?.(row.original)}
                 >
                   {row.cells.map((cell: any, cellIdx: number) => {
@@ -625,13 +621,11 @@ export default function ServiceTablePagination({
                       <td
                         key={cell.column.id}
                         {...cell.getCellProps()}
-                        className={`whitespace-nowrap text-[14px] text-slate-800 dark:text-slate-200 ${
-                          isSelectionCol ? "w-12 !px-3 text-center" : "px-4 py-3.5"
-                        }`}
+                        className={`whitespace-nowrap text-[14px] text-slate-800 dark:text-slate-200 ${isSelectionCol ? "w-12 !px-3 text-center" : "px-4 py-3.5"
+                          }`}
                       >
-                        <div className={`font-normal text-slate-800 dark:text-slate-200 text-[14px] ${
-                          isSelectionCol ? "flex items-center justify-center" : ""
-                        }`}>
+                        <div className={`font-normal text-slate-800 dark:text-slate-200 text-[14px] ${isSelectionCol ? "flex items-center justify-center" : ""
+                          }`}>
                           {cell.render("Cell")}
                         </div>
                       </td>

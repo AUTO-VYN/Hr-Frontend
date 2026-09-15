@@ -13,12 +13,13 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  IndianRupee 
+  IndianRupee
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import LeaveProgressRing from "@/components/Templates/progressing";
+import AButton from "@/components/atoms/Button";
 
 const AttendanceCard = ({ attendance }: { attendance: any }) => {
   return (
@@ -541,6 +542,15 @@ export default function SalaryApproverGridPage() {
               </>
             )}
           </button>
+          <AButton
+            variant="outline"
+            size="md"
+            className="ml-auto h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => history.back()}
+          >
+            Back
+          </AButton>
         </div>
       </div>
 
@@ -739,438 +749,438 @@ export default function SalaryApproverGridPage() {
       {/* 4. ATTENDANCE & LEAVE INFORMATION */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
-  {/* Left: ATTENDANCE */}
-  <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col overflow-hidden">
-    <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 shrink-0">
-      <div className="flex items-center gap-3">
-        <Calendar className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
-        <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
-          ATTENDANCE · {monthLabel} {misdata.year}
-        </h3>
-      </div>
-
-      {BackButton ? (
-        <button
-          type="button"
-          onClick={() => fetchData(startDate, EndDate)}
-          className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-sm transition-colors inline-flex items-center gap-2 cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back</span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={MispunchdtlData}
-          className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-300 shadow-sm transition-colors cursor-pointer"
-        >
-          View calendar
-        </button>
-      )}
-    </div>
-
-    {/* Attendance Content */}
-    {IsMispunchData ? (
-      <div className="flex-1 p-4 max-h-[360px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-        {ViewMispunchData.length === 0 ? (
-          <p className="text-base text-slate-400 py-8 text-center font-medium">
-            No mispunch records found
-          </p>
-        ) : (
-          ViewMispunchData.map((attendance, index) => (
-            <AttendanceCard key={index} attendance={attendance} />
-          ))
-        )}
-      </div>
-    ) : (
-      <div className="flex-1 min-h-0 grid grid-rows-5 divide-y divide-slate-200 dark:divide-slate-800 ">
-        {/* Row 1 */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+        {/* Left: ATTENDANCE */}
+        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 shrink-0">
             <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Present
-              </span>
+              <Calendar className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
+              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                ATTENDANCE · {monthLabel} {misdata.year}
+              </h3>
             </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.Presents ?? 0}
-            </span>
+
+            {BackButton ? (
+              <button
+                type="button"
+                onClick={() => fetchData(startDate, EndDate)}
+                className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-sm transition-colors inline-flex items-center gap-2 cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={MispunchdtlData}
+                className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-300 shadow-sm transition-colors cursor-pointer"
+              >
+                View calendar
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#ef4444", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Absent
-              </span>
+          {/* Attendance Content */}
+          {IsMispunchData ? (
+            <div className="flex-1 p-4 max-h-[360px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+              {ViewMispunchData.length === 0 ? (
+                <p className="text-base text-slate-400 py-8 text-center font-medium">
+                  No mispunch records found
+                </p>
+              ) : (
+                ViewMispunchData.map((attendance, index) => (
+                  <AttendanceCard key={index} attendance={attendance} />
+                ))
+              )}
             </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.Absents ?? 0}
-            </span>
-          </div>
+          ) : (
+            <div className="flex-1 min-h-0 grid grid-rows-5 divide-y divide-slate-200 dark:divide-slate-800 ">
+              {/* Row 1 */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Present
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.Presents ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#ef4444", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Absent
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.Absents ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Half day
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.HalfDays ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#0ea5e9", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Week off
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.WO ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 3 */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#8b5cf6", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Holiday
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.Holidays ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#3b82f6", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Relaxation
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.Relaxations ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 4 */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Paid days
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.PaidDays ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#ec4899", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Unapproved MP
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.UnAprMP ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 5 */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Late marks
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.LateMarks ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#6366f1", minWidth: "10px", minHeight: "10px" }}
+                    />
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                      Overtime hrs
+                    </span>
+                  </div>
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                    {summary.Overtime ?? 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Row 2 */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
+        {/* Right: LEAVE INFORMATION */}
+        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Half day
-              </span>
+              <RefreshCw className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
+              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                LEAVE INFORMATION
+              </h3>
             </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.HalfDays ?? 0}
-            </span>
           </div>
 
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#0ea5e9", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Week off
-              </span>
+          <div className="p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {processedLeaveData.map((data, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl bg-white dark:border-slate-800 dark:bg-[#0B1220] p-4 sm:p-5"
+                >
+                  <LeaveProgressRing
+                    leaveType={data.leaveType}
+                    opBal={data.opBal}
+                    availLev={data.availLev}
+                    clBal={data.clBal}
+                    GenLev={data.Gen_Lev}
+                  />
+                </div>
+              ))}
             </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.WO ?? 0}
-            </span>
-          </div>
-        </div>
-
-        {/* Row 3 */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#8b5cf6", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Holiday
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.Holidays ?? 0}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#3b82f6", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Relaxation
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.Relaxations ?? 0}
-            </span>
-          </div>
-        </div>
-
-        {/* Row 4 */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Paid days
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.PaidDays ?? 0}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#ec4899", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Unapproved MP
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.UnAprMP ?? 0}
-            </span>
-          </div>
-        </div>
-
-        {/* Row 5 */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Late marks
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.LateMarks ?? 0}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: "#6366f1", minWidth: "10px", minHeight: "10px" }}
-              />
-              <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
-                Overtime hrs
-              </span>
-            </div>
-            <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
-              {summary.Overtime ?? 0}
-            </span>
           </div>
         </div>
       </div>
-    )}
-  </div>
-
-  {/* Right: LEAVE INFORMATION */}
-  <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
-    <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-      <div className="flex items-center gap-3">
-        <RefreshCw className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
-        <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
-          LEAVE INFORMATION
-        </h3>
-      </div>
-    </div>
-
-    <div className="p-4 sm:p-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {processedLeaveData.map((data, index) => (
-          <div
-            key={index}
-            className="rounded-xl bg-white dark:border-slate-800 dark:bg-[#0B1220] p-4 sm:p-5"
-          >
-            <LeaveProgressRing
-              leaveType={data.leaveType}
-              opBal={data.opBal}
-              availLev={data.availLev}
-              clBal={data.clBal}
-              GenLev={data.Gen_Lev}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
 
       {/* ========================================================================= */}
       {/* 5. SALARY INFORMATION */}
       {/* ========================================================================= */}
-       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <span className="text-[#4338CA] dark:text-indigo-400 font-bold text-xl leading-none">
-            <IndianRupee/>
-          </span>
-          <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
-            SALARY INFORMATION
-          </h3>
-        </div>
-        <span className="text-sm text-slate-600 dark:text-slate-400">
-          Read-only · from Employee Master
-        </span>
-      </div>
-
-      <div className="px-6 py-5 space-y-6">
-        {/* Section 1 */}
-        <div className="text-sm sm:text-base">
-          {/* Row 1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">PF effective from</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {SalaryInfo[0]?.PF_Date
-                  ? new Date(SalaryInfo[0].PF_Date)
-                      .toLocaleDateString("en-GB")
-                      .replaceAll("/", "-")
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">PF no.</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-                {SalaryInfo[0]?.pfnumber || "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">UAN no.</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-                {SalaryInfo[0]?.UAN_No || "—"}
-              </span>
-            </div>
-          </div>
-
-          {/* Row 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC effective from</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {SalaryInfo[0]?.ESI_Date
-                  ? new Date(SalaryInfo[0].ESI_Date)
-                      .toLocaleDateString("en-GB")
-                      .replaceAll("/", "-")
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC no.</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-                {SalaryInfo[0]?.esinumber || "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">LWF</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {SalaryInfo[0]?.LWFNO || "Applicable"}
-              </span>
-            </div>
-          </div>
-
-          {/* Row 3 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800">
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">Bank name</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {SalaryInfo[0]?.BANKNAME || "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">Account number</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-                {SalaryInfo[0]?.BANKACCOUNTNO || "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-0 sm:px-5 py-4">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">IFSC code</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-                {SalaryInfo[0]?.ifsc_code || "—"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Salary Breakup */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-            <h4 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-700 dark:text-slate-200">
-              SALARY BREAKUP
-            </h4>
-            <span className="font-semibold text-slate-900 dark:text-slate-100">
-              Gross ₹
-              {SalaryInfo[0]?.Gross_Salary
-                ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN")
-                : "0"}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="text-[#4338CA] dark:text-indigo-400 font-bold text-xl leading-none">
+              <IndianRupee />
             </span>
+            <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+              SALARY INFORMATION
+            </h3>
           </div>
+          <span className="text-sm text-slate-600 dark:text-slate-400">
+            Read-only · from Employee Master
+          </span>
+        </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+        <div className="px-6 py-5 space-y-6">
+          {/* Section 1 */}
+          <div className="text-sm sm:text-base">
             {/* Row 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Emp. basic</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Basic ? Number(SalaryInfo[0].Basic).toLocaleString("en-IN") : "0"}
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">PF effective from</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {SalaryInfo[0]?.PF_Date
+                    ? new Date(SalaryInfo[0].PF_Date)
+                      .toLocaleDateString("en-GB")
+                      .replaceAll("/", "-")
+                    : "—"}
+                </span>
               </div>
 
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">HRA</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.HRA ? Number(SalaryInfo[0].HRA).toLocaleString("en-IN") : "0"}
-                </div>
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">PF no.</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {SalaryInfo[0]?.pfnumber || "—"}
+                </span>
               </div>
 
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Conveyance</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Conveyance ? Number(SalaryInfo[0].Conveyance).toLocaleString("en-IN") : "0"}
-                </div>
-              </div>
-
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Medical</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Medical ? Number(SalaryInfo[0].Medical).toLocaleString("en-IN") : "0"}
-                </div>
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">UAN no.</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {SalaryInfo[0]?.UAN_No || "—"}
+                </span>
               </div>
             </div>
 
             {/* Row 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Other</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Other ? Number(SalaryInfo[0].Other).toLocaleString("en-IN") : "0"}
-                </div>
-              </div>
-
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Washing</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Washing ? Number(SalaryInfo[0].Washing).toLocaleString("en-IN") : "0"}
-                </div>
-              </div>
-
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Gross salary</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  ₹{SalaryInfo[0]?.Gross_Salary ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN") : "0"}
-                </div>
-              </div>
-
-              <div className="px-6 py-5">
-                <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Annual CTC</div>
-                <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
-                  {SalaryInfo[0]?.Gross_Salary
-                    ? `₹${((Number(SalaryInfo[0].Gross_Salary) * 12) / 100000).toFixed(2)} L`
+            <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC effective from</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {SalaryInfo[0]?.ESI_Date
+                    ? new Date(SalaryInfo[0].ESI_Date)
+                      .toLocaleDateString("en-GB")
+                      .replaceAll("/", "-")
                     : "—"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC no.</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {SalaryInfo[0]?.esinumber || "—"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">LWF</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {SalaryInfo[0]?.LWFNO || "Applicable"}
+                </span>
+              </div>
+            </div>
+
+            {/* Row 3 */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800">
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Bank name</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {SalaryInfo[0]?.BANKNAME || "—"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Account number</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {SalaryInfo[0]?.BANKACCOUNTNO || "—"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">IFSC code</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {SalaryInfo[0]?.ifsc_code || "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Salary Breakup */}
+          <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+              <h4 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                SALARY BREAKUP
+              </h4>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                Gross ₹
+                {SalaryInfo[0]?.Gross_Salary
+                  ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN")
+                  : "0"}
+              </span>
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {/* Row 1 */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Emp. basic</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Basic ? Number(SalaryInfo[0].Basic).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">HRA</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.HRA ? Number(SalaryInfo[0].HRA).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Conveyance</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Conveyance ? Number(SalaryInfo[0].Conveyance).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Medical</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Medical ? Number(SalaryInfo[0].Medical).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Other</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Other ? Number(SalaryInfo[0].Other).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Washing</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Washing ? Number(SalaryInfo[0].Washing).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Gross salary</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    ₹{SalaryInfo[0]?.Gross_Salary ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Annual CTC</div>
+                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                    {SalaryInfo[0]?.Gross_Salary
+                      ? `₹${((Number(SalaryInfo[0].Gross_Salary) * 12) / 100000).toFixed(2)} L`
+                      : "—"}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Global Skeleton Loader */}
       <HashloaderComponent isLoading={isLoading} />

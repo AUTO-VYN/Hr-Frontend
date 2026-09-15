@@ -179,8 +179,8 @@ const TableComponent: React.FC<TableComponentProps> = ({
       ? "Add qualification"
       : columnsShow?.[0]?.toLowerCase().includes("technology") ||
         columnsShow?.[0]?.toLowerCase().includes("tools")
-      ? "Add technology"
-      : "Add");
+        ? "Add technology"
+        : "Add");
 
   return (
     <>
@@ -251,15 +251,15 @@ const TableComponent: React.FC<TableComponentProps> = ({
                             constraints[column].type === "DOC"
                               ? "file"
                               : constraints[column].type === "DATE"
-                              ? "date"
-                              : "text"
+                                ? "date"
+                                : "text"
                           }
                           value={
                             constraints[column].type === "DOC"
                               ? undefined
                               : item[column]
-                              ? item[column]
-                              : ""
+                                ? item[column]
+                                : ""
                           }
                           accept={
                             constraints[column].type === "DOC"
@@ -277,16 +277,15 @@ const TableComponent: React.FC<TableComponentProps> = ({
                               `${rowIndex}-${columnIndex}`
                             )
                           }
-                          className={`flex ${
-                            Height ? "h-full py-1" : "h-9 py-1"
-                          } w-full rounded-lg border px-3 text-sm shadow-sm transition-colors
+                          className={`flex ${Height ? "h-full py-1" : "h-9 py-1"
+                            } w-full rounded-lg border px-3 text-sm shadow-sm transition-colors
                           bg-white border-slate-200 text-slate-900 placeholder:text-slate-500
                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400
                           disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50
                           dark:bg-[#0F1A2D] dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
                           dark:focus-visible:ring-indigo-400/20 dark:disabled:bg-[#0B1220]`}
                           disabled={
-                            constraints[column].disabled && disabled ? true : false
+                            constraints[column]?.disabled && disabled ? true : false
                           }
                         />
                       )}
