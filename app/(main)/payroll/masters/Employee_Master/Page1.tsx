@@ -25,7 +25,6 @@ import {
 import HashloaderComponent from "@/components/Templates/hashloader";
 import FileViewer from "@/components/atoms/FileviewerBank";
 import { useSecureStorage } from "@/app/hooks/comp-key-data";
-import SelectSearch from "@/components/atoms/Select";
 import { useToast } from "@/app/hooks/useToast";
 
 // ✅ FIX 1: VerifyRow ko BAHAR define karo - component ke andar nahi
@@ -1145,12 +1144,11 @@ if (name === "OTP_With_Aadhaar") {
                 redlabel={isMandatory("PROBATIONPERIOD") ? "*" : ""}
               />
 
-              <SelectSearch
-                selectedValue={formData?.EmpMst?.Source_Code}
-                h={"9"}
+              <Eselect
+                initialValue={formData?.EmpMst?.Source_Code?.toString()}
                 title={"Source"}
                 name={"Source_Code"}
-                options={Source}
+                option={Source}
                 handleInputChange={handleInputChange}
                 className="!h-9"
                 redlabel={isMandatory("Source_Code") ? "*" : ""}

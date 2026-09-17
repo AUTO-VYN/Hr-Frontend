@@ -36,6 +36,12 @@ export default function Sidebar() {
   const [isMultiLocation, setIsMultiLocation] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 640;
+    }
+    return false;
+  });
   const expanded = pinned || hovering;
   const isExpandedView = expanded || mobileOpen;
   const initials = (user?.name || "U")
@@ -72,6 +78,21 @@ export default function Sidebar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  // Dynamically sync sidebar width to CSS variable for fixed elements
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      if (typeof window !== "undefined") {
+        const mobile = window.innerWidth < 640;
+        setIsMobile(mobile);
+        const currentWidth = mobile ? 0 : (expanded ? EXPANDED_WIDTH : RAIL_WIDTH);
+        document.documentElement.style.setProperty("--sidebar-width", `${currentWidth}px`);
+      }
+    };
+    updateSidebarWidth();
+    window.addEventListener("resize", updateSidebarWidth);
+    return () => window.removeEventListener("resize", updateSidebarWidth);
+  }, [expanded, mobileOpen]);
 
   const checkAndWarnMultiLocation = () => {
     const isMulti =
@@ -133,12 +154,14 @@ export default function Sidebar() {
       <aside
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
-        className={`fixed left-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden border-r border-line bg-card transition-transform duration-200 ease-in-out sm:transition-[width] sm:duration-150 ${
-          mobileOpen ? "translate-x-0 w-[270px] shadow-2xl" : "-translate-x-full sm:translate-x-0 shadow-md sm:shadow-none"
+        className={`fixed inset-y-0 left-0 z-50 flex h-full max-h-[100dvh] w-[270px] sm:w-auto flex-col overflow-hidden border-r border-line bg-card transition-transform duration-200 ease-in-out sm:transition-[width] sm:duration-150 ${
+          mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full sm:translate-x-0 shadow-md sm:shadow-none"
         }`}
-        style={{
-          width: typeof window !== "undefined" && window.innerWidth < 640 ? 270 : (expanded ? EXPANDED_WIDTH : RAIL_WIDTH),
-        }}
+        style={
+          !isMobile
+            ? { width: expanded ? EXPANDED_WIDTH : RAIL_WIDTH }
+            : { width: 270 }
+        }
       >
         {/* brand */}
         <div
@@ -183,7 +206,7 @@ export default function Sidebar() {
         </div>
 
         {/* modules */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 pb-20 overscroll-contain touch-pan-y light-scroll custom-scrollbar">
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 pb-2 overscroll-contain touch-pan-y light-scroll custom-scrollbar">
           {PAYROLL_MODULES.map((group) => {
             const isOpen = openGroup === group.slug;
             const holdsActive = pathname?.includes(`/payroll/${group.slug}/`);
@@ -245,7 +268,7 @@ export default function Sidebar() {
         </nav>
 
         {/* footer: branch + profile */}
-        <div className="shrink-0 flex flex-col gap-1.5 border-t border-line bg-card px-2.5 py-3">
+        <div className="shrink-0 mt-auto flex flex-col gap-1.5 border-t border-line bg-card px-2.5 py-3">
           <button
             type="button"
             onClick={() => setIsMultiLocation((prev) => !prev)}

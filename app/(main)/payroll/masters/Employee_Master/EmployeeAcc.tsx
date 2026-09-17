@@ -16,8 +16,8 @@ import {
   Square,
 } from "lucide-react";
 
-import Ainput from "@/components/atoms/Input";
-import SelectSearch from "@/components/atoms/Select";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import { useFormData } from "./Context/FormDataContext";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
@@ -410,27 +410,26 @@ export default function Page() {
               >
                 {/* ✅ darkmode: removed dark:bg-black block; card handles dark background */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3.5 sm:gap-y-4">
-                  <SelectSearch
+                  <Eselect
                     name={"App_Attendance"}
                     title="Allow app attendance"
-                    options={yesno}
-                    selectedValue={formData?.EmpMst?.App_Attendance}
+                    option={yesno}
+                    initialValue={formData?.EmpMst?.App_Attendance?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <SelectSearch
-                    options={yesno}
+                  <Eselect
+                    option={yesno}
                     title="Allow mobile misspunch request"
                     name="mMispunch"
-                    selectedValue={formData?.EmpMst?.mMispunch}
+                    initialValue={formData?.EmpMst?.mMispunch?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <Ainput
+                  <Einput
                     title="Mobile IEMI number"
-                    label="Mobile IEMI number"
                     type="text"
                     name="IEMI"
                     value={formData?.EmpMst?.IEMI}
@@ -439,18 +438,17 @@ export default function Page() {
                     ShortName
                   />
 
-                  <SelectSearch
-                    options={yesno}
+                  <Eselect
+                    option={yesno}
                     title="Allow mobile app punch approval"
                     name="mApprove"
-                    selectedValue={formData?.EmpMst?.mApprove}
+                    initialValue={formData?.EmpMst?.mApprove?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <Ainput
+                  <Einput
                     title="Android mobile id"
-                    label="Android mobile id"
                     type="text"
                     name="Android_ID"
                     value={formData?.EmpMst?.Android_ID}
@@ -458,39 +456,39 @@ export default function Page() {
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <SelectSearch
-                    options={yesno}
+                  <Eselect
+                    option={yesno}
                     title="Allow mobile app leave request"
                     name="mLeave"
-                    selectedValue={formData?.EmpMst?.mLeave}
+                    initialValue={formData?.EmpMst?.mLeave?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <SelectSearch
+                  <Eselect
                     title="Allow mobile app punch in/out"
                     name="mPunch"
-                    options={yesno}
-                    selectedValue={formData?.EmpMst?.mPunch}
+                    option={yesno}
+                    initialValue={formData?.EmpMst?.mPunch?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
-                  <SelectSearch
-                    options={yesno}
+                  <Eselect
+                    option={yesno}
                     title="Allow attendance calendar view"
                     name="mCalender"
-                    selectedValue={formData?.EmpMst?.mCalender}
+                    initialValue={formData?.EmpMst?.mCalender?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
 
                   <div className="sm:col-span-2">
-                    <SelectSearch
-                      options={yesno}
+                    <Eselect
+                      option={yesno}
                       title="Mobile rights"
                       name="MOBILE_RIGHTS"
-                      selectedValue={formData?.EmpMst?.MOBILE_RIGHTS?.toString()}
+                      initialValue={formData?.EmpMst?.MOBILE_RIGHTS?.toString()}
                       handleInputChange={handleInputChange}
                       disabled={formData?.EmpMst?.mobile_rights_flag}
                       className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
@@ -504,32 +502,32 @@ export default function Page() {
                 icon={<GitBranch className="h-5 w-5" />}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
-                  <SelectSearch
+                  <Eselect
                     title="Reporting 1"
                     name="Reporting_1"
-                    options={[]}
-                    selectedValue={formData?.EmpMst?.Reporting_1}
+                    option={[]}
+                    initialValue={formData?.EmpMst?.Reporting_1?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
                   />
 
-                  <SelectSearch
+                  <Eselect
                     title="Reporting 2"
                     name="Reporting_2"
-                    options={[]}
-                    selectedValue={formData?.EmpMst?.Reporting_2}
+                    option={[]}
+                    initialValue={formData?.EmpMst?.Reporting_2?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
                   />
 
-                  <SelectSearch
+                  <Eselect
                     title="HR Team"
-                    {...({ ShortName: true } as any)}
+                    ShortName={true}
                     name="Reporting_3"
-                    options={[]}
-                    selectedValue={formData?.EmpMst?.Reporting_3}
+                    option={[]}
+                    initialValue={formData?.EmpMst?.Reporting_3?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     placeholder="Select"
@@ -542,7 +540,7 @@ export default function Page() {
                 icon={<Link2 className="h-5 w-5" />}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
-                  <Ainput
+                  <Einput
                     title="Emp code 2"
                     type="text"
                     name="empcode2"
@@ -551,7 +549,7 @@ export default function Page() {
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
-                  <Ainput
+                  <Einput
                     title="Emp code 3"
                     type="text"
                     name="empcode3"
@@ -560,7 +558,7 @@ export default function Page() {
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                   />
-                  <Ainput
+                  <Einput
                     title="Emp code 4"
                     type="text"
                     name="empcode4"
@@ -578,11 +576,11 @@ export default function Page() {
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
                   <div className="sm:col-span-2 md:col-span-3">
-                    <SelectSearch
-                      options={yesno}
+                    <Eselect
+                      option={yesno}
                       title="iPhone user"
                       name="IsiphoneUser"
-                      selectedValue={formData?.EmpMst?.IsiphoneUser?.toString()}
+                      initialValue={formData?.EmpMst?.IsiphoneUser?.toString()}
                       handleInputChange={handleInputChange}
                       className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       ShortName={true}
@@ -590,7 +588,7 @@ export default function Page() {
                   </div>
 
                   {isIphoneUser && (
-                    <Ainput
+                    <Einput
                       title="User name"
                       type="text"
                       name="userNameIphone"
@@ -606,7 +604,7 @@ export default function Page() {
                   )}
 
                   {isIphoneUser && (
-                    <Ainput
+                    <Einput
                       title="User pass"
                       type="text"
                       name="userPassIphone"
@@ -761,18 +759,17 @@ export default function Page() {
                 {isRelaxationOpen ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="sm:col-span-2">
-                      <SelectSearch
-                        options={type}
+                      <Eselect
+                        option={type}
                         title="Relaxation Type"
-                        selectedValue={formData?.EmpMst?.Relaxation_Type?.toString()}
+                        initialValue={formData?.EmpMst?.Relaxation_Type?.toString()}
                         name="Relaxation_Type"
                         handleInputChange={handleInputChange}
                         className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                       />
                     </div>
-                    <Ainput
+                    <Einput
                       title="In time relaxation (hrs)"
-                      label="In time relaxation (hrs)"
                       type="text"
                       name="ShiftIn_Relaxation"
                       value={formData?.EmpMst?.EMP_SHIFT}
@@ -780,9 +777,8 @@ export default function Page() {
                       className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     />
 
-                    <Ainput
+                    <Einput
                       title="Out time relaxation (hrs)"
-                      label="Out time relaxation (hrs)"
                       type="text"
                       value={formData?.EmpMst?.EMP_SHIFT}
                       name="ShiftOut_Relaxation"
@@ -790,9 +786,8 @@ export default function Page() {
                       className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     />
 
-                    <Ainput
+                    <Einput
                       title="Cumulative Shift Relation"
-                      label="Cumulative Shift Relation"
                       type="text"
                       name="ShiftIn_Relaxation"
                       value={formData?.EmpMst?.Cumulative_Relaxation}
@@ -812,9 +807,8 @@ export default function Page() {
                 icon={<BadgeCheck className="h-5 w-5" />}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3.5 sm:gap-y-4">
-                  <Ainput
+                  <Einput
                     title="MSPIN"
-                    label="MSPIN"
                     type="text"
                     name="MSPIN"
                     value={formData?.EmpMst?.MSPIN}
@@ -823,9 +817,8 @@ export default function Page() {
                     ShortName={true}
                   />
 
-                  <Ainput
+                  <Einput
                     title="MSPN id"
-                    label="MSPN id"
                     type="text"
                     name="MSPN_Id"
                     value={formData?.EmpMst?.MSPN_Id}
@@ -834,19 +827,18 @@ export default function Page() {
                     ShortName={true}
                   />
 
-                  <SelectSearch
-                    options={yesno}
+                  <Eselect
+                    option={yesno}
                     title="MSPN certified"
                     name="IsMSPN"
-                    selectedValue={formData?.EmpMst?.IsMSPN?.toString()}
+                    initialValue={formData?.EmpMst?.IsMSPN?.toString()}
                     handleInputChange={handleInputChange}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
                     ShortName={true}
                   />
 
-                  <Ainput
+                  <Einput
                     title="MSPN DTL"
-                    label="MSPN DTL"
                     type="text"
                     name="MSPN_DTL"
                     value={formData?.EmpMst?.MSPN_DTL}

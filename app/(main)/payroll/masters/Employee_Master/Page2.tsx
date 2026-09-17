@@ -6,9 +6,8 @@ import Eselect from "@/components/atoms/Eselect";
 import SmallTitle from "@/components/atoms/smallTitle";
 import { useFormData } from "./Context/FormDataContext";
 import { useEffect, useState } from "react";
-import TableComponent from "@/components/atoms/DynamicTable";
-import SelectSearch from "@/components/atoms/Select";
 import YNDynamicTable from "@/components/atoms/YNDynamicTable";
+
 
 const bloodGroup = [
   { value: "A+", label: "A+" },
@@ -324,12 +323,12 @@ const Page2 = ({ masterData, isMandatory }) => {
               </div>
 
               <div className="col-span-12 md:col-span-6 min-w-0">
-                <SelectSearch
-                  options={RELIGION}
+                <Eselect
+                  option={RELIGION}
                   title="Religion"
                   name="RELCODE"
                   className="!h-[30px]"
-                  selectedValue={formData.EmpMst.RELCODE?.toString()}
+                  initialValue={formData.EmpMst.RELCODE?.toString()}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("RELCODE") ? "*" : ""}
                 />
@@ -453,12 +452,12 @@ const Page2 = ({ masterData, isMandatory }) => {
               </div>
 
               <div className="col-span-12 md:col-span-6 min-w-0">
-                <SelectSearch
-                  options={cityNewoption}
+                <Eselect
+                  option={cityNewoption}
                   title="Permanent City"
                   name="PCITY"
                   className="!h-[30px]"
-                  selectedValue={
+                  initialValue={
                     formData.EmpMst.PCITY
                       ? formData.EmpMst.PCITY.toString()
                       : null
@@ -535,12 +534,12 @@ const Page2 = ({ masterData, isMandatory }) => {
               </div>
 
               <div className="col-span-12 md:col-span-6 min-w-0">
-                <SelectSearch
-                  options={cityNewoption}
+                <Eselect
+                  option={cityNewoption}
                   title="City"
                   name="CCITY"
                   className="!h-[30px]"
-                  selectedValue={
+                  initialValue={
                     formData.EmpMst.CCITY
                       ? formData.EmpMst.CCITY.toString()
                       : null

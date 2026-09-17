@@ -33,6 +33,7 @@ type Props = {
   required?: boolean;
   ShortName?: boolean;
   style?: React.CSSProperties;
+  placeholder?: string;
 
   rightElement?: React.ReactNode;
 };
@@ -53,6 +54,7 @@ const Eselect = ({
   required,
   ShortName,
   style,
+  placeholder = "Select",
   rightElement,
 }: Props) => {
   const [inputValue, setInputValue] = useState("");
@@ -307,7 +309,7 @@ const Eselect = ({
         )}
       >
         <div className={cn("truncate", selectedOptions.length ? "" : "text-slate-400")}>
-          {selectedOptions.length ? selectedOptions.map((o) => o.label).join(", ") : "Select"}
+          {selectedOptions.length ? selectedOptions.map((o) => o.label).join(", ") : placeholder}
         </div>
 
         {!disabled ? (

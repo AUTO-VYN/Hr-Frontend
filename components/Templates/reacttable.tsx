@@ -252,6 +252,13 @@ export default function ServiceTablePagination({
 
   const defaultClientPageSize = initialPageSize || 10;
 
+  const clientCalculatedPageCount = useMemo(() => {
+    if (serverMode) return serverPagination?.totalPages || 1;
+    const total = tableData?.length || data?.length || 0;
+    const size = initialPageSize || 10;
+    return Math.max(1, Math.ceil(total / size));
+  }, [serverMode, serverPagination?.totalPages, tableData?.length, data?.length, initialPageSize]);
+
   const tableInstance = useTable(
     {
       columns: tableColumns,
@@ -266,8 +273,14 @@ export default function ServiceTablePagination({
       },
 
       manualPagination: serverMode,
-      pageCount: serverMode ? serverPagination?.totalPages || 1 : undefined,
+      pageCount: serverMode ? serverPagination?.totalPages || 1 : clientCalculatedPageCount,
       autoResetPage: false,
+      autoResetExpanded: false,
+      autoResetGroupBy: false,
+      autoResetSelectedRows: false,
+      autoResetSortBy: false,
+      autoResetFilters: false,
+      autoResetRowState: false,
     },
     useGlobalFilter,
     useSortBy,
@@ -356,12 +369,19 @@ export default function ServiceTablePagination({
 
   const displayedCount = rowsToRender.length;
 
+  const clientCanPrev = pageIndex > 0;
+  const clientCanNext = pageIndex + 1 < (pageOptions.length || clientCalculatedPageCount);
+
   const handlePrev = () => {
     if (serverMode) {
       const curr = serverPagination?.currentPage || 1;
       if (curr > 1) onServerPageChange?.(curr - 1, true);
     } else {
-      if (canPreviousPage) previousPage();
+      if (clientCanPrev) {
+        gotoPage(pageIndex - 1);
+      } else if (canPreviousPage) {
+        previousPage();
+      }
     }
   };
 
@@ -371,7 +391,11 @@ export default function ServiceTablePagination({
       const tp = serverPagination?.totalPages || 1;
       if (curr < tp) onServerPageChange?.(curr + 1, true);
     } else {
-      if (canNextPage) nextPage();
+      if (clientCanNext) {
+        gotoPage(pageIndex + 1);
+      } else if (canNextPage) {
+        nextPage();
+      }
     }
   };
 
@@ -468,7 +492,7 @@ export default function ServiceTablePagination({
       : pageSize;
 
   const currentPageLabel = serverMode ? (serverPagination?.currentPage || 1) : pageIndex + 1;
-  const totalPagesLabel = serverMode ? (serverPagination?.totalPages || 1) : pageOptions.length || 1;
+  const totalPagesLabel = serverMode ? (serverPagination?.totalPages || 1) : (pageOptions.length || clientCalculatedPageCount || 1);
 
   return (
     <div className="w-full flex flex-col bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
@@ -675,7 +699,7 @@ export default function ServiceTablePagination({
               disabled={
                 serverMode
                   ? (serverPagination?.currentPage || 1) <= 1
-                  : !canPreviousPage
+                  : !clientCanPrev
               }
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
@@ -700,7 +724,7 @@ export default function ServiceTablePagination({
                 serverMode
                   ? (serverPagination?.currentPage || 1) >=
                   (serverPagination?.totalPages || 1)
-                  : !canNextPage
+                  : !clientCanNext
               }
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
