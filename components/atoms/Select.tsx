@@ -241,17 +241,19 @@ const CustomSelectSearch = ({
     const spaceAbove = rect.top;
     const placeTop = spaceBelow < measuredH && spaceAbove > measuredH;
 
-    const width = rect.width;
+    const width = Math.max(rect.width, 180);
+    const availableWidth = window.innerWidth - 16;
+    const finalWidth = width > availableWidth ? availableWidth : width;
     let left = rect.left;
 
-    const maxLeft = window.innerWidth - width - 8;
+    const maxLeft = window.innerWidth - finalWidth - 8;
     if (left > maxLeft) left = maxLeft;
     if (left < 8) left = 8;
 
     let top = placeTop ? rect.top - measuredH - 8 : rect.bottom + 8;
     if (top < 8) top = 8;
 
-    setPos({ top, left, width });
+    setPos({ top, left, width: finalWidth });
   }, []);
 
   useLayoutEffect(() => {

@@ -555,7 +555,7 @@ export default function ResumeBankPage() {
             type="button"
             onClick={() => setStatusFilter("Unscreened")}
             className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer ${statusFilter === "Unscreened"
-              ? "bg-amber-500 text-white shadow-xs"
+              ? "bg-[#f59e0b] text-white shadow-xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
           >

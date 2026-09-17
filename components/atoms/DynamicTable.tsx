@@ -229,6 +229,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
                     >
                       {isSelect ? (
                         <Eselect
+                          title=""
                           option={DropDownOp[column]}
                           name={item[column]}
                           mb={"0"}

@@ -5,7 +5,14 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Eselect from "@/components/atoms/Eselect";
 import Einput from "@/components/atoms/Einput";
-import { RotateCw, Upload } from "lucide-react";
+import { Eye, RotateCw, Upload } from "lucide-react";
+import Swal from "sweetalert2";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 
@@ -54,6 +61,7 @@ export default function EmployeeMiniHeader({
       : null);
 
   const [IsGenerate, setIsGenerate] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // wrapper for selecting employee from dropdown
   const handleEmpSelectChange = (name: string, value: any) => {
@@ -209,7 +217,7 @@ export default function EmployeeMiniHeader({
           <div className="col-span-12 xl:col-span-2 xl:col-start-11 ">
             <div className="flex xl:justify-end " >
               {/* screenshot-like width */}
-              <div className="w-[140px] sm:w-[160px] xl:w-[120px]">
+              <div className="relative w-[140px] sm:w-[160px] xl:w-[120px]">
                 <label
                   className="
                     flex w-full items-center justify-center
@@ -249,11 +257,68 @@ export default function EmployeeMiniHeader({
                     onChange={handleFileChange}
                   />
                 </label>
+
+                {/* Preview Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (imgSrc) {
+                      setIsPreviewOpen(true);
+                    } else {
+                      Swal.fire({
+                        toast: true,
+                        position: "top-end",
+                        icon: "info",
+                        title: "No image uploaded to preview",
+                        showConfirmButton: false,
+                        timer: 2500,
+                      });
+                    }
+                  }}
+                  title={imgSrc ? "Preview image" : "No image to preview"}
+                  className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all flex items-center justify-center cursor-pointer shadow-sm ${
+                    imgSrc
+                      ? "bg-black/60 hover:bg-black text-white hover:scale-105"
+                      : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-400"
+                  }`}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-[96vw] w-[96vw] h-[92vh] max-h-[94vh] flex flex-col p-4 sm:p-5 bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+          <DialogHeader className="pb-2.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <DialogTitle className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+              Employee Photo Preview
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2.5 flex-1 w-full flex items-center justify-center bg-slate-100/70 dark:bg-slate-950/80 rounded-xl overflow-hidden p-2 border border-slate-200/80 dark:border-slate-800/80">
+            {imgSrc ? (
+              <Image
+                src={imgSrc}
+                alt="Employee photo preview"
+                width={2400}
+                height={2400}
+                className="w-full h-full max-h-[82vh] object-contain rounded-lg shadow-sm"
+                unoptimized
+              />
+            ) : (
+              <div className="py-16 text-center text-sm text-slate-400">
+                No image available to preview
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

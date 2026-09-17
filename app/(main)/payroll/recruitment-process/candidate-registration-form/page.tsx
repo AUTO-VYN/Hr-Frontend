@@ -1104,22 +1104,22 @@ export default function CandidateRegistrationPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 2. MAIN 2-COLUMN LAYOUT */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:scale-[1.05] lg:origin-top">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* ── LEFT SIDEBAR (STEPPER & DOCUMENTS CHECKLIST) ─────────────────────── */}
-        <div className="lg:col-span-3 space-y-6 sticky top-6">
+        <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-6">
           {/* Stepper Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
             {/* Completion Badge */}
-            <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="h-12 w-12 rounded-full border-2 border-indigo-600 flex items-center justify-center font-bold text-sm text-indigo-600 dark:text-indigo-400 shrink-0 bg-indigo-50 dark:bg-indigo-950/40">
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="h-14 w-14 rounded-full border-2 border-indigo-600 flex items-center justify-center font-bold text-base text-indigo-600 dark:text-indigo-400 shrink-0 bg-indigo-50 dark:bg-indigo-950/40">
                 {completionStats.percent}%
               </div>
               <div>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   Form completion
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-normal mt-0.5">
                   {completionStats.remaining > 0
                     ? `${completionStats.remaining} required fields left`
                     : "All required fields completed!"}
@@ -1128,7 +1128,7 @@ export default function CandidateRegistrationPage() {
             </div>
 
             {/* Steps List */}
-            <nav className="space-y-2">
+            <nav className="space-y-2.5">
               {stepLabels.map((step) => {
                 const isActive = currentStep === step.id;
                 const isCompleted = currentStep > step.id;
@@ -1142,32 +1142,32 @@ export default function CandidateRegistrationPage() {
                         setCurrentStep(step.id);
                       }
                     }}
-                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl transition text-left cursor-pointer ${isActive
+                    className={`w-full flex items-start gap-3.5 p-3.5 rounded-xl transition text-left cursor-pointer ${isActive
                       ? "bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 shadow-xs"
                       : "hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent"
                       }`}
                   >
                     <div
-                      className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition ${isActive
+                      className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition ${isActive
                         ? "bg-indigo-600 text-white shadow-xs"
                         : isCompleted
                           ? "bg-emerald-500 text-white"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
                         }`}
                     >
-                      {isCompleted ? <Check className="h-4 w-4 stroke-[2]" /> : step.id}
+                      {isCompleted ? <Check className="h-4.5 w-4.5 stroke-[2.5]" /> : step.id}
                     </div>
 
                     <div className="min-w-0">
                       <div
-                        className={`text-sm font-semibold ${isActive
-                          ? "text-indigo-950 dark:text-indigo-200"
-                          : "text-slate-800 dark:text-slate-200"
+                        className={`text-base ${isActive
+                          ? "text-indigo-950 dark:text-indigo-200 font-semibold"
+                          : "text-slate-800 dark:text-slate-200 font-medium"
                           }`}
                       >
                         {step.title}
                       </div>
-                      <div className="text-xs text-slate-400 dark:text-slate-500 font-normal truncate mt-0.5">
+                      <div className="text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
                         {step.sub}
                       </div>
                     </div>
@@ -1178,54 +1178,54 @@ export default function CandidateRegistrationPage() {
           </div>
 
           {/* Documents Checklist Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3.5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Documents
             </h4>
 
-            <ul className="space-y-2.5 text-sm font-normal text-slate-600 dark:text-slate-400">
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.ppimg ? "text-emerald-600" : "text-slate-400"}`}>
+            <ul className="space-y-3 text-base font-normal text-slate-600 dark:text-slate-400">
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.ppimg ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.ppimg ? "✓" : "—"}
                 </span>
                 <span className={formData.ppimg ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
                   Profile image
                 </span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.adhar ? "text-emerald-600" : "text-slate-400"}`}>
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.adhar ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.adhar ? "✓" : "—"}
                 </span>
                 <span className={formData.adhar ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
                   Aadhar card
                 </span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.pancard ? "text-emerald-600" : "text-slate-400"}`}>
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.pancard ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.pancard ? "✓" : "—"}
                 </span>
                 <span className={formData.pancard ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
                   PAN card
                 </span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.salslip ? "text-emerald-600" : "text-slate-400"}`}>
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.salslip ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.salslip ? "✓" : "—"}
                 </span>
                 <span className={formData.salslip ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
                   Salary slip
                 </span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.cv ? "text-emerald-600" : "text-slate-400"}`}>
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.cv ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.cv ? "✓" : "—"}
                 </span>
                 <span className={formData.cv ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
                   Updated CV
                 </span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <span className={`text-sm font-medium ${formData.explett ? "text-emerald-600" : "text-slate-400"}`}>
+              <li className="flex items-center gap-3">
+                <span className={`text-base font-semibold ${formData.explett ? "text-emerald-600" : "text-slate-400"}`}>
                   {formData.explett ? "✓" : "—"}
                 </span>
                 <span className={formData.explett ? "text-slate-900 dark:text-slate-100 font-medium" : ""}>
@@ -1259,7 +1259,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {/* Candidate Name */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1395,7 +1395,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {/* Mobile Number */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1500,9 +1500,9 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {/* Address - Span 2 */}
-                  <div className="sm:col-span-2 lg:col-span-2">
+                  <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                       Address
                     </label>
@@ -1607,7 +1607,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {/* Designation Applying for */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1639,7 +1639,7 @@ export default function CandidateRegistrationPage() {
                   </div>
 
                   {/* Key Skills - Span 2 */}
-                  <div className="sm:col-span-2 lg:col-span-2">
+                  <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                       Key Skills
                     </label>
@@ -1699,7 +1699,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
                   {/* Highest Qualification */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1774,9 +1774,9 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 6: Side-by-Side Driving Skills & Documents Upload */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3.5 items-start">
                 {/* Driving Skills Subcard */}
-                <div className="lg:col-span-4 rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3.5">
+                <div className="xl:col-span-4 rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3.5">
                   <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                       <Car className="h-4 w-4" />
@@ -1820,7 +1820,7 @@ export default function CandidateRegistrationPage() {
                 </div>
 
                 {/* Documents Upload Subcard */}
-                <div className="lg:col-span-8">
+                <div className="xl:col-span-8">
                   <CertificatesUpload
                     headerTitle="Documents upload"
                     headerIcon={<Paperclip className="h-4 w-4" />}
@@ -1828,7 +1828,7 @@ export default function CandidateRegistrationPage() {
                     value={docUploadValues}
                     onChange={handleDocUploadChange}
                     compact={true}
-                    gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"
+                    gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5"
                   />
                 </div>
               </div>
@@ -1924,7 +1924,7 @@ export default function CandidateRegistrationPage() {
                       >
                         {/* Row 1: Company, Designation, Responsibilities, Trash */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                          <div className="md:col-span-3 space-y-2">
+                          <div className="md:col-span-4 lg:col-span-3 space-y-2">
                             <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                               Company
                             </label>
@@ -1937,7 +1937,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-3 space-y-2">
+                          <div className="md:col-span-4 lg:col-span-3 space-y-2">
                             <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                               Designation
                             </label>
@@ -1950,7 +1950,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-5 space-y-2">
+                          <div className="md:col-span-4 lg:col-span-5 space-y-2">
                             <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                               Responsibilities
                             </label>
@@ -1963,7 +1963,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-1 flex justify-end md:pt-7">
+                          <div className="md:col-span-12 lg:col-span-1 flex justify-end lg:pt-7">
                             <button
                               type="button"
                               onClick={() => handleDeleteExp(idx)}
@@ -1976,7 +1976,7 @@ export default function CandidateRegistrationPage() {
                         </div>
 
                         {/* Row 2: From, To, Settlement Done, Salary */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="space-y-2">
                             <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                               From
@@ -2110,7 +2110,7 @@ export default function CandidateRegistrationPage() {
               {/* Main Candidate Summary Card */}
               <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-7">
                 {/* Profile Header Row */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-black shadow-xs shrink-0 overflow-hidden border border-indigo-100 dark:border-indigo-900">
                       {imagePreview ? (
@@ -2133,8 +2133,8 @@ export default function CandidateRegistrationPage() {
                   </div>
 
                   {/* Top Stats Metric */}
-                  <div className="flex items-center gap-6 sm:gap-8 self-end sm:self-center">
-                    <div className="text-center sm:text-right">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-8 justify-start md:justify-end w-full md:w-auto">
+                    <div className="text-left sm:text-right">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                         Experience
                       </span>
@@ -2143,7 +2143,7 @@ export default function CandidateRegistrationPage() {
                       </span>
                     </div>
 
-                    <div className="text-center sm:text-right">
+                    <div className="text-left sm:text-right">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                         Current CTC
                       </span>
@@ -2152,7 +2152,7 @@ export default function CandidateRegistrationPage() {
                       </span>
                     </div>
 
-                    <div className="text-center sm:text-right">
+                    <div className="text-left sm:text-right">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                         Expected
                       </span>
@@ -2164,7 +2164,7 @@ export default function CandidateRegistrationPage() {
                 </div>
 
                 {/* Section Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                   {/* Column 1: Identity */}
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -2312,8 +2312,8 @@ export default function CandidateRegistrationPage() {
 
                 {/* Bottom Section: Experience & Family */}
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-                    <div className="space-y-3.5 md:col-span-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <div className="space-y-3.5 col-span-1">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                         <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
                           Experience & family
