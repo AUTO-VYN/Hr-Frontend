@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, ArrowLeft } from "lucide-react";
 import { PAYROLL_MODULES } from "@/constant/modules";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -54,6 +54,17 @@ export default function Topbar() {
         aria-label="Toggle navigation menu"
       >
         <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={() => window.history.back()}
+        className="flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[12px] font-medium text-fg hover:bg-hoverbg shadow-2xs transition shrink-0 cursor-pointer"
+        title="Back"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Back</span>
       </button>
 
       <div className="hidden lg:flex min-w-0 flex-1 items-center gap-1.5 text-[12.5px] text-muted overflow-hidden whitespace-nowrap">
