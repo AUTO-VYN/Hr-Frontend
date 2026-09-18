@@ -460,10 +460,10 @@ export default function ShortlistedApplicationsPage() {
                 `/payroll/recruitment-process/Shortlisted_Candidate?flag=true&v1=${v1}&tran_id=${candidate?.TRAN_ID}`
               );
             }}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-600 dark:hover:text-white transition-all shadow-2xs cursor-pointer select-none"
+            className=" h-10 w-40 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-lg font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-600 dark:hover:text-white transition-all shadow-2xs cursor-pointer select-none"
             title="Open candidate details"
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-5 h-5" />
             <span>Zoom</span>
           </button>
         ),

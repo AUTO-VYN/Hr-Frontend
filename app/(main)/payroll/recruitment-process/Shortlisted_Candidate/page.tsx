@@ -405,7 +405,7 @@ function ShortlistedCandidateContent() {
             <AButton
               variant="primary"
               size="sm"
-              disabled={Boolean(tran_id && compcode)}
+              disabled={false}
               onClick={handleEmpUpdate}
               className="h-9 px-4 rounded-xl bg-[#4338CA] hover:bg-[#3730a3] text-white shadow-xs"
             >
@@ -415,6 +415,8 @@ function ShortlistedCandidateContent() {
           </div>
         </div>
       </header>
+      {/* disabled={!Boolean(tran_id && compcode)} */}
+
 
       {/* ===== BODY CONTENT WRAPPER ===== */}
       <div className={`${isLoading ? "blur-[2px] pointer-events-none select-none" : ""}`}>
