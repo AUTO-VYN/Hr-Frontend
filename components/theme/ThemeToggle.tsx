@@ -32,12 +32,12 @@ export default function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={toggle}
       className={
-        "flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-fg hover:bg-hoverbg " +
+        "flex items-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-card px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10.5px] sm:text-[11.5px] font-medium text-fg hover:bg-hoverbg shrink-0 " +
         (className || "")
       }
     >
-      {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-      {dark ? "Light" : "Dark"}
+      {dark ? <Sun className="h-3.5 w-3.5 shrink-0" /> : <Moon className="h-3.5 w-3.5 shrink-0" />}
+      <span>{dark ? "Light" : "Dark"}</span>
     </button>
   );
 }
