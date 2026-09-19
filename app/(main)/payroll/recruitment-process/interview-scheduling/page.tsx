@@ -1640,9 +1640,9 @@ export default function InterviewSchedulingPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       <div
         style={{
-          left: "var(--sidebar-width, 68px)",
+          paddingBottom: "max(20px, env(safe-area-inset-bottom, 20px))",
         }}
-        className="fixed bottom-0 right-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-[#E2E8F0] dark:border-[#1F2937] p-2.5 sm:p-[12px_24px] shadow-lg transition-[left] duration-150 ease-in-out max-md:!left-0"
+        className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-[#E2E8F0] dark:border-[#1F2937] p-2.5 pb-5 sm:p-[12px_24px] shadow-lg transition-[left] duration-150 ease-in-out"
       >
         <div className="max-w-[1780px] mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-4">
           {/* Left: Progress Badge & Reason Input */}

@@ -75,8 +75,8 @@ export default function BulkResumeUploadPage() {
       (user?.Comp_Code as string) ||
       (typeof window !== "undefined"
         ? localStorage.getItem("Comp_Code") ||
-          localStorage.getItem("compcode") ||
-          ""
+        localStorage.getItem("compcode") ||
+        ""
         : "") ||
       ""
     );
@@ -586,13 +586,12 @@ export default function BulkResumeUploadPage() {
                   handleChangeExileFile({ target: { files: e.dataTransfer.files } });
                 }
               }}
-              className={`w-full flex flex-col sm:flex-row sm:items-center justify-between gap-[14px] border rounded-[11px] p-[16px_18px] transition-all ${
-                excelfile
+              className={`w-full flex flex-col sm:flex-row sm:items-center justify-between gap-[14px] border rounded-[11px] p-[16px_18px] transition-all ${excelfile
                   ? "border-[rgba(16,185,129,0.5)] bg-[rgba(16,185,129,0.06)]"
                   : isDragging
-                  ? "border-[#4F46E5] bg-[#F8FAFC] dark:bg-[#0E1524]"
-                  : "border-dashed border-[#E2E8F0] dark:border-[#1F2937] bg-transparent hover:border-[#4F46E5] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524]"
-              }`}
+                    ? "border-[#4F46E5] bg-[#F8FAFC] dark:bg-[#0E1524]"
+                    : "border-dashed border-[#E2E8F0] dark:border-[#1F2937] bg-transparent hover:border-[#4F46E5] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524]"
+                }`}
             >
               <input
                 type="file"
@@ -608,11 +607,10 @@ export default function BulkResumeUploadPage() {
                 className="flex items-center gap-[14px] flex-1 cursor-pointer min-w-0"
               >
                 <span
-                  className={`w-[40px] h-[40px] rounded-[11px] shrink-0 grid place-items-center ${
-                    excelfile
+                  className={`w-[40px] h-[40px] rounded-[11px] shrink-0 grid place-items-center ${excelfile
                       ? "bg-[rgba(16,185,129,0.15)] text-[#10B981]"
                       : "bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] dark:text-[#94A3B8]"
-                  }`}
+                    }`}
                 >
                   {excelfile ? (
                     <FileCheck2 className="w-5 h-5 stroke-[1.75]" />
@@ -722,11 +720,10 @@ export default function BulkResumeUploadPage() {
 
               <div className="border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[11px_12px]">
                 <div
-                  className={`text-[22px] font-[650] [font-variant-numeric:tabular-nums] ${
-                    (!rowWise ? (fileType === "pdf" ? wrongData : excelRowSkipped) : skipCount)
+                  className={`text-[22px] font-[650] [font-variant-numeric:tabular-nums] ${(!rowWise ? (fileType === "pdf" ? wrongData : excelRowSkipped) : skipCount)
                       ? "text-[#E11D48]"
                       : "text-[#64748B] dark:text-[#94A3B8]"
-                  }`}
+                    }`}
                 >
                   {!rowWise ? (fileType === "pdf" ? wrongData : excelRowSkipped) : skipCount}
                 </div>
@@ -741,11 +738,10 @@ export default function BulkResumeUploadPage() {
               <div className="mt-[14px] pt-[13px] border-t border-[#E2E8F0] dark:border-[#1F2937] flex flex-col gap-[8px]">
                 <div className="flex items-center gap-[9px] text-[12px]">
                   <span
-                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${
-                      validCount > 0
+                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${validCount > 0
                         ? "bg-[rgba(16,185,129,0.15)] text-[#10B981]"
                         : "bg-[rgba(245,158,11,0.16)] text-[#B45309]"
-                    }`}
+                      }`}
                   >
                     {validCount > 0 ? (
                       <Check className="w-3 h-3 stroke-[2.5]" />
@@ -760,11 +756,10 @@ export default function BulkResumeUploadPage() {
 
                 <div className="flex items-center gap-[9px] text-[12px]">
                   <span
-                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${
-                      cvCount === rows.length && rows.length > 0
+                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${cvCount === rows.length && rows.length > 0
                         ? "bg-[rgba(16,185,129,0.15)] text-[#10B981]"
                         : "bg-[rgba(245,158,11,0.16)] text-[#B45309]"
-                    }`}
+                      }`}
                   >
                     {cvCount === rows.length && rows.length > 0 ? (
                       <Check className="w-3 h-3 stroke-[2.5]" />
@@ -779,11 +774,10 @@ export default function BulkResumeUploadPage() {
 
                 <div className="flex items-center gap-[9px] text-[12px]">
                   <span
-                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${
-                      skipCount === 0
+                    className={`w-[17px] h-[17px] rounded-[5px] shrink-0 grid place-items-center ${skipCount === 0
                         ? "bg-[rgba(16,185,129,0.15)] text-[#10B981]"
                         : "bg-[rgba(245,158,11,0.16)] text-[#B45309]"
-                    }`}
+                      }`}
                   >
                     {skipCount === 0 ? (
                       <Check className="w-3 h-3 stroke-[2.5]" />
@@ -803,22 +797,20 @@ export default function BulkResumeUploadPage() {
                     <button
                       type="button"
                       onClick={() => setActiveTable("success")}
-                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${
-                        activeTable === "success"
+                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${activeTable === "success"
                           ? "bg-[rgba(16,185,129,0.15)] text-[#10B981] border border-[rgba(16,185,129,0.4)]"
                           : "bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] hover:text-[#1E293B]"
-                      }`}
+                        }`}
                     >
                       Uploaded ({correctData})
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTable("failed")}
-                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${
-                        activeTable === "failed"
+                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${activeTable === "failed"
                           ? "bg-[rgba(225,29,72,0.1)] text-[#E11D48] border border-[rgba(225,29,72,0.4)]"
                           : "bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] hover:text-[#1E293B]"
-                      }`}
+                        }`}
                     >
                       Rejected ({wrongData})
                     </button>
@@ -828,22 +820,20 @@ export default function BulkResumeUploadPage() {
                     <button
                       type="button"
                       onClick={() => setActiveTable("success")}
-                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${
-                        activeTable === "success"
+                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${activeTable === "success"
                           ? "bg-[rgba(16,185,129,0.15)] text-[#10B981] border border-[rgba(16,185,129,0.4)]"
                           : "bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] hover:text-[#1E293B]"
-                      }`}
+                        }`}
                     >
                       Imported ({excelRowinserted})
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTable("errored")}
-                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${
-                        activeTable === "errored"
+                      className={`flex-1 py-1.5 px-2 rounded-[8px] text-[11.5px] font-[600] transition-colors ${activeTable === "errored"
                           ? "bg-[rgba(225,29,72,0.1)] text-[#E11D48] border border-[rgba(225,29,72,0.4)]"
                           : "bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] hover:text-[#1E293B]"
-                      }`}
+                        }`}
                     >
                       Non-Imported ({excelRowSkipped})
                     </button>
@@ -872,22 +862,20 @@ export default function BulkResumeUploadPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTable("success")}
-                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${
-                    activeTable === "success"
+                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${activeTable === "success"
                       ? "bg-[#10B981] text-white"
                       : "bg-[#F1F5F9] dark:bg-[#182235] text-[#64748B] hover:text-[#1E293B]"
-                  }`}
+                    }`}
                 >
                   Uploaded ({correctData})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTable("failed")}
-                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${
-                    activeTable === "failed"
+                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${activeTable === "failed"
                       ? "bg-[#E11D48] text-white"
                       : "bg-[#F1F5F9] dark:bg-[#182235] text-[#64748B] hover:text-[#1E293B]"
-                  }`}
+                    }`}
                 >
                   Rejected ({wrongData})
                 </button>
@@ -987,22 +975,20 @@ export default function BulkResumeUploadPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTable("success")}
-                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${
-                    activeTable === "success"
+                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${activeTable === "success"
                       ? "bg-[#10B981] text-white"
                       : "bg-[#F1F5F9] dark:bg-[#182235] text-[#64748B] hover:text-[#1E293B]"
-                  }`}
+                    }`}
                 >
                   Imported ({excelRowinserted})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTable("errored")}
-                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${
-                    activeTable === "errored"
+                  className={`py-1.5 px-3 rounded-[8px] text-[12px] font-[600] whitespace-nowrap transition-colors ${activeTable === "errored"
                       ? "bg-[#E11D48] text-white"
                       : "bg-[#F1F5F9] dark:bg-[#182235] text-[#64748B] hover:text-[#1E293B]"
-                  }`}
+                    }`}
                 >
                   Non-Imported ({excelRowSkipped})
                 </button>
@@ -1104,11 +1090,10 @@ export default function BulkResumeUploadPage() {
                   <button
                     type="button"
                     onClick={() => setViewMode("table")}
-                    className={`p-1 rounded-[5px] text-[11px] transition-colors ${
-                      viewMode === "table"
+                    className={`p-1 rounded-[5px] text-[11px] transition-colors ${viewMode === "table"
                         ? "bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] shadow-xs"
                         : "text-[#64748B] hover:text-[#1E293B] dark:text-[#94A3B8]"
-                    }`}
+                      }`}
                     title="Table view"
                   >
                     <TableIcon className="w-3.5 h-3.5" />
@@ -1116,11 +1101,10 @@ export default function BulkResumeUploadPage() {
                   <button
                     type="button"
                     onClick={() => setViewMode("cards")}
-                    className={`p-1 rounded-[5px] text-[11px] transition-colors ${
-                      viewMode === "cards"
+                    className={`p-1 rounded-[5px] text-[11px] transition-colors ${viewMode === "cards"
                         ? "bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] shadow-xs"
                         : "text-[#64748B] hover:text-[#1E293B] dark:text-[#94A3B8]"
-                    }`}
+                      }`}
                     title="Card view"
                   >
                     <LayoutGrid className="w-3.5 h-3.5" />
@@ -1203,16 +1187,14 @@ export default function BulkResumeUploadPage() {
                     return (
                       <div
                         key={index}
-                        className={`grid grid-cols-[52px_168px_132px_128px_92px_108px_100px_116px_168px_190px_128px_168px_116px_48px] items-center border-b border-[#E2E8F0] dark:border-[#1F2937] transition-colors ${
-                          report.ok ? "bg-transparent" : "bg-[rgba(225,29,72,0.04)]"
-                        }`}
+                        className={`grid grid-cols-[52px_168px_132px_128px_92px_108px_100px_116px_168px_190px_128px_168px_116px_48px] items-center border-b border-[#E2E8F0] dark:border-[#1F2937] transition-colors ${report.ok ? "bg-transparent" : "bg-[rgba(225,29,72,0.04)]"
+                          }`}
                       >
                         {/* # Col with colored dot */}
                         <span className="p-[9px_10px] flex items-center gap-[6px]">
                           <span
-                            className={`w-[7px] h-[7px] rounded-full shrink-0 ${
-                              report.ok ? "bg-[#10B981]" : "bg-[#E11D48]"
-                            }`}
+                            className={`w-[7px] h-[7px] rounded-full shrink-0 ${report.ok ? "bg-[#10B981]" : "bg-[#E11D48]"
+                              }`}
                           />
                           <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] [font-variant-numeric:tabular-nums]">
                             {index + 1}
@@ -1226,11 +1208,10 @@ export default function BulkResumeUploadPage() {
                             value={row.name}
                             onChange={(e) => handleChange(index, "name", e.target.value)}
                             placeholder="Full name"
-                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${
-                              report.isNameInvalid
+                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${report.isNameInvalid
                                 ? "border-[rgba(225,29,72,0.5)] bg-[rgba(225,29,72,0.06)] text-[#E11D48] placeholder:text-[#E11D48]/70"
                                 : "border-transparent bg-transparent text-[#1E293B] dark:text-[#E7ECF3] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524] focus:border-[#4F46E5] focus:bg-white dark:focus:bg-[#0E1524]"
-                            }`}
+                              }`}
                           />
                         </span>
 
@@ -1242,11 +1223,10 @@ export default function BulkResumeUploadPage() {
                             maxLength={10}
                             onChange={(e) => handleChange(index, "mob_no", e.target.value)}
                             placeholder="10 digits"
-                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${
-                              report.isMobileInvalid
+                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${report.isMobileInvalid
                                 ? "border-[rgba(225,29,72,0.5)] bg-[rgba(225,29,72,0.06)] text-[#E11D48] placeholder:text-[#E11D48]/70"
                                 : "border-transparent bg-transparent text-[#1E293B] dark:text-[#E7ECF3] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524] focus:border-[#4F46E5] focus:bg-white dark:focus:bg-[#0E1524]"
-                            }`}
+                              }`}
                           />
                         </span>
 
@@ -1338,11 +1318,10 @@ export default function BulkResumeUploadPage() {
                             value={row.email}
                             onChange={(e) => handleChange(index, "email", e.target.value)}
                             placeholder="name@example.com"
-                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${
-                              report.isEmailInvalid
+                            className={`w-full text-[12.5px] p-[7px_8px] rounded-[7px] outline-none transition-colors border ${report.isEmailInvalid
                                 ? "border-[rgba(225,29,72,0.5)] bg-[rgba(225,29,72,0.06)] text-[#E11D48]"
                                 : "border-transparent bg-transparent text-[#1E293B] dark:text-[#E7ECF3] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524] focus:border-[#4F46E5] focus:bg-white dark:focus:bg-[#0E1524]"
-                            }`}
+                              }`}
                           />
                         </span>
 
@@ -1382,11 +1361,10 @@ export default function BulkResumeUploadPage() {
                           <button
                             type="button"
                             onClick={() => rowFileInputRefs.current[index]?.click()}
-                            className={`w-full flex items-center gap-[6px] border rounded-[8px] p-[6px_8px] text-[11.5px] font-[600] cursor-pointer whitespace-nowrap overflow-hidden transition-colors border-[#E2E8F0] dark:border-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] ${
-                              row.resume || row.resumeName
+                            className={`w-full flex items-center gap-[6px] border rounded-[8px] p-[6px_8px] text-[11.5px] font-[600] cursor-pointer whitespace-nowrap overflow-hidden transition-colors border-[#E2E8F0] dark:border-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] ${row.resume || row.resumeName
                                 ? "text-[#10B981]"
                                 : "text-[#64748B] dark:text-[#94A3B8]"
-                            }`}
+                              }`}
                           >
                             {row.resume || row.resumeName ? (
                               <FileCheck className="w-3.5 h-3.5 shrink-0 stroke-[1.75]" />
@@ -1456,11 +1434,11 @@ export default function BulkResumeUploadPage() {
       {/* Sticky Bottom Action Bar */}
       <div
         style={{
-          left: "var(--sidebar-width, 68px)",
+          paddingBottom: "max(24px, env(safe-area-inset-bottom, 24px))",
         }}
-        className="fixed bottom-0 right-0 z-40 bg-white dark:bg-[#111827] border-t border-[#E2E8F0] dark:border-[#1F2937] px-3 sm:px-6 py-2.5 sm:py-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-[14px] shadow-lg transition-[left] duration-150 ease-in-out max-sm:!left-0"
+        className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white dark:bg-[#111827] border-t border-[#E2E8F0] dark:border-[#1F2937] px-3 sm:px-6 pt-2.5 pb-6 sm:py-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-[14px] shadow-[0_-4px_16px_rgba(0,0,0,0.08)] transition-[left] duration-150 ease-in-out"
       >
-        <div className="text-[12px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] text-center sm:text-left w-full sm:w-auto">
+        <div className="text-[11.5px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] text-center sm:text-left w-full sm:w-auto shrink-0">
           Total rows{" "}
           <span className="text-[#1E293B] dark:text-[#E7ECF3] font-[600] [font-variant-numeric:tabular-nums]">
             {!rowWise ? getcount : rows.length}
@@ -1478,8 +1456,9 @@ export default function BulkResumeUploadPage() {
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
           <AButton
             variant="outline"
+            size="sm"
             onClick={() => router.push("/payroll/recruitment-process/resume-bank")}
-            className="flex-1 sm:flex-none justify-center items-center gap-[6px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12px] sm:text-[12.5px] font-[550] py-2 px-3 sm:py-[9px] sm:px-[14px] rounded-[10px] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center items-center gap-1.5 border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12px] sm:text-[12.5px] font-[550] h-10 py-2 px-3 sm:px-[14px] rounded-[10px] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] whitespace-nowrap"
           >
             <span>Open resume bank</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
@@ -1487,13 +1466,13 @@ export default function BulkResumeUploadPage() {
 
           <AButton
             variant="primary"
+            size="sm"
             onClick={handleSubmit}
             loading={isLoading}
             loadingText="Saving..."
             disabled={validCount === 0}
-            className={`flex-1 sm:flex-none justify-center items-center gap-[6px] text-white text-[12px] sm:text-[12.5px] font-[600] py-2 px-3 sm:py-[9px] sm:px-[17px] rounded-[10px] whitespace-nowrap shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] ${
-              validCount > 0 ? "bg-[#4F46E5] hover:bg-[#4338CA]" : "bg-[#64748B] cursor-not-allowed"
-            }`}
+            className={`flex-1 sm:flex-none justify-center items-center gap-1.5 text-white text-[12px] sm:text-[12.5px] font-[600] h-10 py-2 px-3 sm:px-[17px] rounded-[10px] whitespace-nowrap shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] ${validCount > 0 ? "bg-[#4F46E5] hover:bg-[#4338CA]" : "bg-[#64748B] cursor-not-allowed"
+              }`}
           >
             <Save className="w-3.5 h-3.5 shrink-0" />
             <span>Save to resume bank</span>

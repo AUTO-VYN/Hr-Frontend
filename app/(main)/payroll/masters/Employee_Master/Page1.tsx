@@ -328,12 +328,22 @@ if (name === "OTP_With_Aadhaar") {
           title: `Please Enter Official Mobile Number first`,
           variant: "destructive",
         });
+        Swal.fire({
+          icon: "warning",
+          title: "Mobile Number Required",
+          text: "Please Enter Official Mobile Number first",
+        });
         return;
       }
       if (!formData?.EmpMst?.PANNO) {
         toast({
           title: `Please Enter Pan Number first`,
           variant: "destructive",
+        });
+        Swal.fire({
+          icon: "warning",
+          title: "PAN Number Required",
+          text: "Please Enter Pan Number first",
         });
         return;
       }
@@ -346,6 +356,11 @@ if (name === "OTP_With_Aadhaar") {
           toast({
             title: `Invalid PAN Card No. Format should be ABCDE1234F`,
             variant: "destructive",
+          });
+          Swal.fire({
+            icon: "warning",
+            title: "Invalid PAN Format",
+            text: "Invalid PAN Card No. Format should be ABCDE1234F",
           });
           return;
         }
@@ -366,23 +381,43 @@ if (name === "OTP_With_Aadhaar") {
         const res1 = result?.data?.data;
 
         if (result.status === 202) {
+          const reason =
+            result?.data?.message ||
+            "Please Create Employee, Then Do Verification";
           toast({
-            title:
-              result?.data?.message ||
-              "Please Create Employee, Then Do Verification",
+            title: reason,
             variant: "destructive",
+          });
+          Swal.fire({
+            icon: "error",
+            title: "PAN Verification Failed",
+            text: reason,
           });
           return;
         }
         if (res1) {
           setDocumentData((prev: any) => ({ ...prev, pan: res1 }));
           onAadharVerified?.("pan");
+          Swal.fire({
+            icon: "success",
+            title: "PAN Verified",
+            text: "PAN Card verified successfully.",
+          });
         } else {
           onOpenDialog();
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error", error);
         setIsLoading(false);
+        const reason =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to verify PAN Card";
+        Swal.fire({
+          icon: "error",
+          title: "PAN Verification Failed",
+          text: reason,
+        });
       }
       return;
     }
@@ -396,20 +431,40 @@ if (name === "OTP_With_Aadhaar") {
             "Invalid PAN Card No. Format should be ABCDE1234F",
             "warning",
           );
+          Swal.fire({
+            icon: "warning",
+            title: "Invalid PAN Format",
+            text: "Invalid PAN Card No. Format should be ABCDE1234F",
+          });
           return;
         }
       }
 
       if (!formData.EmpMst?.PANNO) {
         showSideAlert("Please Enter Pan No", "warning");
+        Swal.fire({
+          icon: "warning",
+          title: "PAN Number Required",
+          text: "Please Enter Pan No",
+        });
         return;
       }
       if (!formData.EmpMst?.EMPFIRSTNAME) {
         showSideAlert("Please Enter First Name", "warning");
+        Swal.fire({
+          icon: "warning",
+          title: "First Name Required",
+          text: "Please Enter First Name",
+        });
         return;
       }
       if (!formData.EmpMst?.DOB) {
         showSideAlert("Please Enter Date Of Birth(DOB)", "warning");
+        Swal.fire({
+          icon: "warning",
+          title: "DOB Required",
+          text: "Please Enter Date Of Birth(DOB)",
+        });
         return;
       }
 
@@ -448,7 +503,16 @@ if (name === "OTP_With_Aadhaar") {
             },
           }));
           showSideAlert("PAN Card Verified successfully", "success");
+          Swal.fire({
+            icon: "success",
+            title: "PAN Verified",
+            text: "PAN Card verified successfully.",
+          });
         } else {
+          const reason =
+            res?.message ||
+            res?.detail ||
+            "Invalid PAN Card Number or Details Mismatch";
           setFormData((prev) => ({
             ...prev,
             EmpMst: {
@@ -458,17 +522,27 @@ if (name === "OTP_With_Aadhaar") {
               AADHAAR_LINKED_VER: false,
             },
           }));
-          showSideAlert("Invalid PAN Card Number", "warning");
+          showSideAlert(reason, "warning");
+          Swal.fire({
+            icon: "error",
+            title: "PAN Verification Failed",
+            text: reason,
+          });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("Error", error);
         setIsLoading(false);
-        if (error?.response?.data?.error?.detail) {
-          showSideAlert(
-            `${error?.response?.data?.error?.detail?.details}`,
-            "error",
-          );
-        }
+        const reason =
+          error?.response?.data?.error?.detail?.details ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "PAN verification failed";
+        showSideAlert(reason, "error");
+        Swal.fire({
+          icon: "error",
+          title: "PAN Verification Failed",
+          text: reason,
+        });
       }
       return;
     }
@@ -481,8 +555,23 @@ if (name === "OTP_With_Aadhaar") {
           "Invalid PAN Card No. Format should be ABCDE1234F",
           "warning",
         );
+        Swal.fire({
+          icon: "warning",
+          title: "Invalid PAN Format",
+          text: "Invalid PAN Card No. Format should be ABCDE1234F",
+        });
         return;
       }
+    }
+
+    if (!formData.EmpMst?.PANNO) {
+      showSideAlert("Please Enter Pan No", "warning");
+      Swal.fire({
+        icon: "warning",
+        title: "PAN Number Required",
+        text: "Please Enter Pan No",
+      });
+      return;
     }
 
     try {
@@ -517,7 +606,17 @@ if (name === "OTP_With_Aadhaar") {
           },
         }));
         showSideAlert("PAN Card Verified successfully", "success");
+        Swal.fire({
+          icon: "success",
+          title: "PAN Verified",
+          text: "PAN Card verified successfully.",
+        });
       } else {
+        const reason =
+          res?.message ||
+          res?.status_desc ||
+          res?.error ||
+          "Invalid PAN Card Number or Details Mismatch";
         setFormData((prev) => ({
           ...prev,
           EmpMst: {
@@ -527,11 +626,25 @@ if (name === "OTP_With_Aadhaar") {
             AADHAAR_LINKED_VER: false,
           },
         }));
-        showSideAlert("Invalid PAN Card Number", "warning");
+        showSideAlert(reason, "warning");
+        Swal.fire({
+          icon: "error",
+          title: "PAN Verification Failed",
+          text: reason,
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error", error);
       setIsLoading(false);
+      const reason =
+        error?.response?.data?.message ||
+        error?.message ||
+        "PAN verification failed";
+      Swal.fire({
+        icon: "error",
+        title: "PAN Verification Failed",
+        text: reason,
+      });
     }
   };
 
@@ -541,6 +654,11 @@ if (name === "OTP_With_Aadhaar") {
         title: `Please enter Aadhaar number first`,
         variant: "destructive",
       });
+      Swal.fire({
+        icon: "warning",
+        title: "Aadhaar Required",
+        text: "Please enter Aadhaar number first",
+      });
       return;
     }
 
@@ -549,6 +667,11 @@ if (name === "OTP_With_Aadhaar") {
         title: `Aadhaar number must be exactly 12 digits`,
         variant: "destructive",
       });
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Aadhaar Format",
+        text: "Aadhaar number must be exactly 12 digits",
+      });
       return;
     }
 
@@ -556,6 +679,11 @@ if (name === "OTP_With_Aadhaar") {
       toast({
         title: `Please enter Official Mobile Number first`,
         variant: "destructive",
+      });
+      Swal.fire({
+        icon: "warning",
+        title: "Mobile Number Required",
+        text: "Please enter Official Mobile Number first",
       });
       return;
     }
@@ -584,10 +712,21 @@ if (name === "OTP_With_Aadhaar") {
           },
         }));
         setIsLoading(false);
+        showSideAlert("Aadhaar Card Verified successfully", "success");
+        Swal.fire({
+          icon: "success",
+          title: "Aadhaar Verified",
+          text: "Aadhaar Card verified successfully.",
+        });
         return;
       } else if (res.reference_id) {
         setAadhaarMode("primary");
         showSideAlert(res?.message || "OTP sent successfully", "success");
+        Swal.fire({
+          icon: "info",
+          title: "OTP Sent",
+          text: res?.message || "OTP sent successfully to registered mobile number.",
+        });
         setreference_id(res.reference_id?.toString());
         setdisabledOtp(false);
         setVarifiyDis1(true);
@@ -596,7 +735,7 @@ if (name === "OTP_With_Aadhaar") {
       } else {
         throw new Error(res?.message || "Primary Aadhaar Failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       setAadhaarMode("digilocker");
       try {
         const digiRes = await axios.post(
@@ -624,7 +763,12 @@ if (name === "OTP_With_Aadhaar") {
         if (digilockerUrl) {
           setDocumentData((prev) => ({ ...prev, digilockerUrl }));
           setShowAadhaarTooltip(true);
-        } else if (digiRes?.data) {
+          Swal.fire({
+            icon: "info",
+            title: "DigiLocker Verification",
+            text: "DigiLocker verification initiated. Please complete the verification link.",
+          });
+        } else if (digiRes?.data && (digiRes?.data?.full_address || digiRes?.data?.aadhaar_photo_base64)) {
           setDocumentData((prev) => ({ ...prev, aadhaar: digiRes?.data }));
           setFormData((prev) => ({
             ...prev,
@@ -633,20 +777,41 @@ if (name === "OTP_With_Aadhaar") {
               photo: digiRes?.data?.aadhaar_photo_base64,
               full_addressAadhaar: digiRes?.data?.full_address,
               PERMANENTADDRESS1: digiRes?.data?.full_address,
+              AADHAR_CARD_VER: "true",
             },
           }));
           setShowAadhaarTooltip(true);
+          Swal.fire({
+            icon: "success",
+            title: "Aadhaar Verified",
+            text: "Aadhaar verified successfully via DigiLocker.",
+          });
         } else {
+          const reason = digiRes?.data?.message || "Digilocker verification failed";
           toast({
-            title: "Digilocker verification failed",
+            title: reason,
             variant: "destructive",
           });
+          Swal.fire({
+            icon: "error",
+            title: "Aadhaar Verification Failed",
+            text: reason,
+          });
         }
-      } catch (digiError) {
+      } catch (digiError: any) {
         console.error("Digilocker Error", digiError);
+        const reason =
+          digiError?.response?.data?.message ||
+          digiError?.message ||
+          "Both primary and DigiLocker verification methods failed";
         toast({
-          title: "Both verification methods failed",
+          title: reason,
           variant: "destructive",
+        });
+        Swal.fire({
+          icon: "error",
+          title: "Aadhaar Verification Failed",
+          text: reason,
         });
       }
     } finally {
@@ -763,18 +928,29 @@ if (name === "OTP_With_Aadhaar") {
         }));
         setdisabledOtp(true);
         setVarifiyDis1(false);
-        showSideAlert("OTP Verififyed  successfully", "success");
+        showSideAlert("OTP Verified successfully", "success");
+        Swal.fire({
+          icon: "success",
+          title: "Aadhaar Verified",
+          text: "Aadhaar OTP verified successfully.",
+        });
         setIsLoading(false);
       } else if (
         res.status &&
         typeof res.status === "string" &&
         res.status.toLowerCase() != "valid"
       ) {
+        const reason = res.message || res.status_desc || "Invalid OTP NUMBER";
         setFormData((prev) => ({
           ...prev,
           EmpMst: { ...prev.EmpMst, AADHAR_CARD_VER: false },
         }));
-        showSideAlert("Invalid OTP NUMBER", "warning");
+        showSideAlert(reason, "warning");
+        Swal.fire({
+          icon: "error",
+          title: "Aadhaar Verification Failed",
+          text: reason,
+        });
         setIsLoading(false);
       } else if (
         res.message &&
@@ -786,18 +962,38 @@ if (name === "OTP_With_Aadhaar") {
           EmpMst: { ...prev.EmpMst, AADHAR_CARD_VER: false },
         }));
         showSideAlert("Invalid OTP NUMBER", "warning");
+        Swal.fire({
+          icon: "error",
+          title: "Aadhaar Verification Failed",
+          text: "Invalid OTP NUMBER. Please enter the correct OTP.",
+        });
         setIsLoading(false);
       } else {
+        const reason = res?.message || "Aadhaar OTP verification failed";
         setFormData((prev) => ({
           ...prev,
           EmpMst: { ...prev.EmpMst, AADHAR_CARD_VER: false },
         }));
-        showSideAlert(`${res.message}`, "warning");
+        showSideAlert(`${reason}`, "warning");
+        Swal.fire({
+          icon: "error",
+          title: "Aadhaar Verification Failed",
+          text: reason,
+        });
         setIsLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error", error);
       setIsLoading(false);
+      const reason =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Aadhaar OTP verification failed";
+      Swal.fire({
+        icon: "error",
+        title: "Aadhaar Verification Failed",
+        text: reason,
+      });
     }
   };
 
@@ -835,25 +1031,32 @@ if (name === "OTP_With_Aadhaar") {
     }
   }, [formData.EmpMst?.OTP_With_Aadhaar]);
 
-  const MobileNumberpreviousDeatils = async (mobile: string) => {
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/employee/ExistingEmpDetailsByNo`,
-        { MOBILENO: mobile, Loc_code: user?.branch },
-        { headers: { compcode: user?.Comp_Code } },
-      );
+const MobileNumberpreviousDeatils = async (mobile: string) => {
+  try {
+    const compcode = user?.COMP_CODE; // <-- correct
+    if (!compcode) {
+      console.log("COMP_CODE missing in user:", user);
+      return;
+    }
 
-      if (response?.data?.message == "Customer Data fetched successfully") {
-        setMobileData(response.data.result);
-        setIsDialogOpen(true);
-      } else {
-        setIsDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error fetching customer details:", error);
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/employee/ExistingEmpDetailsByNo`,
+      { MOBILENO: mobile, Loc_code: user?.branch || "" },
+      { headers: { compcode: String(compcode) } }
+    );
+
+    if (response?.data?.message === "Customer Data fetched successfully") {
+      setMobileData(response.data.result);
+      setIsDialogOpen(true);
+    } else {
       setIsDialogOpen(false);
     }
-  };
+  } catch (error: any) {
+    console.error("Error fetching customer details:", error);
+    console.error("Server Error Details:", error.response?.data || error.message);
+    setIsDialogOpen(false);
+  }
+};
 
   const EmailpreviousDeatils = async (email) => {
     try {

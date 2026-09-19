@@ -33,8 +33,8 @@ const formatDate = (dateString: any) => {
 };
 
 type CardViewProps = {
-  data: any[];
-  onCardDoubleClick: (employee: any) => void;
+  data?: any[];
+  onCardDoubleClick?: (employee: any) => void;
   empView?: "ALL" | "ACTIVE" | "LEFT" | string;
   totalCount?: number;
   setEmpView?: (newView: "ALL" | "ACTIVE" | "LEFT" | string) => void;
@@ -347,4 +347,190 @@ const CardView = ({
   );
 };
 
-export default CardView;
+export type StatCardVariant =
+  | "indigo"
+  | "amber"
+  | "sky"
+  | "emerald"
+  | "purple"
+  | "rose"
+  | "blue"
+  | "green"
+  | "red";
+
+export interface StatCardProps {
+  title: string;
+  count: number | string;
+  icon?: React.ReactNode;
+  isActive?: boolean;
+  onClick?: () => void;
+  variant?: StatCardVariant;
+  className?: string;
+  activeClassName?: string;
+  inactiveClassName?: string;
+  iconClassName?: string;
+  titleClassName?: string;
+  countClassName?: string;
+}
+
+const variantStyles: Record<
+  string,
+  {
+    active: string;
+    inactive: string;
+    iconBox: string;
+    title: string;
+    count: string;
+  }
+> = {
+  indigo: {
+    active:
+      "bg-[#eef2ff] dark:bg-indigo-950/40 border-[#4338ca] ring-2 ring-[#4338ca]/25 shadow-sm",
+    inactive:
+      "bg-[#f8faff] dark:bg-indigo-950/20 border-[#c7d2fe] dark:border-indigo-800/60 hover:border-[#6366f1]",
+    iconBox:
+      "bg-[#e0e7ff] dark:bg-indigo-900/50 border border-[#c7d2fe] dark:border-indigo-700/60 text-[#4338ca] dark:text-indigo-300",
+    title: "text-[#4338ca] dark:text-indigo-300",
+    count: "text-[#1e1b4b] dark:text-slate-100",
+  },
+  amber: {
+    active:
+      "bg-[#fffbeb] dark:bg-amber-950/40 border-[#d97706] ring-2 ring-[#d97706]/25 shadow-sm",
+    inactive:
+      "bg-[#fffdf5] dark:bg-amber-950/20 border-[#fde68a] dark:border-amber-800/60 hover:border-[#f59e0b]",
+    iconBox:
+      "bg-[#fef3c7] dark:bg-amber-900/50 border border-[#fde68a] dark:border-amber-700/60 text-[#d97706] dark:text-amber-300",
+    title: "text-[#b45309] dark:text-amber-300",
+    count: "text-[#451a03] dark:text-slate-100",
+  },
+  sky: {
+    active:
+      "bg-[#f0f9ff] dark:bg-sky-950/40 border-[#0284c7] ring-2 ring-[#0284c7]/25 shadow-sm",
+    inactive:
+      "bg-[#f8fcff] dark:bg-sky-950/20 border-[#bae6fd] dark:border-sky-800/60 hover:border-[#0ea5e9]",
+    iconBox:
+      "bg-[#e0f2fe] dark:bg-sky-900/50 border border-[#bae6fd] dark:border-sky-700/60 text-[#0284c7] dark:text-sky-300",
+    title: "text-[#0369a1] dark:text-sky-300",
+    count: "text-[#082f49] dark:text-slate-100",
+  },
+  blue: {
+    active:
+      "bg-[#f0f9ff] dark:bg-sky-950/40 border-[#0284c7] ring-2 ring-[#0284c7]/25 shadow-sm",
+    inactive:
+      "bg-[#f8fcff] dark:bg-sky-950/20 border-[#bae6fd] dark:border-sky-800/60 hover:border-[#0ea5e9]",
+    iconBox:
+      "bg-[#e0f2fe] dark:bg-sky-900/50 border border-[#bae6fd] dark:border-sky-700/60 text-[#0284c7] dark:text-sky-300",
+    title: "text-[#0369a1] dark:text-sky-300",
+    count: "text-[#082f49] dark:text-slate-100",
+  },
+  emerald: {
+    active:
+      "bg-[#f0fdf4] dark:bg-emerald-950/40 border-[#059669] ring-2 ring-[#059669]/25 shadow-sm",
+    inactive:
+      "bg-[#f7fef9] dark:bg-emerald-950/20 border-[#a7f3d0] dark:border-emerald-800/60 hover:border-[#10b981]",
+    iconBox:
+      "bg-[#d1fae5] dark:bg-emerald-900/50 border border-[#a7f3d0] dark:border-emerald-700/60 text-[#059669] dark:text-emerald-300",
+    title: "text-[#047857] dark:text-emerald-300",
+    count: "text-[#064e3b] dark:text-slate-100",
+  },
+  green: {
+    active:
+      "bg-[#f0fdf4] dark:bg-emerald-950/40 border-[#059669] ring-2 ring-[#059669]/25 shadow-sm",
+    inactive:
+      "bg-[#f7fef9] dark:bg-emerald-950/20 border-[#a7f3d0] dark:border-emerald-800/60 hover:border-[#10b981]",
+    iconBox:
+      "bg-[#d1fae5] dark:bg-emerald-900/50 border border-[#a7f3d0] dark:border-emerald-700/60 text-[#059669] dark:text-emerald-300",
+    title: "text-[#047857] dark:text-emerald-300",
+    count: "text-[#064e3b] dark:text-slate-100",
+  },
+  purple: {
+    active:
+      "bg-[#faf5ff] dark:bg-purple-950/40 border-[#7c3aed] ring-2 ring-[#7c3aed]/25 shadow-sm",
+    inactive:
+      "bg-[#fdfaff] dark:bg-purple-950/20 border-[#ddd6fe] dark:border-purple-800/60 hover:border-[#8b5cf6]",
+    iconBox:
+      "bg-[#ede9fe] dark:bg-purple-900/50 border border-[#ddd6fe] dark:border-purple-700/60 text-[#7c3aed] dark:text-purple-300",
+    title: "text-[#6d28d9] dark:text-purple-300",
+    count: "text-[#3b0764] dark:text-slate-100",
+  },
+  rose: {
+    active:
+      "bg-[#fff1f2] dark:bg-rose-950/40 border-[#e11d48] ring-2 ring-[#e11d48]/25 shadow-sm",
+    inactive:
+      "bg-[#fff8f8] dark:bg-rose-950/20 border-[#fecdd3] dark:border-rose-800/60 hover:border-[#f43f5e]",
+    iconBox:
+      "bg-[#ffe4e6] dark:bg-rose-900/50 border border-[#fecdd3] dark:border-rose-700/60 text-[#e11d48] dark:text-rose-300",
+    title: "text-[#be123c] dark:text-rose-300",
+    count: "text-[#4c0519] dark:text-slate-100",
+  },
+  red: {
+    active:
+      "bg-[#fff1f2] dark:bg-rose-950/40 border-[#e11d48] ring-2 ring-[#e11d48]/25 shadow-sm",
+    inactive:
+      "bg-[#fff8f8] dark:bg-rose-950/20 border-[#fecdd3] dark:border-rose-800/60 hover:border-[#f43f5e]",
+    iconBox:
+      "bg-[#ffe4e6] dark:bg-rose-900/50 border border-[#fecdd3] dark:border-rose-700/60 text-[#e11d48] dark:text-rose-300",
+    title: "text-[#be123c] dark:text-rose-300",
+    count: "text-[#4c0519] dark:text-slate-100",
+  },
+};
+
+export function StatCard({
+  title,
+  count,
+  icon,
+  isActive = false,
+  onClick,
+  variant = "indigo",
+  className = "",
+  activeClassName,
+  inactiveClassName,
+  iconClassName,
+  titleClassName,
+  countClassName,
+}: StatCardProps) {
+  const styles = variantStyles[variant] || variantStyles.indigo;
+  const activeStyle = activeClassName || styles.active;
+  const inactiveStyle = inactiveClassName || styles.inactive;
+  const iconStyle = iconClassName || styles.iconBox;
+  const titleStyle = titleClassName || styles.title;
+  const countStyle = countClassName || styles.count;
+
+  return (
+    <div
+      onClick={onClick}
+      className={`h-[110px] min-h-[110px] rounded-2xl border p-4 shadow-2xs flex flex-col justify-between cursor-pointer select-none transition-all duration-150 hover:shadow-md active:scale-[0.99] ${
+        isActive ? activeStyle : inactiveStyle
+      } ${className}`}
+    >
+      <div className="flex items-center gap-2.5">
+        {icon && (
+          <div
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconStyle}`}
+          >
+            {icon}
+          </div>
+        )}
+        <span
+          className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate ${titleStyle}`}
+        >
+          {title}
+        </span>
+      </div>
+      <div className={`text-2xl sm:text-3xl font-extrabold ${countStyle}`}>
+        {count}
+      </div>
+    </div>
+  );
+}
+
+export const MetricCard = StatCard;
+
+export default function Card(props: any) {
+  if (props && ("title" in props || "count" in props)) {
+    return <StatCard {...props} />;
+  }
+  return <CardView {...props} />;
+}
+
+export { CardView };

@@ -32,8 +32,11 @@ interface Props {
   data: any[];
 
   check?: boolean;
+  onlyOnecheck?: boolean; // When true, only one row can be selected at a time
   selectValue?: string;
   setsellectedrowdata?: (data: any[]) => void;
+  setSelectedRows?: (data: any[]) => void;
+  selectedRows?: any[];
 
   height?: number | string;
   size?: string;
@@ -59,6 +62,15 @@ interface Props {
   showExcelExport?: boolean; // default true
   columnsDownload?: any; // ✅ DataTable jaisa (optional)
   onExportAll?: () => Promise<any[]> | any[];
+
+  // Column Filters
+  showColumnFilters?: boolean;
+  columnFilters?: Record<string, string>;
+  onColumnFilterChange?: (columnKey: string, value: string) => void;
+  columnFiltersResetTrigger?: number;
+
+  footerTextMode?: "showing" | "pageItems";
+  containerClassName?: string;
 }
 
 const globalFilterFunction = (
@@ -91,8 +103,11 @@ export default function ServiceTablePagination({
   columns,
   data = [],
   check = false,
+  onlyOnecheck = false,
   selectValue = "Tran_id",
   setsellectedrowdata,
+  setSelectedRows,
+  selectedRows,
   height = 560,
   size,
   headerClassName,
@@ -114,11 +129,70 @@ export default function ServiceTablePagination({
   showExcelExport = true,
   columnsDownload,
   onExportAll,
+
+  showColumnFilters,
+  columnFilters,
+  onColumnFilterChange,
+  columnFiltersResetTrigger,
+  footerTextMode = "showing",
+  containerClassName = "",
 }: Props) {
   const tableRef = useRef<HTMLTableElement | null>(null);
   const scrollWrapRef = useRef<HTMLDivElement | null>(null);
 
   const { handleExcelDownload, isLoading: isExcelLoading } = useExcelDownload();
+
+  // Column Filter State
+  const [internalColumnFilters, setInternalColumnFilters] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (columnFiltersResetTrigger !== undefined) {
+      setInternalColumnFilters({});
+    }
+  }, [columnFiltersResetTrigger]);
+
+  const activeColumnFilters = useMemo(() => {
+    return columnFilters !== undefined ? columnFilters : internalColumnFilters;
+  }, [columnFilters, internalColumnFilters]);
+
+  const handleColumnFilterChange = (key: string, val: string) => {
+    if (columnFilters === undefined) {
+      setInternalColumnFilters((prev) => ({
+        ...prev,
+        [key]: val,
+      }));
+    }
+    onColumnFilterChange?.(key, val);
+  };
+
+  const hasColumnFilters = useMemo(() => {
+    if (showColumnFilters !== undefined) return showColumnFilters;
+    return (columns || []).some(
+      (col: any) =>
+        col &&
+        (col.filterPlaceholder ||
+          col.placeholder ||
+          col.filterable === true ||
+          col.showFilter === true)
+    );
+  }, [showColumnFilters, columns]);
+
+  const getColumnPlaceholder = (column: any) => {
+    if (column.filterPlaceholder) return column.filterPlaceholder;
+    if (column.placeholder && typeof column.placeholder === "string") return column.placeholder;
+    const headerTitle =
+      typeof column.Header === "string"
+        ? column.Header
+        : typeof column.id === "string"
+        ? column.id
+        : typeof column.accessor === "string"
+        ? column.accessor
+        : "";
+    if (headerTitle && headerTitle !== "_selection") {
+      return `All ${headerTitle.toLowerCase()}`;
+    }
+    return "All";
+  };
 
   // Selection state
   const [internalSelected, setInternalSelected] = useState<any[]>([]);
@@ -145,13 +219,34 @@ export default function ServiceTablePagination({
     ? serverPagination?.totalPages || 1
     : 1;
 
+  // Filter client data if column filters are active
+  const filteredDataByColumns = useMemo(() => {
+    if (serverMode) return data;
+    const activeEntries = Object.entries(activeColumnFilters).filter(
+      ([_, v]) => v && String(v).trim() !== ""
+    );
+    if (activeEntries.length === 0) return data;
+
+    return (data || []).filter((row: any) => {
+      return activeEntries.every(([key, filterVal]) => {
+        const query = String(filterVal).toLowerCase().trim();
+        const rawVal = row[key] !== undefined ? row[key] : row.original?.[key];
+        if (rawVal === undefined || rawVal === null) return false;
+        return String(rawVal).toLowerCase().includes(query);
+      });
+    });
+  }, [data, activeColumnFilters, serverMode]);
+
   // ✅ data source for table
   const tableData = useMemo(() => {
     if (serverMode && allMode) return allModeData;
-    return data;
-  }, [serverMode, allMode, allModeData, data]);
+    return filteredDataByColumns;
+  }, [serverMode, allMode, allModeData, filteredDataByColumns]);
+
+  const currentSelected = selectedRows !== undefined ? selectedRows : internalSelected;
 
   const handleSelectAll = (isChecked: boolean) => {
+    if (onlyOnecheck) return; // Single selection mode has no select all
     if (isChecked) {
       const allSelected = tableData.map((row) => ({
         id: row[selectValue] || row.id,
@@ -160,33 +255,40 @@ export default function ServiceTablePagination({
       }));
       setInternalSelected(allSelected);
       setsellectedrowdata?.(allSelected);
+      setSelectedRows?.(allSelected);
     } else {
       setInternalSelected([]);
       setsellectedrowdata?.([]);
+      setSelectedRows?.([]);
     }
   };
 
   const handleSelectRow = (rowObj: any, isChecked: boolean) => {
     const rowId = rowObj[selectValue] || rowObj.id;
-    let nextSelected = [];
+    let nextSelected: any[] = [];
     if (isChecked) {
-      nextSelected = [...internalSelected, { id: rowId, rowData: rowObj, ...rowObj }];
+      if (onlyOnecheck) {
+        nextSelected = [{ id: rowId, rowData: rowObj, ...rowObj }];
+      } else {
+        nextSelected = [...currentSelected, { id: rowId, rowData: rowObj, ...rowObj }];
+      }
     } else {
-      nextSelected = internalSelected.filter((item) => item.id !== rowId);
+      nextSelected = currentSelected.filter((item: any) => item.id !== rowId && item[selectValue] !== rowId);
     }
     setInternalSelected(nextSelected);
     setsellectedrowdata?.(nextSelected);
+    setSelectedRows?.(nextSelected);
   };
 
   const isAllSelected = useMemo(() => {
-    if (!check || tableData.length === 0) return false;
-    return internalSelected.length === tableData.length;
-  }, [check, internalSelected.length, tableData.length]);
+    if (!check || onlyOnecheck || tableData.length === 0) return false;
+    return currentSelected.length === tableData.length;
+  }, [check, onlyOnecheck, currentSelected.length, tableData.length]);
 
   const isIndeterminate = useMemo(() => {
-    if (!check || tableData.length === 0) return false;
-    return internalSelected.length > 0 && internalSelected.length < tableData.length;
-  }, [check, internalSelected.length, tableData.length]);
+    if (!check || onlyOnecheck || tableData.length === 0) return false;
+    return currentSelected.length > 0 && currentSelected.length < tableData.length;
+  }, [check, onlyOnecheck, currentSelected.length, tableData.length]);
 
   const tableColumns = useMemo(() => {
     if (!check) return columns;
@@ -194,35 +296,40 @@ export default function ServiceTablePagination({
     const checkboxColumn = {
       id: "_selection",
       disableSortBy: true,
-      Header: () => (
-        <div
-          className="flex items-center justify-center cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSelectAll(!isAllSelected);
-          }}
-        >
+      Header: () => {
+        if (onlyOnecheck) {
+          return <div className="w-[18px] h-[18px]" />;
+        }
+        return (
           <div
-            role="checkbox"
-            aria-checked={isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"}
-            className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isAllSelected
-                ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
-                : isIndeterminate
-                  ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
-                  : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
-              }`}
+            className="flex items-center justify-center cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelectAll(!isAllSelected);
+            }}
           >
-            {isAllSelected ? (
-              <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
-            ) : isIndeterminate ? (
-              <div className="w-2.5 h-[2px] bg-[#4338CA] rounded-full" />
-            ) : null}
+            <div
+              role="checkbox"
+              aria-checked={isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"}
+              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isAllSelected
+                  ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
+                  : isIndeterminate
+                    ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
+                    : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
+                }`}
+            >
+              {isAllSelected ? (
+                <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
+              ) : isIndeterminate ? (
+                <div className="w-2.5 h-[2px] bg-[#4338CA] rounded-full" />
+              ) : null}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
       Cell: ({ row }: any) => {
         const rowId = row.original[selectValue] || row.original.id;
-        const isChecked = internalSelected.some((item) => item.id === rowId);
+        const isChecked = currentSelected.some((item: any) => item.id === rowId || item[selectValue] === rowId);
 
         return (
           <div
@@ -248,7 +355,7 @@ export default function ServiceTablePagination({
     };
 
     return [checkboxColumn, ...columns];
-  }, [check, columns, isAllSelected, isIndeterminate, internalSelected, tableData, selectValue]);
+  }, [check, onlyOnecheck, columns, isAllSelected, isIndeterminate, currentSelected, tableData, selectValue]);
 
   const defaultClientPageSize = initialPageSize || 10;
 
@@ -495,7 +602,13 @@ export default function ServiceTablePagination({
   const totalPagesLabel = serverMode ? (serverPagination?.totalPages || 1) : (pageOptions.length || clientCalculatedPageCount || 1);
 
   return (
-    <div className="w-full flex flex-col bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
+    <div
+      className={`w-full flex flex-col bg-white dark:bg-[#0B1220] ${
+        containerClassName
+          ? containerClassName
+          : "rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs"
+      }`}
+    >
       {(title || showTopSearch || searchValue !== undefined || onSearchChange || showExcelExport) && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 gap-2.5 bg-slate-50/50 dark:bg-slate-900/50">
           {title ? (
@@ -569,53 +682,113 @@ export default function ServiceTablePagination({
         >
           <thead className="sticky top-0 z-10 bg-[#FAFBFD] dark:bg-[#0B1220] border-b border-slate-200 dark:border-slate-800">
             {headerGroups.map((headerGroup: any, headerGroupIdx: number) => (
-              <tr key={headerGroupIdx} {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column: any, colIdx: number) => {
-                  const isSelectionCol = column.id === "_selection";
-                  const isEmpNameCol = column.id === "NewEmpName" || column.id === "EMPLOYEENAME";
+              <React.Fragment key={headerGroupIdx}>
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column: any, colIdx: number) => {
+                    const isSelectionCol = column.id === "_selection";
+                    const isEmpNameCol = column.id === "NewEmpName" || column.id === "EMPLOYEENAME";
 
-                  return (
-                    <th
-                      key={column.id}
-                      {...column.getHeaderProps(
-                        isSelectionCol ? {} : column.getSortByToggleProps()
-                      )}
-                      className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${isSelectionCol
-                          ? "w-12 text-center !px-3"
-                          : isEmpNameCol
-                            ? "text-[#4F46E5] dark:text-indigo-400"
-                            : "text-slate-500 dark:text-slate-400"
-                        } ${headerClassName || ""}`}
-                    >
-                      {isSelectionCol ? (
-                        <div className="flex items-center justify-center">
-                          {column.render("Header")}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span>{column.render("Header")}</span>
+                    return (
+                      <th
+                        key={column.id}
+                        {...column.getHeaderProps(
+                          isSelectionCol ? {} : column.getSortByToggleProps()
+                        )}
+                        className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${isSelectionCol
+                            ? "w-12 text-center !px-3"
+                            : isEmpNameCol
+                              ? "text-[#4F46E5] dark:text-indigo-400"
+                              : "text-slate-500 dark:text-slate-400"
+                          } ${headerClassName || ""}`}
+                      >
+                        {isSelectionCol ? (
+                          <div className="flex items-center justify-center">
+                            {column.render("Header")}
                           </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span>{column.render("Header")}</span>
+                            </div>
 
-                          <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-2 shrink-0">
-                            {column.isSorted ? (
-                              column.isSortedDesc ? (
-                                <ChevronDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                            <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-2 shrink-0">
+                              {column.isSorted ? (
+                                column.isSortedDesc ? (
+                                  <ChevronDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                                ) : (
+                                  <ChevronUp className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                                )
+                              ) : isEmpNameCol ? (
+                                <ChevronUp className="w-3.5 h-3.5 text-[#4F46E5] dark:text-indigo-400 stroke-[2.5]" />
                               ) : (
-                                <ChevronUp className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                              )
-                            ) : isEmpNameCol ? (
-                              <ChevronUp className="w-3.5 h-3.5 text-[#4F46E5] dark:text-indigo-400 stroke-[2.5]" />
-                            ) : (
-                              <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400" />
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
+                                <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400" />
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+
+                {/* Column Filters Row */}
+                {hasColumnFilters && (
+                  <tr className="bg-white dark:bg-[#0B1220] border-b border-slate-200 dark:border-slate-800">
+                    {headerGroup.headers.map((column: any) => {
+                      const isSelectionCol = column.id === "_selection";
+                      const filterKey =
+                        column.accessor && typeof column.accessor === "string"
+                          ? column.accessor
+                          : column.id;
+
+                      const isFilterDisabled =
+                        isSelectionCol ||
+                        column.disableFilter === true ||
+                        column.filterable === false;
+
+                      const shouldShowInput =
+                        !isFilterDisabled &&
+                        Boolean(
+                          column.filterPlaceholder ||
+                            column.placeholder ||
+                            column.filterable === true ||
+                            column.showFilter === true ||
+                            (showColumnFilters && typeof column.Header !== "function")
+                        );
+
+                      const placeholder = getColumnPlaceholder(column);
+                      const currentVal = activeColumnFilters[filterKey] ?? "";
+
+                      return (
+                        <th
+                          key={`${column.id}_filter`}
+                          className={`px-3 py-1.5 font-normal ${
+                            isSelectionCol ? "w-12 text-center !px-3" : ""
+                          }`}
+                        >
+                          {shouldShowInput ? (
+                            <div
+                              className="w-full font-normal normal-case"
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="text"
+                                value={currentVal}
+                                placeholder={placeholder}
+                                onChange={(e) =>
+                                  handleColumnFilterChange(filterKey, e.target.value)
+                                }
+                                className="w-full h-8 px-2.5 text-xs sm:text-[13px] font-normal border border-slate-200 dark:border-slate-700/80 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal focus:outline-none focus:ring-1.5 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-2xs"
+                              />
+                            </div>
+                          ) : null}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </thead>
 
@@ -668,9 +841,11 @@ export default function ServiceTablePagination({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-5 py-3 sm:py-3.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
         <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal whitespace-nowrap">
-          Showing {displayedCount} of {totalRecordsCount} rows
+          {footerTextMode === "pageItems"
+            ? `Page ${currentPageLabel} of ${totalPagesLabel} (${displayedCount} items)`
+            : `Showing ${displayedCount} of ${totalRecordsCount} rows`}
         </div>
 
         <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto">
@@ -706,16 +881,18 @@ export default function ServiceTablePagination({
               Previous
             </button>
 
-            <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal px-1 whitespace-nowrap">
-              Page{" "}
-              <strong className="font-semibold text-slate-900 dark:text-slate-100">
-                {currentPageLabel}
-              </strong>{" "}
-              of{" "}
-              <strong className="font-semibold text-slate-900 dark:text-slate-100">
-                {totalPagesLabel}
-              </strong>
-            </span>
+            {footerTextMode !== "pageItems" && (
+              <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal px-1 whitespace-nowrap">
+                Page{" "}
+                <strong className="font-semibold text-slate-900 dark:text-slate-100">
+                  {currentPageLabel}
+                </strong>{" "}
+                of{" "}
+                <strong className="font-semibold text-slate-900 dark:text-slate-100">
+                  {totalPagesLabel}
+                </strong>
+              </span>
+            )}
 
             <button
               type="button"
