@@ -29,6 +29,7 @@ type CertificatesUploadProps = {
 
 function CompactUploadTile({
   id,
+  name,
   title,
   subtitle,
   icon,
@@ -39,6 +40,7 @@ function CompactUploadTile({
   onRemove,
 }: {
   id: string;
+  name?: string;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
@@ -62,6 +64,7 @@ function CompactUploadTile({
       >
         <input
           id={id}
+          name={name}
           type="file"
           accept={accept}
           disabled={disabled}
@@ -115,6 +118,7 @@ function CompactUploadTile({
 
 function UploadTile({
   id,
+  name,
   title,
   subtitle,
   icon,
@@ -125,6 +129,7 @@ function UploadTile({
   onRemove,
 }: {
   id: string;
+  name?: string;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
@@ -170,6 +175,7 @@ function UploadTile({
 
         <input
           id={id}
+          name={name}
           type="file"
           accept={accept}
           disabled={disabled}
@@ -261,6 +267,7 @@ export default function CertificatesUpload({
             <CompactUploadTile
               key={t.name}
               id={`upload-${t.name}`}
+              name={t.name}
               title={t.title}
               subtitle={t.subtitle ?? "Click to attach"}
               icon={t.icon ?? <FileText className="h-4 w-4" />}
@@ -307,6 +314,7 @@ export default function CertificatesUpload({
             <UploadTile
               key={t.name}
               id={`upload-${t.name}`}
+              name={t.name}
               title={t.title}
               subtitle={t.subtitle ?? "Optional · PDF/JPG"}
               icon={t.icon ?? <FileText size={18} />}

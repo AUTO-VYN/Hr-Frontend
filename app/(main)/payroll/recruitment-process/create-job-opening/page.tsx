@@ -29,6 +29,8 @@ import { FaWhatsapp } from "react-icons/fa";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import {
@@ -126,6 +128,22 @@ export default function CreateJobOpeningPage() {
     );
   }, [cardData, cardSearch]);
 
+  const desgOptions = useMemo(() => {
+    return (desgApplying || []).map((d: any) => {
+      const val = d.value ?? d.desg_code ?? d.DESG_CODE ?? d.label ?? d.desg_name ?? d;
+      const label = d.label ?? d.desg_name ?? d.DESG_NAME ?? d.value ?? String(d);
+      return { value: String(val), label: String(label) };
+    });
+  }, [desgApplying]);
+
+  const branchOptions = useMemo(() => {
+    return (branchApplying || []).map((b: any) => {
+      const val = b.value ?? b.loc_code ?? b.LOC_CODE ?? b.label ?? b.loc_name ?? b;
+      const label = b.label ?? b.loc_name ?? b.LOC_NAME ?? b.value ?? String(b);
+      return { value: String(val), label: String(label) };
+    });
+  }, [branchApplying]);
+
   // State: Form Inputs
   const [formData, setFormData] = useState({
     TRAN_ID: "",
@@ -167,7 +185,9 @@ export default function CreateJobOpeningPage() {
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/interview/gethrentry`,
-        {},
+        {
+          flag: 1,
+        },
         {
           headers: {
             compcode: compCode,
@@ -907,20 +927,22 @@ export default function CreateJobOpeningPage() {
         <div className="space-y-3">
           {/* Card Search Bar */}
           <div className="flex items-center justify-between gap-3">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              <input
+            <div className="relative w-full max-w-sm [&>div]:space-y-0 [&_label]:hidden">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+              <Einput
+                title=""
                 type="text"
+                name="cardSearch"
                 placeholder="Search job opening / designation..."
                 value={cardSearch}
-                onChange={(e) => setCardSearch(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-lg sm:text-lg rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-2xs"
+                handleInputChange={(_, val) => setCardSearch(val)}
+                className="!pl-9 !pr-8 !py-2 !text-sm sm:!text-base !rounded-xl"
               />
               {cardSearch && (
                 <button
                   type="button"
                   onClick={() => setCardSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 z-10"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -1056,97 +1078,75 @@ export default function CreateJobOpeningPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
           {/* Candidate Name */}
           <div>
-            <label className="block text-xs sm:text-[13px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              CANDIDATE NAME <span className="text-rose-500">*</span>
-            </label>
-            <input
+            <Einput
+              title="Candidate Name"
               type="text"
+              name="NAME"
               placeholder="Full name"
               value={formData.NAME}
-              onChange={(e) => handleInputChange("NAME", e.target.value)}
-              className="w-full h-11 sm:h-12 px-4 text-sm sm:text-base rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-semibold uppercase shadow-2xs"
+              handleInputChange={handleInputChange}
+              redlabel="*"
+              className="!h-11 sm:!h-12 !px-4 !text-sm sm:!text-base !rounded-xl font-semibold uppercase"
             />
           </div>
 
           {/* Mobile Number */}
           <div>
-            <label className="block text-xs sm:text-[13px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              MOBILE NUMBER <span className="text-rose-500">*</span>
-            </label>
-            <input
+            <Einput
+              title="Mobile Number"
               type="tel"
+              name="MOB_NO"
               placeholder="10-digit mobile"
               value={formData.MOB_NO}
-              onChange={(e) => handleInputChange("MOB_NO", e.target.value)}
+              handleInputChange={handleInputChange}
               maxLength={10}
-              className={`w-full h-11 sm:h-12 px-4 text-sm sm:text-base rounded-xl border font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-100 shadow-2xs ${errors.MOB_NO
-                ? "border-rose-300 bg-rose-50 text-rose-800"
-                : "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500"
-                }`}
+              redlabel="*"
+              errorMessage={errors.MOB_NO ? "Invalid 10-digit mobile" : ""}
+              className="!h-11 sm:!h-12 !px-4 !text-sm sm:!text-base !rounded-xl font-mono font-bold"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-xs sm:text-[13px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              EMAIL <span className="text-rose-500">*</span>
-            </label>
-            <input
+            <Einput
+              title="Email"
               type="email"
+              name="EMAIL"
               placeholder="name@company.com"
               value={formData.EMAIL}
-              onChange={(e) => handleInputChange("EMAIL", e.target.value)}
-              className={`w-full h-11 sm:h-12 px-4 text-sm sm:text-base rounded-xl border font-medium outline-none focus:ring-2 focus:ring-indigo-100 shadow-2xs ${errors.EMAIL
-                ? "border-rose-300 bg-rose-50 text-rose-800"
-                : "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500"
-                }`}
+              handleInputChange={handleInputChange}
+              redlabel="*"
+              errorMessage={errors.EMAIL ? "Invalid email" : ""}
+              className="!h-11 sm:!h-12 !px-4 !text-sm sm:!text-base !rounded-xl font-medium"
             />
           </div>
 
           {/* Designation */}
           <div>
-            <label className="block text-xs sm:text-[13px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              DESIGNATION <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={formData.DESIGNATION}
-              onChange={(e) => handleInputChange("DESIGNATION", e.target.value)}
-              className="w-full h-11 sm:h-12 px-3.5 text-sm sm:text-base rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-semibold cursor-pointer shadow-2xs"
-            >
-              <option value="">Designation applying for</option>
-              {desgApplying.map((d: any, idx: number) => {
-                const val = d.value ?? d.desg_code ?? d.DESG_CODE ?? d.label ?? d.desg_name ?? d;
-                const label = d.label ?? d.desg_name ?? d.DESG_NAME ?? d.value ?? String(d);
-                return (
-                  <option key={idx} value={val}>
-                    {label}
-                  </option>
-                );
-              })}
-            </select>
+            <Eselect
+              title="Designation"
+              name="DESIGNATION"
+              option={desgOptions}
+              initialValue={formData.DESIGNATION}
+              handleInputChange={handleInputChange}
+              placeholder="Designation applying for"
+              redlabel="*"
+              className="!h-11 sm:!h-12 !text-sm sm:!text-base !rounded-xl"
+            />
           </div>
 
           {/* Branch */}
           <div>
-            <label className="block text-xs sm:text-[13px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              BRANCH <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={formData.LOC_CODE}
-              onChange={(e) => handleInputChange("LOC_CODE", e.target.value)}
-              className="w-full h-11 sm:h-12 px-3.5 text-sm sm:text-base rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-semibold cursor-pointer shadow-2xs"
-            >
-              <option value="">Branch applying for</option>
-              {branchApplying.map((b: any, idx: number) => {
-                const val = b.value ?? b.loc_code ?? b.LOC_CODE ?? b.label ?? b.loc_name ?? b;
-                const label = b.label ?? b.loc_name ?? b.LOC_NAME ?? b.value ?? String(b);
-                return (
-                  <option key={idx} value={String(val)}>
-                    {label}
-                  </option>
-                );
-              })}
-            </select>
+            <Eselect
+              title="Branch"
+              name="LOC_CODE"
+              option={branchOptions}
+              initialValue={formData.LOC_CODE}
+              handleInputChange={handleInputChange}
+              placeholder="Branch applying for"
+              redlabel="*"
+              className="!h-11 sm:!h-12 !text-sm sm:!text-base !rounded-xl"
+            />
           </div>
 
           {/* Action Button */}

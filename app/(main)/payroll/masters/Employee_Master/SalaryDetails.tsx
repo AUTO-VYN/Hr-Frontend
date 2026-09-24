@@ -140,6 +140,8 @@ const SalaryDetails = ({
   const user = useCurrentUser();
   const { compdata } = useSecureStorage();
 
+  console.log('compdata',compdata)
+
   const [SalRegionoption, setSalRegionoption] = useState([]);
   useEffect(() => {
     if (masterData?.Sal_Region?.length) {
@@ -903,83 +905,57 @@ const SalaryDetails = ({
   };
 
   const UpdateBankdetails = async () => {
-    if (!formData?.EmpMst.EMPCODE) {
-      toast({
-        title: "Please Enter EmpCode",
-        variant: "destructive",
-      });
+    if (!formData?.EmpMst?.EMPCODE) {
+      showSideAlert("Please enter Employee Code", "warning");
       return;
     }
 
-    if (!formData?.EmpMst.PAYMENTMODE) {
-      toast({
-        title: "Please Enter Payment Mode",
-        variant: "destructive",
-      });
-      return;
-    }
     const skipBankValidation = ["Cash", "Salary Hold"].includes(
       formData?.EmpMst?.PAYMENTMODE,
     );
 
     if (!skipBankValidation) {
-      if (!formData?.EmpMst.BANKNAME) {
-        toast({
-          title: "Please Enter Bank Name",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.ACCOUNT_TYPE) {
-        toast({
-          title: "Please Enter Account Type",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.BANKACCOUNTNO) {
-        toast({
-          title: "Please Enter Bank Account Number",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.BRANCH) {
-        toast({
-          title: "Please Enter Branch",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.ifsc_code) {
-        toast({
-          title: "Please Enter IFSC Code",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.Emp_Ac_Name) {
-        toast({
-          title: "Please Enter Employee Account Name",
-          variant: "destructive",
-        });
-        return;
-      }
-      const accNo = formData?.EmpMst.BANKACCOUNTNO?.toString() || "";
+      const missingFields: string[] = [];
+      if (!formData?.EmpMst?.BANKNAME) missingFields.push("Bank Name");
+      if (!formData?.EmpMst?.BANKACCOUNTNO) missingFields.push("Account No");
+      if (!formData?.EmpMst?.Cnf_BANKACCOUNTNO)
+        missingFields.push("Confirm Account No");
+      if (!formData?.EmpMst?.ifsc_code) missingFields.push("IFSC Code");
+      if (!formData?.EmpMst?.BRANCH) missingFields.push("Branch Name");
+      if (!formData?.EmpMst?.Emp_Ac_Name)
+        missingFields.push("Account Holder Name");
+      if (!formData?.EmpMst?.ACCOUNT_TYPE) missingFields.push("Account Type");
+      if (!formData?.EmpMst?.PAYMENTMODE) missingFields.push("Payment Mode");
 
-      const cnfAccNo = formData?.EmpMst.Cnf_BANKACCOUNTNO?.toString() || "";
-      if (accNo.length < 10 || cnfAccNo.length < 10) {
-        toast({
-          title: "Account numbers must be at least 10 digits long.",
-          variant: "destructive",
-        });
+      if (missingFields.length > 0) {
+        showSideAlert(
+          `Please enter ${missingFields.join(", ")}`,
+          "warning",
+        );
         return;
       }
-      if (accNo != cnfAccNo) {
-        toast({
-          title: "Account No and Confirm Account No do not match.",
-          variant: "destructive",
-        });
+
+      const accNo = formData?.EmpMst?.BANKACCOUNTNO?.toString() || "";
+      const cnfAccNo = formData?.EmpMst?.Cnf_BANKACCOUNTNO?.toString() || "";
+
+      if (accNo.length < 10 || cnfAccNo.length < 10) {
+        showSideAlert(
+          "Account numbers must be at least 10 digits long.",
+          "warning",
+        );
+        return;
+      }
+
+      if (accNo !== cnfAccNo) {
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return;
+      }
+    } else {
+      if (!formData?.EmpMst?.PAYMENTMODE) {
+        showSideAlert("Please enter Payment Mode", "warning");
         return;
       }
     }
@@ -1009,7 +985,11 @@ const SalaryDetails = ({
         },
       );
 
+      showSideAlert(result.data.Message, "success");
       toast({ title: result.data.Message, variant: "default" });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("bankDetailsUpdated"));
+      }
       const reupdate = result.data?.Reupdate;
 
       if (reupdate) {
@@ -1022,6 +1002,10 @@ const SalaryDetails = ({
       }
     } catch (error) {
       console.error("Error occurred while making the request:", error);
+      showSideAlert(
+        error?.response?.data?.Message || "Request failed",
+        "error",
+      );
       toast({
         title: error?.response?.data?.Message || "Request failed",
         variant: "destructive",
@@ -1205,35 +1189,39 @@ const SalaryDetails = ({
 
     if (option === 13) {
       if (!accNo) {
-        toast({ title: "Please Enter Account No.", variant: "destructive" });
+        showSideAlert("Please enter account no", "warning");
         return;
       }
 
       if (!cnfAccNo) {
-        toast({
-          title: "Please Enter Confirm Account No.",
-          variant: "destructive",
-        });
+        showSideAlert("Please enter confirm account no", "warning");
         return;
       }
 
       if (accNo !== cnfAccNo) {
-        toast({
-          title: "Account No and Confirm Account No do not match.",
-          variant: "destructive",
-        });
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return;
+      }
+
+      if (!formData?.EmpMst?.ifsc_code) {
+        showSideAlert("Please enter ifsc code", "warning");
         return;
       }
     }
 
-    if (!formData?.EmpMst?.ifsc_code) {
-      toast({ title: "Please Enter IFSC Code", variant: "destructive" });
-      return;
-    }
+    if (option === 12) {
+      if (!formData?.EmpMst?.ifsc_code) {
+        showSideAlert("Please enter ifsc code", "warning");
+        return;
+      }
 
-    if (!formData?.EmpMst?.BANKACCOUNTNO) {
-      toast({ title: "Please Fill Bank Account No.", variant: "destructive" });
-      return;
+      if (!formData?.EmpMst?.BANKACCOUNTNO) {
+        showSideAlert("Please enter account no", "warning");
+        return;
+      }
     }
 
     if (option === 13 && compdata?.Banking_AccountNo_Verify !== 1) {

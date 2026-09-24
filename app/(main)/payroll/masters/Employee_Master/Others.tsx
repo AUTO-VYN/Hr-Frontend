@@ -4,27 +4,294 @@ import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import ATextArea from "@/components/atoms/textArea";
 import { useFormData } from "./Context/FormDataContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import { ListChecks, History } from "lucide-react";
+import axios from "axios";
 
 export default function page({ masterData, isMandatory }: any) {
   const { formData, setFormData } = useFormData();
   const user = useCurrentUser();
 
-  function filterDataByMiscType(Masters: any, miscType: any) {
-    return Masters.filter((item: any) => item.Misc_Type === miscType);
+  const [localMasterData, setLocalMasterData] = useState<any>(null);
+  const [fetchedCategory, setFetchedCategory] = useState<any[]>([]);
+  const [fetchedCostCentre, setFetchedCostCentre] = useState<any[]>([]);
+
+  // Flatten all array items from an object or array
+  function extractAllItems(data: any): any[] {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    let items: any[] = [];
+    if (typeof data === "object") {
+      for (const key of Object.keys(data)) {
+        if (Array.isArray(data[key])) {
+          items.push(...data[key]);
+        }
+      }
+    }
+    return items;
   }
 
+  // Filter items by misc_type (case-insensitive & handles string/number)
+  function findMiscOptions(items: any[], miscType: number | string) {
+    if (!Array.isArray(items)) return [];
+    return items
+      .filter((item: any) => {
+        const type =
+          item?.Misc_Type ??
+          item?.misc_type ??
+          item?.MISC_TYPE ??
+          item?.MiscType ??
+          item?.misctype;
+        return String(type) === String(miscType);
+      })
+      .map((item: any) => ({
+        label: String(
+          item?.label ||
+            item?.labelname ||
+            item?.Misc_Name ||
+            item?.misc_name ||
+            item?.MISC_NAME ||
+            item?.NAME ||
+            item?.name ||
+            item?.value ||
+            item?.Misc_Code ||
+            ""
+        ).trim(),
+        value: String(
+          item?.value ??
+            item?.Misc_Code ??
+            item?.misc_code ??
+            item?.MISC_CODE ??
+            item?.CODE ??
+            item?.code ??
+            item?.label ??
+            ""
+        ).trim(),
+      }))
+      .filter((opt: any) => opt.label !== "");
+  }
+
+  // Find options by type or by key name in masterData
+  function getOptionsForField(data: any, fieldKeys: string[], miscType: number) {
+    if (!data) return [];
+    const all = extractAllItems(data);
+    const byType = findMiscOptions(all, miscType);
+    if (byType.length > 0) return byType;
+
+    if (typeof data === "object") {
+      for (const key of fieldKeys) {
+        if (Array.isArray(data[key]) && data[key].length > 0) {
+          const mapped = data[key]
+            .map((item: any) => ({
+              label: String(
+                item?.label ||
+                  item?.labelname ||
+                  item?.Misc_Name ||
+                  item?.misc_name ||
+                  item?.MISC_NAME ||
+                  item?.NAME ||
+                  item?.name ||
+                  item?.value ||
+                  item?.Misc_Code ||
+                  ""
+              ).trim(),
+              value: String(
+                item?.value ??
+                  item?.Misc_Code ??
+                  item?.misc_code ??
+                  item?.MISC_CODE ??
+                  item?.CODE ??
+                  item?.code ??
+                  item?.label ??
+                  ""
+              ).trim(),
+            }))
+            .filter((o: any) => o.label !== "");
+          if (mapped.length > 0) return mapped;
+        }
+      }
+    }
+    return [];
+  }
+
+  // Fallback 1: If masterData prop is empty, fetch /employee/masters
+  useEffect(() => {
+    if (!user?.Comp_Code) return;
+    if (
+      masterData &&
+      (Array.isArray(masterData)
+        ? masterData.length > 0
+        : Object.keys(masterData).length > 0)
+    ) {
+      return;
+    }
+
+    axios
+      .post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
+        {},
+        {
+          headers: {
+            compcode: String(user.Comp_Code),
+            name: user.name || "",
+          },
+        }
+      )
+      .then((res) => {
+        if (res?.data?.data) {
+          setLocalMasterData(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Employee masters fallback error in Others:", err);
+      });
+  }, [user?.Comp_Code, user?.name, masterData]);
+
+  // Fallback 2: Fetch misc_type 625 & 628 via /master/findmaster
+  useEffect(() => {
+    if (!user?.Comp_Code) return;
+
+    const headers = {
+      compcode: String(user.Comp_Code),
+      name: user.name || "",
+    };
+
+    axios
+      .post(
+        `${process.env.NEXT_PUBLIC_URL}/master/findmaster`,
+        { Misc_Type: 625 },
+        { headers }
+      )
+      .then((res) => {
+        const list =
+          res?.data?.MiscMst ||
+          res?.data?.data?.MiscMst ||
+          res?.data?.data ||
+          res?.data?.Result ||
+          [];
+        if (Array.isArray(list) && list.length > 0) {
+          setFetchedCategory(
+            list
+              .map((item: any) => ({
+                label: String(
+                  item?.label ||
+                    item?.Misc_Name ||
+                    item?.NAME ||
+                    item?.value ||
+                    item?.Misc_Code ||
+                    ""
+                ).trim(),
+                value: String(
+                  item?.value ?? item?.Misc_Code ?? item?.CODE ?? item?.label ?? ""
+                ).trim(),
+              }))
+              .filter((o: any) => o.label !== "")
+          );
+        }
+      })
+      .catch(() => {});
+
+    axios
+      .post(
+        `${process.env.NEXT_PUBLIC_URL}/master/findmaster`,
+        { Misc_Type: 628 },
+        { headers }
+      )
+      .then((res) => {
+        const list =
+          res?.data?.MiscMst ||
+          res?.data?.data?.MiscMst ||
+          res?.data?.data ||
+          res?.data?.Result ||
+          [];
+        if (Array.isArray(list) && list.length > 0) {
+          setFetchedCostCentre(
+            list
+              .map((item: any) => ({
+                label: String(
+                  item?.label ||
+                    item?.Misc_Name ||
+                    item?.NAME ||
+                    item?.value ||
+                    item?.Misc_Code ||
+                    ""
+                ).trim(),
+                value: String(
+                  item?.value ?? item?.Misc_Code ?? item?.CODE ?? item?.label ?? ""
+                ).trim(),
+              }))
+              .filter((o: any) => o.label !== "")
+          );
+        }
+      })
+      .catch(() => {});
+  }, [user?.Comp_Code, user?.name]);
+
+  const activeMasterData = useMemo(() => {
+    if (
+      masterData &&
+      (Array.isArray(masterData)
+        ? masterData.length > 0
+        : Object.keys(masterData).length > 0)
+    ) {
+      return masterData;
+    }
+    return localMasterData;
+  }, [masterData, localMasterData]);
+
+  const CATEGORY = useMemo(() => {
+    const fromMaster = getOptionsForField(
+      activeMasterData,
+      ["CATEGORY", "Category", "category", "CATEGORIES", "CLUSTERS", "clusters"],
+      625
+    );
+    if (fromMaster.length > 0) return fromMaster;
+    return fetchedCategory;
+  }, [activeMasterData, fetchedCategory]);
+
+  const COSTCENTRE = useMemo(() => {
+    const fromMaster = getOptionsForField(
+      activeMasterData,
+      [
+        "COSTCENTRE",
+        "CostCentre",
+        "Costcentre",
+        "costcentre",
+        "COST_CENTRE",
+        "Cost_Centre",
+        "COSTCENTER",
+        "CostCenter",
+        "CLUSTERS",
+        "clusters",
+      ],
+      628
+    );
+    if (fromMaster.length > 0) return fromMaster;
+    return fetchedCostCentre;
+  }, [activeMasterData, fetchedCostCentre]);
+
+  const cityNewoption = useMemo(() => {
+    const raw = activeMasterData?.CITY || [];
+    return raw
+      .map((item: any) => ({
+        label: String(
+          item?.label ||
+            item?.CITY_NAME ||
+            item?.City_Name ||
+            item?.value ||
+            item?.CITY_CODE ||
+            item?.City_Code ||
+            ""
+        ).trim(),
+        value: String(
+          item?.value ?? item?.CITY_CODE ?? item?.City_Code ?? item?.label ?? ""
+        ).trim(),
+      }))
+      .filter((o: any) => o.label !== "");
+  }, [activeMasterData]);
+
   const Status = ["Status1", "Status2"];
-
-  const [Masters, setMasters] = useState(masterData?.CLUSTERS || []);
-  const [cityNewoption, setcityNewoption] = useState(masterData?.CITY || []);
-
-  const CATEGORY: any = filterDataByMiscType(Masters, 625);
-  const CLUSTER: any = filterDataByMiscType(Masters, 626);
-  const CHANNEL: any = filterDataByMiscType(Masters, 627);
-  const COSTCENTRE: any = filterDataByMiscType(Masters, 628);
 
   const formatDate = (date: any) => {
     if (!date) return "";
@@ -110,7 +377,7 @@ export default function page({ masterData, isMandatory }: any) {
                     title="Category"
                     name="CATEGORY"
                     handleInputChange={handleInputChange}
-                    initialValue={formData.EmpMst.CATEGORY?.toString()}
+                    initialValue={formData?.EmpMst?.CATEGORY?.toString()}
                     redlabel={isMandatory("CATEGORY") ? "*" : ""}
                     className={fieldDarkClass}
                   />
@@ -122,7 +389,7 @@ export default function page({ masterData, isMandatory }: any) {
                     title="Cost center"
                     name="COSTCENTRE"
                     handleInputChange={handleInputChange}
-                    initialValue={formData.EmpMst.COSTCENTRE?.toString()}
+                    initialValue={formData?.EmpMst?.COSTCENTRE?.toString()}
                     redlabel={isMandatory("COSTCENTRE") ? "*" : ""}
                     className={fieldDarkClass}
                   />

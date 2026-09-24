@@ -145,7 +145,7 @@ export default function Page() {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/MstData`,
-        { branch: user?.branch },
+        { branch: user?.multi || user?.branch },
         {
           headers: {
             compcode: user?.Comp_Code,
@@ -163,11 +163,223 @@ export default function Page() {
     }
   };
 
-  // Helper to ensure array format for backend (e.g. Cluster.map)
+  // Helper to extract option label or value
+  const resolveOptionValues = (options: Option[], val: any): string[] => {
+    if (!val || val === "") return [];
+    const str = String(val).trim();
+    if (str.toUpperCase().startsWith("ALL")) return [];
+
+    const parts = str.includes(",")
+      ? str.split(",").map((p) => p.trim())
+      : [str];
+    const results = new Set<string>();
+
+    parts.forEach((p) => {
+      if (!p || p.toUpperCase().startsWith("ALL")) return;
+      results.add(p);
+      const match = options.find(
+        (o) =>
+          String(o.value).toLowerCase() === p.toLowerCase() ||
+          String(o.label).toLowerCase() === p.toLowerCase()
+      );
+      if (match) {
+        if (match.value && !String(match.value).toUpperCase().startsWith("ALL"))
+          results.add(String(match.value));
+        if (match.label && !String(match.label).toUpperCase().startsWith("ALL"))
+          results.add(String(match.label));
+      }
+    });
+
+    return Array.from(results);
+  };
+
   const toArrayParam = (val: any) => {
     if (!val || val === "") return [];
-    if (Array.isArray(val)) return val;
-    return [val];
+    if (Array.isArray(val)) {
+      return val.filter(
+        (v) => v && !String(v).trim().toUpperCase().startsWith("ALL")
+      );
+    }
+    const str = String(val).trim();
+    if (!str || str.toUpperCase().startsWith("ALL")) return [];
+    if (str.includes(",")) {
+      return str
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s && !s.toUpperCase().startsWith("ALL"));
+    }
+    return [str];
+  };
+
+  const allFilteredRowsRef = useRef<any[]>([]);
+
+  const getRowCluster = (r: any) =>
+    r?.CLUSTER ??
+    r?.Cluster ??
+    r?.cluster ??
+    r?.CLUSTERLabel ??
+    r?.ClusterLabel ??
+    r?.Cluster_Name ??
+    r?.CLUSTER_NAME ??
+    r?.Br_Location ??
+    r?.br_location ??
+    r?.BR_LOCATION;
+
+  const getRowSection = (r: any) =>
+    r?.SECTION ??
+    r?.Section ??
+    r?.section ??
+    r?.SECTIONLabel ??
+    r?.SectionLabel ??
+    r?.Section_Name ??
+    r?.SECTION_NAME;
+
+  const getRowChannel = (r: any) =>
+    r?.CHANNEL ??
+    r?.Channel ??
+    r?.channel ??
+    r?.CHANNELLabel ??
+    r?.ChannelLabel ??
+    r?.Channel_Name ??
+    r?.CHANNEL_NAME;
+
+  const getRowLocation = (r: any) =>
+    r?.Location ??
+    r?.LOCATION ??
+    r?.location ??
+    r?.Branch ??
+    r?.BRANCH ??
+    r?.branch ??
+    r?.LOC_CODE ??
+    r?.LOC_CODE1 ??
+    r?.Loc_Name ??
+    r?.LOC_NAME;
+
+  const matchField = (raw: any, filterArr: string[], options: Option[]) => {
+    if (!filterArr || filterArr.length === 0) return true;
+    if (raw === null || raw === undefined || raw === "" || raw === "null") return false;
+    const str = String(raw).trim().toUpperCase();
+
+    // Direct match with any value in filter array
+    if (filterArr.some((f) => String(f).trim().toUpperCase() === str)) return true;
+
+    // Check against option label or value
+    const matchedOpt = options.find(
+      (o) =>
+        String(o.value).trim().toUpperCase() === str ||
+        String(o.label).trim().toUpperCase() === str
+    );
+    if (matchedOpt) {
+      const optVal = String(matchedOpt.value).trim().toUpperCase();
+      const optLbl = String(matchedOpt.label).trim().toUpperCase();
+      if (
+        filterArr.some((f) => {
+          const fs = String(f).trim().toUpperCase();
+          return fs === optVal || fs === optLbl;
+        })
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const filterRowsLocally = (
+    rawRows: any[],
+    clusterArr: string[],
+    sectionArr: string[],
+    locationArr: string[],
+    channelArr: string[],
+    dash: typeof dashbord,
+    searchStr: string
+  ) => {
+    let res = rawRows;
+
+    if (clusterArr.length > 0) {
+      res = res.filter((r) => matchField(getRowCluster(r), clusterArr, Br_Location));
+    }
+
+    if (sectionArr.length > 0) {
+      res = res.filter((r) => matchField(getRowSection(r), sectionArr, Section));
+    }
+
+    if (channelArr.length > 0) {
+      res = res.filter((r) => matchField(getRowChannel(r), channelArr, Channel));
+    }
+
+    if (locationArr.length > 0) {
+      res = res.filter((r) => matchField(getRowLocation(r), locationArr, Location));
+    }
+
+    if (dash.Joining_DateFROM) {
+      const fromTime = new Date(dash.Joining_DateFROM).getTime();
+      if (!isNaN(fromTime)) {
+        res = res.filter((r) => {
+          const d = r.JOININGDATE || r.JoiningDate || r.LASTWOR_NEWDATE;
+          return d && new Date(d).getTime() >= fromTime;
+        });
+      }
+    }
+
+    if (dash.Joining_DateTO) {
+      const toTime = new Date(dash.Joining_DateTO).getTime();
+      if (!isNaN(toTime)) {
+        res = res.filter((r) => {
+          const d = r.JOININGDATE || r.JoiningDate || r.LASTWOR_NEWDATE;
+          return d && new Date(d).getTime() <= toTime;
+        });
+      }
+    }
+
+    if (searchStr) {
+      const s = searchStr.toLowerCase().trim();
+      res = res.filter((r) => {
+        return (
+          String(r.EMPCODE || "").toLowerCase().includes(s) ||
+          String(r.EMPLOYEENAME || r.Employee_Name || r.name || "")
+            .toLowerCase()
+            .includes(s)
+        );
+      });
+    }
+
+    return res;
+  };
+
+  const formatCellFromOptions = (
+    raw: any,
+    options: Option[],
+    fallbackFilterVal?: string
+  ) => {
+    if (
+      raw === null ||
+      raw === undefined ||
+      raw === "" ||
+      raw === "null" ||
+      raw === "—"
+    ) {
+      if (
+        fallbackFilterVal &&
+        !String(fallbackFilterVal).toUpperCase().startsWith("ALL")
+      ) {
+        const opt = options.find(
+          (o) =>
+            String(o.value).trim().toLowerCase() ===
+              String(fallbackFilterVal).trim().toLowerCase() ||
+            String(o.label).trim().toLowerCase() ===
+              String(fallbackFilterVal).trim().toLowerCase()
+        );
+        return formatCellText(opt?.label || fallbackFilterVal);
+      }
+      return renderDash();
+    }
+    const str = String(raw).trim();
+    const opt = options.find(
+      (o) =>
+        String(o.value).trim().toLowerCase() === str.toLowerCase() ||
+        String(o.label).trim().toLowerCase() === str.toLowerCase()
+    );
+    return formatCellText(opt?.label || str);
   };
 
   // =========================
@@ -183,40 +395,107 @@ export default function Page() {
   ) => {
     if (showLoader) setIsLoading(true);
 
+    const clusterArr = resolveOptionValues(Br_Location, dash.Br_Location);
+    const sectionArr = resolveOptionValues(Section, dash.Section);
+    const locationArr = resolveOptionValues(Location, dash.Location);
+    const channelArr = resolveOptionValues(Channel, dash.Channel);
+
+    const isAllBranchSelected = Boolean(
+      dash.Location && String(dash.Location).trim().toUpperCase().startsWith("ALL")
+    );
+
+    let effectiveLocCode = user?.branch;
+    if (isAllBranchSelected) {
+      effectiveLocCode = user?.multi || user?.branch || "";
+    } else if (locationArr.length > 0) {
+      effectiveLocCode = locationArr.join(",");
+    } else {
+      effectiveLocCode = user?.branch;
+    }
+
+    const hasActiveFilter = Boolean(
+      clusterArr.length > 0 ||
+        sectionArr.length > 0 ||
+        locationArr.length > 0 ||
+        channelArr.length > 0 ||
+        dash.Joining_DateFROM ||
+        dash.Joining_DateTO
+    );
+
     try {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
-          Loc_code: user?.branch,
-          Cluster: toArrayParam(dash.Br_Location),
-          Section: toArrayParam(dash.Section),
-          Location: toArrayParam(dash.Location),
-          Channel: toArrayParam(dash.Channel),
+          Loc_code: effectiveLocCode,
+          branch: effectiveLocCode,
+          Cluster: clusterArr.length > 0 ? clusterArr : null,
+          cluster: clusterArr.length > 0 ? clusterArr : null,
+          Br_Location: clusterArr.length > 0 ? clusterArr : null,
+          br_location: clusterArr.length > 0 ? clusterArr : null,
+
+          Section: sectionArr.length > 0 ? sectionArr : null,
+          section: sectionArr.length > 0 ? sectionArr : null,
+
+          Location: locationArr.length > 0 ? locationArr : null,
+          location: locationArr.length > 0 ? locationArr : null,
+
+          Channel: channelArr.length > 0 ? channelArr : null,
+          channel: channelArr.length > 0 ? channelArr : null,
+
           Joining_DateFROM: dash.Joining_DateFROM || null,
           Joining_DateTO: dash.Joining_DateTO || null,
           empView: targetView,
           search: debouncedSearch,
           filters: filters,
-          pageSize: targetPageSize === -1 ? 1000000 : targetPageSize,
-          pageNo: targetPage,
+          pageSize: hasActiveFilter
+            ? 10000
+            : targetPageSize === -1
+            ? 10000
+            : targetPageSize,
+          pageNo: hasActiveFilter ? 1 : targetPage,
         },
         {
           headers: { compcode: user?.Comp_Code, name: user?.name },
         }
       );
 
-      const rows = result.data.Result || result.data.data || [];
-      const count = Number(
-        result.data.TotalCount ?? result.data.total ?? rows.length
-      );
+      const rawRows = result.data.Result || result.data.data || [];
 
-      setData(rows);
-      setTotalCount(count);
+      if (hasActiveFilter) {
+        const filtered = filterRowsLocally(
+          rawRows,
+          clusterArr,
+          sectionArr,
+          locationArr,
+          channelArr,
+          dash,
+          debouncedSearch
+        );
+        allFilteredRowsRef.current = filtered;
+        const total = filtered.length;
+        setTotalCount(total);
+        const pSize = targetPageSize === -1 ? 10000 : targetPageSize;
+        const paged = filtered.slice(
+          (targetPage - 1) * pSize,
+          targetPage * pSize
+        );
+        setData(paged);
 
-      // update count for current view we loaded
-      if (targetView === "ACTIVE") setActiveCount(count);
-      if (targetView === "LEFT") setLeftCount(count);
-      if (targetView === "ALL") setAllCount(count);
+        if (targetView === "ACTIVE") setActiveCount(total);
+        if (targetView === "LEFT") setLeftCount(total);
+        if (targetView === "ALL") setAllCount(total);
+      } else {
+        allFilteredRowsRef.current = rawRows;
+        const count = Number(
+          result.data.TotalCount ?? result.data.total ?? rawRows.length
+        );
+        setData(rawRows);
+        setTotalCount(count);
+
+        if (targetView === "ACTIVE") setActiveCount(count);
+        if (targetView === "LEFT") setLeftCount(count);
+        if (targetView === "ALL") setAllCount(count);
+      }
     } catch (error) {
       console.error("Error fetching employee data:", error);
     } finally {
@@ -231,21 +510,59 @@ export default function Page() {
     targetView: "ACTIVE" | "LEFT" | "ALL",
     dash = dashbord
   ) => {
+    const clusterArr = resolveOptionValues(Br_Location, dash.Br_Location);
+    const sectionArr = resolveOptionValues(Section, dash.Section);
+    const locationArr = resolveOptionValues(Location, dash.Location);
+    const channelArr = resolveOptionValues(Channel, dash.Channel);
+
+    const isAllBranchSelected = Boolean(
+      dash.Location && String(dash.Location).trim().toUpperCase().startsWith("ALL")
+    );
+
+    let effectiveLocCode = user?.branch;
+    if (isAllBranchSelected) {
+      effectiveLocCode = user?.multi || user?.branch || "";
+    } else if (locationArr.length > 0) {
+      effectiveLocCode = locationArr.join(",");
+    } else {
+      effectiveLocCode = user?.branch;
+    }
+
+    const hasActiveFilter = Boolean(
+      clusterArr.length > 0 ||
+        sectionArr.length > 0 ||
+        locationArr.length > 0 ||
+        channelArr.length > 0 ||
+        dash.Joining_DateFROM ||
+        dash.Joining_DateTO
+    );
+
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
-          Loc_code: user?.branch,
-          Cluster: toArrayParam(dash.Br_Location),
-          Section: toArrayParam(dash.Section),
-          Location: toArrayParam(dash.Location),
-          Channel: toArrayParam(dash.Channel),
+          Loc_code: effectiveLocCode,
+          branch: effectiveLocCode,
+          Cluster: clusterArr.length > 0 ? clusterArr : null,
+          cluster: clusterArr.length > 0 ? clusterArr : null,
+          Br_Location: clusterArr.length > 0 ? clusterArr : null,
+          br_location: clusterArr.length > 0 ? clusterArr : null,
+
+          Section: sectionArr.length > 0 ? sectionArr : null,
+          section: sectionArr.length > 0 ? sectionArr : null,
+
+          Location: locationArr.length > 0 ? locationArr : null,
+          location: locationArr.length > 0 ? locationArr : null,
+
+          Channel: channelArr.length > 0 ? channelArr : null,
+          channel: channelArr.length > 0 ? channelArr : null,
+
           Joining_DateFROM: dash.Joining_DateFROM || null,
           Joining_DateTO: dash.Joining_DateTO || null,
           empView: targetView,
           search: debouncedSearch,
           filters: {},
-          pageSize: 1,
+          pageSize: hasActiveFilter ? 10000 : 1,
           pageNo: 1,
         },
         {
@@ -253,8 +570,22 @@ export default function Page() {
         }
       );
 
-      const rows = res.data.Result || res.data.data || [];
-      const count = Number(res.data.TotalCount ?? res.data.total ?? rows.length);
+      const rawRows = res.data.Result || res.data.data || [];
+      if (hasActiveFilter) {
+        const filtered = filterRowsLocally(
+          rawRows,
+          clusterArr,
+          sectionArr,
+          locationArr,
+          channelArr,
+          dash,
+          debouncedSearch
+        );
+        return filtered.length;
+      }
+      const count = Number(
+        res.data.TotalCount ?? res.data.total ?? rawRows.length
+      );
       return count;
     } catch (err) {
       console.error("Error in fetchCountOnly:", err);
@@ -287,7 +618,7 @@ export default function Page() {
     showapi("ACTIVE", 1, pageSize, {}, true);
     refreshTabCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.Comp_Code]);
+  }, [user?.Comp_Code, user?.branch]);
 
   // =========================
   // Search filter: Auto fetch on typing
@@ -369,13 +700,31 @@ export default function Page() {
       { Header: "Gender", accessor: "GENDER", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Employee type", accessor: "EmployeeType", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Region", accessor: "region1", Cell: ({ value }: any) => formatCellText(value) },
-      { Header: "Location", accessor: "Location", Cell: ({ value }: any) => formatCellText(value) },
+      {
+        Header: "Location",
+        accessor: "Location",
+        Cell: ({ value, row }: any) =>
+          formatCellFromOptions(
+            value ?? getRowLocation(row?.original),
+            Location,
+            dashbord.Location
+          ),
+      },
       { Header: "Department", accessor: "Department", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Employee designation", accessor: "EMPLOYEEDESIGNATION", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Joining date", accessor: "JOININGDATE", Cell: ({ value }: any) => formatCellDate(value) },
       { Header: "Punch code", accessor: "PUNCHCODE", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Payment mode", accessor: "PAYMENTMODE", Cell: ({ value }: any) => formatCellText(value) },
-      { Header: "Section", accessor: "SECTION", Cell: ({ value }: any) => formatCellText(value) },
+      {
+        Header: "Section",
+        accessor: "SECTION",
+        Cell: ({ value, row }: any) =>
+          formatCellFromOptions(
+            value ?? getRowSection(row?.original),
+            Section,
+            dashbord.Section
+          ),
+      },
       { Header: "Mobile no", accessor: "MOBILENO", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Corporate mail id", accessor: "CORPORATEMAILID", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Alternate mail", accessor: "ALTERNET_MAIL", Cell: ({ value }: any) => formatCellText(value) },
@@ -420,8 +769,26 @@ export default function Page() {
       { Header: "Last working date", accessor: "LASTWOR_NEWDATE", Cell: ({ value }: any) => formatCellDate(value) },
 
       { Header: "Category", accessor: "CATEGORY", Cell: ({ value }: any) => formatCellText(value) },
-      { Header: "Cluster", accessor: "CLUSTER", Cell: ({ value }: any) => formatCellText(value) },
-      { Header: "Channel", accessor: "CHANNEL", Cell: ({ value }: any) => formatCellText(value) },
+      {
+        Header: "Cluster",
+        accessor: "CLUSTER",
+        Cell: ({ value, row }: any) =>
+          formatCellFromOptions(
+            value ?? getRowCluster(row?.original),
+            Br_Location,
+            dashbord.Br_Location
+          ),
+      },
+      {
+        Header: "Channel",
+        accessor: "CHANNEL",
+        Cell: ({ value, row }: any) =>
+          formatCellFromOptions(
+            value ?? getRowChannel(row?.original),
+            Channel,
+            dashbord.Channel
+          ),
+      },
       { Header: "Cost centre", accessor: "COSTCENTRE", Cell: ({ value }: any) => formatCellText(value) },
 
       { Header: "Punch type", accessor: "Punch_Type", Cell: ({ value }: any) => formatCellText(value) },
@@ -463,7 +830,7 @@ export default function Page() {
       { Header: "Source name", accessor: "Source_Name", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Photo URL", accessor: "photoUrl", Cell: ({ value }: any) => formatCellText(value) },
     ],
-    []
+    [Location, Section, Br_Location, Channel, dashbord]
   );
 
   // =========================
@@ -504,29 +871,82 @@ export default function Page() {
   };
 
   const fetchAllForExport = async () => {
+    if (allFilteredRowsRef.current.length > 0) {
+      return allFilteredRowsRef.current;
+    }
+    const clusterArr = resolveOptionValues(Br_Location, dashbord.Br_Location);
+    const sectionArr = resolveOptionValues(Section, dashbord.Section);
+    const locationArr = resolveOptionValues(Location, dashbord.Location);
+    const channelArr = resolveOptionValues(Channel, dashbord.Channel);
+
+    const isAllBranchSelected = Boolean(
+      dashbord.Location && String(dashbord.Location).trim().toUpperCase().startsWith("ALL")
+    );
+
+    let effectiveLocCode = user?.branch;
+    if (isAllBranchSelected) {
+      effectiveLocCode = user?.multi || user?.branch || "";
+    } else if (locationArr.length > 0) {
+      effectiveLocCode = locationArr.join(",");
+    } else {
+      effectiveLocCode = user?.branch;
+    }
+
+    const hasActiveFilter = Boolean(
+      clusterArr.length > 0 ||
+        sectionArr.length > 0 ||
+        locationArr.length > 0 ||
+        channelArr.length > 0 ||
+        dashbord.Joining_DateFROM ||
+        dashbord.Joining_DateTO
+    );
+
     try {
       setIsLoading(true);
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/EmployeeMasterView`,
         {
-          Loc_code: user?.branch,
-          Cluster: toArrayParam(dashbord.Br_Location),
-          Section: toArrayParam(dashbord.Section),
-          Location: toArrayParam(dashbord.Location),
-          Channel: toArrayParam(dashbord.Channel),
+          Loc_code: effectiveLocCode,
+          branch: effectiveLocCode,
+          Cluster: clusterArr.length > 0 ? clusterArr : null,
+          cluster: clusterArr.length > 0 ? clusterArr : null,
+          Br_Location: clusterArr.length > 0 ? clusterArr : null,
+          br_location: clusterArr.length > 0 ? clusterArr : null,
+
+          Section: sectionArr.length > 0 ? sectionArr : null,
+          section: sectionArr.length > 0 ? sectionArr : null,
+
+          Location: locationArr.length > 0 ? locationArr : null,
+          location: locationArr.length > 0 ? locationArr : null,
+
+          Channel: channelArr.length > 0 ? channelArr : null,
+          channel: channelArr.length > 0 ? channelArr : null,
+
           Joining_DateFROM: dashbord.Joining_DateFROM || null,
           Joining_DateTO: dashbord.Joining_DateTO || null,
           empView: empView,
           search: debouncedSearch,
           filters: {},
-          pageSize: 1000000,
+          pageSize: 10000,
           pageNo: 1,
         },
         {
           headers: { compcode: user?.Comp_Code, name: user?.name },
         }
       );
-      return result.data.Result || result.data.data || [];
+      const rawRows = result.data.Result || result.data.data || [];
+      if (hasActiveFilter) {
+        return filterRowsLocally(
+          rawRows,
+          clusterArr,
+          sectionArr,
+          locationArr,
+          channelArr,
+          dashbord,
+          debouncedSearch
+        );
+      }
+      return rawRows;
     } catch (error) {
       console.error("Error exporting all data:", error);
       return data;
@@ -721,8 +1141,8 @@ export default function Page() {
                 type="button"
                 onClick={() => {
                   setCurrentPage(1);
-                  showapi(empView, 1, pageSize, {}, true);
-                  refreshTabCounts();
+                  showapi(empView, 1, pageSize, {}, true, dashbord);
+                  refreshTabCounts(dashbord);
                 }}
                 className="h-12 px-7 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-[15px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
               >
