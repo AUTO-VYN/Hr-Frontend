@@ -53,20 +53,36 @@ const HindiPrintout = forwardRef<HTMLDivElement, any>((props, ref) => {
 
   const evaluationRows = buildEvaluationTable(formData1?.EvaluationCriteria);
 
+  const getCompCode = () => {
+    return (
+      user?.Comp_Code ||
+      user?.compcode ||
+      user?.comp_code ||
+      user?.COMP_CODE ||
+      user?.company_code ||
+      user?.DB ||
+      ""
+    );
+  };
+
   useEffect(() => {
+    const compCode = getCompCode();
+    if (!compCode) return;
     fetchDataEmpName();
     printapi();
-  }, []);
+  }, [user]);
 
   const fetchDataEmpName = async () => {
+    const compCode = getCompCode();
+    if (!compCode) return;
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/interview/allemployee`,
-        {},
+        { compcode: compCode },
         {
           headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
+            compcode: compCode,
+            name: user?.name || "",
           },
         }
       );
@@ -138,16 +154,19 @@ const HindiPrintout = forwardRef<HTMLDivElement, any>((props, ref) => {
   const DRIVE = formData1?.DRIVE?.toString()?.trim();
 
   const printapi = async () => {
+    const compCode = getCompCode();
+    if (!compCode) return;
     try {
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/interview/PrintHeader`,
         {
-          multi_loc: user?.branch,
+          multi_loc: user?.branch || "",
+          compcode: compCode,
         },
         {
           headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
+            compcode: compCode,
+            name: user?.name || "",
           },
         }
       );

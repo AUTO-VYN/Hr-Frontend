@@ -16,7 +16,10 @@ import {
   CheckCircle,
   Plus,
   Upload,
+  BadgeCheck,
+  GitFork,
 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Eselect from "@/components/atoms/Eselect";
@@ -51,7 +54,34 @@ const SalaryDetails = ({
 }: any) => {
   const router = useRouter();
   const [profileSrc, setProfileSrc] = useState<string | null>(null);
+  const [profileSrc1, setProfileSrc1] = useState<File | null>(null);
+  const [selectedEmpSrNo, setSelectedEmpSrNo] = useState<string>("");
+  const [isNewEmployee, setIsNewEmployee] = useState<boolean>(false);
   const [empcodeOptions, setEmpcodeOptions] = useState<any[]>([]);
+  const [EMPLOYEEDESIGNATIONoption, setEMPLOYEEDESIGNATIONoption] = useState<any[]>([]);
+  const [CHANEELOPTION, setCHANEELOPTION] = useState<any[]>([]);
+  const [CLUSTEROPTION, setCLUSTEROPTION] = useState<any[]>([]);
+  const [locationnoption, setlocationnoption] = useState<any[]>([]);
+  const [SECTIONoption, setSECTIONoption] = useState<any[]>([]);
+  const [divisionoption, setdivisionoption] = useState<any[]>([]);
+
+  const MrOptions = [
+    { value: "mr.", label: "Mr." },
+    { value: "mrs.", label: "Mrs." },
+    { value: "miss.", label: "Miss." },
+    { value: "dr.", label: "Dr." },
+    { value: "prof.", label: "Prof." },
+  ];
+  const GenderOptions = [
+    { value: "Male", label: "Male" },
+    { value: "Female", label: "Female" },
+    { value: "Other", label: "Other" },
+  ];
+  const Type = [
+    { value: "1", label: "Regular" },
+    { value: "2", label: "Retainer" },
+    { value: "3", label: "Apprentice" },
+  ];
 
   const isMandatory = (field: string) => {
     if (typeof isMandatoryProp === "function") {
@@ -141,7 +171,8 @@ const SalaryDetails = ({
     { value: "Salary Hold", label: "Salary Hold" },
   ];
 
-  const convertValuesToString = (array) => {
+  const convertValuesToString = (array: any) => {
+    if (!array || !Array.isArray(array)) return [];
     return array.map((obj) => {
       return {
         label: obj.label,
@@ -211,35 +242,39 @@ const SalaryDetails = ({
   const [confirmAccountDisabled, setConfirmAccountDisabled] = useState(false);
   const [isEmpCodeGenerated, setIsEmpCodeGenerated] = useState(false);
 
-  useEffect(() => {
+  const fetchEmpList = async () => {
     if (!user?.Comp_Code) return;
-    const fetchEmpList = async () => {
-      try {
-        const result = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
-          { branch: user?.branch },
-          {
-            headers: {
-              compcode: user?.Comp_Code,
-              name: user?.name,
-            },
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
+        { branch: user?.branch },
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
           },
-        );
-        if (result.data?.data) {
-          setEmpcodeOptions(result.data.data);
-        }
-      } catch (err) {
-        console.error("Error fetching employee list:", err);
+        },
+      );
+      if (result.data?.data) {
+        setEmpcodeOptions(result.data.data);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching employee list:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchEmpList();
   }, [user?.Comp_Code, user?.name, user?.branch]);
 
   const handleEmpChange = async (name: string, value: string | number) => {
     try {
       if (!value || value.toString().trim() === "" || value.toString().trim() === "null") {
+        setSelectedEmpSrNo("");
         return;
       }
+      setSelectedEmpSrNo(String(value));
+      setIsNewEmployee(false);
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/${value}`,
         {},
@@ -273,6 +308,7 @@ const SalaryDetails = ({
       } else {
         setProfileSrc(null);
       }
+      setProfileSrc1(null);
       setIsEmpCodeGenerated(true);
     } catch (error) {
       console.error("Error loading employee data:", error);
@@ -301,11 +337,15 @@ const SalaryDetails = ({
       }
 
       const code = result?.data?.code;
+      setSelectedEmpSrNo("");
+      setIsNewEmployee(true);
       setFormData((prev: any) => ({
         ...prev,
+        SrNo: "",
         EmpMst: {
           ...prev?.EmpMst,
           EMPCODE: code,
+          SrNo: "",
         },
       }));
       setIsEmpCodeGenerated(true);
@@ -322,24 +362,212 @@ const SalaryDetails = ({
         setProfileSrc(e.target.result);
       };
       reader.readAsDataURL(file);
+      setProfileSrc1(file);
     }
   };
 
   const handleReset = () => {
+    setSelectedEmpSrNo("");
+    setIsNewEmployee(false);
     setFormData((prev: any) => ({
       ...prev,
+      SrNo: "",
       EmpMst: {
         ...prev?.EmpMst,
         EMPCODE: "",
         EMPFIRSTNAME: "",
         EMPLASTNAME: "",
         PAY_CODE: "",
+        TITLE: "",
+        GENDER: "",
+        EmpType: "",
+        EMPLOYEEDESIGNATION: "",
+        Sal_Region: "",
+        CHANNEL: "",
+        CLUSTER: "",
+        LOCATION: "",
+        SECTION: "",
+        DIVISION: "",
         photo: null,
       },
     }));
     setProfileSrc(null);
+    setProfileSrc1(null);
     setIsEmpCodeGenerated(false);
   };
+
+  const handleLocationChange = async (name: string, value: string | number) => {
+    handleInputChange(name, value);
+  };
+
+  const handleUpdateEmployee = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
+    const empCode = formData?.EmpMst?.EMPCODE;
+    if (!empCode || empCode.toString().trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        title: "Please enter or select an Employee Code",
+      });
+      return;
+    }
+
+    if (!formData?.EmpMst?.EMPFIRSTNAME || formData?.EmpMst?.EMPFIRSTNAME.toString().trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        title: "First Name is required",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const formDataToSend = new FormData();
+      if (Object.keys(formData).length > 0) {
+        formDataToSend.append("formData", JSON.stringify(formData));
+      }
+      if (profileSrc1) {
+        const fileName = uuidv4();
+        const fileType = profileSrc1.type?.split("/")[1] || "jpeg";
+        formDataToSend.append(
+          "profile",
+          profileSrc1,
+          `${fileName}.${fileType}`,
+        );
+      }
+      formDataToSend.append("User", user?.EMPCODE || user?.name || "");
+      formDataToSend.append("LASTMODI_BY", user?.name || "");
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/update/${empCode}`,
+        formDataToSend,
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+            user_id: user?.id,
+          },
+        },
+      );
+
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Employee updated successfully.",
+        });
+        fetchEmpList();
+      }
+    } catch (error: any) {
+      console.error("Error updating employee:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: error?.response?.data?.Message || error?.message || "Failed to update employee.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveEmployee = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
+    const empCode = formData?.EmpMst?.EMPCODE;
+    if (!empCode || empCode.toString().trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        title: "Please generate or enter an Employee Code",
+      });
+      return;
+    }
+
+    if (!formData?.EmpMst?.EMPFIRSTNAME || formData?.EmpMst?.EMPFIRSTNAME.toString().trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        title: "First Name is required",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const formDataToSend = new FormData();
+      if (Object.keys(formData).length > 0) {
+        formDataToSend.append("formData", JSON.stringify(formData));
+      }
+      if (profileSrc1) {
+        const fileName = uuidv4();
+        const fileType = profileSrc1.type?.split("/")[1] || "jpeg";
+        formDataToSend.append(
+          "profile",
+          profileSrc1,
+          `${fileName}.${fileType}`,
+        );
+      }
+      formDataToSend.append("User", user?.EMPCODE || user?.name || "");
+      formDataToSend.append("LASTMODI_BY", user?.name || "");
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee`,
+        formDataToSend,
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+            user_id: user?.id,
+          },
+        },
+      );
+
+      if (response.status === 200) {
+        const assignedCode = response.data?.finalEmpCode || empCode;
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Data submitted successfully and Assigned code: '${assignedCode}'`,
+        });
+        fetchEmpList();
+      }
+    } catch (error: any) {
+      console.error("Error saving employee:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Save Failed",
+        text: error?.response?.data?.Message || error?.message || "Failed to save employee.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isEditMode = Boolean(!isNewEmployee && (selectedEmpSrNo || formData?.EmpMst?.SrNo));
 
   const isEmpCodeReadOnly = Boolean(
     isEmpCodeGenerated ||
@@ -993,26 +1221,43 @@ const SalaryDetails = ({
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
-      {},
-      {
-        headers: {
-          compcode: user?.Comp_Code,
-          name: user?.name,
+    if (!user?.Comp_Code) return;
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
+        {},
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
         },
-      },
-    );
-    setEmpShift(response.data.data.EMP_SHIFT);
-    setBankoption(response.data.data.BANK);
-    setPFPERCoption(response.data.data.PFPERC);
-    setGRADEoption(response.data.data.GradeMstData);
+      );
+      if (response?.data?.data) {
+        const masters = response.data.data;
+        if (masters.EMP_SHIFT) setEmpShift(masters.EMP_SHIFT);
+        if (masters.BANK) setBankoption(masters.BANK);
+        if (masters.PFPERC) setPFPERCoption(masters.PFPERC);
+        if (masters.GradeMstData) setGRADEoption(masters.GradeMstData);
+        if (masters.Sal_Region) setSalRegionoption(convertValuesToString(masters.Sal_Region));
+        if (masters.EMPLOYEEDESIGNATION) setEMPLOYEEDESIGNATIONoption(convertValuesToString(masters.EMPLOYEEDESIGNATION));
+        if (masters.CHANNEL1) setCHANEELOPTION(convertValuesToString(masters.CHANNEL1));
+        if (masters.CLUSTER1) setCLUSTEROPTION(convertValuesToString(masters.CLUSTER1));
+        if (masters.LOCATION) setlocationnoption(convertValuesToString(masters.LOCATION));
+        if (masters.SECTION) setSECTIONoption(convertValuesToString(masters.SECTION));
+        if (masters.DIVISION) setdivisionoption(convertValuesToString(masters.DIVISION));
+      }
+    } catch (error) {
+      console.error("Error fetching masters:", error);
+    }
   };
+
+  useEffect(() => {
+    if (user?.Comp_Code) {
+      fetchData();
+    }
+  }, [user?.Comp_Code, user?.name]);
 
   const handleChangeSalaryDetails = async () => {
     setIsDialogOpen2(true);
@@ -1857,12 +2102,13 @@ const SalaryDetails = ({
           </Button>
 
           <Button
-            onClick={handleChangeSalaryDetails}
+            onClick={isEditMode ? handleUpdateEmployee : handleSaveEmployee}
             size="md"
+            disabled={isLoading}
             className="h-10 rounded-xl gap-2 bg-[#4F46E5] hover:bg-[#433df0] text-white font-medium shadow-xs"
           >
             <CheckCircle className="h-4 w-4" />
-            Save employee
+            {isEditMode ? "Update employee" : "Save employee"}
           </Button>
         </div>
       </div>
@@ -1883,7 +2129,7 @@ const SalaryDetails = ({
                     handleEmpChange(name, value);
                   }}
                   option={empcodeOptions}
-                  initialValue=""
+                  initialValue={selectedEmpSrNo || formData?.EmpMst?.SrNo?.toString() || ""}
                 />
               </div>
 
@@ -2020,6 +2266,135 @@ const SalaryDetails = ({
                   />
                 </label>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== BASIC INFO CARD ===================== */}
+      <div className="rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm overflow-visible w-full mb-4">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] rounded-t-2xl">
+          <div className="flex items-center gap-2.5 h-7">
+            <BadgeCheck className="h-5 w-5 text-[#4F46E5]" />
+            <span className={cardTitleClass}>Basic Info</span>
+          </div>
+        </div>
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {/* Title */}
+            <div>
+              <Eselect
+                title="Title"
+                option={MrOptions}
+                name="TITLE"
+                initialValue={
+                  formData?.EmpMst?.TITLE
+                    ? formData.EmpMst.TITLE.toString().toLowerCase().endsWith(".")
+                      ? formData.EmpMst.TITLE.toString().toLowerCase()
+                      : `${formData.EmpMst.TITLE.toString().toLowerCase()}.`
+                    : ""
+                }
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <Eselect
+                title="Gender"
+                option={GenderOptions}
+                name="GENDER"
+                initialValue={formData?.EmpMst?.GENDER ? formData.EmpMst.GENDER.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Employee type */}
+            <div>
+              <Eselect
+                title="Employee type"
+                option={Type}
+                name="EmpType"
+                initialValue={formData?.EmpMst?.EmpType ? formData.EmpMst.EmpType.toString().toLowerCase() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Employee designation */}
+            <div>
+              <Eselect
+                option={EMPLOYEEDESIGNATIONoption}
+                title="Employee designation"
+                name="EMPLOYEEDESIGNATION"
+                initialValue={formData?.EmpMst?.EMPLOYEEDESIGNATION ? formData.EmpMst.EMPLOYEEDESIGNATION.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Region */}
+            <div>
+              <Eselect
+                option={SalRegionoption}
+                title="Region"
+                name="Sal_Region"
+                initialValue={formData?.EmpMst?.Sal_Region ? formData.EmpMst.Sal_Region.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Channel */}
+            <div>
+              <Eselect
+                option={CHANEELOPTION}
+                title="Channel"
+                name="CHANNEL"
+                initialValue={formData?.EmpMst?.CHANNEL ? formData.EmpMst.CHANNEL.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Cluster */}
+            <div>
+              <Eselect
+                option={CLUSTEROPTION}
+                title="Cluster"
+                name="CLUSTER"
+                initialValue={formData?.EmpMst?.CLUSTER ? formData.EmpMst.CLUSTER.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <Eselect
+                option={locationnoption}
+                title="Location"
+                name="LOCATION"
+                initialValue={formData?.EmpMst?.LOCATION ? formData.EmpMst.LOCATION.toString() : ""}
+                handleInputChange={handleLocationChange}
+              />
+            </div>
+
+            {/* Section */}
+            <div>
+              <Eselect
+                option={SECTIONoption}
+                name="SECTION"
+                title="Section"
+                initialValue={formData?.EmpMst?.SECTION ? formData.EmpMst.SECTION.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+
+            {/* Department */}
+            <div>
+              <Eselect
+                option={divisionoption}
+                title="Department"
+                name="DIVISION"
+                initialValue={formData?.EmpMst?.DIVISION ? formData.EmpMst.DIVISION.toString() : ""}
+                handleInputChange={handleInputChange}
+              />
             </div>
           </div>
         </div>

@@ -78,7 +78,7 @@ export default function ResumeBankPage() {
   const [allData, setAllData] = useState<any[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<"Profile" | "Documents" | "Languages" | "Experience">("Profile");
-  const [statusFilter, setStatusFilter] = useState<"Unscreened" | "Reviewed" | "All">("Unscreened");
+  const [statusFilter, setStatusFilter] = useState<"Unscreened" | "Selected" | "All">("Unscreened");
 
   // Filters State
   const [filterSkills, setFilterSkills] = useState("");
@@ -143,10 +143,9 @@ export default function ResumeBankPage() {
   };
 
   // Determine candidate status
-  const getCandidateStatus = (item: any): "Unscreened" | "Reviewed" | "Shortlisted" | "Rejected" => {
+  const getCandidateStatus = (item: any): "Unscreened" | "Selected" | "Rejected" => {
     if (item.REJECTED_BY || item.INT_STATUS === 3 || item.STATUS === "Rejected") return "Rejected";
-    if (item.INT_STATUS === 2 || item.STATUS === "Shortlisted") return "Shortlisted";
-    if (item.INTR1BY || item.STATUS === "Reviewed") return "Reviewed";
+    if (item.INT_STATUS === 2 || item.STATUS === "Shortlisted") return "Selected";
     return "Unscreened";
   };
 
@@ -161,6 +160,7 @@ export default function ResumeBankPage() {
         `${process.env.NEXT_PUBLIC_URL}/interview/interviewcanidates`,
         {
           loc_code: user?.branch || user?.Primary_Branch || user?.branch_code || "",
+          flag:1
         },
         {
           headers: {
@@ -209,7 +209,7 @@ export default function ResumeBankPage() {
     if (user) {
       fetchData();
     }
-  }, [user]);
+  }, [user, user?.branch, user?.Comp_Code]);
 
   // Compute status counts
   const statusCounts = useMemo(() => {
@@ -234,8 +234,11 @@ export default function ResumeBankPage() {
     // Status filter pill
     if (statusFilter === "Unscreened") {
       list = list.filter((item) => getCandidateStatus(item) === "Unscreened");
-    } else if (statusFilter === "Reviewed") {
-      list = list.filter((item) => getCandidateStatus(item) !== "Unscreened");
+    } else if (statusFilter === "Selected") {
+      list = list.filter((item) => {
+        const status = getCandidateStatus(item);
+        return status === "Selected" || status === "Rejected";
+      });
     }
 
     // Dropdown filters
@@ -391,7 +394,7 @@ export default function ResumeBankPage() {
   };
 
   // Render Status Badge
-  const renderStatusBadge = (status: "Unscreened" | "Reviewed" | "Shortlisted" | "Rejected") => {
+  const renderStatusBadge = (status: "Unscreened" | "Selected" | "Rejected") => {
     switch (status) {
       case "Unscreened":
         return (
@@ -399,13 +402,12 @@ export default function ResumeBankPage() {
             Unscreened
           </span>
         );
-      case "Reviewed":
+      case "Selected":
         return (
           <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800">
-            Reviewed
+            Selected
           </span>
         );
-      case "Shortlisted":
         return (
           <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
             Shortlisted
@@ -451,12 +453,12 @@ export default function ResumeBankPage() {
               </div>
               <div className="min-w-0">
                 <div
-                  className={`text-base sm:text-[17px] font-semibold truncate ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-white"
+                  className={`text-xl font-semibold truncate ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-white"
                     }`}
                 >
                   {cand.NAME || "Unnamed"}
                 </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                <div className="text-base text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {cand.EMAIL || "No email"}
                 </div>
               </div>
@@ -469,7 +471,7 @@ export default function ResumeBankPage() {
         accessor: "MOB_NO",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-[17px] font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -481,7 +483,7 @@ export default function ResumeBankPage() {
         accessor: "APPLICATION_DATE1",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-[17px] font-medium text-slate-700 dark:text-slate-300 py-1.5 cursor-pointer"
+            className="text-xl font-medium text-slate-700 dark:text-slate-300 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {formatDate(value || row.original.APPLICATION_DATE)}
@@ -493,7 +495,7 @@ export default function ResumeBankPage() {
         accessor: "EXP_IN_YEAR",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-[17px] font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value !== null && value !== undefined ? `${value} yr` : "—"}
@@ -505,7 +507,7 @@ export default function ResumeBankPage() {
         accessor: "DESIGNATION",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-[17px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1.5 cursor-pointer"
+            className="text-xl font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -531,6 +533,91 @@ export default function ResumeBankPage() {
     [selectedCandidate]
   );
 
+  const languageColumns = useMemo(
+    () => [
+      {
+        Header: "Language",
+        accessor: "Emp_Language",
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "Understand",
+        accessor: "Emp_Language_Understand",
+        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+      },
+      {
+        Header: "Speak",
+        accessor: "Emp_Language_Speak",
+        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+      },
+      {
+        Header: "Read",
+        accessor: "Emp_Language_Read",
+        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+      },
+      {
+        Header: "Write",
+        accessor: "Emp_Language_Write",
+        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+      },
+    ],
+    []
+  );
+
+  const experienceColumns = useMemo(
+    () => [
+      {
+        Header: "Company",
+        accessor: "Emp_Company",
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "Designation",
+        accessor: "Emp_Designation",
+        Cell: ({ value }: any) => <div className="text-xl">{value || "—"}</div>,
+      },
+      {
+        Header: "Duration",
+        accessor: "Emp_From_Date",
+        Cell: ({ row }: any) => {
+          const exp = row.original;
+          return (
+            <span className="text-base font-bold text-indigo-600 dark:text-indigo-400">
+              {calculateDateDiff(exp.Emp_From_Date, exp.Emp_To_Date)}
+            </span>
+          );
+        },
+      },
+      {
+        Header: "Salary",
+        accessor: "Emp_Drawn_Salary",
+        Cell: ({ value }: any) => (
+          <div className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+            {value ? `₹${Number(value).toFixed(2)}` : "—"}
+          </div>
+        ),
+      },
+      {
+        Header: "Leaving Reason",
+        accessor: "Emp_Leaving_Reason",
+        Cell: ({ value }: any) => (
+          <div className="text-xl text-slate-600 dark:text-slate-400">
+            {value || "—"}
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
   return (
     <div className="min-h-screen bg-slate-50/60 dark:bg-[#070D18] p-4 sm:p-6 lg:p-8 space-y-6">
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -541,7 +628,7 @@ export default function ResumeBankPage() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
             Resume bank
           </h1>
-          <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
             Screen one dossier at a time.{" "}
             <strong className="text-yellow-600 dark:text-yellow-400 font-bold">
               {statusCounts.unscreened} resumes still unscreened.
@@ -554,14 +641,14 @@ export default function ResumeBankPage() {
           <button
             type="button"
             onClick={() => setStatusFilter("Unscreened")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer ${statusFilter === "Unscreened"
+            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "Unscreened"
               ? "bg-[#f59e0b] text-white shadow-xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
           >
             <span>Unscreened</span>
             <span
-              className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-black ${statusFilter === "Unscreened"
+              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "Unscreened"
                 ? "bg-white/25 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
@@ -572,15 +659,15 @@ export default function ResumeBankPage() {
 
           <button
             type="button"
-            onClick={() => setStatusFilter("Reviewed")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer ${statusFilter === "Reviewed"
+            onClick={() => setStatusFilter("Selected")}
+            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "Selected"
               ? "bg-blue-600 text-white shadow-xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
           >
             <span>Reviewed</span>
             <span
-              className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-black ${statusFilter === "Reviewed"
+              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "Selected"
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
@@ -592,14 +679,14 @@ export default function ResumeBankPage() {
           <button
             type="button"
             onClick={() => setStatusFilter("All")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer ${statusFilter === "All"
+            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "All"
               ? "bg-indigo-600 text-white shadow-xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
           >
             <span>All</span>
             <span
-              className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-black ${statusFilter === "All"
+              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "All"
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
@@ -680,7 +767,7 @@ export default function ResumeBankPage() {
               size="md"
               fullWidth
               onClick={() => { }}
-              className="text-base font-bold shadow-xs cursor-pointer"
+              className="text-xl font-bold shadow-xs cursor-pointer"
             >
               Show
             </AButton>
@@ -688,7 +775,7 @@ export default function ResumeBankPage() {
               variant="outline"
               size="md"
               onClick={handleResetFilters}
-              className="text-base font-semibold cursor-pointer"
+              className="text-xl font-semibold cursor-pointer"
             >
               Reset
             </AButton>
@@ -702,7 +789,7 @@ export default function ResumeBankPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── LEFT COLUMN: CANDIDATES LIST TABLE USING ReactTable ───────────────── */}
         <div className="lg:col-span-7 xl:col-span-7 space-y-4">
-          <div className="rounded-2xl bg-white dark:bg-[#0B1220] shadow-xs">
+          <div className="rounded-2xl bg-white dark:bg-[#0B1220] shadow-xs overflow-hidden">
             <ReactTable
               columns={tableColumns}
               data={displayedCandidates}
@@ -711,12 +798,13 @@ export default function ResumeBankPage() {
               onRowDoubleClick={(row) => setSelectedCandidate(row)}
               showExcelExport={true}
               showTopSearch={true}
+              showPageSizeInFooter={true}
               searchPlaceholder="Search candidate by name, email, designation..."
             />
           </div>
 
           {/* Table Footer with Upload Button */}
-          <div className="flex items-center justify-between px-5 py-3.5 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-[#0B1220] text-base text-slate-600 dark:text-slate-300 font-semibold shadow-xs">
+          <div className="flex items-center justify-between px-5 py-3.5 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-[#0B1220] text-xl text-slate-600 dark:text-slate-300 font-semibold shadow-xs">
             <span>
               Showing{" "}
               <strong className="text-slate-900 dark:text-white font-bold">
@@ -730,7 +818,7 @@ export default function ResumeBankPage() {
               size="sm"
               onClick={() => router.push("/payroll/recruitment-process/candidate-registration-form")}
               icon={<Upload className="h-4 w-4" />}
-              className="text-sm font-bold cursor-pointer"
+              className="text-xl font-bold cursor-pointer"
             >
               Bulk upload
             </AButton>
@@ -753,7 +841,7 @@ export default function ResumeBankPage() {
                       <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
                         {selectedCandidate.NAME || "Candidate Dossier"}
                       </h3>
-                      <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 font-medium mt-1">
+                      <p className="text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
                         {selectedCandidate.DESIGNATION || "No Designation"} ·{" "}
                         {selectedCandidate.LOC_CODE1 || "Location"}
                       </p>
@@ -805,7 +893,7 @@ export default function ResumeBankPage() {
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
-                      className={`pb-3 text-base sm:text-lg font-semibold transition cursor-pointer relative ${activeTab === tab
+                      className={`pb-3 text-xl font-semibold transition cursor-pointer relative ${activeTab === tab
                         ? "text-indigo-600 dark:text-indigo-400"
                         : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
                         }`}
@@ -822,7 +910,7 @@ export default function ResumeBankPage() {
                 <div>
                   {/* TAB 1: PROFILE */}
                   {activeTab === "Profile" && (
-                    <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800/60 text-base sm:text-[17px]">
+                    <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800/60 text-xl">
                       <div className="flex justify-between py-2">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Application date</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
@@ -945,7 +1033,7 @@ export default function ResumeBankPage() {
                                   <FileText className="h-5 w-5" />
                                 )}
                               </div>
-                              <span className="text-base font-bold text-slate-800 dark:text-slate-200">
+                              <span className="text-xl font-bold text-slate-800 dark:text-slate-200">
                                 {doc.title}
                               </span>
                             </div>
@@ -953,7 +1041,7 @@ export default function ResumeBankPage() {
                             {fileLink ? (
                               <FileViewer fileLink={fileLink} celldata="View" Title={doc.title} />
                             ) : (
-                              <span className="text-sm sm:text-base text-slate-400 font-medium">Not uploaded</span>
+                              <span className="text-base sm:text-lg text-slate-400 font-medium">Not uploaded</span>
                             )}
                           </div>
                         );
@@ -963,97 +1051,29 @@ export default function ResumeBankPage() {
 
                   {/* TAB 3: LANGUAGES */}
                   {activeTab === "Languages" && (
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-                      <table className="w-full text-left text-base border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold uppercase text-xs sm:text-sm">
-                            <th className="p-3.5">Language</th>
-                            <th className="p-3.5 text-center">Understand</th>
-                            <th className="p-3.5 text-center">Speak</th>
-                            <th className="p-3.5 text-center">Read</th>
-                            <th className="p-3.5 text-center">Write</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-base">
-                          {selectedCandidate?.EmpLang && selectedCandidate.EmpLang.length > 0 ? (
-                            selectedCandidate.EmpLang.map((item: any, idx: number) => (
-                              <tr key={idx}>
-                                <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
-                                  {item.Emp_Language}
-                                </td>
-                                <td className="p-3.5 text-center text-slate-800 dark:text-slate-200">
-                                  {item.Emp_Language_Understand || "—"}
-                                </td>
-                                <td className="p-3.5 text-center text-slate-800 dark:text-slate-200">
-                                  {item.Emp_Language_Speak || "—"}
-                                </td>
-                                <td className="p-3.5 text-center text-slate-800 dark:text-slate-200">
-                                  {item.Emp_Language_Read || "—"}
-                                </td>
-                                <td className="p-3.5 text-center text-slate-800 dark:text-slate-200">
-                                  {item.Emp_Language_Write || "—"}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-6 text-center text-slate-400 text-base font-medium">
-                                No languages recorded.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                      <ReactTable
+                        columns={languageColumns}
+                        data={selectedCandidate?.EmpLang || []}
+                        showExcelExport={false}
+                        showTopSearch={false}
+                        showPageSizeInFooter={false}
+                        height="auto"
+                      />
                     </div>
                   )}
 
                   {/* TAB 4: EXPERIENCE */}
                   {activeTab === "Experience" && (
-                    <div className="space-y-3.5">
-                      {selectedCandidate?.EmpExperience && selectedCandidate.EmpExperience.length > 0 ? (
-                        selectedCandidate.EmpExperience.map((exp: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 space-y-2.5 text-base"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-900 dark:text-white text-lg">
-                                {exp.Emp_Company || "Company Name"}
-                              </span>
-                              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                                {calculateDateDiff(exp.Emp_From_Date, exp.Emp_To_Date)}
-                              </span>
-                            </div>
-
-                            <div className="text-slate-700 dark:text-slate-300">
-                              <strong className="text-slate-900 dark:text-slate-100">Designation:</strong>{" "}
-                              {exp.Emp_Designation || "—"}
-                            </div>
-
-                            {exp.Emp_Responsibility && (
-                              <div className="text-slate-600 dark:text-slate-400">
-                                <strong>Duties:</strong> {exp.Emp_Responsibility}
-                              </div>
-                            )}
-
-                            {exp.Emp_Leaving_Reason && (
-                              <div className="text-slate-600 dark:text-slate-400">
-                                <strong>Leaving Reason:</strong> {exp.Emp_Leaving_Reason}
-                              </div>
-                            )}
-
-                            {exp.Emp_Drawn_Salary && (
-                              <div className="text-slate-900 dark:text-slate-100 font-bold text-right text-base">
-                                Salary: ₹{Number(exp.Emp_Drawn_Salary).toFixed(2)}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="py-8 text-center text-slate-400 text-base font-medium">
-                          No prior experience listed.
-                        </div>
-                      )}
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                      <ReactTable
+                        columns={experienceColumns}
+                        data={selectedCandidate?.EmpExperience || []}
+                        showExcelExport={false}
+                        showTopSearch={false}
+                        showPageSizeInFooter={false}
+                        height="auto"
+                      />
                     </div>
                   )}
                 </div>
@@ -1077,9 +1097,9 @@ export default function ResumeBankPage() {
                   </div>
                 </div>
 
-                {/* Show remark tags, textarea, and Shortlist/Reject buttons for Unscreened and Reviewed candidates */}
+                {/* Show remark tags, textarea, and Shortlist/Reject buttons for Unscreened and Selected candidates */}
                 {(getCandidateStatus(selectedCandidate) === "Unscreened" ||
-                  getCandidateStatus(selectedCandidate) === "Reviewed") && (
+                  getCandidateStatus(selectedCandidate) === "Selected") && (
                   <>
                     {/* Quick decision tags */}
                     <div className="flex flex-wrap gap-2.5">
@@ -1088,7 +1108,7 @@ export default function ResumeBankPage() {
                           key={tag}
                           type="button"
                           onClick={() => setRemarkReason(tag)}
-                          className={`px-4 py-2 rounded-xl text-sm sm:text-base font-semibold transition cursor-pointer border ${remarkReason === tag
+                          className={`px-4 py-2 rounded-xl text-lg sm:text-xl font-semibold transition cursor-pointer border ${remarkReason === tag
                             ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-700 dark:text-indigo-300"
                             : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
                             }`}
@@ -1104,7 +1124,7 @@ export default function ResumeBankPage() {
                       value={remarkReason}
                       onChange={(e) => setRemarkReason(e.target.value)}
                       placeholder="Reason / remark for the decision..."
-                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-base text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
+                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
                     />
 
                     {/* Shortlist & Reject Buttons */}
@@ -1114,7 +1134,7 @@ export default function ResumeBankPage() {
                         size="lg"
                         onClick={handleApprove}
                         icon={<UserCheck className="h-5 w-5" />}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base sm:text-lg cursor-pointer py-3"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xl cursor-pointer py-3"
                       >
                         Shortlist
                       </AButton>
@@ -1124,7 +1144,7 @@ export default function ResumeBankPage() {
                         size="lg"
                         onClick={handleReject}
                         icon={<UserX className="h-5 w-5 text-rose-600" />}
-                        className="border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30 font-bold text-base sm:text-lg cursor-pointer py-3"
+                        className="border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30 font-bold text-xl cursor-pointer py-3"
                       >
                         Reject
                       </AButton>
@@ -1139,7 +1159,7 @@ export default function ResumeBankPage() {
                     size="md"
                     onClick={handlePrint}
                     icon={<Printer className="h-4 w-4" />}
-                    className="text-base font-bold cursor-pointer"
+                    className="text-xl font-bold cursor-pointer"
                   >
                     English print
                   </AButton>
@@ -1149,7 +1169,7 @@ export default function ResumeBankPage() {
                     size="md"
                     onClick={handlePrint}
                     icon={<Printer className="h-4 w-4" />}
-                    className="text-base font-bold cursor-pointer"
+                    className="text-xl font-bold cursor-pointer"
                   >
                     Hindi print
                   </AButton>
@@ -1159,7 +1179,7 @@ export default function ResumeBankPage() {
           ) : (
             <div className="rounded-2xl border border-slate-200/90 bg-white p-14 text-center shadow-xs dark:border-slate-800 dark:bg-[#0B1220] text-slate-400">
               <User className="h-12 w-12 mx-auto mb-3 opacity-40" />
-              <p className="text-lg font-bold">Select a candidate to view dossier</p>
+              <p className="text-xl font-bold">Select a candidate to view dossier</p>
             </div>
           )}
         </div>

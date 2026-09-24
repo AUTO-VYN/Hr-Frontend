@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
 import EmpTabs from "./EmpTabs";
 import axios from "axios";
@@ -312,6 +312,37 @@ function EmployeeMasterContent() {
   const searchParams = useSearchParams();
   const Empcode = searchParams.get("UTD");
 
+  const initialBankDetailsRef = useRef<{
+    BANKNAME?: any;
+    ACCOUNT_TYPE?: any;
+    BANKACCOUNTNO?: any;
+    BRANCH?: any;
+    PAYMENTMODE?: any;
+    ifsc_code?: any;
+    Emp_Ac_Name?: any;
+    Sal_Hold?: any;
+  } | null>(null);
+
+  useEffect(() => {
+    const handleBankUpdated = () => {
+      if (formData?.EmpMst) {
+        initialBankDetailsRef.current = {
+          BANKNAME: formData.EmpMst.BANKNAME ?? null,
+          ACCOUNT_TYPE: formData.EmpMst.ACCOUNT_TYPE ?? null,
+          BANKACCOUNTNO: formData.EmpMst.BANKACCOUNTNO ?? null,
+          BRANCH: formData.EmpMst.BRANCH ?? null,
+          PAYMENTMODE: formData.EmpMst.PAYMENTMODE ?? null,
+          ifsc_code: formData.EmpMst.ifsc_code ?? null,
+          Emp_Ac_Name: formData.EmpMst.Emp_Ac_Name ?? null,
+          Sal_Hold: formData.EmpMst.Sal_Hold ?? null,
+        };
+      }
+    };
+    window.addEventListener("bankDetailsUpdated", handleBankUpdated);
+    return () =>
+      window.removeEventListener("bankDetailsUpdated", handleBankUpdated);
+  }, [formData?.EmpMst]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.Comp_Code) {
@@ -441,83 +472,8 @@ function EmployeeMasterContent() {
   // end add code
 
   ///////////////////////////////////////////
-  // ===== Left sidebar sections (screenshot style) =====
-  const SECTIONS = useMemo(
-    () => [
-      {
-        key: "identity",
-        label: "Basic Info",
-        desc: "Employee master header fields and photo upload.",
-        total: 11,
-      },
-      {
-        key: "info",
-        label: "Employee Identity",
-        desc: "Joining dates, contact details and statutory identity. Required to save the record.",
-        total: 30,
-      },
-      {
-        key: "personal",
-        label: "Personal Info",
-        desc: "Personal and family details.",
-        total: 25,
-      },
-      {
-        key: "salary",
-        label: "Salary Details",
-        desc: "Payroll and salary configuration.",
-        total: 41,
-      },
-      {
-        key: "education",
-        label: "Education/Skills",
-        desc: "Education, language, skills and experience.",
-        total: 8,
-      },
-      {
-        key: "work",
-        label: "Work Details",
-        desc: "Work profile, department, reporting etc.",
-        total: 1,
-      },
-      {
-        key: "mobile",
-        label: "Mobile App Access",
-        desc: "Mobile app access and rights.",
-        total: 24,
-      },
-      {
-        key: "asset",
-        label: "Asset Issue",
-        desc: "Assets issued to employee.",
-        total: 1,
-      },
-      {
-        key: "doc",
-        label: "Doc Upload",
-        desc: "Upload documents (Aadhar, PAN, etc.)",
-        total: 8,
-      },
-      {
-        key: "others",
-        label: "Others",
-        desc: "Category, previous experience and system audit trail.",
-        total: 17,
-      },
-      {
-        key: "separation",
-        label: "Separation",
-        desc: "Resignation/separation details.",
-        total: 18,
-      },
-    ],
-    [],
-  );
-
   const SECTION_FIELDS: Record<string, string[]> = {
-    // ✅ BASIC INFO (key: identity) total: 20
-    // NOTE: agar aapke actual keys thode different hain (EMP_CODE vs EMPCODE etc.)
-    // to bas yahin string change kar dena (name="..." wale same).
+    // ✅ BASIC INFO (key: identity)
     identity: [
       "EmpMst.EMPCODE",
       "EmpMst.TITLE",
@@ -531,7 +487,7 @@ function EmployeeMasterContent() {
       "EmpMst.SECTION",
       "EmpMst.DIVISION",
     ],
-    // ✅ EMPLOYEE IDENTITY (key: info) total: 30
+    // ✅ EMPLOYEE IDENTITY (key: info)
     info: [
       "EmpMst.Interview_Date",
       "EmpMst.EMP_STATUS",
@@ -549,34 +505,24 @@ function EmployeeMasterContent() {
       "EmpMst.EMERGENCYNO",
       "EmpMst.SKILLS",
       "EmpMst.Induction_Done",
-
       "EmpMst.PANNO",
       "EmpMst.PAN_CARD_VER",
       "EmpMst.AADHAAR_LINKED_VER",
       "EmpMst.PAN_NAME_MATCH_VER",
-
       "EmpMst.UID_NO",
       "EmpMst.OTP_With_Aadhaar",
       "EmpMst.AADHAR_CARD_VER",
-
       "EmpMst.PASSPORTNO",
       "EmpMst.PASSEXPIRYDATE",
       "EmpMst.PASSPORT_VER",
-
       "EmpMst.DRIVINGLIC_ISSUEPALACE",
       "EmpMst.Dlv_Type",
       "EmpMst.DRIVINGLIC_ISSUEDATE",
       "EmpMst.DRIVINGLIC_EXPDATE",
       "EmpMst.DRIVING_VER",
-
-      // optional (only if you want to count these too)
-      "EmpMst.photo",
-      "EmpMst.full_addressAadhaar",
-      "EmpMst.PERMANENTADDRESS1",
     ],
-    // ✅ PERSONAL INFO (key: personal) total: 25
+    // ✅ PERSONAL INFO (key: personal)
     personal: [
-      // Family Detail
       "EmpMst.FATHERNAME",
       "EmpMst.Father_Mob",
       "EmpMst.SPOUSENAME",
@@ -590,27 +536,20 @@ function EmployeeMasterContent() {
       "EmpMst.BLOODGROUP",
       "EmpMst.EMPHEIGHT",
       "EmpMst.EMPWEIGHT",
-
-      // Address Information
       "EmpMst.PERMANENTADDRESS1",
       "EmpMst.PCITY",
       "EmpMst.PPINCODE",
       "EmpMst.PSTATE",
       "EmpMst.PDIST",
-      "EmpMst.CopytoCurrentAddress", // (agar aap isko count karna chahte ho)
       "EmpMst.CURRENTADDRESS1",
       "EmpMst.CCITY",
       "EmpMst.CPINCODE",
       "EmpMst.CSTATE",
       "EmpMst.CDIST",
-
-      // Nominee table (at least one row filled => filled)
       "EmpFamily",
     ],
-
-    // ✅ SALARY DETAILS (key: salary) total: 41
+    // ✅ SALARY DETAILS (key: salary)
     salary: [
-      // Salary Detail Form
       "EmpMst.PFNO",
       "EmpMst.pfper",
       "EmpMst.PF_Date",
@@ -628,9 +567,15 @@ function EmployeeMasterContent() {
       "EmpMst.GRADE",
       "EmpMst.Sal_Region",
       "EmpMst.Punch_Type",
-      "EmpMst.CONTRACT_NUMBER",
-      "EmpMst.DD_CLUB",
-
+      "EmpMst.BANKNAME",
+      "EmpMst.BANKACCOUNTNO",
+      "EmpMst.Cnf_BANKACCOUNTNO",
+      "EmpMst.ifsc_code",
+      "EmpMst.BRANCH",
+      "EmpMst.Emp_Ac_Name",
+      "EmpMst.ACCOUNT_TYPE",
+      "EmpMst.PAYMENTMODE",
+      "EmpMst.Sal_Hold",
       // Salary Breakup
       "EmpMst.Effective_date",
       "EmpMst.Gross_Salary",
@@ -645,40 +590,21 @@ function EmployeeMasterContent() {
       "EmpMst.LWF",
       "EmpMst.PFSALARY_LIMIT",
       "EmpMst.BONUS_AMOUNT",
-      "EmpMst.Gratuity",
       "EmpMst.CTC",
-      "EmpMst.Daily_Wages",
-
-      // Bank Details
-      "EmpMst.BANKNAME",
-      "EmpMst.BANKACCOUNTNO",
-      "EmpMst.Cnf_BANKACCOUNTNO",
-      "EmpMst.ifsc_code",
-      "EmpMst.BRANCH",
-      "EmpMst.Emp_Ac_Name",
-      "EmpMst.ACCOUNT_TYPE",
-      "EmpMst.PAYMENTMODE",
-      "EmpMst.Sal_Hold",
-
-      // OTP
-      "EmpMst.OTP",
     ],
-    // ✅ EDUCATION/SKILLS (key: education) total: 30
-    education: ["EmpEdu", "EmpItSkill", "EmpLang", "EmpCertificates"],
-    // ✅ WORK DETAILS (key: work) total: 9
-    work: [
-      "EmpMst.DEPARTMENT",
-      "EmpMst.DESIGNATION",
-      "EmpMst.CLUSTER",
-      "EmpMst.CHANNEL",
-      "EmpMst.COSTCENTRE",
-      "EmpMst.CATEGORY",
-      "EmpMst.Reporting_1",
-      "EmpMst.Reporting_2",
-      "EmpExperience", // table (your Work Details page)
+    // ✅ EDUCATION/SKILLS (key: education)
+    education: [
+      "EmpEdu",
+      "EmpItSkill",
+      "EmpLang",
+      "EmpCertificates.DegreeCert",
+      "EmpCertificates.SkillCert",
+      "EmpCertificates.LangCert",
+      "EmpCertificates.OtherCert",
     ],
-
-    // ✅ MOBILE APP ACCESS (key: mobile) total: 24
+    // ✅ WORK DETAILS (key: work)
+    work: ["EmpExperience"],
+    // ✅ MOBILE APP ACCESS (key: mobile)
     mobile: [
       "EmpMst.App_Attendance",
       "EmpMst.mMispunch",
@@ -689,35 +615,28 @@ function EmployeeMasterContent() {
       "EmpMst.mPunch",
       "EmpMst.mCalender",
       "EmpMst.MOBILE_RIGHTS",
-
       "EmpMst.Reporting_1",
       "EmpMst.Reporting_2",
       "EmpMst.Reporting_3",
-
       "EmpMst.empcode2",
       "EmpMst.empcode3",
       "EmpMst.empcode4",
-
       "EmpMst.IsiphoneUser",
       "EmpMst.userNameIphone",
       "EmpMst.userPassIphone",
-
       "EmpMst.GEOOFFENCELOC",
-
       "EmpMst.ShiftIn_Relaxation",
       "EmpMst.ShiftOut_Relaxation",
       "EmpMst.Relaxation_Type",
-
+      "EmpMst.Cumulative_Relaxation",
       "EmpMst.MSPIN",
       "EmpMst.MSPN_Id",
       "EmpMst.IsMSPN",
       "EmpMst.MSPN_DTL",
     ],
-
-    // ✅ ASSET ISSUE (key: asset) total: 8
+    // ✅ ASSET ISSUE (key: asset)
     asset: ["AssetIssue"],
-
-    // ✅ DOC UPLOAD (total 8) - confirm keys
+    // ✅ DOC UPLOAD (key: doc)
     doc: [
       "EmpMst.adhar",
       "EmpMst.pan",
@@ -728,8 +647,7 @@ function EmployeeMasterContent() {
       "EmpMst.other4",
       "EmpMst.otherpdf",
     ],
-
-    // ✅ OTHERS (total 17) - confirm keys
+    // ✅ OTHERS (key: others)
     others: [
       "EmpMst.CATEGORY",
       "EmpMst.COSTCENTRE",
@@ -749,8 +667,7 @@ function EmployeeMasterContent() {
       "EmpMst.AX_EMP_CODE",
       "EmpMst.ROLE",
     ],
-
-    // ✅ SEPARATION (confirm keys)
+    // ✅ SEPARATION (key: separation)
     separation: [
       "EmpMst.RESIGNATION_SUBMISSION_DATE",
       "EmpMst.NOTICEPERIOD",
@@ -771,33 +688,177 @@ function EmployeeMasterContent() {
       "EmpMst.Separation4",
     ],
   };
-  console.log("EmpMst keys:", Object.keys(formData?.EmpMst || {}));
-  console.log("IEMI value:", formData?.EmpMst?.IEMI);
 
-  console.log(
-    "Identity-like keys:",
-    Object.keys(formData?.EmpMst || {}).filter((k) => {
-      const u = k.toUpperCase();
-      return (
-        u.includes("EMP") ||
-        u.includes("NAME") ||
-        u.includes("DOB") ||
-        u.includes("GENDER") ||
-        u.includes("DEPT") ||
-        u.includes("DESIG") ||
-        u.includes("JOIN") ||
-        u.includes("PHOTO")
-      );
-    }),
+  // active section controlled by sidebar
+  const [activeSection, setActiveSection] = useState<string>("identity");
+  const [dynamicFields, setDynamicFields] = useState<Record<string, string[]>>({});
+
+  const ROOT_TABLE_NAMES = useMemo(
+    () =>
+      new Set([
+        "EmpEdu",
+        "EmpItSkill",
+        "EmpLang",
+        "EmpExperience",
+        "EmpFamily",
+        "AssetIssue",
+        "EmpCertificates",
+      ]),
+    [],
   );
+
+  const normalizeFieldName = useCallback(
+    (name: string, section?: string): string => {
+      const trimmed = name.trim();
+      if (
+        trimmed.startsWith("EmpMst.") ||
+        trimmed.startsWith("Asset.") ||
+        trimmed.startsWith("EmpCertificates.") ||
+        ROOT_TABLE_NAMES.has(trimmed)
+      ) {
+        return trimmed;
+      }
+      if (section === "education") {
+        return `EmpCertificates.${trimmed}`;
+      }
+      return `EmpMst.${trimmed}`;
+    },
+    [ROOT_TABLE_NAMES],
+  );
+
+  const allSectionFields = useMemo(() => {
+    const res: Record<string, string[]> = {};
+    Object.keys(SECTION_FIELDS).forEach((key) => {
+      const base = SECTION_FIELDS[key] || [];
+      const extra = dynamicFields[key] || [];
+      res[key] = Array.from(new Set([...base, ...extra]));
+    });
+    return res;
+  }, [dynamicFields]);
+
+  // ===== Left sidebar sections (screenshot style) =====
+  const SECTIONS = useMemo(
+    () => [
+      {
+        key: "identity",
+        label: "Basic Info",
+        desc: "Employee master header fields and photo upload.",
+        total: allSectionFields.identity?.length ?? 0,
+      },
+      {
+        key: "info",
+        label: "Employee Identity",
+        desc: "Joining dates, contact details and statutory identity. Required to save the record.",
+        total: allSectionFields.info?.length ?? 0,
+      },
+      {
+        key: "personal",
+        label: "Personal Info",
+        desc: "Personal and family details.",
+        total: allSectionFields.personal?.length ?? 0,
+      },
+      {
+        key: "salary",
+        label: "Salary Details",
+        desc: "Payroll and salary configuration.",
+        total: allSectionFields.salary?.length ?? 0,
+      },
+      {
+        key: "education",
+        label: "Education/Skills",
+        desc: "Education, language, skills and experience.",
+        total: allSectionFields.education?.length ?? 0,
+      },
+      {
+        key: "work",
+        label: "Work Details",
+        desc: "Work profile, department, reporting etc.",
+        total: allSectionFields.work?.length ?? 0,
+      },
+      {
+        key: "mobile",
+        label: "Mobile App Access",
+        desc: "Mobile app access and rights.",
+        total: allSectionFields.mobile?.length ?? 0,
+      },
+      {
+        key: "asset",
+        label: "Asset Issue",
+        desc: "Assets issued to employee.",
+        total: allSectionFields.asset?.length ?? 0,
+      },
+      {
+        key: "doc",
+        label: "Doc Upload",
+        desc: "Upload documents (Aadhar, PAN, etc.)",
+        total: allSectionFields.doc?.length ?? 0,
+      },
+      {
+        key: "others",
+        label: "Others",
+        desc: "Category, previous experience and system audit trail.",
+        total: allSectionFields.others?.length ?? 0,
+      },
+      {
+        key: "separation",
+        label: "Separation",
+        desc: "Resignation/separation details.",
+        total: allSectionFields.separation?.length ?? 0,
+      },
+    ],
+    [allSectionFields],
+  );
+
+  const IGNORED_SCAN_NAMES = useMemo(
+    () =>
+      new Set([
+        "",
+        "search",
+        "checkbox",
+        "undefined",
+        "null",
+        "otp",
+        "salary_type",
+        "proposed_salary",
+        "daily_wages",
+      ]),
+    [],
+  );
+
   const getByPath = (obj: any, path: string) =>
     path.split(".").reduce((acc, k) => (acc ? acc[k] : undefined), obj);
 
-  const isFilled = (v: any) => {
+  const SALARY_ZERO_IGNORE_FIELDS = new Set([
+    "EmpMst.CTC",
+    "EmpMst.ANNUAL_CTC",
+    "EmpMst.Gross_Salary",
+    "EmpMst.Basic",
+    "EmpMst.HRA",
+    "EmpMst.Conveyance",
+    "EmpMst.Medical",
+    "EmpMst.Other",
+    "EmpMst.Washing",
+    "EmpMst.Uniform",
+    "EmpMst.LWF",
+    "EmpMst.PFSALARY_LIMIT",
+    "EmpMst.BONUS_AMOUNT",
+  ]);
+
+  const isFilled = (v: any, path?: string): boolean => {
     if (v === null || v === undefined) return false;
 
     // File uploads
     if (typeof File !== "undefined" && v instanceof File) return true;
+
+    // Checkbox specifically for Sal_Hold (only filled if checked: 1 or true)
+    if (path === "EmpMst.Sal_Hold") {
+      return v === 1 || v === "1" || v === true;
+    }
+
+    // Salary breakup numeric placeholders (0 is considered empty until filled)
+    if (path && SALARY_ZERO_IGNORE_FIELDS.has(path)) {
+      if (v === 0 || v === "0" || v === "0.00" || v === "") return false;
+    }
 
     // boolean
     if (typeof v === "boolean") return v === true;
@@ -806,32 +867,155 @@ function EmployeeMasterContent() {
     if (typeof v === "number") return !Number.isNaN(v);
 
     // string
-    if (typeof v === "string") return v.trim().length > 0;
+    if (typeof v === "string") {
+      const trimmed = v.trim();
+      return (
+        trimmed.length > 0 &&
+        trimmed.toLowerCase() !== "null" &&
+        trimmed.toLowerCase() !== "undefined"
+      );
+    }
 
     // arrays / tables
     if (Array.isArray(v)) return v.some((row) => isFilled(row));
 
-    // object (e.g. select option object)
-    if (typeof v === "object") return Object.keys(v).length > 0;
+    // object
+    if (typeof v === "object") {
+      const values = Object.values(v);
+      return values.length > 0 && values.some((val) => isFilled(val));
+    }
 
     return false;
+  };
+
+  const ARRAY_TABLE_FIELDS = useMemo(
+    () =>
+      new Set([
+        "EmpEdu",
+        "EmpLang",
+        "EmpItSkill",
+        "EmpExperience",
+        "AssetIssue",
+        "EmpFamily",
+      ]),
+    [],
+  );
+
+  const isRowFilled = (row: any): boolean => {
+    if (!row || typeof row !== "object") return false;
+    return Object.entries(row).some(([key, val]) => {
+      const lower = key.toLowerCase();
+      if (
+        lower === "utd" ||
+        lower === "empcode" ||
+        lower === "srno" ||
+        lower === "created_by" ||
+        lower === "entr_user"
+      ) {
+        return false;
+      }
+      return isFilled(val);
+    });
   };
 
   const progressMap = useMemo(() => {
     const res: Record<string, { filled: number; total: number }> = {};
 
     SECTIONS.forEach((sec) => {
-      const fields = SECTION_FIELDS[sec.key] ?? [];
-      const filled = fields.reduce((count, path) => {
-        const val = getByPath(formData, path);
-        return count + (isFilled(val) ? 1 : 0);
-      }, 0);
+      const fields = allSectionFields[sec.key] ?? [];
+      let sectionFilled = 0;
+      let sectionTotal = 0;
 
-      res[sec.key] = { filled, total: sec.total ?? 0 };
+      fields.forEach((path) => {
+        const val = getByPath(formData, path);
+
+        if (ARRAY_TABLE_FIELDS.has(path) || Array.isArray(val)) {
+          const arr = Array.isArray(val) ? val : [];
+          // Each row added in dynamic table / yndynamic table counts towards total (minimum 1)
+          const rowCount = Math.max(1, arr.length);
+          sectionTotal += rowCount;
+
+          // Count how many rows are actually filled with data
+          const filledRows = arr.filter((row: any) => isRowFilled(row)).length;
+          sectionFilled += filledRows;
+        } else {
+          sectionTotal += 1;
+          if (isFilled(val, path)) {
+            sectionFilled += 1;
+          }
+        }
+      });
+
+      res[sec.key] = { filled: sectionFilled, total: sectionTotal };
     });
 
     return res;
-  }, [formData, SECTIONS]);
+  }, [formData, SECTIONS, allSectionFields, ARRAY_TABLE_FIELDS]);
+
+  // ✅ Auto-detect and register any newly added fields in the active section
+  const sectionContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = sectionContentRef.current;
+    if (!container) return;
+
+    const scanFields = () => {
+      const inputs = container.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >("input[name], select[name], textarea[name]");
+
+      const foundNames = new Set<string>();
+      inputs.forEach((el) => {
+        const rawName = el.getAttribute("name")?.trim();
+        if (
+          rawName &&
+          !IGNORED_SCAN_NAMES.has(rawName.toLowerCase()) &&
+          !rawName.startsWith("ant-") &&
+          !rawName.includes("search")
+        ) {
+          foundNames.add(normalizeFieldName(rawName, activeSection));
+        }
+      });
+
+      setDynamicFields((prev) => {
+        const baseList = SECTION_FIELDS[activeSection] || [];
+        const currentDynamic = prev[activeSection] || [];
+        const dynamicFromDom = Array.from(foundNames).filter(
+          (f) => !baseList.includes(f),
+        );
+
+        if (
+          currentDynamic.length === dynamicFromDom.length &&
+          currentDynamic.every((f) => dynamicFromDom.includes(f))
+        ) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [activeSection]: dynamicFromDom,
+        };
+      });
+    };
+
+    scanFields();
+
+    const observer = new MutationObserver(() => {
+      scanFields();
+    });
+
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["name"],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeSection, normalizeFieldName, IGNORED_SCAN_NAMES]);
+
   // ✅ EmpTabs tab mapping: "info" section will open EmpTabs tab 1 (Basic Info Page1)
   const TAB_MAP: Record<string, number> = {
     info: 1,
@@ -849,9 +1033,6 @@ function EmployeeMasterContent() {
   const REVERSE_TAB_MAP: Record<number, string> = Object.fromEntries(
     Object.entries(TAB_MAP).map(([k, v]) => [v, k]),
   ) as Record<number, string>;
-
-  // active section controlled by sidebar
-  const [activeSection, setActiveSection] = useState<string>("identity");
 
   const activeIndex = useMemo(
     () => SECTIONS.findIndex((s) => s.key === activeSection),
@@ -872,10 +1053,9 @@ function EmployeeMasterContent() {
       setActiveSection(SECTIONS[activeIndex + 1].key);
   };
 
-  // NOTE: abhi filled counts dummy (0). Later aap chaho to per-section real progress nikal denge.
   const getSectionProgress = (key: string) => {
-    const sec = SECTIONS.find((s) => s.key === key);
-    return progressMap[key] || { filled: 0, total: sec?.total ?? 0 };
+    const fields = allSectionFields[key] ?? [];
+    return progressMap[key] || { filled: 0, total: fields.length };
   };
 
   const handleEmpChange = async (name: string, value: string | number) => {
@@ -935,6 +1115,17 @@ function EmployeeMasterContent() {
           [name]: value,
         },
       });
+
+      initialBankDetailsRef.current = {
+        BANKNAME: EmpMst?.BANKNAME ?? null,
+        ACCOUNT_TYPE: EmpMst?.ACCOUNT_TYPE ?? null,
+        BANKACCOUNTNO: EmpMst?.BANKACCOUNTNO ?? null,
+        BRANCH: EmpMst?.BRANCH ?? null,
+        PAYMENTMODE: EmpMst?.PAYMENTMODE ?? null,
+        ifsc_code: EmpMst?.ifsc_code ?? null,
+        Emp_Ac_Name: EmpMst?.Emp_Ac_Name ?? null,
+        Sal_Hold: EmpMst?.Sal_Hold ?? null,
+      };
 
       setProfileSrc(response.data.data.EmpMst.profile);
       setUpdateDisable(false);
@@ -1013,6 +1204,24 @@ function EmployeeMasterContent() {
   };
 
   const handleInputChange = (name: string, value: string | number) => {
+    if (name && activeSection) {
+      const lower = name.trim().toLowerCase();
+      if (!IGNORED_SCAN_NAMES.has(lower)) {
+        const path = normalizeFieldName(name, activeSection);
+        setDynamicFields((prev) => {
+          const currentList = prev[activeSection] || [];
+          const baseList = SECTION_FIELDS[activeSection] || [];
+          if (baseList.includes(path) || currentList.includes(path)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            [activeSection]: [...currentList, path],
+          };
+        });
+      }
+    }
+
     setFormData((prevData) => {
       let updated = {
         ...prevData,
@@ -1095,7 +1304,218 @@ function EmployeeMasterContent() {
     }
   };
 
+  const hasBankDetailsChanged = () => {
+    if (!initialBankDetailsRef.current || !formData?.EmpMst?.EMPCODE)
+      return false;
+    const init = initialBankDetailsRef.current;
+    const current = formData.EmpMst;
+
+    const norm = (v: any) =>
+      v === null || v === undefined ? "" : String(v).trim();
+
+    return (
+      norm(init.BANKNAME) !== norm(current.BANKNAME) ||
+      norm(init.ACCOUNT_TYPE) !== norm(current.ACCOUNT_TYPE) ||
+      norm(init.BANKACCOUNTNO) !== norm(current.BANKACCOUNTNO) ||
+      norm(init.BRANCH) !== norm(current.BRANCH) ||
+      norm(init.PAYMENTMODE) !== norm(current.PAYMENTMODE) ||
+      norm(init.ifsc_code) !== norm(current.ifsc_code) ||
+      norm(init.Emp_Ac_Name) !== norm(current.Emp_Ac_Name) ||
+      norm(init.Sal_Hold) !== norm(current.Sal_Hold)
+    );
+  };
+
+  const updateBankDetailsFromDialog = async (): Promise<boolean> => {
+    if (!formData?.EmpMst?.EMPCODE) {
+      showSideAlert("Please enter Employee Code", "warning");
+      return false;
+    }
+
+    const skipBankValidation = ["Cash", "Salary Hold"].includes(
+      formData?.EmpMst?.PAYMENTMODE,
+    );
+
+    if (!skipBankValidation) {
+      const missingFields: string[] = [];
+      if (!formData?.EmpMst?.BANKNAME) missingFields.push("Bank Name");
+      if (!formData?.EmpMst?.BANKACCOUNTNO) missingFields.push("Account No");
+      if (!formData?.EmpMst?.Cnf_BANKACCOUNTNO)
+        missingFields.push("Confirm Account No");
+      if (!formData?.EmpMst?.ifsc_code) missingFields.push("IFSC Code");
+      if (!formData?.EmpMst?.BRANCH) missingFields.push("Branch Name");
+      if (!formData?.EmpMst?.Emp_Ac_Name)
+        missingFields.push("Account Holder Name");
+      if (!formData?.EmpMst?.ACCOUNT_TYPE) missingFields.push("Account Type");
+      if (!formData?.EmpMst?.PAYMENTMODE) missingFields.push("Payment Mode");
+
+      if (missingFields.length > 0) {
+        showSideAlert(
+          `Please enter ${missingFields.join(", ")}`,
+          "warning",
+        );
+        return false;
+      }
+
+      const accNo = formData?.EmpMst?.BANKACCOUNTNO?.toString() || "";
+      const cnfAccNo = formData?.EmpMst?.Cnf_BANKACCOUNTNO?.toString() || "";
+
+      if (accNo.length < 10 || cnfAccNo.length < 10) {
+        showSideAlert(
+          "Account numbers must be at least 10 digits long.",
+          "warning",
+        );
+        return false;
+      }
+
+      if (accNo !== cnfAccNo) {
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return false;
+      }
+    } else {
+      if (!formData?.EmpMst?.PAYMENTMODE) {
+        showSideAlert("Please enter Payment Mode", "warning");
+        return false;
+      }
+    }
+
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/EmpMaster/UpdateBankdetails`,
+        {
+          EmpCode: formData?.EmpMst?.EMPCODE,
+          LOGINEMPCODE: user?.EMPCODE,
+          Loc_code: user?.branch,
+          Sal_Hold: formData?.EmpMst?.Sal_Hold,
+          BANKNAME: formData?.EmpMst?.BANKNAME,
+          ACCOUNT_TYPE: formData?.EmpMst?.ACCOUNT_TYPE,
+          BANKACCOUNTNO: formData?.EmpMst?.BANKACCOUNTNO,
+          BRANCH: formData?.EmpMst?.BRANCH,
+          PAYMENTMODE: formData?.EmpMst?.PAYMENTMODE,
+          ifsc_code: formData?.EmpMst?.ifsc_code,
+          Emp_Ac_Name: formData?.EmpMst?.Emp_Ac_Name,
+          EmpMasterOtp: compdata?.EmpMasterOtp,
+        },
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        },
+      );
+
+      showSideAlert(
+        result.data?.Message || "Bank details updated successfully",
+        "success",
+      );
+      initialBankDetailsRef.current = {
+        BANKNAME: formData?.EmpMst?.BANKNAME ?? null,
+        ACCOUNT_TYPE: formData?.EmpMst?.ACCOUNT_TYPE ?? null,
+        BANKACCOUNTNO: formData?.EmpMst?.BANKACCOUNTNO ?? null,
+        BRANCH: formData?.EmpMst?.BRANCH ?? null,
+        PAYMENTMODE: formData?.EmpMst?.PAYMENTMODE ?? null,
+        ifsc_code: formData?.EmpMst?.ifsc_code ?? null,
+        Emp_Ac_Name: formData?.EmpMst?.Emp_Ac_Name ?? null,
+        Sal_Hold: formData?.EmpMst?.Sal_Hold ?? null,
+      };
+      return true;
+    } catch (error: any) {
+      console.error("Error occurred while updating bank details:", error);
+      showSideAlert(
+        error?.response?.data?.Message || "Failed to update bank details",
+        "error",
+      );
+      return false;
+    }
+  };
+
   const handleUpdate = async () => {
+    if (hasBankDetailsChanged()) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Bank Details Not Updated!",
+        html: `
+          <div style="font-size: 15px; color: #374151; line-height: 1.6; margin-top: 8px;">
+            You have <span style="color: #dc2626; font-weight: 700;">changed the Bank Details</span>, but the <b>Update</b> button was not clicked yet.
+            <br /><br />
+            <b>Do you want to update the Bank Details now?</b>
+          </div>
+        `,
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Yes, Update Bank Details",
+        denyButtonText: "Continue Without Updating",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#163761",
+        denyButtonColor: "#b45309",
+        cancelButtonColor: "#5a6772",
+        reverseButtons: true,
+        didOpen: (popup) => {
+          const actions = popup.querySelector(".swal2-actions") as HTMLElement;
+          const confirmBtn = popup.querySelector(
+            ".swal2-confirm",
+          ) as HTMLElement;
+          const denyBtn = popup.querySelector(".swal2-deny") as HTMLElement;
+          const cancelBtn = popup.querySelector(
+            ".swal2-cancel",
+          ) as HTMLElement;
+
+          if (actions) {
+            actions.style.display = "flex";
+            actions.style.flexWrap = "wrap";
+            actions.style.justifyContent = "center";
+            actions.style.gap = "10px";
+            actions.style.maxWidth = "420px";
+            actions.style.margin = "1.5rem auto 0.5rem";
+          }
+          if (cancelBtn) {
+            cancelBtn.style.order = "1";
+            cancelBtn.style.backgroundColor = "#5a6772";
+            cancelBtn.style.color = "#ffffff";
+            cancelBtn.style.borderRadius = "6px";
+            cancelBtn.style.padding = "9px 18px";
+            cancelBtn.style.fontWeight = "600";
+            cancelBtn.style.fontSize = "13px";
+            cancelBtn.style.margin = "0";
+            cancelBtn.style.boxShadow = "none";
+          }
+          if (denyBtn) {
+            denyBtn.style.order = "2";
+            denyBtn.style.backgroundColor = "#b45309";
+            denyBtn.style.color = "#ffffff";
+            denyBtn.style.borderRadius = "6px";
+            denyBtn.style.padding = "9px 16px";
+            denyBtn.style.fontWeight = "600";
+            denyBtn.style.fontSize = "13px";
+            denyBtn.style.margin = "0";
+            denyBtn.style.boxShadow = "none";
+          }
+          if (confirmBtn) {
+            confirmBtn.style.order = "3";
+            confirmBtn.style.backgroundColor = "#163761";
+            confirmBtn.style.color = "#ffffff";
+            confirmBtn.style.borderRadius = "6px";
+            confirmBtn.style.padding = "9px 22px";
+            confirmBtn.style.fontWeight = "600";
+            confirmBtn.style.fontSize = "13px";
+            confirmBtn.style.margin = "4px 0 0 0";
+            confirmBtn.style.boxShadow = "none";
+          }
+        },
+      });
+
+      if (result.isConfirmed) {
+        const ok = await updateBankDetailsFromDialog();
+        if (!ok) return;
+      } else if (result.isDenied) {
+        // Continue without updating bank details
+      } else {
+        // Canceled or dismissed
+        return;
+      }
+    }
     if (dobStr && domStr) {
       const dobDate = new Date(dobStr);
       const domDate = new Date(domStr);
@@ -1502,6 +1922,7 @@ function EmployeeMasterContent() {
       // Assuming you want to handle the response here
       if (response.status == 200) {
         showSideAlert("DATA UPDATED SUCCESSFULLY", "success");
+        initialBankDetailsRef.current = null;
         setFormData({
           Created_by: user?.name,
           SrNo: "",
@@ -1732,7 +2153,7 @@ function EmployeeMasterContent() {
           EmpFamily: [],
         });
         setProfileSrc(null);
-        router.push("/payroll/masters/employee-View");
+        router.push("/payroll/masters/employee-view");
         router.refresh();
       } else {
         showSideAlert("Error UPDATING DATA", "warning");
@@ -1768,6 +2189,21 @@ function EmployeeMasterContent() {
   };
 
   const handleSave = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
     if (dobStr && domStr) {
       const dobDate = new Date(dobStr);
       const domDate = new Date(domStr);
@@ -3265,7 +3701,7 @@ function EmployeeMasterContent() {
                   </div>
                 </div>
 
-                <div className="mt-3 w-[100%]">
+                <div ref={sectionContentRef} className="mt-3 w-[100%]">
                   {activeSection === "identity" ? (
                     // ✅ Basic Info click => EmployeeIdentitySection
                     <EmployeeIdentitySection

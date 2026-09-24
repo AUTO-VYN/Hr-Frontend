@@ -304,7 +304,7 @@ export default function RecruitmentDetailedReportPage() {
           : [];
 
       // Sort by TRAN_ID descending
-      const sorted = [...rawData].sort(
+      const   sorted = [...rawData].sort(
         (a, b) => Number(b.TRAN_ID || 0) - Number(a.TRAN_ID || 0)
       );
       setTableData(sorted);

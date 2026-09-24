@@ -55,6 +55,7 @@ const Ainput: FC<AinputProps> = ({
       return;
     }
     handleInputChange(name, v);
+    
   };
 
   const toTitleCase = (str?: string) => {
@@ -72,7 +73,7 @@ const Ainput: FC<AinputProps> = ({
   const isDate = type === "date";
 
   return (
-    <div className="w-full space-y-1">
+    <div className="w-full space-y-1.5">
       <label
         className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300"
         htmlFor={name}

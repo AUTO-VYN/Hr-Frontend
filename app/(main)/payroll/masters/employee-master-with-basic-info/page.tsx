@@ -289,6 +289,21 @@ export default function EmployeeMasterBasicInfoPage() {
 
   // Save / Update Employee Handler
   const handleSaveEmployee = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
     if (requiredFields.length > 0) {
       Swal.fire({
         icon: "warning",

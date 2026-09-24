@@ -103,8 +103,8 @@ export default function EmployeeMiniHeader({
               <div className="min-w-0">
                 {canSearchEmployee ? (
                   <Eselect
-                    title="Employee code"
-                    redlabel="*"
+                    title="Find Employee"
+                    redlabel=""
                     name="SrNo"
                     handleInputChange={handleEmpSelectChange}
                     option={empcodeOptions}
@@ -147,7 +147,7 @@ export default function EmployeeMiniHeader({
                   type="text"
                   name="EMPFIRSTNAME"
                   title="First name"
-                  redlabel="*"
+                  redlabel=""
                   value={formData?.EmpMst?.EMPFIRSTNAME}
                   handleInputChange={handleInputChange}
                   className="uppercase"

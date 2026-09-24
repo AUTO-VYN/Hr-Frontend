@@ -313,7 +313,7 @@ export default function InterviewSchedulingPage() {
           year: "numeric",
         });
       }
-    } catch {}
+    } catch { }
     return dateStr;
   };
 
@@ -352,7 +352,7 @@ export default function InterviewSchedulingPage() {
         if (decoded?.Comp_code || decoded?.comp_code || decoded?.compcode) {
           return String(decoded.Comp_code || decoded.comp_code || decoded.compcode);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (
@@ -364,10 +364,10 @@ export default function InterviewSchedulingPage() {
     ) {
       return String(
         user?.Comp_Code ||
-          (user as any)?.compcode ||
-          (user as any)?.comp_code ||
-          (user as any)?.company_code ||
-          (user as any)?.DB
+        (user as any)?.compcode ||
+        (user as any)?.comp_code ||
+        (user as any)?.company_code ||
+        (user as any)?.DB
       );
     }
 
@@ -719,7 +719,6 @@ export default function InterviewSchedulingPage() {
     } else if (!formData1?.TRAN_ID && !formData1?.NAME) {
       // Fallback initial dummy candidate if neither context nor URL param provides data
       setFormData1((prev: any) => ({
-        ...initialDefaultCandidate,
         ...(prev || {}),
       }));
     }
@@ -1224,8 +1223,7 @@ export default function InterviewSchedulingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-5 lg:p-7 space-y-4 max-w-[1780px] mx-auto pb-48 sm:pb-36 font-sans">
-      {/* ────────────────────────────────────────────────────────────────────────── */}
+<div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pt-3 sm:pt-5 lg:pt-7 px-3 sm:px-5 lg:px-7 pb-52 sm:pb-64 lg:pb-80 space-y-4 max-w-[1780px] mx-auto font-sans">      {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP CANDIDATE SUMMARY CARD */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
       <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] overflow-hidden">
@@ -1245,10 +1243,10 @@ export default function InterviewSchedulingPage() {
                   {formData1?.INT_STATUS === "101"
                     ? "Selected"
                     : formData1?.INT_STATUS === "102"
-                    ? "Rejected"
-                    : formData1?.INT_STATUS === "103"
-                    ? `Employee Code: ${formData1?.EMPCODE || "Created"}`
-                    : "Interview in processing"}
+                      ? "Rejected"
+                      : formData1?.INT_STATUS === "103"
+                        ? `Employee Code: ${formData1?.EMPCODE || "Created"}`
+                        : "Interview in processing"}
                 </span>
               </div>
               <p className="text-[11.5px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] font-normal mt-0.5 truncate">
@@ -1280,7 +1278,7 @@ export default function InterviewSchedulingPage() {
             >
               Hindi Print
             </AButton>
-           
+
             <AButton
               variant="danger"
               size="sm"
@@ -1290,7 +1288,7 @@ export default function InterviewSchedulingPage() {
             >
               Back
             </AButton>
-          
+
           </div>
         </div>
 
@@ -1304,13 +1302,13 @@ export default function InterviewSchedulingPage() {
             },
             {
               label: "EXPERIENCE",
-              value: formData1?.EXP_IN_YEAR ? `${formData1.EXP_IN_YEAR} yrs` : "Fresher",
+              value: formData1?.EXP_IN_YEAR ? `${formData1.EXP_IN_YEAR} yrs` : "—",
             },
             {
               label: "CURRENT CTC",
               value: formData1?.CURRENT_CTC ? `${formData1.CURRENT_CTC} L` : "—",
             },
-            { label: "SOURCE", value: formData1?.SOURCE_OF_REG || "Referral" },
+            { label: "SOURCE", value: formData1?.SOURCE_OF_REG || "—" },
             { label: "ROUNDS CLEARED", value: `${clearedCount} of 4` },
           ].map((s, idx) => (
             <div
@@ -1577,9 +1575,8 @@ export default function InterviewSchedulingPage() {
                           key={btn.val}
                           type="button"
                           disabled
-                          className={`py-[6px] px-[6px] text-[11px] font-[600] rounded-[8px] transition whitespace-nowrap text-center select-none cursor-default h-auto min-h-0 ${
-                            isSelected ? "" : "opacity-45"
-                          }`}
+                          className={`py-[6px] px-[6px] text-[11px] font-[600] rounded-[8px] transition whitespace-nowrap text-center select-none cursor-default h-auto min-h-0 ${isSelected ? "" : "opacity-45"
+                            }`}
                           style={{
                             border: isSelected ? `1px solid ${btn.color}80` : "1px solid #E2E8F0",
                             background: isSelected ? `${btn.color}1A` : "transparent",
@@ -1702,8 +1699,8 @@ export default function InterviewSchedulingPage() {
                   : formData1?.INT_STATUS == "102" ||
                     formData1?.INT_STATUS == "3" ||
                     formData1?.INT_STATUS == "100"
-                  ? false
-                  : true
+                    ? false
+                    : true
               }
               icon={<Check className="h-4 w-4" />}
               className="h-[36px] sm:h-[38px] px-[12px] sm:px-[14px] rounded-[10px] text-[12px] sm:text-[12.5px] font-[600] bg-[#10B981] hover:brightness-110 text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
@@ -1928,10 +1925,9 @@ export default function InterviewSchedulingPage() {
                   <div className="col-span-6 sm:col-span-4 flex items-center gap-2">
                     <span className="text-xs text-slate-400 font-medium">Rating:</span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                        ratingStyleMap[item.Is_Minor] ||
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${ratingStyleMap[item.Is_Minor] ||
                         "bg-slate-100 text-slate-700 border-slate-200"
-                      }`}
+                        }`}
                     >
                       {getRatingLabel(item.Is_Minor)}
                     </span>

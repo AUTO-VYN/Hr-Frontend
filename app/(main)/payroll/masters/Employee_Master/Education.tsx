@@ -345,7 +345,13 @@ const YourComponent: React.FC = () => {
                 LangCert: certificates?.LangCert ?? null,
                 OtherCert: certificates?.OtherCert ?? null,
               }}
-              onChange={(next) => setCertificates(next)}
+              onChange={(next) => {
+                setCertificates(next);
+                setFormData((prev: any) => ({
+                  ...prev,
+                  EmpCertificates: next,
+                }));
+              }}
             />{" "}
           </div>
         </div>

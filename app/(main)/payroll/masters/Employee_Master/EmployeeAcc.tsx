@@ -502,35 +502,35 @@ export default function Page() {
                 icon={<GitBranch className="h-5 w-5" />}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
-                  <Eselect
+                  <Einput
                     title="Reporting 1"
+                    type="text"
                     name="Reporting_1"
-                    option={[]}
-                    initialValue={formData?.EmpMst?.Reporting_1?.toString()}
+                    value={formData?.EmpMst?.Reporting_1}
                     handleInputChange={handleInputChange}
+                    disabled={true}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-                    placeholder="Select"
                   />
 
-                  <Eselect
+                  <Einput
                     title="Reporting 2"
+                    type="text"
                     name="Reporting_2"
-                    option={[]}
-                    initialValue={formData?.EmpMst?.Reporting_2?.toString()}
+                    value={formData?.EmpMst?.Reporting_2}
                     handleInputChange={handleInputChange}
+                    disabled={true}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-                    placeholder="Select"
                   />
 
-                  <Eselect
+                  <Einput
                     title="HR Team"
                     ShortName={true}
+                    type="text"
                     name="Reporting_3"
-                    option={[]}
-                    initialValue={formData?.EmpMst?.Reporting_3?.toString()}
+                    value={formData?.EmpMst?.Reporting_3}
                     handleInputChange={handleInputChange}
+                    disabled={true}
                     className="h-10 sm:h-11 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-                    placeholder="Select"
                   />
                 </div>
               </Card>

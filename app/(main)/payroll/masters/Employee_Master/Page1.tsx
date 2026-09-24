@@ -84,10 +84,15 @@ const Page1 = ({
     if (!el) return;
 
     const compute = () => {
+      if (typeof window === "undefined") return;
+      if (window.innerWidth < 1024) {
+        setRowHeight(null);
+        return;
+      }
       const top = el.getBoundingClientRect().top;
       const bottomGap = 16;
       const h = window.innerHeight - top - bottomGap;
-      setRowHeight(Math.max(h, 340));
+      setRowHeight(Math.max(h, 450));
     };
 
     compute();
@@ -189,10 +194,10 @@ if (name === "OTP_With_Aadhaar") {
       value = str;
     }
 
-    // ✅ Skills -> only letters/spaces
+    // ✅ Skills -> only letters/spaces/commas
     if (name === "SKILLS") {
       const str = toStr(value);
-      value = str.replace(/[^a-zA-Z\s]/g, "");
+      value = str.replace(/[^a-zA-Z,\s]/g, "");
     }
 
     // ✅ Mobile number (personal) -> digits only, max 10
@@ -675,15 +680,18 @@ if (name === "OTP_With_Aadhaar") {
       return;
     }
 
-    if (!formData.EmpMst?.MOBILENO) {
+    const mobileNumber =
+      formData.EmpMst?.MOBILE_NO || formData.EmpMst?.MOBILENO;
+
+    if (!mobileNumber) {
       toast({
-        title: `Please enter Official Mobile Number first`,
+        title: "Mobile number is required",
         variant: "destructive",
       });
       Swal.fire({
         icon: "warning",
         title: "Mobile Number Required",
-        text: "Please enter Official Mobile Number first",
+        text: "Mobile number is required",
       });
       return;
     }
@@ -752,7 +760,7 @@ if (name === "OTP_With_Aadhaar") {
               consent_purpose: "true",
               consent: "true",
             },
-            mobile: formData.EmpMst?.MOBILENO,
+            mobile: mobileNumber,
             aadhaar_number: formData.EmpMst?.UID_NO,
           },
           { headers: { compcode: user?.Comp_Code, name: user?.name } },
@@ -1171,17 +1179,17 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
   };
 
   // --- UI helper classes ---
-  const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-6";
+  const pageWrap = "w-full max-w-none bg-slate-50 dark:bg-black p-3 sm:p-4 lg:p-6";
   const cardClass =
-    "rounded-2xl -mx-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col min-h-0";
+    "rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col min-h-0";
 
   const cardHeaderClass =
-    "flex items-center gap-2 px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20";
+    "flex items-center gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20";
 
   const cardTitleClass =
     "text-[13px] tracking-wide font-semibold uppercase text-slate-900 dark:text-white";
 
-  const cardBodyClass = "p-3 overflow-y-auto min-h-0";
+  const cardBodyClass = "p-3 sm:p-4 min-h-0";
 
   const fieldGridClass = "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6";
 
@@ -1253,7 +1261,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
     <div className={pageWrap}>
       <div
         ref={wrapRef}
-        className="grid -mx-7 -mt-6 w-[calc(100%+3rem)] px-6 grid-cols-1 lg:grid-cols-2 gap-6 min-h-0"
+        className="grid w-full grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 min-h-0"
         style={{ height: rowHeight ? `${rowHeight}px` : undefined }}
       >
         {/* ===================== BASIC JOINING DETAILS ===================== */}
@@ -1267,7 +1275,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
           </div>
 
           <div
-            className={`${cardBodyClass} flex-1 min-h-0 overflow-y-auto light-scroll pr-2`}
+            className={`${cardBodyClass} flex-1 min-h-0 lg:overflow-y-auto light-scroll pr-2`}
           >
             <div className={fieldGridClass}>
               <Einput
@@ -1473,7 +1481,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
           </div>
 
           <div
-            className={`${cardBodyClass} max-h-[calc(100vh-300px)] overflow-y-auto light-scroll pr-2`}
+            className={`${cardBodyClass} flex-1 min-h-0 lg:overflow-y-auto light-scroll pr-2`}
           >
             <div className="space-y-7">
               {/* ----------------- PAN (3 modes) ----------------- */}
@@ -1531,7 +1539,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
                     )}
                   </VerifyRow>
 
-                  <div className="grid gap-3  [grid-template-columns:110px_1fr_1fr]">
+                  <div className="grid gap-2 grid-cols-1 sm:[grid-template-columns:110px_1fr_1fr]">
                     <label
                       htmlFor="PAN_CARD_VER"
                       className={toggleTileClass(
@@ -1669,7 +1677,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
                     )}
                   </VerifyRow>
 
-                  <div className="grid gap-3 [grid-template-columns:auto_1fr_1fr]">
+                  <div className="grid gap-2 grid-cols-1 sm:[grid-template-columns:auto_1fr_1fr]">
                     <label
                       htmlFor="PAN_CARD_VER"
                       className={toggleTileClass(
@@ -1807,7 +1815,7 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
                       )}
                     </VerifyRow>
 
-                    <div className="grid gap-3 [grid-template-columns:auto_1fr_1fr]">
+                    <div className="grid gap-2 grid-cols-1 sm:[grid-template-columns:auto_1fr_1fr]">
                       <label
                         htmlFor="PAN_CARD_VER"
                         className={toggleTileClass(

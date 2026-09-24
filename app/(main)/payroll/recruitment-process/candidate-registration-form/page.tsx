@@ -50,7 +50,8 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/atoms/Button";
+import Einput from "@/components/atoms/Einput";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import SelectSearch from "@/components/atoms/Select";
 import LanguageTable from "@/components/atoms/LanguageTable";
@@ -1082,18 +1083,21 @@ export default function CandidateRegistrationPage() {
         <div className="flex items-center gap-2.5 shrink-0">
           <Button
             variant="outline"
+            size="lg"
             type="button"
             onClick={() => window.print()}
-            className="h-12 px-5 rounded-xl text-base text-xl font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs cursor-pointer"
+            className="h-12 px-5 font-bold cursor-pointer"
           >
             <Printer className="h-5 w-5 mr-2 text-slate-600 dark:text-slate-400" />
             Print
           </Button>
 
           <Button
+            variant="primary"
+            size="lg"
             type="button"
             onClick={() => handleSubmitData(false)}
-            className="h-12 px-6 rounded-xl text-base font-bold bg-indigo-600 hover:bg-indigo-700 text-white text-xl shadow-md shadow-indigo-600/20 cursor-pointer"
+            className="h-12 px-6 font-bold cursor-pointer shadow-md shadow-indigo-600/20"
           >
             <Bookmark className="h-5 w-5 mr-2" />
             Save draft
@@ -1259,46 +1263,41 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
                   {/* Candidate Name */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Candidate Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Candidate Name"
                       type="text"
+                      name="NAME"
                       placeholder="Full name as per Aadhar"
                       value={formData.NAME}
-                      onChange={(e) => handleInputChange("NAME", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      redlabel="*"
                     />
                   </div>
 
                   {/* Father's Name */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Father&apos;s Name
-                    </label>
-                    <input
+                    <Einput
+                      title="Father's Name"
                       type="text"
+                      name="FATHERS_NAME"
                       placeholder="Father's full name"
                       value={formData.FATHERS_NAME}
-                      onChange={(e) => handleInputChange("FATHERS_NAME", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
 
                   {/* Mother's Name */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Mother&apos;s Name
-                    </label>
-                    <input
+                    <Einput
+                      title="Mother's Name"
                       type="text"
+                      name="MOTHERS_NAME"
                       placeholder="Mother's full name"
                       value={formData.MOTHERS_NAME}
-                      onChange={(e) => handleInputChange("MOTHERS_NAME", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
 
@@ -1319,32 +1318,30 @@ export default function CandidateRegistrationPage() {
 
                   {/* Date of Birth */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Date of Birth <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Date of Birth"
                       type="date"
+                      name="DOB"
                       value={formData.DOB}
-                      onChange={(e) => handleInputChange("DOB", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      redlabel="*"
                     />
                   </div>
 
                   {/* Aadhar Number */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Aadhar Number <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Aadhar Number"
                       type="tel"
+                      name="AADHAR_NO"
                       maxLength={12}
                       placeholder="12 digits"
                       value={formData.AADHAR_NO}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 12);
-                        handleInputChange("AADHAR_NO", val);
+                      handleInputChange={(name, val) => {
+                        const clean = String(val ?? "").replace(/\D/g, "").slice(0, 12);
+                        handleInputChange(name, clean);
                       }}
-                      className="w-full h-10 px-3 text-[13px] font-mono font-semibold rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      redlabel="*"
                     />
                   </div>
 
@@ -1365,15 +1362,13 @@ export default function CandidateRegistrationPage() {
 
                   {/* Caste */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Caste
-                    </label>
-                    <input
+                    <Einput
+                      title="Caste"
                       type="text"
+                      name="CASTE"
                       placeholder="Caste / Sub-caste"
                       value={formData.CASTE}
-                      onChange={(e) => handleInputChange("CASTE", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -1395,57 +1390,54 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
                   {/* Mobile Number */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Mobile Number <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Mobile Number"
                       type="tel"
+                      name="MOB_NO"
                       maxLength={10}
                       placeholder="10-digit mobile"
                       value={formData.MOB_NO}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        handleInputChange("MOB_NO", val);
+                      handleInputChange={(name, val) => {
+                        const clean = String(val ?? "").replace(/\D/g, "").slice(0, 10);
+                        handleInputChange("MOB_NO", clean);
                         if (!formData.WHATSAPP_NO || formData.WHATSAPP_NO === formData.MOB_NO) {
-                          handleInputChange("WHATSAPP_NO", val);
+                          handleInputChange("WHATSAPP_NO", clean);
                         }
                       }}
-                      className="w-full h-10 px-3 text-[13px] font-mono font-semibold rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      redlabel="*"
                     />
                   </div>
 
                   {/* WhatsApp Number */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      WhatsApp Number
-                    </label>
-                    <input
+                    <Einput
+                      title="WhatsApp Number"
                       type="tel"
+                      name="WHATSAPP_NO"
                       maxLength={10}
                       placeholder="Same as mobile if blank"
                       value={formData.WHATSAPP_NO}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        handleInputChange("WHATSAPP_NO", val);
+                      handleInputChange={(name, val) => {
+                        const clean = String(val ?? "").replace(/\D/g, "").slice(0, 10);
+                        handleInputChange("WHATSAPP_NO", clean);
                       }}
-                      className="w-full h-10 px-3 text-[13px] font-mono font-semibold rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      ShortName={true}
                     />
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Email <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Email"
                       type="email"
+                      name="EMAIL"
                       placeholder="name@example.com"
                       value={formData.EMAIL}
-                      onChange={(e) => handleInputChange("EMAIL", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      redlabel="*"
                     />
                   </div>
 
@@ -1466,19 +1458,17 @@ export default function CandidateRegistrationPage() {
 
                   {/* Emergency Number */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Emergency Number
-                    </label>
-                    <input
+                    <Einput
+                      title="Emergency Number"
                       type="tel"
+                      name="Emgy_Mob_No"
                       maxLength={10}
                       placeholder="10-digit emergency"
                       value={formData.Emgy_Mob_No}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        handleInputChange("Emgy_Mob_No", val);
+                      handleInputChange={(name, val) => {
+                        const clean = String(val ?? "").replace(/\D/g, "").slice(0, 10);
+                        handleInputChange("Emgy_Mob_No", clean);
                       }}
-                      className="w-full h-10 px-3 text-[13px] font-mono font-semibold rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
                     />
                   </div>
                 </div>
@@ -1500,32 +1490,29 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
                   {/* Address - Span 2 */}
                   <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Address
-                    </label>
-                    <input
+                    <Einput
+                      title="Address"
                       type="text"
+                      name="ADDRESS"
                       placeholder="House, street, area"
                       value={formData.ADDRESS}
-                      onChange={(e) => handleInputChange("ADDRESS", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
 
                   {/* City */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      City <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="City"
                       type="text"
+                      name="CITY"
                       placeholder="City name"
                       value={formData.CITY}
-                      onChange={(e) => handleInputChange("CITY", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      redlabel="*"
                     />
                   </div>
 
@@ -1607,7 +1594,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
                   {/* Designation Applying for */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1640,15 +1627,13 @@ export default function CandidateRegistrationPage() {
 
                   {/* Key Skills - Span 2 */}
                   <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Key Skills
-                    </label>
-                    <input
+                    <Einput
+                      title="Key Skills"
                       type="text"
+                      name="SKILLS"
                       placeholder="Comma separated"
                       value={formData.SKILLS}
-                      onChange={(e) => handleInputChange("SKILLS", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
 
@@ -1669,15 +1654,13 @@ export default function CandidateRegistrationPage() {
 
                   {/* Sub Source */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Sub Source
-                    </label>
-                    <input
+                    <Einput
+                      title="Sub Source"
                       type="text"
+                      name="SUB_SOURCE"
                       placeholder="Referral / Portal name"
                       value={formData.SUB_SOURCE}
-                      onChange={(e) => handleInputChange("SUB_SOURCE", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -1699,7 +1682,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-4 gap-y-5">
                   {/* Highest Qualification */}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1717,57 +1700,54 @@ export default function CandidateRegistrationPage() {
 
                   {/* Qualification % */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Qualification %
-                    </label>
-                    <input
+                    <Einput
+                      title="Qualification %"
                       type="number"
+                      name="PASSING_PER"
                       placeholder="e.g. 72"
                       value={formData.PASSING_PER}
-                      onChange={(e) => handleInputChange("PASSING_PER", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      ShortName={true}
                     />
                   </div>
 
                   {/* Experience (Years) */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Experience (Years) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
+                    <Einput
+                      title="Experience (Years)"
                       type="number"
+                      name="EXP_IN_YEAR"
                       placeholder="0 for fresher"
                       value={formData.EXP_IN_YEAR}
-                      onChange={(e) => handleInputChange("EXP_IN_YEAR", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      ShortName={true}
+                      redlabel="*"
                     />
                   </div>
 
                   {/* Current CTC */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Current CTC
-                    </label>
-                    <input
+                    <Einput
+                      title="Current CTC"
                       type="number"
+                      name="CURRENT_CTC"
                       placeholder="Annual, in ₹"
                       value={formData.CURRENT_CTC}
-                      onChange={(e) => handleInputChange("CURRENT_CTC", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      ShortName={true}
                     />
                   </div>
 
                   {/* Expected CTC */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Expected CTC
-                    </label>
-                    <input
+                    <Einput
+                      title="Expected CTC"
                       type="number"
+                      name="EXPECTED_CTC"
                       placeholder="Annual, in ₹"
                       value={formData.EXPECTED_CTC}
-                      onChange={(e) => handleInputChange("EXPECTED_CTC", e.target.value)}
-                      className="w-full h-10 px-3 text-[13px] font-medium rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 shadow-2xs"
+                      handleInputChange={handleInputChange}
+                      ShortName={true}
                     />
                   </div>
                 </div>
@@ -1897,8 +1877,9 @@ export default function CandidateRegistrationPage() {
                   <Button
                     type="button"
                     variant="outline"
+                    size="sm"
                     onClick={handleAddExperience}
-                    className="h-10 px-4 rounded-xl text-sm font-bold text-indigo-600 border-indigo-200 hover:bg-indigo-50/60 dark:text-indigo-400 dark:border-indigo-900 dark:hover:bg-indigo-950/40 cursor-pointer"
+                    className="font-bold text-indigo-600 border-indigo-200 hover:bg-indigo-50/60 dark:text-indigo-400 dark:border-indigo-900 cursor-pointer"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add employer
@@ -1920,125 +1901,111 @@ export default function CandidateRegistrationPage() {
                     {tableDataExp.map((item, idx) => (
                       <div
                         key={idx}
-                        className="rounded-2xl p-5 sm:p-6 border border-slate-200 bg-slate-50/40 dark:border-slate-800 dark:bg-slate-900/50 space-y-4.5 relative shadow-2xs"
+                        className="rounded-2xl p-5 sm:p-6 border border-slate-200 bg-slate-50/40 dark:border-slate-800 dark:bg-slate-900/50 flex flex-col gap-5 relative shadow-2xs"
                       >
                         {/* Row 1: Company, Designation, Responsibilities, Trash */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                          <div className="md:col-span-4 lg:col-span-3 space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              Company
-                            </label>
-                            <input
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                          <div className="md:col-span-4 lg:col-span-3">
+                            <Einput
+                              title="Company"
                               type="text"
+                              name="Emp_Company"
                               placeholder="Employer name"
                               value={item.Emp_Company}
-                              onChange={(e) => handleExpChange(idx, "Emp_Company", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="md:col-span-4 lg:col-span-3 space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              Designation
-                            </label>
-                            <input
+                          <div className="md:col-span-4 lg:col-span-3">
+                            <Einput
+                              title="Designation"
                               type="text"
+                              name="Emp_Designation"
                               placeholder="Role held"
                               value={item.Emp_Designation}
-                              onChange={(e) => handleExpChange(idx, "Emp_Designation", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="md:col-span-4 lg:col-span-5 space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              Responsibilities
-                            </label>
-                            <input
+                          <div className="md:col-span-4 lg:col-span-5">
+                            <Einput
+                              title="Responsibilities"
                               type="text"
+                              name="Emp_Responsibility"
                               placeholder="Key duties"
                               value={item.Emp_Responsibility}
-                              onChange={(e) => handleExpChange(idx, "Emp_Responsibility", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="md:col-span-12 lg:col-span-1 flex justify-end lg:pt-7">
-                            <button
+                          <div className="md:col-span-12 lg:col-span-1 flex justify-end">
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon"
                               onClick={() => handleDeleteExp(idx)}
-                              className="h-10 w-10 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center justify-center transition cursor-pointer"
+                              className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
                               title="Delete employer"
                             >
                               <Trash2 className="h-5 w-5" />
-                            </button>
+                            </Button>
                           </div>
                         </div>
 
                         {/* Row 2: From, To, Settlement Done, Salary */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              From
-                            </label>
-                            <input
+                          <div>
+                            <Einput
+                              title="From"
                               type="date"
+                              name="Emp_From_Date"
                               value={item.Emp_From_Date}
-                              onChange={(e) => handleExpChange(idx, "Emp_From_Date", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              To
-                            </label>
-                            <input
+                          <div>
+                            <Einput
+                              title="To"
                               type="date"
+                              name="Emp_To_Date"
                               value={item.Emp_To_Date}
-                              onChange={(e) => handleExpChange(idx, "Emp_To_Date", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              Settlement Done
-                            </label>
-                            <input
+                          <div>
+                            <Einput
+                              title="Settlement Done"
                               type="text"
+                              name="Emp_Settlement_Done"
                               placeholder="Yes / No"
                               value={item.Emp_Settlement_Done}
-                              onChange={(e) => handleExpChange(idx, "Emp_Settlement_Done", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                              Salary
-                            </label>
-                            <input
+                          <div>
+                            <Einput
+                              title="Salary"
                               type="number"
+                              name="Emp_Drawn_Salary"
                               placeholder="Monthly, in ₹"
                               value={item.Emp_Drawn_Salary}
-                              onChange={(e) => handleExpChange(idx, "Emp_Drawn_Salary", e.target.value)}
-                              className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                              handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                             />
                           </div>
                         </div>
 
                         {/* Row 3: Reason of Leaving */}
-                        <div className="space-y-2">
-                          <label className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                            Reason of Leaving
-                          </label>
-                          <input
+                        <div>
+                          <Einput
+                            title="Reason of Leaving"
                             type="text"
+                            name="Emp_Leaving_Reason"
                             placeholder="Reason for leaving this job"
                             value={item.Emp_Leaving_Reason}
-                            onChange={(e) => handleExpChange(idx, "Emp_Leaving_Reason", e.target.value)}
-                            className="w-full h-11 px-4 text-sm sm:text-base font-medium rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                            handleInputChange={(name, val) => handleExpChange(idx, name, val)}
                           />
                         </div>
                       </div>
@@ -2171,13 +2138,15 @@ export default function CandidateRegistrationPage() {
                       <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
                         Identity
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="sm"
                         onClick={() => setCurrentStep(1)}
-                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer p-0 h-auto"
                       >
                         Edit
-                      </button>
+                      </Button>
                     </div>
                     <div className="space-y-2.5 text-sm sm:text-base">
                       <div className="flex justify-between gap-2">
@@ -2219,13 +2188,15 @@ export default function CandidateRegistrationPage() {
                       <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
                         Contact
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="sm"
                         onClick={() => setCurrentStep(1)}
-                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer p-0 h-auto"
                       >
                         Edit
-                      </button>
+                      </Button>
                     </div>
                     <div className="space-y-2.5 text-sm sm:text-base">
                       <div className="flex justify-between gap-2">
@@ -2267,13 +2238,15 @@ export default function CandidateRegistrationPage() {
                       <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
                         Qualification
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="sm"
                         onClick={() => setCurrentStep(2)}
-                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer p-0 h-auto"
                       >
                         Edit
-                      </button>
+                      </Button>
                     </div>
                     <div className="space-y-2.5 text-sm sm:text-base">
                       <div className="flex justify-between gap-2">
@@ -2318,13 +2291,15 @@ export default function CandidateRegistrationPage() {
                         <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
                           Experience & family
                         </span>
-                        <button
+                        <Button
                           type="button"
+                          variant="link"
+                          size="sm"
                           onClick={() => setCurrentStep(3)}
-                          className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+                          className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer p-0 h-auto"
                         >
                           Edit
-                        </button>
+                        </Button>
                       </div>
                       <div className="space-y-2.5 text-sm sm:text-base">
                         <div className="flex justify-between gap-2">
@@ -2377,9 +2352,10 @@ export default function CandidateRegistrationPage() {
               <Button
                 type="button"
                 variant="outline"
+                size="lg"
                 onClick={handlePrevStep}
                 disabled={currentStep === 1}
-                className="h-12 px-7 rounded-xl text-base font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer shadow-xs"
+                className="h-12 px-7 font-bold cursor-pointer"
               >
                 <ChevronLeft className="h-5 w-5 mr-1.5" />
                 Previous
@@ -2387,8 +2363,10 @@ export default function CandidateRegistrationPage() {
 
               <Button
                 type="button"
+                variant={currentStep === 4 ? "secondary" : "primary"}
+                size="lg"
                 onClick={handleNextStep}
-                className={`h-12 px-8 rounded-xl text-base font-bold tracking-wide shadow-md cursor-pointer transition-all ${currentStep === 4
+                className={`h-12 px-8 font-bold tracking-wide cursor-pointer transition-all ${currentStep === 4
                   ? "bg-[#059669] hover:bg-[#047857] text-white shadow-emerald-600/20"
                   : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20"
                   }`}

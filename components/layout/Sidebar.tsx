@@ -6,8 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import * as Icons from "lucide-react";
 import { ChevronRight, ChevronsLeft, ChevronsRight, GitBranch, X } from "lucide-react";
 import { PAYROLL_MODULES } from "@/constant/modules";
+import { useSession } from "next-auth/react";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import { logoutAction } from "@/action/loginAction";
+import { fetchBranch } from "@/action/branch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,7 @@ function GroupIcon({ name, className }: { name: string; className?: string }) {
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, update } = useSession();
   const user = useCurrentUser() as any;
   const [userState, setUserState] = useState(user);
   const [pinned, setPinned] = useState(false); // persistent expand
@@ -53,8 +56,13 @@ export default function Sidebar() {
 
   useEffect(() => {
     setUserState(user);
-    if (user?.branch && String(user.branch).includes(",")) {
+    if (
+      user?.branchName === "MultiLocation" ||
+      (user?.branch && String(user.branch).includes(","))
+    ) {
       setIsMultiLocation(true);
+    } else {
+      setIsMultiLocation(false);
     }
   }, [user]);
 
@@ -137,6 +145,103 @@ export default function Sidebar() {
     }
   };
 
+  const [isTogglingMulti, setIsTogglingMulti] = useState(false);
+
+  const handleToggleMultiLocation = async () => {
+    if (isTogglingMulti) return;
+    setIsTogglingMulti(true);
+    try {
+      const willBeMulti = !isMultiLocation;
+      if (willBeMulti) {
+        // Switching to MultiLocation
+        let multiVal = user?.multi;
+        if (Array.isArray(multiVal)) {
+          multiVal = multiVal.join(",");
+        }
+        if (!multiVal || multiVal === "") {
+          const res = await fetchBranch(user);
+          const branches = res?.data?.[0]?.branch || [];
+          if (branches.length > 0) {
+            multiVal = branches.map((b: any) => b.value).join(",");
+          } else {
+            multiVal = user?.branch || user?.Primary_Branch ;
+          }
+        }
+        setIsMultiLocation(true);
+        setUserState((prev: any) => ({
+          ...prev,
+          branch: multiVal,
+          branchName: "MultiLocation",
+        }));
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            branch: multiVal,
+            branchName: "MultiLocation",
+          },
+        });
+        router.refresh();
+
+        const isEmployeePage =
+          pathname?.includes("Employee_Master") ||
+          pathname?.includes("employee-master") ||
+          pathname?.includes("employee-salary-structure") ||
+          pathname?.includes("employee-master-with-basic-info") ||
+          pathname?.includes("employee-master-mini");
+
+        if (isEmployeePage) {
+          Swal.fire({
+            icon: "warning",
+            title: "Warning",
+            text: "You are in multilocation. Please switch to single branch to save employee.",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#4338CA",
+          });
+        }
+      } else {
+        // Switching to Single Branch
+        let singleVal = user?.Primary_Branch;
+        let singleName = "";
+        try {
+          const res = await fetchBranch(user);
+          const branches = res?.data?.[0]?.branch || [];
+          if (branches.length > 0) {
+            const primary =
+              branches.find((b: any) => String(b.value) === String(user?.Primary_Branch)) ||
+              branches[0];
+            singleVal = primary.value;
+            singleName = primary.label;
+          }
+        } catch (e) {
+          console.error("Error fetching single branch:", e);
+        }
+        if (!singleVal) {
+          singleVal = (user?.multi ? String(user.multi).split(",")[0] : user?.branch) || "1";
+          singleName = "Branch";
+        }
+        setIsMultiLocation(false);
+        setUserState((prev: any) => ({
+          ...prev,
+          branch: singleVal,
+          branchName: singleName,
+        }));
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            branch: singleVal,
+            branchName: singleName,
+          },
+        });
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Error toggling multi-location:", err);
+    } finally {
+      setIsTogglingMulti(false);
+    }
+  };
 
   return (
     <>
@@ -270,8 +375,9 @@ export default function Sidebar() {
         <div className="shrink-0 mt-auto flex flex-col gap-1.5 border-t border-line bg-card px-2.5 py-3">
           <button
             type="button"
-            onClick={() => setIsMultiLocation((prev) => !prev)}
-            className="flex w-full items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-[12.5px] font-medium text-fg hover:bg-hoverbg"
+            disabled={isTogglingMulti}
+            onClick={handleToggleMultiLocation}
+            className="flex w-full items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-[12.5px] font-medium text-fg hover:bg-hoverbg transition-opacity disabled:opacity-50"
           >
             <GitBranch className="h-6 w-6 shrink-0 text-muted" />
 
