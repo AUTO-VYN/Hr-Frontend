@@ -18,6 +18,8 @@ import {
   Upload,
   BadgeCheck,
   GitFork,
+  Check,
+  Wand2,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
@@ -242,6 +244,17 @@ const SalaryDetails = ({
   const [confirmAccountDisabled, setConfirmAccountDisabled] = useState(false);
   const [isEmpCodeGenerated, setIsEmpCodeGenerated] = useState(false);
 
+  const initialBankDetailsRef = useRef<{
+    BANKNAME?: string;
+    ACCOUNT_TYPE?: string;
+    BANKACCOUNTNO?: string;
+    BRANCH?: string;
+    PAYMENTMODE?: string;
+    ifsc_code?: string;
+    Emp_Ac_Name?: string;
+    Sal_Hold?: string;
+  } | null>(null);
+
   const fetchEmpList = async () => {
     if (!user?.Comp_Code) return;
     try {
@@ -300,6 +313,17 @@ const SalaryDetails = ({
           [name]: value,
         },
       });
+
+      initialBankDetailsRef.current = {
+        BANKNAME: EmpMst?.BANKNAME,
+        ACCOUNT_TYPE: EmpMst?.ACCOUNT_TYPE,
+        BANKACCOUNTNO: EmpMst?.BANKACCOUNTNO,
+        BRANCH: EmpMst?.BRANCH,
+        PAYMENTMODE: EmpMst?.PAYMENTMODE,
+        ifsc_code: EmpMst?.ifsc_code,
+        Emp_Ac_Name: EmpMst?.Emp_Ac_Name,
+        Sal_Hold: EmpMst?.Sal_Hold,
+      };
 
       if (response.data?.data?.EmpMst?.profile) {
         setProfileSrc(response.data.data.EmpMst.profile);
@@ -367,6 +391,7 @@ const SalaryDetails = ({
   };
 
   const handleReset = () => {
+    initialBankDetailsRef.current = null;
     setSelectedEmpSrNo("");
     setIsNewEmployee(false);
     setFormData((prev: any) => ({
@@ -400,6 +425,134 @@ const SalaryDetails = ({
     handleInputChange(name, value);
   };
 
+  const hasBankDetailsChanged = () => {
+    if (!initialBankDetailsRef.current || !formData?.EmpMst?.EMPCODE)
+      return false;
+    const init = initialBankDetailsRef.current;
+    const current = formData.EmpMst;
+
+    const norm = (v: any) =>
+      v === null || v === undefined ? "" : String(v).trim();
+
+    return (
+      norm(init.BANKNAME) !== norm(current.BANKNAME) ||
+      norm(init.ACCOUNT_TYPE) !== norm(current.ACCOUNT_TYPE) ||
+      norm(init.BANKACCOUNTNO) !== norm(current.BANKACCOUNTNO) ||
+      norm(init.BRANCH) !== norm(current.BRANCH) ||
+      norm(init.PAYMENTMODE) !== norm(current.PAYMENTMODE) ||
+      norm(init.ifsc_code) !== norm(current.ifsc_code) ||
+      norm(init.Emp_Ac_Name) !== norm(current.Emp_Ac_Name) ||
+      norm(init.Sal_Hold) !== norm(current.Sal_Hold)
+    );
+  };
+
+  const updateBankDetailsFromDialog = async (): Promise<boolean> => {
+    if (!formData?.EmpMst?.EMPCODE) {
+      showSideAlert("Please enter Employee Code", "warning");
+      return false;
+    }
+
+    const skipBankValidation = ["Cash", "Salary Hold"].includes(
+      formData?.EmpMst?.PAYMENTMODE,
+    );
+
+    if (!skipBankValidation) {
+      const missingFields: string[] = [];
+      if (!formData?.EmpMst?.BANKNAME) missingFields.push("Bank Name");
+      if (!formData?.EmpMst?.BANKACCOUNTNO) missingFields.push("Account No");
+      if (!formData?.EmpMst?.Cnf_BANKACCOUNTNO)
+        missingFields.push("Confirm Account No");
+      if (!formData?.EmpMst?.ifsc_code) missingFields.push("IFSC Code");
+      if (!formData?.EmpMst?.BRANCH) missingFields.push("Branch Name");
+      if (!formData?.EmpMst?.Emp_Ac_Name)
+        missingFields.push("Account Holder Name");
+      if (!formData?.EmpMst?.ACCOUNT_TYPE) missingFields.push("Account Type");
+      if (!formData?.EmpMst?.PAYMENTMODE) missingFields.push("Payment Mode");
+
+      if (missingFields.length > 0) {
+        showSideAlert(
+          `Please enter ${missingFields.join(", ")}`,
+          "warning",
+        );
+        return false;
+      }
+
+      const accNo = formData?.EmpMst?.BANKACCOUNTNO?.toString() || "";
+      const cnfAccNo = formData?.EmpMst?.Cnf_BANKACCOUNTNO?.toString() || "";
+
+      if (accNo.length < 10 || cnfAccNo.length < 10) {
+        showSideAlert(
+          "Account numbers must be at least 10 digits long.",
+          "warning",
+        );
+        return false;
+      }
+
+      if (accNo !== cnfAccNo) {
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return false;
+      }
+    } else {
+      if (!formData?.EmpMst?.PAYMENTMODE) {
+        showSideAlert("Please enter Payment Mode", "warning");
+        return false;
+      }
+    }
+
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/EmpMaster/UpdateBankdetails`,
+        {
+          EmpCode: formData?.EmpMst?.EMPCODE,
+          LOGINEMPCODE: user?.EMPCODE,
+          Loc_code: user?.branch,
+          Sal_Hold: formData?.EmpMst?.Sal_Hold,
+          BANKNAME: formData?.EmpMst?.BANKNAME,
+          ACCOUNT_TYPE: formData?.EmpMst?.ACCOUNT_TYPE,
+          BANKACCOUNTNO: formData?.EmpMst?.BANKACCOUNTNO,
+          BRANCH: formData?.EmpMst?.BRANCH,
+          PAYMENTMODE: formData?.EmpMst?.PAYMENTMODE,
+          ifsc_code: formData?.EmpMst?.ifsc_code,
+          Emp_Ac_Name: formData?.EmpMst?.Emp_Ac_Name,
+          EmpMasterOtp: compdata?.EmpMasterOtp,
+        },
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        },
+      );
+
+      initialBankDetailsRef.current = {
+        BANKNAME: formData?.EmpMst?.BANKNAME,
+        ACCOUNT_TYPE: formData?.EmpMst?.ACCOUNT_TYPE,
+        BANKACCOUNTNO: formData?.EmpMst?.BANKACCOUNTNO,
+        BRANCH: formData?.EmpMst?.BRANCH,
+        PAYMENTMODE: formData?.EmpMst?.PAYMENTMODE,
+        ifsc_code: formData?.EmpMst?.ifsc_code,
+        Emp_Ac_Name: formData?.EmpMst?.Emp_Ac_Name,
+        Sal_Hold: formData?.EmpMst?.Sal_Hold,
+      };
+
+      showSideAlert(
+        result.data?.Message || "Bank details updated successfully",
+        "success",
+      );
+      return true;
+    } catch (error: any) {
+      console.error("Error updating bank details from dialog:", error);
+      showSideAlert(
+        error?.response?.data?.Message || "Failed to update bank details",
+        "error",
+      );
+      return false;
+    }
+  };
+
   const handleUpdateEmployee = async () => {
     const isMulti =
       user?.branchName === "MultiLocation" ||
@@ -414,6 +567,102 @@ const SalaryDetails = ({
         confirmButtonColor: "#4338CA",
       });
       return;
+    }
+
+    if (hasBankDetailsChanged()) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Bank Details Not Updated!",
+        html: `
+          <div style="font-size: 15px; color: #374151; line-height: 1.6; margin-top: 8px;">
+            You have <span style="color: #dc2626; font-weight: 700;">changed the Bank Details</span>, but the <b>Update</b> button was not clicked yet.
+            <br /><br />
+            <b>Do you want to update the Bank Details now?</b>
+          </div>
+        `,
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Yes, Update Bank Details",
+        denyButtonText: "Continue Without Updating",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#163761",
+        denyButtonColor: "#b45309",
+        cancelButtonColor: "#5a6772",
+        reverseButtons: true,
+        didOpen: (popup) => {
+          const actions = popup.querySelector(".swal2-actions") as HTMLElement;
+          const confirmBtn = popup.querySelector(
+            ".swal2-confirm",
+          ) as HTMLElement;
+          const denyBtn = popup.querySelector(".swal2-deny") as HTMLElement;
+          const cancelBtn = popup.querySelector(
+            ".swal2-cancel",
+          ) as HTMLElement;
+
+          if (actions) {
+            actions.style.display = "flex";
+            actions.style.flexWrap = "wrap";
+            actions.style.justifyContent = "center";
+            actions.style.gap = "10px";
+            actions.style.maxWidth = "420px";
+            actions.style.margin = "1.5rem auto 0.5rem";
+          }
+          if (cancelBtn) {
+            cancelBtn.style.order = "1";
+            cancelBtn.style.backgroundColor = "#5a6772";
+            cancelBtn.style.color = "#ffffff";
+            cancelBtn.style.borderRadius = "6px";
+            cancelBtn.style.padding = "9px 18px";
+            cancelBtn.style.fontWeight = "600";
+            cancelBtn.style.fontSize = "13px";
+            cancelBtn.style.margin = "0";
+            cancelBtn.style.boxShadow = "none";
+          }
+          if (denyBtn) {
+            denyBtn.style.order = "2";
+            denyBtn.style.backgroundColor = "#b45309";
+            denyBtn.style.color = "#ffffff";
+            denyBtn.style.borderRadius = "6px";
+            denyBtn.style.padding = "9px 16px";
+            denyBtn.style.fontWeight = "600";
+            denyBtn.style.fontSize = "13px";
+            denyBtn.style.margin = "0";
+            denyBtn.style.boxShadow = "none";
+          }
+          if (confirmBtn) {
+            confirmBtn.style.order = "3";
+            confirmBtn.style.backgroundColor = "#163761";
+            confirmBtn.style.color = "#ffffff";
+            confirmBtn.style.borderRadius = "6px";
+            confirmBtn.style.padding = "9px 22px";
+            confirmBtn.style.fontWeight = "600";
+            confirmBtn.style.fontSize = "13px";
+            confirmBtn.style.margin = "4px 0 0 0";
+            confirmBtn.style.boxShadow = "none";
+          }
+        },
+      });
+
+      if (result.isConfirmed) {
+        const ok = await updateBankDetailsFromDialog();
+        if (!ok) return;
+      } else if (result.isDenied) {
+        // Continue without updating bank details
+      } else {
+        // Canceled or dismissed
+        return;
+      }
+    }
+
+    const pfNo = formData?.EmpMst?.PFNO;
+    const pfPer = formData?.EmpMst?.pfper;
+
+    // If PF = Yes (assuming "1" = Yes)
+    if (pfNo === "1" || pfNo === 1) {
+      if (!pfPer || pfPer === "" || pfPer === null) {
+        showSideAlert("Please select PF % when PF is Yes.", "warning");
+        return;
+      }
     }
 
     const empCode = formData?.EmpMst?.EMPCODE;
@@ -464,6 +713,7 @@ const SalaryDetails = ({
       );
 
       if (response.status === 200) {
+        initialBankDetailsRef.current = null;
         Swal.fire({
           icon: "success",
           title: "Success!",
@@ -497,6 +747,17 @@ const SalaryDetails = ({
         confirmButtonColor: "#4338CA",
       });
       return;
+    }
+
+    const pfNo = formData?.EmpMst?.PFNO;
+    const pfPer = formData?.EmpMst?.pfper;
+
+    // If PF = Yes (assuming "1" = Yes)
+    if (pfNo === "1" || pfNo === 1) {
+      if (!pfPer || pfPer === "" || pfPer === null) {
+        showSideAlert("Please select PF % when PF is Yes.", "warning");
+        return;
+      }
     }
 
     const empCode = formData?.EmpMst?.EMPCODE;
@@ -856,6 +1117,43 @@ const SalaryDetails = ({
   useEffect(() => {
     FetchBreakupRatio();
   }, []);
+
+  const handleSplitSalary = (grossVal?: number) => {
+    const gross = grossVal !== undefined ? grossVal : Number(formData1?.Gross_Salary || 0);
+    if (!gross || !ratios) return;
+    setFormData1((prev: any) => ({
+      ...prev,
+      Gross_Salary: gross,
+      Basic: (gross * (ratios.Basic || 0)) / 100,
+      Uniform: (gross * (ratios.Uniform || 0)) / 100,
+      HRA: (gross * (ratios.HRA || 0)) / 100,
+      Conveyance: (gross * (ratios.Conveyance || 0)) / 100,
+      Medical: (gross * (ratios.Medical || 0)) / 100,
+      Other: (gross * (ratios.DA || 0)) / 100,
+      Washing: (gross * (ratios.Washing || 0)) / 100,
+    }));
+  };
+
+  const handleSaveSalaryBreakup = async () => {
+    if (formData1?.Salary_Type == null) {
+      setFormData1((prev: any) => ({
+        ...prev,
+        Salary_Type: isSalarySaved ? "1" : "0",
+      }));
+      formData1.Salary_Type = isSalarySaved ? "1" : "0";
+    }
+    await saveData();
+  };
+
+  const salaryBreakupItems = [
+    { label: "Basic", name: "Basic", ratioKey: "Basic" },
+    { label: "HRA", name: "HRA", ratioKey: "HRA" },
+    { label: "DA", name: "Other", ratioKey: "DA" },
+    { label: "Conveyance", name: "Conveyance", ratioKey: "Conveyance" },
+    { label: "Medical", name: "Medical", ratioKey: "Medical" },
+    { label: "Washing", name: "Washing", ratioKey: "Washing" },
+    { label: "Uniform", name: "Uniform", ratioKey: "Uniform" },
+  ];
 
   const FetchMessageData = async () => {
     try {
@@ -1299,83 +1597,57 @@ const SalaryDetails = ({
   };
 
   const UpdateBankdetails = async () => {
-    if (!formData?.EmpMst.EMPCODE) {
-      toast({
-        title: "Please Enter EmpCode",
-        variant: "destructive",
-      });
+    if (!formData?.EmpMst?.EMPCODE) {
+      showSideAlert("Please enter Employee Code", "warning");
       return;
     }
 
-    if (!formData?.EmpMst.PAYMENTMODE) {
-      toast({
-        title: "Please Enter Payment Mode",
-        variant: "destructive",
-      });
-      return;
-    }
     const skipBankValidation = ["Cash", "Salary Hold"].includes(
       formData?.EmpMst?.PAYMENTMODE,
     );
 
     if (!skipBankValidation) {
-      if (!formData?.EmpMst.BANKNAME) {
-        toast({
-          title: "Please Enter Bank Name",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.ACCOUNT_TYPE) {
-        toast({
-          title: "Please Enter Account Type",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.BANKACCOUNTNO) {
-        toast({
-          title: "Please Enter Bank Account Number",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.BRANCH) {
-        toast({
-          title: "Please Enter Branch",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.ifsc_code) {
-        toast({
-          title: "Please Enter IFSC Code",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!formData?.EmpMst.Emp_Ac_Name) {
-        toast({
-          title: "Please Enter Employee Account Name",
-          variant: "destructive",
-        });
-        return;
-      }
-      const accNo = formData?.EmpMst.BANKACCOUNTNO?.toString() || "";
+      const missingFields: string[] = [];
+      if (!formData?.EmpMst?.BANKNAME) missingFields.push("Bank Name");
+      if (!formData?.EmpMst?.BANKACCOUNTNO) missingFields.push("Account No");
+      if (!formData?.EmpMst?.Cnf_BANKACCOUNTNO)
+        missingFields.push("Confirm Account No");
+      if (!formData?.EmpMst?.ifsc_code) missingFields.push("IFSC Code");
+      if (!formData?.EmpMst?.BRANCH) missingFields.push("Branch Name");
+      if (!formData?.EmpMst?.Emp_Ac_Name)
+        missingFields.push("Account Holder Name");
+      if (!formData?.EmpMst?.ACCOUNT_TYPE) missingFields.push("Account Type");
+      if (!formData?.EmpMst?.PAYMENTMODE) missingFields.push("Payment Mode");
 
-      const cnfAccNo = formData?.EmpMst.Cnf_BANKACCOUNTNO?.toString() || "";
-      if (accNo.length < 10 || cnfAccNo.length < 10) {
-        toast({
-          title: "Account numbers must be at least 10 digits long.",
-          variant: "destructive",
-        });
+      if (missingFields.length > 0) {
+        showSideAlert(
+          `Please enter ${missingFields.join(", ")}`,
+          "warning",
+        );
         return;
       }
-      if (accNo != cnfAccNo) {
-        toast({
-          title: "Account No and Confirm Account No do not match.",
-          variant: "destructive",
-        });
+
+      const accNo = formData?.EmpMst?.BANKACCOUNTNO?.toString() || "";
+      const cnfAccNo = formData?.EmpMst?.Cnf_BANKACCOUNTNO?.toString() || "";
+
+      if (accNo.length < 10 || cnfAccNo.length < 10) {
+        showSideAlert(
+          "Account numbers must be at least 10 digits long.",
+          "warning",
+        );
+        return;
+      }
+
+      if (accNo !== cnfAccNo) {
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return;
+      }
+    } else {
+      if (!formData?.EmpMst?.PAYMENTMODE) {
+        showSideAlert("Please enter Payment Mode", "warning");
         return;
       }
     }
@@ -1405,7 +1677,18 @@ const SalaryDetails = ({
         },
       );
 
-      toast({ title: result.data.Message, variant: "default" });
+      initialBankDetailsRef.current = {
+        BANKNAME: formData?.EmpMst?.BANKNAME,
+        ACCOUNT_TYPE: formData?.EmpMst?.ACCOUNT_TYPE,
+        BANKACCOUNTNO: formData?.EmpMst?.BANKACCOUNTNO,
+        BRANCH: formData?.EmpMst?.BRANCH,
+        PAYMENTMODE: formData?.EmpMst?.PAYMENTMODE,
+        ifsc_code: formData?.EmpMst?.ifsc_code,
+        Emp_Ac_Name: formData?.EmpMst?.Emp_Ac_Name,
+        Sal_Hold: formData?.EmpMst?.Sal_Hold,
+      };
+
+      showSideAlert(result.data.Message, "success");
       const reupdate = result.data?.Reupdate;
 
       if (reupdate) {
@@ -1416,12 +1699,12 @@ const SalaryDetails = ({
         setIsReupdate(false);
         setIsClicked(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error occurred while making the request:", error);
-      toast({
-        title: error?.response?.data?.Message || "Request failed",
-        variant: "destructive",
-      });
+      showSideAlert(
+        error?.response?.data?.Message || "Failed to update bank details",
+        "error",
+      );
       setIsClicked(false);
     }
   };
@@ -1601,35 +1884,39 @@ const SalaryDetails = ({
 
     if (option === 13) {
       if (!accNo) {
-        toast({ title: "Please Enter Account No.", variant: "destructive" });
+        showSideAlert("Please enter account no", "warning");
         return;
       }
 
       if (!cnfAccNo) {
-        toast({
-          title: "Please Enter Confirm Account No.",
-          variant: "destructive",
-        });
+        showSideAlert("Please enter confirm account no", "warning");
         return;
       }
 
       if (accNo !== cnfAccNo) {
-        toast({
-          title: "Account No and Confirm Account No do not match.",
-          variant: "destructive",
-        });
+        showSideAlert(
+          "Account No and Confirm Account No do not match.",
+          "warning",
+        );
+        return;
+      }
+
+      if (!formData?.EmpMst?.ifsc_code) {
+        showSideAlert("Please enter ifsc code", "warning");
         return;
       }
     }
 
-    if (!formData?.EmpMst?.ifsc_code) {F
-      toast({ title: "Please Enter IFSC Code", variant: "destructive" });
-      return;
-    }
+    if (option === 12) {
+      if (!formData?.EmpMst?.ifsc_code) {
+        showSideAlert("Please enter ifsc code", "warning");
+        return;
+      }
 
-    if (!formData?.EmpMst?.BANKACCOUNTNO) {
-      toast({ title: "Please Fill Bank Account No.", variant: "destructive" });
-      return;
+      if (!formData?.EmpMst?.BANKACCOUNTNO) {
+        showSideAlert("Please enter account no", "warning");
+        return;
+      }
     }
 
     if (option === 13 && compdata?.Banking_AccountNo_Verify !== 1) {
@@ -2272,137 +2559,11 @@ const SalaryDetails = ({
       </div>
 
       {/* ===================== BASIC INFO CARD ===================== */}
-      <div className="rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm overflow-visible w-full mb-4">
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] rounded-t-2xl">
-          <div className="flex items-center gap-2.5 h-7">
-            <BadgeCheck className="h-5 w-5 text-[#4F46E5]" />
-            <span className={cardTitleClass}>Basic Info</span>
-          </div>
-        </div>
-        <div className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {/* Title */}
-            <div>
-              <Eselect
-                title="Title"
-                option={MrOptions}
-                name="TITLE"
-                initialValue={
-                  formData?.EmpMst?.TITLE
-                    ? formData.EmpMst.TITLE.toString().toLowerCase().endsWith(".")
-                      ? formData.EmpMst.TITLE.toString().toLowerCase()
-                      : `${formData.EmpMst.TITLE.toString().toLowerCase()}.`
-                    : ""
-                }
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Gender */}
-            <div>
-              <Eselect
-                title="Gender"
-                option={GenderOptions}
-                name="GENDER"
-                initialValue={formData?.EmpMst?.GENDER ? formData.EmpMst.GENDER.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Employee type */}
-            <div>
-              <Eselect
-                title="Employee type"
-                option={Type}
-                name="EmpType"
-                initialValue={formData?.EmpMst?.EmpType ? formData.EmpMst.EmpType.toString().toLowerCase() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Employee designation */}
-            <div>
-              <Eselect
-                option={EMPLOYEEDESIGNATIONoption}
-                title="Employee designation"
-                name="EMPLOYEEDESIGNATION"
-                initialValue={formData?.EmpMst?.EMPLOYEEDESIGNATION ? formData.EmpMst.EMPLOYEEDESIGNATION.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Region */}
-            <div>
-              <Eselect
-                option={SalRegionoption}
-                title="Region"
-                name="Sal_Region"
-                initialValue={formData?.EmpMst?.Sal_Region ? formData.EmpMst.Sal_Region.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Channel */}
-            <div>
-              <Eselect
-                option={CHANEELOPTION}
-                title="Channel"
-                name="CHANNEL"
-                initialValue={formData?.EmpMst?.CHANNEL ? formData.EmpMst.CHANNEL.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Cluster */}
-            <div>
-              <Eselect
-                option={CLUSTEROPTION}
-                title="Cluster"
-                name="CLUSTER"
-                initialValue={formData?.EmpMst?.CLUSTER ? formData.EmpMst.CLUSTER.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Location */}
-            <div>
-              <Eselect
-                option={locationnoption}
-                title="Location"
-                name="LOCATION"
-                initialValue={formData?.EmpMst?.LOCATION ? formData.EmpMst.LOCATION.toString() : ""}
-                handleInputChange={handleLocationChange}
-              />
-            </div>
-
-            {/* Section */}
-            <div>
-              <Eselect
-                option={SECTIONoption}
-                name="SECTION"
-                title="Section"
-                initialValue={formData?.EmpMst?.SECTION ? formData.EmpMst.SECTION.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-
-            {/* Department */}
-            <div>
-              <Eselect
-                option={divisionoption}
-                title="Department"
-                name="DIVISION"
-                initialValue={formData?.EmpMst?.DIVISION ? formData.EmpMst.DIVISION.toString() : ""}
-                handleInputChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+    
 
       <div className="grid grid-cols-12 gap-4 fluid-gap-md pb-6">
-        {/* ===================== LEFT COLUMN - SALARY DETAIL FORM ===================== */}
-        <div className="col-span-12 xl:col-span-6">
+        {/* ===================== LEFT COLUMN - SALARY DETAIL FORM & BANK DETAILS ===================== */}
+        <div className="col-span-12 xl:col-span-8 flex flex-col gap-4">
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
@@ -2623,235 +2784,8 @@ const SalaryDetails = ({
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ===================== RIGHT COLUMN - SALARY BREAKUP ===================== */}
-        {user?.role1.includes("1.1.15") && (
-          <div className="col-span-12 xl:col-span-6">
-            <div className={cardClass}>
-              <div className={cardHeaderClass}>
-                <div className={cardTitleWrapClass}>
-                  <Wallet className="h-7 w-5 text-[#4F46E5]" strokeWidth={3} />
-                  <span className={cardTitleClass}>Salary Breakup</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={pillBtnClass}
-                    onClick={() => OutServiceView(formData.EmpMst.EMPCODE)}
-                    disabled={disapleForSalary}
-                  >
-                    <History className="h-3.5 w-3.5" />
-                    See history
-                  </Button>
-
-                  {user?.role1.includes("1.1.13") && (
-                    <Button
-                      type="button"
-                      className={pillBtnPrimaryClass}
-                      onClick={handleChangeSalaryDetails}
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                      {isSalarySaved
-                        ? "Change salary details"
-                        : "Save salary details"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className={cardBodyClass}>
-                <div className={fieldGridClass}>
-                  <Einput
-                    type="date"
-                    title="Effective from (date)"
-                    name="Effective_date"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Effective_date}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Monthly Gross:"
-                    name="Gross_Salary"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Gross_Salary?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="EMP Basic:"
-                    name="Basic"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Basic?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="HRA:"
-                    name="HRA"
-                    id="HRA"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.HRA?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Conveyance:"
-                    name="Conveyance"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Conveyance?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Medical:"
-                    name="Medical"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Medical?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="DA:"
-                    name="Other"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Other?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Washing:"
-                    name="Washing"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Washing?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Uniform Amt:"
-                    name="Uniform"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Uniform?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Annual Gross:"
-                    name="ANNUAL_CTC"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.ANNUAL_CTC?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="EMP Salary:"
-                    name="Gross_Salary"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Gross_Salary?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="LWF:"
-                    name="LWF"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.LWF?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="PF Salary Limit:"
-                    name="PFSALARY_LIMIT"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.PFSALARY_LIMIT?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Bonus:"
-                    name="BONUS_AMOUNT"
-                    handleInputChange={handleInputChange}
-                    disabled={
-                      falg1 || isDailyWagesActive || GratuityCompKeyData
-                    }
-                    value={formData1?.BONUS_AMOUNT?.toString()}
-                  />
-
-                  {GratuityCompKeyData && (
-                    <Einput
-                      type="text"
-                      title="Gratuity:"
-                      name="Gratuity"
-                      handleInputChange={handleInputChange}
-                      disabled={true}
-                      value={formData1?.Gratuity?.toString()}
-                    />
-                  )}
-
-                  <div className="md:col-span-2">
-                    <Einput
-                      type="text"
-                      title="CTC:"
-                      name="CTC"
-                      ShortName={true}
-                      handleInputChange={handleInputChange}
-                      disabled={falg1 || isDailyWagesActive}
-                      value={formData1?.CTC?.toString()}
-                    />
-                  </div>
-                </div>
-
-                {DalyWagescompKeyData && (
-                  <div className="mt-5 rounded-xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] p-4">
-                    <div className="text-exit font-bold text-sm mb-2">
-                      Daily Wages (Alternative Salary Mode)
-                    </div>
-                    <Einput
-                      title="Daily Wages"
-                      name="Daily_Wages"
-                      value={formData1.Daily_Wages}
-                      handleInputChange={handleInputChange}
-                      disabled={falg1 || isSalaryBreakupActive}
-                    />
-                  </div>
-                )}
-
-                {/* Approval Status */}
-                <div className="mt-5 flex text-left justify-center">
-                  <p
-                    className={`text-[15px] font-semibold ${salarystatus == 2 ? "text-save" : "text-exit"
-                      }`}
-                  >
-                    {salaryMessage}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================== BANK DETAILS - FULL WIDTH ===================== */}
-        <div className="col-span-12 mb-8">
+          {/* ===================== BANK DETAILS ===================== */}
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
@@ -3146,6 +3080,392 @@ const SalaryDetails = ({
             </div>
           </div>
         </div>
+
+        {/* ===================== RIGHT COLUMN - SALARY BREAKUP ===================== */}
+        {user?.role1.includes("1.1.15") && (
+          <div className="col-span-12 xl:col-span-4">
+            {(() => {
+              const monthlyGross = Number(formData1?.Gross_Salary || 0);
+              const allocated =
+                Number(formData1?.Basic || 0) +
+                Number(formData1?.HRA || 0) +
+                Number(formData1?.Other || 0) +
+                Number(formData1?.Conveyance || 0) +
+                Number(formData1?.Medical || 0) +
+                Number(formData1?.Washing || 0) +
+                Number(formData1?.Uniform || 0);
+              const isBalanced =
+                monthlyGross > 0 && Math.abs(monthlyGross - allocated) < 1;
+
+              const pfLimit = Number(formData1?.PFSALARY_LIMIT || 0);
+              const isPfYes =
+                formData?.EmpMst?.PFNO === "1" || formData?.EmpMst?.PFNO === 1;
+              const pfPerc = Number(formData?.EmpMst?.pfper || 12);
+              const employerPf = isPfYes
+                ? Math.round(
+                    (pfLimit > 0
+                      ? pfLimit
+                      : Number(formData1?.Basic || 0)) *
+                      (pfPerc / 100),
+                  )
+                : 0;
+
+              const isEsicYes =
+                formData?.EmpMst?.ESINO === "1" || formData?.EmpMst?.ESINO === 1;
+              const employerEsic =
+                isEsicYes && monthlyGross <= 21000
+                  ? Math.round(monthlyGross * 0.0325)
+                  : 0;
+
+              const annualGross = monthlyGross * 12;
+              const totalCtc = formData1?.CTC
+                ? Number(formData1.CTC)
+                : annualGross +
+                  Number(formData1?.BONUS_AMOUNT || 0) +
+                  Number(formData1?.LWF || 0) +
+                  (pfLimit > 0 ? pfLimit : employerPf * 12) +
+                  Number(formData1?.Gratuity || 0);
+
+              return (
+                <div className="w-full rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm p-4 sm:p-5 flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F46E5] text-white shadow-sm font-bold text-lg select-none">
+                      ₹
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[17px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        Salary breakup
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+                        Monthly amounts · annual figures calculatve
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Effective from & Monthly Gross */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        EFFECTIVE FROM
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="Effective_date"
+                          value={formData1?.Effective_date || ""}
+                          onChange={(e) =>
+                            handleInputChange("Effective_date", e.target.value)
+                          }
+                          disabled={isDailyWagesActive}
+                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        MONTHLY GROSS
+                      </label>
+                      <div className="relative flex items-center h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold text-base mr-2 select-none">
+                          ₹
+                        </span>
+                        <input
+                          type="number"
+                          name="Gross_Salary"
+                          value={formData1?.Gross_Salary ?? ""}
+                          onChange={(e) =>
+                            handleInputChange("Gross_Salary", e.target.value)
+                          }
+                          placeholder="0"
+                          disabled={isDailyWagesActive}
+                          className="w-full bg-transparent font-bold text-slate-800 dark:text-slate-100 text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSplitSalary()}
+                          disabled={isDailyWagesActive || !formData1?.Gross_Salary}
+                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-400 text-xs font-bold shrink-0 transition-colors disabled:opacity-50"
+                        >
+                          <Wand2 className="h-3.5 w-3.5" />
+                          <span>Split</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Allocation progress & badge */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-600 dark:text-slate-400">
+                        ₹{allocated.toLocaleString("en-IN")} of ₹
+                        {monthlyGross.toLocaleString("en-IN")} allocated
+                      </span>
+                      {isBalanced ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                          <Check className="h-3 w-3" strokeWidth={3} /> Balanced
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                          Unbalanced (
+                          {allocated > monthlyGross ? "+" : "-"}₹
+                          {Math.abs(monthlyGross - allocated).toLocaleString(
+                            "en-IN",
+                          )}
+                          )
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          isBalanced
+                            ? "bg-emerald-500"
+                            : allocated > monthlyGross
+                              ? "bg-rose-500"
+                              : "bg-amber-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            monthlyGross > 0
+                              ? (allocated / monthlyGross) * 100
+                              : 0,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Breakdown Components Table */}
+                  <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/70 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+                    {salaryBreakupItems.map((item) => {
+                      const val = Number(formData1?.[item.name] || 0);
+                      const pct =
+                        monthlyGross > 0
+                          ? Math.round((val / monthlyGross) * 100)
+                          : ratios[item.ratioKey] || 0;
+                      return (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between px-4 py-2 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                        >
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {item.label}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 w-10 text-right">
+                              {pct}%
+                            </span>
+                            <div className="flex items-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 w-32 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
+                              <span className="text-slate-400 text-xs font-bold mr-1 select-none">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                name={item.name}
+                                value={formData1?.[item.name] ?? ""}
+                                onChange={(e) =>
+                                  handleInputChange(item.name, e.target.value)
+                                }
+                                disabled={isDailyWagesActive}
+                                className="w-full bg-transparent text-right font-bold text-slate-800 dark:text-slate-100 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 4 Bottom Inputs Grid */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        EMP SALARY
+                      </label>
+                      <input
+                        type="number"
+                        name="Gross_Salary"
+                        value={formData1?.Gross_Salary ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("Gross_Salary", e.target.value)
+                        }
+                        disabled={isDailyWagesActive}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        PF SALARY LIMIT
+                      </label>
+                      <input
+                        type="number"
+                        name="PFSALARY_LIMIT"
+                        value={formData1?.PFSALARY_LIMIT ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("PFSALARY_LIMIT", e.target.value)
+                        }
+                        disabled={isDailyWagesActive}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        LWF
+                      </label>
+                      <input
+                        type="number"
+                        name="LWF"
+                        value={formData1?.LWF ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("LWF", e.target.value)
+                        }
+                        disabled={isDailyWagesActive}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        BONUS
+                      </label>
+                      <input
+                        type="number"
+                        name="BONUS_AMOUNT"
+                        value={formData1?.BONUS_AMOUNT ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("BONUS_AMOUNT", e.target.value)
+                        }
+                        disabled={isDailyWagesActive || GratuityCompKeyData}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Summary Box */}
+                  <div className="rounded-2xl bg-[#F8FAFC] dark:bg-[#0B0F19] border border-slate-200/80 dark:border-slate-800 p-4 space-y-2.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Monthly gross
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ₹{monthlyGross.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Employer PF
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {employerPf > 0
+                          ? `₹${employerPf.toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Employer ESIC
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {employerEsic > 0
+                          ? `₹${employerEsic.toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Bonus
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ₹{Number(formData1?.BONUS_AMOUNT || 0).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-slate-200/80 dark:border-slate-800 pt-2.5 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                          Annual gross
+                        </span>
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          ₹{annualGross.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                          Annual CTC
+                        </span>
+                        <span className="font-extrabold text-xl text-[#4F46E5] dark:text-indigo-400">
+                          ₹{totalCtc.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Daily Wages alternative mode if enabled */}
+                  {DalyWagescompKeyData && (
+                    <div className="rounded-xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] p-3.5">
+                      <div className="text-exit font-bold text-sm mb-2">
+                        Daily Wages (Alternative Salary Mode)
+                      </div>
+                      <Einput
+                        title="Daily Wages"
+                        name="Daily_Wages"
+                        value={formData1.Daily_Wages}
+                        handleInputChange={handleInputChange}
+                        disabled={falg1 || isSalaryBreakupActive}
+                      />
+                    </div>
+                  )}
+
+                  {/* Approval Status */}
+                  {salaryMessage && (
+                    <div className="flex text-left justify-center">
+                      <p
+                        className={`text-[14px] font-semibold ${
+                          salarystatus == 2 ? "text-save" : "text-exit"
+                        }`}
+                      >
+                        {salaryMessage}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bottom Action Buttons */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-xs shrink-0"
+                      onClick={() => OutServiceView(formData?.EmpMst?.EMPCODE)}
+                      disabled={disapleForSalary || !formData?.EmpMst?.EMPCODE}
+                    >
+                      <History className="h-4 w-4" />
+                      <span>History</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={handleSaveSalaryBreakup}
+                      className="h-11 px-5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold flex-1 flex items-center justify-center gap-2 shadow-xs transition-colors"
+                    >
+                      <Check className="h-4 w-4" strokeWidth={2.5} />
+                      <span>Save salary details</span>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
 
         {/* ===================== DIALOGS ===================== */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

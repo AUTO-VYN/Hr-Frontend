@@ -1238,6 +1238,14 @@ export default function SalaryApproverGridPage() {
                 Detailed breakdown and revision summary
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsDialogOpen2(false)}
+              className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="p-7 space-y-6">
@@ -1329,6 +1337,17 @@ export default function SalaryApproverGridPage() {
 
             <div className="text-center text-sm font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-800/80">
               Please review the employee salary details carefully before approving or rejecting.
+            </div>
+
+            {/* Cancel / Close Button */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setIsDialogOpen2(false)}
+                className="h-10 px-7 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-xs transition-colors cursor-pointer text-sm"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </DialogContent>

@@ -279,7 +279,7 @@ export default function InterviewQRCodePage() {
     };
 
     const v1 = btoa(JSON.stringify(payload));
-    const dynamicLink = `https://erp.autovyn.com/autovyn/payroll/Recruitment_Process/Candidate_Registratio_Form?v1=${encodeURIComponent(v1)}`;
+    const dynamicLink = `https://hr.autovyn.com/payroll/recruitment-process/candidate-registration-form?v1=${encodeURIComponent(v1)}`;
     setQrCodeLink(dynamicLink);
     setHasGeneratedCode(true);
 
@@ -616,7 +616,7 @@ export default function InterviewQRCodePage() {
                           authToken: user?.authToken || "",
                         };
                         const v1 = btoa(JSON.stringify(payload));
-                        setQrCodeLink(`https://erp.autovyn.com/autovyn/payroll/Recruitment_Process/Candidate_Registratio_Form?v1=${encodeURIComponent(v1)}`);
+                        setQrCodeLink(`https://hr.autovyn.com/payroll/recruitment-process/candidate-registration-form?v1=${encodeURIComponent(v1)}`);
                       }
                       setHasGeneratedCode(true);
                       showSideAlert(`Loaded existing code for ${item.designation}`, "info");
@@ -737,7 +737,7 @@ export default function InterviewQRCodePage() {
                     <QRCode
                       value={
                         qrCodeLink ||
-                        "https://erp.autovyn.com/autovyn/payroll/Recruitment_Process/Candidate_Registratio_Form"
+                        "https://hr.autovyn.com/payroll/recruitment-process/candidate-registration-form"
                       }
                       size={250}
                       bordered={false}
