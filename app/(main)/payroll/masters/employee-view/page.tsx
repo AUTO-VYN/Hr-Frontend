@@ -1136,7 +1136,7 @@ export default function Page() {
               className="h-12 rounded-xl text-[15px] font-medium w-full"
             />
 
-            <div className="flex items-center gap-2 pb-0.5">
+            <div className="flex items-center gap-2 pb-0.5 col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-1">
               <button
                 type="button"
                 onClick={() => {
@@ -1144,7 +1144,7 @@ export default function Page() {
                   showapi(empView, 1, pageSize, {}, true, dashbord);
                   refreshTabCounts(dashbord);
                 }}
-                className="h-12 px-7 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-[15px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+                className="h-12 flex-1 sm:flex-initial sm:px-7 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-[15px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
               >
                 Show
               </button>
@@ -1152,7 +1152,7 @@ export default function Page() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="h-12 px-6 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[15px] shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
+                className="h-12 flex-1 sm:flex-initial sm:px-6 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[15px] shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
               >
                 Reset
               </button>
@@ -1161,12 +1161,12 @@ export default function Page() {
         </div>
 
         {/* Tabs + Columns */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1 font-[inherit]">
-          <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs overflow-x-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+          <div className="inline-flex items-center rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs max-w-full overflow-x-auto">
             {[
-              { key: "ACTIVE" as const, label: "Active employees", count: activeCount },
-              { key: "LEFT" as const, label: "Left employees", count: leftCount },
-              { key: "ALL" as const, label: "All employees", count: allCount },
+              { key: "ACTIVE" as const, label: "Active", fullLabel: "Active employees", count: activeCount },
+              { key: "LEFT" as const, label: "Left", fullLabel: "Left employees", count: leftCount },
+              { key: "ALL" as const, label: "All", fullLabel: "All employees", count: allCount },
             ].map((t) => {
               const isActive = tab === t.key;
               return (
@@ -1175,35 +1175,28 @@ export default function Page() {
                   type="button"
                   onClick={() => handleTab(t.key)}
                   className={[
-                    "h-10 px-3.5 sm:px-4 rounded-xl text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-all whitespace-nowrap font-[inherit]",
+                    "h-9 sm:h-10 px-2.5 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-[14px] font-semibold transition-all shrink-0 cursor-pointer",
                     isActive
                       ? "bg-[#4338CA] text-white shadow-2xs"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
                   ].join(" ")}
                 >
-                  <span className="font-[inherit]">{t.label}</span>
-                  <span
-                    className={[
-                      "text-[14px] font-bold font-[inherit]",
-                      isActive ? "text-white/90" : "text-slate-400 dark:text-slate-500",
-                    ].join(" ")}
-                  >
-                    {t.count}
-                  </span>
+                  <span className="inline sm:hidden">{t.label} ({t.count})</span>
+                  <span className="hidden sm:inline">{t.fullLabel} ({t.count})</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 justify-end font-[inherit]">
+          <div className="flex items-center">
             <button
               type="button"
-              className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-[15px] font-semibold inline-flex items-center gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 font-[inherit]"
+              className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg sm:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs sm:text-[14px] font-semibold inline-flex items-center gap-1.5 sm:gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 shrink-0 cursor-pointer"
             >
               <Columns3 className="h-4 w-4 text-slate-500" />
-              <span className="font-[inherit]">
+              <span>
                 Columns{" "}
-                <span className="text-slate-400 font-semibold text-[14px] font-[inherit]">
+                <span className="text-slate-400 font-semibold text-xs sm:text-[13px]">
                   11/25
                 </span>
               </span>

@@ -558,11 +558,11 @@ export default function SalaryApproverGridPage() {
       {/* 2. EMPLOYEE HEADER PROFILE CARD */}
       {/* ========================================================================= */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:px-6 sm:py-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] justify-between">
-        <div className="flex flex-col lg:flex-row lg:items-center  justify-between gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8 w-full sm:flex-nowrap">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 lg:gap-8 w-full min-w-0">
             {/* Avatar + Name + Subtitle */}
             <div className="flex items-center gap-3.5 min-w-0 shrink-0">
-              <div className="w-20 h-20 rounded-full bg-[#EEF2FF] text-[#4338CA] dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-2xl flex items-center justify-center shrink-0 select-none shadow-2xs border border-indigo-100 dark:border-indigo-900/60">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#EEF2FF] text-[#4338CA] dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xl sm:text-2xl flex items-center justify-center shrink-0 select-none shadow-2xs border border-indigo-100 dark:border-indigo-900/60">
                 {initials}
               </div>
               <div className="min-w-0">
@@ -579,39 +579,39 @@ export default function SalaryApproverGridPage() {
             <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
             {/* Details Row: Location, Department, Email, Mobile */}
-            <div className="flex items-center gap-6 sm:gap-8 lg:gap-10 w-full sm:flex-1 sm:justify-between sm:flex-nowrap min-w-0">
-              <div className="shrink-0">
-                <span className="text-slate-400 uppercase font-semibold text-[12px] tracking-wider block">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 w-full sm:flex-1 min-w-0">
+              <div className="min-w-0">
+                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
                   LOCATION
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5">
+                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
                   {misdata.Location || "Branch - 1"}
                 </span>
               </div>
 
-              <div className="shrink-0">
-                <span className="text-slate-400 uppercase font-semibold text-[12px] tracking-wider block">
+              <div className="min-w-0">
+                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
                   DEPARTMENT
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5">
+                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
                   {misdata.Department || "Sales"}
                 </span>
               </div>
 
               <div className="min-w-0">
-                <span className="text-slate-400 uppercase font-semibold text-[12px] tracking-wider block">
+                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
                   EMAIL
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
+                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate" title={misdata.Email}>
                   {misdata.Email || "—"}
                 </span>
               </div>
 
-              <div className="shrink-0">
-                <span className="text-slate-400 uppercase font-semibold text-[12px] tracking-wider block">
+              <div className="min-w-0">
+                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
                   MOBILE NO.
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5">
+                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
                   {misdata.MobileNo || "—"}
                 </span>
               </div>
@@ -622,7 +622,7 @@ export default function SalaryApproverGridPage() {
           <div className="shrink-0 flex items-center justify-end">
             <Link
               href="/payroll/masters/Employee_Master"
-              className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-400 font-semibold text-sm sm:text-base inline-flex items-center gap-1.5 shadow-2xs transition-all"
+              className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-400 font-semibold text-sm sm:text-base inline-flex items-center gap-1.5 shadow-2xs transition-all shrink-0"
             >
               <span>Open master</span>
               <ExternalLink className="h-3.5 w-3.5" />
