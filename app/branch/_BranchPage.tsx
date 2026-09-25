@@ -57,6 +57,7 @@ const STATS = [
   },
 ];
 
+// ✅ Correct (Initialized with array):
 const PEOPLE: Array<{
   initials: string;
   name: string;
@@ -69,6 +70,7 @@ const PEOPLE: Array<{
   { initials: "PK", name: "Priya Kulkarni", status: "On leave · CL", fg: "#FBBF24", delay: ".42s", dur: "6.8s" },
   { initials: "AV", name: "Amit Verma", status: "Present · 08:47", fg: "#34D399", delay: ".54s", dur: "7.2s" },
 ];
+
 
 const FEATURES = [
   { icon: Wallet, label: "Payroll Automation" },
@@ -128,10 +130,8 @@ const BranchCom = () => {
     try {
       await update({
         ...session,
-        ...session,
         user: {
           ...session?.user,
-          branch: selectedBranch.value,
           branch: selectedBranch.value,
           branchName: selectedBranch.label,
         },
