@@ -471,7 +471,7 @@ export default function ResumeBankPage() {
         accessor: "MOB_NO",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -483,7 +483,7 @@ export default function ResumeBankPage() {
         accessor: "APPLICATION_DATE1",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-xl font-medium text-slate-700 dark:text-slate-300 py-1.5 cursor-pointer"
+            className="text-base sm:text-xl font-medium text-slate-700 dark:text-slate-300 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {formatDate(value || row.original.APPLICATION_DATE)}
@@ -495,7 +495,7 @@ export default function ResumeBankPage() {
         accessor: "EXP_IN_YEAR",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value !== null && value !== undefined ? `${value} yr` : "—"}
@@ -507,7 +507,7 @@ export default function ResumeBankPage() {
         accessor: "DESIGNATION",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-xl font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1.5 cursor-pointer"
+            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1.5 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -521,7 +521,7 @@ export default function ResumeBankPage() {
           const status = getCandidateStatus(row.original);
           return (
             <div
-              className="py-1.5 flex justify-end cursor-pointer"
+              className="py-1.5 flex sm:justify-end cursor-pointer"
               onClick={() => setSelectedCandidate(row.original)}
             >
               {renderStatusBadge(status)}
@@ -539,7 +539,7 @@ export default function ResumeBankPage() {
         Header: "Language",
         accessor: "Emp_Language",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
             {value || "—"}
           </span>
         ),
@@ -574,7 +574,7 @@ export default function ResumeBankPage() {
         Header: "Company",
         accessor: "Emp_Company",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
             {value || "—"}
           </span>
         ),
@@ -582,7 +582,7 @@ export default function ResumeBankPage() {
       {
         Header: "Designation",
         accessor: "Emp_Designation",
-        Cell: ({ value }: any) => <div className="text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => <div className="text-base sm:text-xl">{value || "—"}</div>,
       },
       {
         Header: "Duration",
@@ -600,7 +600,7 @@ export default function ResumeBankPage() {
         Header: "Salary",
         accessor: "Emp_Drawn_Salary",
         Cell: ({ value }: any) => (
-          <div className="font-bold text-slate-900 dark:text-slate-100 text-xl">
+          <div className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
             {value ? `₹${Number(value).toFixed(2)}` : "—"}
           </div>
         ),
@@ -619,16 +619,16 @@ export default function ResumeBankPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-[#070D18] p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-[#070D18] p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER & STATUS FILTER PILLS */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
             Resume bank
           </h1>
-          <p className="text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
             Screen one dossier at a time.{" "}
             <strong className="text-yellow-600 dark:text-yellow-400 font-bold">
               {statusCounts.unscreened} resumes still unscreened.
@@ -637,71 +637,73 @@ export default function ResumeBankPage() {
         </div>
 
         {/* Status Filter Pills */}
-        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setStatusFilter("Unscreened")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "Unscreened"
-              ? "bg-[#f59e0b] text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-          >
-            <span>Unscreened</span>
-            <span
-              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "Unscreened"
-                ? "bg-white/25 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+        <div className="w-full lg:w-auto overflow-x-auto scrollbar-none py-1 min-w-0">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs min-w-max">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Unscreened")}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "Unscreened"
+                ? "bg-[#f59e0b] text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
             >
-              {statusCounts.unscreened}
-            </span>
-          </button>
+              <span className="whitespace-nowrap shrink-0">Unscreened</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "Unscreened"
+                  ? "bg-white/25 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  }`}
+              >
+                {statusCounts.unscreened}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setStatusFilter("Selected")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "Selected"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-          >
-            <span>Reviewed</span>
-            <span
-              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "Selected"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Selected")}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "Selected"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
             >
-              {statusCounts.reviewed}
-            </span>
-          </button>
+              <span className="whitespace-nowrap shrink-0">Reviewed</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "Selected"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  }`}
+              >
+                {statusCounts.reviewed}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setStatusFilter("All")}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xl font-bold transition cursor-pointer ${statusFilter === "All"
-              ? "bg-indigo-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-          >
-            <span>All</span>
-            <span
-              className={`px-2 py-0.5 rounded-lg text-sm font-black ${statusFilter === "All"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            <button
+              type="button"
+              onClick={() => setStatusFilter("All")}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "All"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
             >
-              {statusCounts.all}
-            </span>
-          </button>
+              <span className="whitespace-nowrap shrink-0">All</span>
+              <span
+                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "All"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  }`}
+              >
+                {statusCounts.all}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 2. FILTER BAR CARD USING Eselect & AButton */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#0B1220]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-4 md:p-5 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 items-end">
           {/* Skills */}
           <div>
             <Eselect
@@ -761,13 +763,13 @@ export default function ResumeBankPage() {
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center gap-2 pb-0.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pb-0.5">
             <AButton
               variant="primary"
               size="md"
               fullWidth
               onClick={() => { }}
-              className="text-xl font-bold shadow-xs cursor-pointer"
+              className="text-base sm:text-xl font-bold shadow-xs cursor-pointer"
             >
               Show
             </AButton>
@@ -775,7 +777,7 @@ export default function ResumeBankPage() {
               variant="outline"
               size="md"
               onClick={handleResetFilters}
-              className="text-xl font-semibold cursor-pointer"
+              className="text-base sm:text-xl font-semibold cursor-pointer"
             >
               Reset
             </AButton>
@@ -786,25 +788,27 @@ export default function ResumeBankPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 3. MAIN 2-COLUMN DOSSIER LAYOUT (ReactTable on Left, Dossier on Right) */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start min-w-0">
         {/* ── LEFT COLUMN: CANDIDATES LIST TABLE USING ReactTable ───────────────── */}
-        <div className="lg:col-span-7 xl:col-span-7 space-y-4">
-          <div className="rounded-2xl bg-white dark:bg-[#0B1220] shadow-xs overflow-hidden">
-            <ReactTable
-              columns={tableColumns}
-              data={displayedCandidates}
-              height={560}
-              selectValue="TRAN_ID"
-              onRowDoubleClick={(row) => setSelectedCandidate(row)}
-              showExcelExport={true}
-              showTopSearch={true}
-              showPageSizeInFooter={true}
-              searchPlaceholder="Search candidate by name, email, designation..."
-            />
+        <div className="lg:col-span-7 xl:col-span-7 space-y-4 min-w-0">
+          <div className="rounded-2xl bg-white dark:bg-[#0B1220] shadow-xs overflow-hidden min-w-0">
+            <div className="w-full overflow-x-auto">
+              <ReactTable
+                columns={tableColumns}
+                data={displayedCandidates}
+                height={560}
+                selectValue="TRAN_ID"
+                onRowDoubleClick={(row) => setSelectedCandidate(row)}
+                showExcelExport={true}
+                showTopSearch={true}
+                showPageSizeInFooter={true}
+                searchPlaceholder="Search candidate by name, email, designation..."
+              />
+            </div>
           </div>
 
           {/* Table Footer with Upload Button */}
-          <div className="flex items-center justify-between px-5 py-3.5 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-[#0B1220] text-xl text-slate-600 dark:text-slate-300 font-semibold shadow-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 sm:px-5 py-3.5 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-[#0B1220] text-base sm:text-xl text-slate-600 dark:text-slate-300 font-semibold shadow-xs">
             <span>
               Showing{" "}
               <strong className="text-slate-900 dark:text-white font-bold">
@@ -818,7 +822,7 @@ export default function ResumeBankPage() {
               size="sm"
               onClick={() => router.push("/payroll/recruitment-process/candidate-registration-form")}
               icon={<Upload className="h-4 w-4" />}
-              className="text-xl font-bold cursor-pointer"
+              className="text-base sm:text-xl font-bold cursor-pointer"
             >
               Bulk upload
             </AButton>
@@ -826,22 +830,22 @@ export default function ResumeBankPage() {
         </div>
 
         {/* ── RIGHT COLUMN: CANDIDATE DOSSIER & SCREENING ──────────────────────── */}
-        <div className="lg:col-span-5 xl:col-span-5 space-y-6">
+        <div className="lg:col-span-5 xl:col-span-5 space-y-4 sm:space-y-6 min-w-0">
           {selectedCandidate ? (
             <>
               {/* Dossier Card */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-6">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 md:p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-5 sm:space-y-6 overflow-hidden">
                 {/* Header info */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <div className="h-16 w-16 rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs">
                       {getInitials(selectedCandidate.NAME)}
                     </div>
                     <div>
-                      <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white leading-tight break-words">
                         {selectedCandidate.NAME || "Candidate Dossier"}
                       </h3>
-                      <p className="text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
+                      <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-medium mt-1 break-words">
                         {selectedCandidate.DESIGNATION || "No Designation"} ·{" "}
                         {selectedCandidate.LOC_CODE1 || "Location"}
                       </p>
@@ -854,8 +858,8 @@ export default function ResumeBankPage() {
                 </div>
 
                 {/* 3 Overview Stats Box */}
-                <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-slate-800 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 p-4 border border-slate-200/80 dark:border-slate-800">
-                  <div className="px-2 text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 p-3 sm:p-4 border border-slate-200/80 dark:border-slate-800">
+                  <div className="px-2 py-2 sm:py-0 text-left min-w-0">
                     <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Experience
                     </div>
@@ -866,7 +870,7 @@ export default function ResumeBankPage() {
                     </div>
                   </div>
 
-                  <div className="px-3 text-left">
+                  <div className="px-2 sm:px-3 py-2 sm:py-0 text-left min-w-0">
                     <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Qualification
                     </div>
@@ -876,7 +880,7 @@ export default function ResumeBankPage() {
                     </div>
                   </div>
 
-                  <div className="px-3 text-left">
+                  <div className="px-2 sm:px-3 py-2 sm:py-0 text-left min-w-0">
                     <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Current CTC
                     </div>
@@ -887,13 +891,13 @@ export default function ResumeBankPage() {
                 </div>
 
                 {/* Tabs bar */}
-                <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
+                <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto scrollbar-none min-w-0">
                   {(["Profile", "Documents", "Languages", "Experience"] as const).map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
-                      className={`pb-3 text-xl font-semibold transition cursor-pointer relative ${activeTab === tab
+                      className={`pb-3 text-base sm:text-xl font-semibold transition cursor-pointer relative whitespace-nowrap shrink-0 ${activeTab === tab
                         ? "text-indigo-600 dark:text-indigo-400"
                         : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
                         }`}
@@ -910,78 +914,78 @@ export default function ResumeBankPage() {
                 <div>
                   {/* TAB 1: PROFILE */}
                   {activeTab === "Profile" && (
-                    <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800/60 text-xl">
-                      <div className="flex justify-between py-2">
+                    <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800/60 text-base sm:text-xl">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Application date</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {formatDate(selectedCandidate.APPLICATION_DATE1 || selectedCandidate.APPLICATION_DATE)}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Mobile / WhatsApp</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.MOB_NO || selectedCandidate.WHATSAPP_NO || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Email</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium truncate max-w-[260px]">
+                        <span className="text-slate-900 dark:text-slate-100 font-medium break-words sm:text-right max-w-full sm:max-w-[260px]">
                           {selectedCandidate.EMAIL || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Date of birth</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {formatDate(selectedCandidate.DOB1 || selectedCandidate.DOB)}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">City</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.CITY1 || selectedCandidate.CITY || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">State</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.STATE1 || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Location</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.LOC_CODE1 || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Key skills</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.SKILLS || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Father's name</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.FATHERS_NAME || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Mother's name</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.MOTHERS_NAME || "Not provided"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Expected CTC</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {selectedCandidate.EXPECTED_CTC
@@ -990,7 +994,7 @@ export default function ResumeBankPage() {
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Religion</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">
                           {religionMapping[selectedCandidate.RELIGION?.trim()] ||
@@ -999,9 +1003,9 @@ export default function ResumeBankPage() {
                         </span>
                       </div>
 
-                      <div className="flex justify-between py-2">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
                         <span className="text-slate-500 dark:text-slate-400 font-normal">Address</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium text-right max-w-[260px]">
+                        <span className="text-slate-900 dark:text-slate-100 font-medium sm:text-right break-words max-w-full sm:max-w-[260px]">
                           {selectedCandidate.ADDRESS || "Not provided"}
                         </span>
                       </div>
@@ -1010,7 +1014,7 @@ export default function ResumeBankPage() {
 
                   {/* TAB 2: DOCUMENTS */}
                   {activeTab === "Documents" && (
-                    <div className="space-y-3.5">
+                    <div className="space-y-3.5 min-w-0">
                       {[
                         { title: "Profile image", srno: 1, type: "image" },
                         { title: "Updated CV (PDF)", srno: 2, type: "pdf" },
@@ -1023,9 +1027,9 @@ export default function ResumeBankPage() {
                         return (
                           <div
                             key={doc.srno}
-                            className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 min-w-0"
                           >
-                            <div className="flex items-center gap-3.5">
+                            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
                               <div className="h-10 w-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                                 {doc.type === "image" ? (
                                   <ImageIcon className="h-5 w-5" />
@@ -1033,7 +1037,7 @@ export default function ResumeBankPage() {
                                   <FileText className="h-5 w-5" />
                                 )}
                               </div>
-                              <span className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                              <span className="text-base sm:text-xl font-bold text-slate-800 dark:text-slate-200 break-words">
                                 {doc.title}
                               </span>
                             </div>
@@ -1052,28 +1056,32 @@ export default function ResumeBankPage() {
                   {/* TAB 3: LANGUAGES */}
                   {activeTab === "Languages" && (
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                      <ReactTable
-                        columns={languageColumns}
-                        data={selectedCandidate?.EmpLang || []}
-                        showExcelExport={false}
-                        showTopSearch={false}
-                        showPageSizeInFooter={false}
-                        height="auto"
-                      />
+                      <div className="w-full overflow-x-auto">
+                        <ReactTable
+                          columns={languageColumns}
+                          data={selectedCandidate?.EmpLang || []}
+                          showExcelExport={false}
+                          showTopSearch={false}
+                          showPageSizeInFooter={false}
+                          height="auto"
+                        />
+                      </div>
                     </div>
                   )}
 
                   {/* TAB 4: EXPERIENCE */}
                   {activeTab === "Experience" && (
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                      <ReactTable
-                        columns={experienceColumns}
-                        data={selectedCandidate?.EmpExperience || []}
-                        showExcelExport={false}
-                        showTopSearch={false}
-                        showPageSizeInFooter={false}
-                        height="auto"
-                      />
+                      <div className="w-full overflow-x-auto">
+                        <ReactTable
+                          columns={experienceColumns}
+                          data={selectedCandidate?.EmpExperience || []}
+                          showExcelExport={false}
+                          showTopSearch={false}
+                          showPageSizeInFooter={false}
+                          height="auto"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1082,8 +1090,8 @@ export default function ResumeBankPage() {
               {/* ──────────────────────────────────────────────────────── */}
               {/* Screening Decision Card */}
               {/* ──────────────────────────────────────────────────────── */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-5">
-                <div className="flex items-center justify-between">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 md:p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-5 overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                       <Gavel className="h-5 w-5" />
@@ -1102,13 +1110,13 @@ export default function ResumeBankPage() {
                   getCandidateStatus(selectedCandidate) === "Selected") && (
                   <>
                     {/* Quick decision tags */}
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
                       {QUICK_DECISION_TAGS.map((tag) => (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => setRemarkReason(tag)}
-                          className={`px-4 py-2 rounded-xl text-lg sm:text-xl font-semibold transition cursor-pointer border ${remarkReason === tag
+                          className={`px-3 sm:px-4 py-2 rounded-xl text-base sm:text-xl font-semibold transition cursor-pointer border ${remarkReason === tag
                             ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-700 dark:text-indigo-300"
                             : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
                             }`}
@@ -1124,11 +1132,11 @@ export default function ResumeBankPage() {
                       value={remarkReason}
                       onChange={(e) => setRemarkReason(e.target.value)}
                       placeholder="Reason / remark for the decision..."
-                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
+                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-base sm:text-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
                     />
 
                     {/* Shortlist & Reject Buttons */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <AButton
                         variant="primary"
                         size="lg"
@@ -1153,13 +1161,13 @@ export default function ResumeBankPage() {
                 )}
 
                 {/* Print Buttons Grid with AButton */}
-                <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <AButton
                     variant="outline"
                     size="md"
                     onClick={handlePrint}
                     icon={<Printer className="h-4 w-4" />}
-                    className="text-xl font-bold cursor-pointer"
+                    className="text-base sm:text-xl font-bold cursor-pointer"
                   >
                     English print
                   </AButton>
@@ -1169,7 +1177,7 @@ export default function ResumeBankPage() {
                     size="md"
                     onClick={handlePrint}
                     icon={<Printer className="h-4 w-4" />}
-                    className="text-xl font-bold cursor-pointer"
+                    className="text-base sm:text-xl font-bold cursor-pointer"
                   >
                     Hindi print
                   </AButton>
@@ -1179,7 +1187,7 @@ export default function ResumeBankPage() {
           ) : (
             <div className="rounded-2xl border border-slate-200/90 bg-white p-14 text-center shadow-xs dark:border-slate-800 dark:bg-[#0B1220] text-slate-400">
               <User className="h-12 w-12 mx-auto mb-3 opacity-40" />
-              <p className="text-xl font-bold">Select a candidate to view dossier</p>
+              <p className="text-base sm:text-xl font-bold">Select a candidate to view dossier</p>
             </div>
           )}
         </div>

@@ -36,6 +36,7 @@ export default function EmployeeMasterBasicInfoPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [showValidationErrors, setShowValidationErrors] = useState<boolean>(false);
   const router = useRouter();
 
 
@@ -49,9 +50,9 @@ export default function EmployeeMasterBasicInfoPage() {
     EMAILID: "",
     MOBILE_NO: "",
     MSPIN: "",
-    REPORTING1: "",
-    REPORTING2: "",
-    REPORTING3: "",
+    REPORTING_1: "",
+    REPORTING_2: "",
+    REPORTING_3: "",
   });
 
   // Master Dropdown Options
@@ -72,55 +73,134 @@ export default function EmployeeMasterBasicInfoPage() {
   }, [searchFilter, selectedBranchFilter]);
 
   // Fetch Master Dropdown Options
-  const fetchMasters = async () => {
-    if (!user?.Comp_Code) return;
-    try {
-      const [mastersRes, empListRes] = await Promise.all([
-        axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
-          {},
-          { headers: { compcode: user.Comp_Code, name: user.name } }
-        ),
-        axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
-          { branch: user.branch },
-          { headers: { compcode: user.Comp_Code, name: user.name } }
-        ),
-      ]);
+const fetchMasters = async () => {
+  if (!user?.Comp_Code) return;
 
-      if (mastersRes?.data?.data) {
-        const m = mastersRes.data.data;
-        if (Array.isArray(m.EMPLOYEEDESIGNATION)) {
-          setDesignationOptions(
-            m.EMPLOYEEDESIGNATION.map((item: any) => ({
-              label: String(item.label || item.value),
-              value: String(item.value),
-            }))
-          );
+  try {
+    const [mastersRes, empListRes] = await Promise.all([
+      // -----------------------------------------
+      // DESIGNATION + LOCATION MASTERS
+      // -----------------------------------------
+      axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
+        {},
+        {
+          headers: {
+            compcode: user.Comp_Code,
+            name: user.name,
+          },
         }
-        if (Array.isArray(m.LOCATION)) {
-          setLocationOptions(
-            m.LOCATION.map((item: any) => ({
-              label: String(item.label || item.value),
-              value: String(item.value),
-            }))
-          );
-        }
-      }
+      ),
 
-      if (empListRes?.data?.data && Array.isArray(empListRes.data.data)) {
-        setEmployeeOptions(
-          empListRes.data.data.map((item: any) => ({
-            label: `${item.EMPCODE || ""} - ${item.EMPFIRSTNAME || ""} ${item.EMPLASTNAME || ""}`.trim(),
-            value: String(item.EMPCODE || item.value || ""),
+      // -----------------------------------------
+      // EMPLOYEE LIST FOR REPORTING DROPDOWNS
+      // -----------------------------------------
+      axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/findallemp`,
+        {
+          branch: user?.branch,
+        },
+        {
+          headers: {
+            compcode: user.Comp_Code,
+            name: user.name,
+          },
+        }
+      ),
+    ]);
+
+    // =====================================================
+    // DESIGNATION + LOCATION
+    // =====================================================
+    if (mastersRes?.data?.data) {
+      const masters = mastersRes.data.data;
+
+      // Designation
+      if (Array.isArray(masters.EMPLOYEEDESIGNATION)) {
+        setDesignationOptions(
+          masters.EMPLOYEEDESIGNATION.map((item: any) => ({
+            label: String(item.label || item.value || ""),
+            value: String(item.value || ""),
           }))
         );
+      } else {
+        setDesignationOptions([]);
       }
-    } catch (err) {
-      console.error("Error fetching employee masters:", err);
-    }
-  };
 
+      // Location
+      if (Array.isArray(masters.LOCATION)) {
+        setLocationOptions(
+          masters.LOCATION.map((item: any) => ({
+            label: String(item.label || item.value || ""),
+            value: String(item.value || ""),
+          }))
+        );
+      } else {
+        setLocationOptions([]);
+      }
+    }
+
+    // =====================================================
+    // EMPLOYEE REPORTING OPTIONS
+    // =====================================================
+
+    /*
+      API is already returning:
+
+      {
+        success: true,
+        data: [
+          {
+            label: "MA4609 RAJENDRA BAPU PACHARNE",
+            value: "MA4609"
+          },
+          ...
+        ]
+      }
+
+      So DON'T recreate the label using
+      EMPCODE / EMPFIRSTNAME / EMPLASTNAME.
+    */
+
+    const rawEmployees = empListRes?.data?.data;
+
+    console.log("Employee API response:", empListRes?.data);
+    console.log("Employee branch:", user?.branch);
+    console.log("Raw employees:", rawEmployees);
+
+    if (Array.isArray(rawEmployees)) {
+      const options = rawEmployees
+        .map((item: any) => ({
+          label: String(item?.label || "").trim(),
+          value: String(item?.value || "").trim(),
+        }))
+        .filter(
+          (item: { label: string; value: string }) =>
+            item.value !== ""
+        );
+
+      console.log("Reporting dropdown options:", options);
+
+      setEmployeeOptions(options);
+    } else {
+      console.error(
+        "Invalid employee API response:",
+        empListRes?.data
+      );
+
+      setEmployeeOptions([]);
+    }
+  } catch (err: any) {
+    console.error("Error fetching employee masters:", err);
+
+    console.error(
+      "Employee API error response:",
+      err?.response?.data
+    );
+
+    setEmployeeOptions([]);
+  }
+};
   // Fetch Employee Table Data
   const fetchTableData = async () => {
     if (!user?.Comp_Code) return;
@@ -210,6 +290,7 @@ export default function EmployeeMasterBasicInfoPage() {
   // Tab switch handler
   const handleTabChange = (tab: number) => {
     setActiveTab(tab);
+    setShowValidationErrors(false);
     if (tab === 2) {
       fetchTableData();
     }
@@ -225,6 +306,7 @@ export default function EmployeeMasterBasicInfoPage() {
 
   // Reset form
   const handleResetForm = () => {
+    setShowValidationErrors(false);
     setFormData({
       EMPCODE: "",
       EMPFIRSTNAME: "",
@@ -234,9 +316,9 @@ export default function EmployeeMasterBasicInfoPage() {
       EMAILID: "",
       MOBILE_NO: "",
       MSPIN: "",
-      REPORTING1: "",
-      REPORTING2: "",
-      REPORTING3: "",
+      REPORTING_1: "",
+      REPORTING_2: "",
+      REPORTING_3: "",
     });
     setIsEditMode(false);
     handleGenerateCode();
@@ -244,6 +326,7 @@ export default function EmployeeMasterBasicInfoPage() {
 
   // Edit Employee from table
   const handleEditEmployee = (row: any) => {
+    setShowValidationErrors(false);
     setFormData({
       EMPCODE: row.EMPCODE || "",
       EMPFIRSTNAME: row.EMPFIRSTNAME || "",
@@ -253,9 +336,9 @@ export default function EmployeeMasterBasicInfoPage() {
       EMAILID: row.EMAILID || "",
       MOBILE_NO: row.MOBILE_NO || "",
       MSPIN: row.MSPIN || "",
-      REPORTING1: row.REPORTING1 ? String(row.REPORTING1) : "",
-      REPORTING2: row.REPORTING2 ? String(row.REPORTING2) : "",
-      REPORTING3: row.REPORTING3 ? String(row.REPORTING3) : "",
+      REPORTING_1: row.REPORTING_1 ? String(row.REPORTING_1) : "",
+      REPORTING_2: row.REPORTING_2 ? String(row.REPORTING_2) : "",
+      REPORTING_3: row.REPORTING_3 ? String(row.REPORTING_3) : "",
     });
     setIsEditMode(true);
     setActiveTab(1);
@@ -305,6 +388,7 @@ export default function EmployeeMasterBasicInfoPage() {
     }
 
     if (requiredFields.length > 0) {
+      setShowValidationErrors(true);
       Swal.fire({
         icon: "warning",
         title: "Required Fields Missing",
@@ -549,9 +633,9 @@ export default function EmployeeMasterBasicInfoPage() {
         MOBILE_NO: formData.MOBILE_NO || null,
         MOBILENO: formData.MOBILE_NO || null,
         MSPIN: formData.MSPIN || null,
-        Reporting_1: formData.REPORTING1 || null,
-        Reporting_2: formData.REPORTING2 || null,
-        Reporting_3: formData.REPORTING3 || null,
+        Reporting_1: formData.REPORTING_1 || null,
+        Reporting_2: formData.REPORTING_2 || null,
+        Reporting_3: formData.REPORTING_3 || null,
         Created_by: user?.name || "admin",
         CREATED_BY: user?.name || "admin",
         Inserted_By: "Form",
@@ -924,7 +1008,10 @@ export default function EmployeeMasterBasicInfoPage() {
                     value={formData.EMPCODE}
                     readOnly={Boolean(formData.EMPCODE || isEditMode)}
                     onChange={(e) => handleInputChange("EMPCODE", e.target.value)}
-                    className={`flex-1 h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 ${formData.EMPCODE
+                    className={`flex-1 h-12 px-4 rounded-xl border ${showValidationErrors && !formData.EMPCODE?.trim()
+                      ? "border-rose-300 dark:border-rose-800/80"
+                      : "border-slate-300 dark:border-slate-700"
+                      } ${formData.EMPCODE
                       ? "bg-slate-50/80 dark:bg-slate-900/60 text-slate-800 dark:text-slate-100 font-medium cursor-not-allowed select-all"
                       : "bg-white dark:bg-black text-slate-900 dark:text-white"
                       } placeholder:text-slate-400 text-base focus:outline-none focus:ring-2 focus:ring-[#4F46E5]`}
@@ -957,7 +1044,7 @@ export default function EmployeeMasterBasicInfoPage() {
                   placeholder="First name"
                   value={formData.EMPFIRSTNAME}
                   onChange={(e) => handleInputChange("EMPFIRSTNAME", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${!formData.EMPFIRSTNAME && requiredFields.includes("first")
+                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${showValidationErrors && !formData.EMPFIRSTNAME?.trim()
                     ? "border-rose-300 dark:border-rose-800/80"
                     : "border-slate-300 dark:border-slate-700"
                     }`}
@@ -977,7 +1064,7 @@ export default function EmployeeMasterBasicInfoPage() {
                   placeholder="Last name"
                   value={formData.EMPLASTNAME}
                   onChange={(e) => handleInputChange("EMPLASTNAME", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${!formData.EMPLASTNAME && requiredFields.includes("last")
+                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${showValidationErrors && !formData.EMPLASTNAME?.trim()
                     ? "border-rose-300 dark:border-rose-800/80"
                     : "border-slate-300 dark:border-slate-700"
                     }`}
@@ -1008,7 +1095,7 @@ export default function EmployeeMasterBasicInfoPage() {
                   selectedValue={formData.LOCATION}
                   handleInputChange={handleInputChange}
                   labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className={`h-12 text-base font-medium rounded-xl ${!formData.LOCATION && requiredFields.includes("location")
+                  className={`h-12 text-base font-medium rounded-xl ${showValidationErrors && !formData.LOCATION
                     ? "border-rose-300 dark:border-rose-800"
                     : "border-slate-300 dark:border-slate-700"
                     }`}
@@ -1044,7 +1131,7 @@ export default function EmployeeMasterBasicInfoPage() {
                   maxLength={10}
                   value={formData.MOBILE_NO}
                   onChange={(e) => handleInputChange("MOBILE_NO", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] ${!formData.MOBILE_NO && requiredFields.includes("mobile")
+                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] ${showValidationErrors && !formData.MOBILE_NO?.trim()
                     ? "border-rose-300 dark:border-rose-800/80"
                     : "border-slate-300 dark:border-slate-700"
                     }`}
@@ -1071,9 +1158,9 @@ export default function EmployeeMasterBasicInfoPage() {
               <div>
                 <SelectSearch
                   title="Reporting 1"
-                  name="REPORTING1"
+                  name="REPORTING_1"
                   options={employeeOptions}
-                  selectedValue={formData.REPORTING1}
+                  selectedValue={formData.REPORTING_1}
                   handleInputChange={handleInputChange}
                   labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
                   className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
@@ -1084,9 +1171,9 @@ export default function EmployeeMasterBasicInfoPage() {
               <div>
                 <SelectSearch
                   title="Reporting 2"
-                  name="REPORTING2"
+                  name="REPORTING_2"
                   options={employeeOptions}
-                  selectedValue={formData.REPORTING2}
+                  selectedValue={formData.REPORTING_2}
                   handleInputChange={handleInputChange}
                   labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
                   className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
@@ -1097,9 +1184,9 @@ export default function EmployeeMasterBasicInfoPage() {
               <div>
                 <SelectSearch
                   title="Reporting 3"
-                  name="REPORTING3"
+                  name="REPORTING_3"
                   options={employeeOptions}
-                  selectedValue={formData.REPORTING3}
+                  selectedValue={formData.REPORTING_3}
                   handleInputChange={handleInputChange}
                   labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
                   className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
@@ -1111,16 +1198,16 @@ export default function EmployeeMasterBasicInfoPage() {
             {/* Form Footer */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
               <div>
-                {requiredFields.length > 0 ? (
+                {showValidationErrors && requiredFields.length > 0 ? (
                   <p className="text-sm font-semibold text-rose-500 dark:text-rose-400">
                     {requiredFields.length} required field(s) left: {requiredFields.join(", ")}
                   </p>
-                ) : (
+                ) : requiredFields.length === 0 ? (
                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4" />
                     All required fields filled
                   </p>
-                )}
+                ) : null}
               </div>
 
               <div className="flex items-center gap-3">

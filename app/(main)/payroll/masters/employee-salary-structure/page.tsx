@@ -2332,59 +2332,93 @@ const SalaryDetails = ({
   return (
     <div className="min-h-full w-full flex flex-col pb-24">
       {/* Top Action Bar */}
-      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-black px-3 sm:px-6 py-3 border-b border-[#E6E8EF] dark:border-[#2A2F3A] mb-4">
-        {/* Left: Brand + Back */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-10 w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-bold text-sm select-none shadow-sm">
-            HS
+      <div className="sticky top-0 z-30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-black px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#E6E8EF] dark:border-[#2A2F3A] mb-4">
+        {/* Top/Left: Brand + Back + Mobile Utility buttons */}
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-bold text-xs sm:text-sm select-none shadow-sm shrink-0">
+              HS
+            </div>
+
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => router.back()}
+              className="h-9 sm:h-10 px-3 rounded-xl gap-1.5 sm:gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs text-xs sm:text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
           </div>
 
-          <Button
-            variant="outline"
-            size="md"
-            onClick={() => router.back()}
-            className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+          {/* Mobile only: History & Help in the top row */}
+          <div className="flex sm:hidden items-center gap-1.5">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (formData?.EmpMst?.EMPCODE) {
+                  OutServiceView(formData.EmpMst.EMPCODE);
+                } else {
+                  showSideAlert("Please select or enter an employee first.", "warning");
+                }
+              }}
+              size="md"
+              className="h-9 px-2.5 rounded-xl gap-1.5 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs text-xs"
+            >
+              <History className="h-3.5 w-3.5" />
+              History
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => { }}
+              size="md"
+              className="h-9 px-2.5 rounded-xl gap-1.5 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs text-xs"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              Help
+            </Button>
+          </div>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (formData?.EmpMst?.EMPCODE) {
-                OutServiceView(formData.EmpMst.EMPCODE);
-              } else {
-                showSideAlert("Please select or enter an employee first.", "warning");
-              }
-            }}
-            size="md"
-            className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
-          >
-            <History className="h-4 w-4" />
-            History
-          </Button>
+        {/* Right / Bottom Actions: Desktop has all 4 actions, Mobile has Discard & Save */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+          {/* Desktop only: History & Help */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (formData?.EmpMst?.EMPCODE) {
+                  OutServiceView(formData.EmpMst.EMPCODE);
+                } else {
+                  showSideAlert("Please select or enter an employee first.", "warning");
+                }
+              }}
+              size="md"
+              className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            >
+              <History className="h-4 w-4" />
+              History
+            </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => { }}
-            size="md"
-            className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
-          >
-            <HelpCircle className="h-4 w-4" />
-            Help
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => { }}
+              size="md"
+              className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Help
+            </Button>
+          </div>
 
           <Button
             variant="outline"
             onClick={handleReset}
             size="md"
-            className="h-10 rounded-xl gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            className="h-9 sm:h-10 flex-1 sm:flex-initial rounded-xl gap-1.5 sm:gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs text-xs sm:text-sm justify-center"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Discard
           </Button>
 
@@ -2392,9 +2426,9 @@ const SalaryDetails = ({
             onClick={isEditMode ? handleUpdateEmployee : handleSaveEmployee}
             size="md"
             disabled={isLoading}
-            className="h-10 rounded-xl gap-2 bg-[#4F46E5] hover:bg-[#433df0] text-white font-medium shadow-xs"
+            className="h-9 sm:h-10 flex-[1.4] sm:flex-initial rounded-xl gap-1.5 sm:gap-2 bg-[#4F46E5] hover:bg-[#433df0] text-white font-medium shadow-xs text-xs sm:text-sm justify-center"
           >
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             {isEditMode ? "Update employee" : "Save employee"}
           </Button>
         </div>

@@ -37,7 +37,7 @@ export const useSecureStorage = () => {
     const getcompdata = () => {
         const stored = localStorage.getItem("secure_user_data");
         if (!stored) return null;
-        return decrypt(stored);
+        return decrypt(stored);  
     };
 
     // SET

@@ -68,14 +68,14 @@ const Page: React.FC = () => {
   ];
 
   const constraints = {
-    Emp_Company: { type: "TEXT", required: true },
-    Emp_Designation: { type: "TEXT", required: true },
-    Emp_Responsibility: { type: "TEXT" },
-    Emp_From_Date: { type: "DATE", required: true },
-    Emp_To_Date: { type: "DATE" },
-    Emp_Settlement_Done: { type: "TEXT" },
-    Emp_Drawn_Salary: { type: "NUMBER" },
-    Emp_Leaving_Reason: { type: "TEXT" },
+    Emp_Company: { type: "TEXT", required: true, minWidth: "160px" },
+    Emp_Designation: { type: "TEXT", required: true, minWidth: "160px" },
+    Emp_Responsibility: { type: "TEXT", minWidth: "180px" },
+    Emp_From_Date: { type: "DATE", required: true, placeholder: "dd/mm/yyyy", minWidth: "140px" },
+    Emp_To_Date: { type: "DATE", placeholder: "dd/mm/yyyy", minWidth: "140px" },
+    Emp_Settlement_Done: { type: "TEXT", minWidth: "160px" },
+    Emp_Drawn_Salary: { type: "NUMBER", minWidth: "140px" },
+    Emp_Leaving_Reason: { type: "TEXT", minWidth: "180px" },
   };
 
   return (

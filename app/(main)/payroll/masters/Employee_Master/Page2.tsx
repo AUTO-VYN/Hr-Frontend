@@ -80,7 +80,21 @@ const Page2 = ({ masterData, isMandatory }) => {
     let isValid = true;
 
     if (name == "ALTERNET_MAIL") {
-      isValid = validateEmail(value);
+      const trimmed = (value ?? "").toString().trim();
+      const hasAt = trimmed.includes("@");
+      const hasDotCom =
+        trimmed.toLowerCase().includes(".com") ||
+        /\.[a-zA-Z]{2,}$/.test(trimmed);
+
+      if (!trimmed) {
+        isValid = true;
+      } else if (hasDotCom && !hasAt) {
+        isValid = false;
+      } else if (hasDotCom && hasAt) {
+        isValid = validateEmail(trimmed);
+      } else {
+        isValid = true;
+      }
     }
 
     setFormData((prevData) => {
@@ -95,7 +109,9 @@ const Page2 = ({ masterData, isMandatory }) => {
       setErrors((prevErrors) => ({
         ...prevErrors,
         [name]:
-          value && typeof value == "string"
+          name === "ALTERNET_MAIL"
+            ? !isValid
+            : value && typeof value == "string"
             ? value.trim()
               ? !isValid
               : true

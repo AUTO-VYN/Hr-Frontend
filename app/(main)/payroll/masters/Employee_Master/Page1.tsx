@@ -221,16 +221,31 @@ if (name === "OTP_With_Aadhaar") {
       }
     }
 
-    // ✅ Official email -> validate + debounced existing check
+    // ✅ Official email -> validate only when .com/domain is typed without @
     if (name === "CORPORATEMAILID") {
       const str = toStr(value);
-      isValid = validateEmail(str);
+      const trimmed = str.trim();
+      const hasAt = trimmed.includes("@");
+      const hasDotCom =
+        trimmed.toLowerCase().includes(".com") ||
+        /\.[a-zA-Z]{2,}$/.test(trimmed);
 
-      const trimmedEmail = str.trim();
-      if (validateEmail(trimmedEmail)) {
+      if (!trimmed) {
+        isValid = true;
+      } else if (hasDotCom && !hasAt) {
+        // @ na lagake .com kiya ho tabhi invalid error dikhaye
+        isValid = false;
+      } else if (hasDotCom && hasAt) {
+        isValid = validateEmail(trimmed);
+      } else {
+        // Usse pehle error nahi dikhana hai
+        isValid = true;
+      }
+
+      if (validateEmail(trimmed)) {
         if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
         emailDebounceRef.current = setTimeout(() => {
-          EmailpreviousDeatils(trimmedEmail);
+          EmailpreviousDeatils(trimmed);
         }, 500);
       }
       value = str;
@@ -314,7 +329,12 @@ if (name === "OTP_With_Aadhaar") {
     if (typeof value === "string") {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: value.trim() ? !isValid : true,
+        [name]:
+          name === "CORPORATEMAILID"
+            ? !isValid
+            : value.trim()
+            ? !isValid
+            : true,
       }));
     } else {
       setErrors((prevErrors) => ({
@@ -335,7 +355,7 @@ if (name === "OTP_With_Aadhaar") {
         });
         Swal.fire({
           icon: "warning",
-          title: "Mobile Number Required",
+          title: "OFFICIAL Mobile Number Required",
           text: "Please Enter Official Mobile Number first",
         });
         return;
@@ -690,7 +710,7 @@ if (name === "OTP_With_Aadhaar") {
       });
       Swal.fire({
         icon: "warning",
-        title: "Mobile Number Required",
+        title: "OFFICIAL Mobile Number Required",
         text: "Mobile number is required",
       });
       return;

@@ -187,9 +187,9 @@ const Page: React.FC = () => {
     Aset_Code: { type: "TEXT", required: true, disabled: true },
     Aset_Name: { type: "TEXT", required: true, disabled: true },
     Asset_Type: { type: "Select", required: true, disabled: true },
-    Issue_Date: { type: "DATE", required: true, disabled: true },
-    Revoke_Date: { type: "DATE" },
-    Lost_Date: { type: "DATE" },
+    Issue_Date: { type: "DATE", required: true, disabled: true, placeholder: "dd/mm/yyyy" },
+    Revoke_Date: { type: "DATE", placeholder: "dd/mm/yyyy" },
+    Lost_Date: { type: "DATE", placeholder: "dd/mm/yyyy" },
     Revoke_Rem: { type: "TEXT" },
   };
 
