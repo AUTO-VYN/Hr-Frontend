@@ -472,9 +472,30 @@ export default function ServiceTablePagination({
     : allRows.length;
 
   // ✅ rendering rows: normal mode => page, allMode(server) => allRows (loaded so far)
-  const rowsToRender = serverMode && allMode ? allRows : page;
+const rowsToRender = useMemo(() => {
+  // ALL mode
+  if (serverMode && allMode) {
+    return allRows;
+  }
 
-  const displayedCount = rowsToRender.length;
+  // SERVER mode
+  if (serverMode) {
+    const size = serverPagination?.pageSize || 10;
+
+    return allRows.slice(0, size);
+  }
+
+  // CLIENT mode
+  return page;
+}, [
+  serverMode,
+  allMode,
+  allRows,
+  page,
+  serverPagination?.pageSize,
+]);
+
+const displayedCount = rowsToRender.length;
 
   const clientCanPrev = pageIndex > 0;
   const clientCanNext = pageIndex + 1 < (pageOptions.length || clientCalculatedPageCount);

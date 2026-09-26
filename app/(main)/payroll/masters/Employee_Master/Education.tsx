@@ -45,11 +45,11 @@ const columns = [
 ];
 
 const constraints = {
-  Emp_Degree: { type: "TEXT", required: true, max: 30 },
-  Emp_Board: { type: "TEXT", max: 30 },
-  Emp_College: { type: "TEXT", max: 30 },
-  Emp_Passing_year: { type: "NUMBER", max: 4 },
-  Emp_Percentage: { type: "NUMBER", max: 5 },
+  Emp_Degree: { type: "TEXT", required: true, max: 30, placeholder: "e.g. B.Tech / MBA / 12th" },
+  Emp_Board: { type: "TEXT", max: 30, placeholder: "e.g. CBSE / State Board / University" },
+  Emp_College: { type: "TEXT", max: 30, placeholder: "e.g. College / School Name" },
+  Emp_Passing_year: { type: "NUMBER", max: 4, placeholder: "e.g. 2023" },
+  Emp_Percentage: { type: "NUMBER", max: 5, placeholder: "e.g. 85 or 8.5" },
 };
 
 const columnsShow1 = [
@@ -68,11 +68,11 @@ const columns1 = [
 ];
 
 const constraints1 = {
-  Emp_Tool: { type: "TEXT", required: true, max: 30 },
-  Emp_Version: { type: "TEXT", max: 30 },
-  Emp_Proficiency: { type: "TEXT", max: 30 },
-  Emp_Last_Used: { type: "NUMBER", max: 4 },
-  Emp_Experience: { type: "TEXT", max: 9 },
+  Emp_Tool: { type: "TEXT", required: true, max: 30, placeholder: "e.g. React / Java / Excel" },
+  Emp_Version: { type: "TEXT", max: 30, placeholder: "e.g. 18.0 / 2021" },
+  Emp_Proficiency: { type: "TEXT", max: 30, placeholder: "e.g. Beginner / Intermediate / Expert" },
+  Emp_Last_Used: { type: "NUMBER", max: 4, placeholder: "e.g. 2024" },
+  Emp_Experience: { type: "TEXT", max: 9, placeholder: "e.g. 2" },
 };
 
 const columnsShow2 = [
@@ -91,11 +91,11 @@ const columns2 = [
 ];
 
 const constraints2 = {
-  Emp_Language: { type: "TEXT", required: true, max: 30 },
-  Emp_Language_Understand: { type: "TEXT", max: 30 },
-  Emp_Language_Speak: { type: "TEXT", max: 30 },
-  Emp_Language_Read: { type: "TEXT", max: 30 },
-  Emp_Language_Write: { type: "TEXT", max: 30 },
+  Emp_Language: { type: "TEXT", required: true, max: 30, placeholder: "e.g. English / Hindi" },
+  Emp_Language_Understand: { type: "TEXT", max: 30, placeholder: "Yes / No" },
+  Emp_Language_Speak: { type: "TEXT", max: 30, placeholder: "Yes / No" },
+  Emp_Language_Read: { type: "TEXT", max: 30, placeholder: "Yes / No" },
+  Emp_Language_Write: { type: "TEXT", max: 30, placeholder: "Yes / No" },
 };
 
 // ------- Icons (UI only) -------
@@ -214,7 +214,11 @@ const YourComponent: React.FC = () => {
 
   const [tableData, setTableData] = useState(formData.EmpEdu || [{}]);
   const [tableData1, setTableData1] = useState(formData.EmpItSkill || [{}]);
-  const [tableData2, setTableData2] = useState(formData.EmpLang || [{}]);
+  const [tableData2, setTableData2] = useState(
+    Array.isArray(formData.EmpLang) && formData.EmpLang.length > 0
+      ? formData.EmpLang
+      : [{}]
+  );
   const [certificates, setCertificates] = useState<any>(
     formData.EmpCertificates || {},
   );

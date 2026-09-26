@@ -346,9 +346,6 @@ export default function Page() {
     setIsAllSelected(checked);
 
     const selectableFiltered = filteredLocations.filter(isLocationSelectable);
-    const skippedLocations = filteredLocations.filter(
-      (loc: any) => !isLocationSelectable(loc),
-    );
 
     if (checked) {
       const filteredKeys = selectableFiltered.map((item: any) => item.key);
@@ -357,14 +354,6 @@ export default function Page() {
       );
 
       onCheck([...otherSelectedKeys, ...filteredKeys], { checked: true });
-
-      if (skippedLocations.length > 0) {
-        const msg =
-          skippedLocations.length === 1
-            ? `Geo location is not set for ${skippedLocations[0].title} — cannot select it`
-            : `Geo location is not set for ${skippedLocations.length} locations — cannot select them`;
-        showSideAlert(msg, "warning");
-      }
     } else {
       const remainingKeys = checkedKeys.filter(
         (key) => !filteredLocations.some((loc: any) => loc.key === key),

@@ -333,6 +333,13 @@ export default function page({ masterData, isMandatory }: any) {
   }, []);
 
   const handleInputChange = (name: any, value: any) => {
+    // ✅ Prev. exp. (years) only numbers (no words/letters)
+    if (name === "EXP_IN_YEAR") {
+      const str = (value ?? "").toString().replace(/[^0-9.]/g, "");
+      const parts = str.split(".");
+      value = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : str;
+    }
+
     setFormData((prevData: any) => ({
       ...prevData,
       EmpMst: {

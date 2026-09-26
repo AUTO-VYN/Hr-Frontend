@@ -75,11 +75,11 @@ const Education: React.FC<Props> = ({ flag }) => {
     "Emp_Percentage",
   ];
   const constraints = {
-    Emp_Degree: { type: "TEXT", required: true, max: 30 },
-    Emp_Board: { type: "TEXT", max: 30 },
-    Emp_College: { type: "TEXT", max: 30 },
-    Emp_Passing_year: { type: "NUMBER", max: 4 },
-    Emp_Percentage: { type: "NUMBER", max: 5 },
+    Emp_Degree: { type: "TEXT", required: true, max: 30, placeholder: "e.g. B.Tech / MBA / 12th" },
+    Emp_Board: { type: "TEXT", max: 30, placeholder: "e.g. CBSE / State Board / University" },
+    Emp_College: { type: "TEXT", max: 30, placeholder: "e.g. College / School Name" },
+    Emp_Passing_year: { type: "NUMBER", max: 4, placeholder: "e.g. 2023" },
+    Emp_Percentage: { type: "NUMBER", max: 5, placeholder: "e.g. 85 or 8.5" },
   };
 
   // Tools & Technologies
@@ -98,11 +98,11 @@ const Education: React.FC<Props> = ({ flag }) => {
     "Emp_Experience",
   ];
   const constraints1 = {
-    Emp_Tool: { type: "TEXT", required: true, max: 30 },
-    Emp_Version: { type: "TEXT", max: 30 },
-    Emp_Proficiency: { type: "TEXT", max: 30 },
-    Emp_Last_Used: { type: "NUMBER", max: 4 },
-    Emp_Experience: { type: "TEXT", max: 10 },
+    Emp_Tool: { type: "TEXT", required: true, max: 30, placeholder: "e.g. React / Java / Excel" },
+    Emp_Version: { type: "TEXT", max: 30, placeholder: "e.g. 18.0 / 2021" },
+    Emp_Proficiency: { type: "TEXT", max: 30, placeholder: "e.g. Beginner / Intermediate / Expert" },
+    Emp_Last_Used: { type: "NUMBER", max: 4, placeholder: "e.g. 2024" },
+    Emp_Experience: { type: "NUMBER", max: 4, placeholder: "e.g.2" },
   };
 
   // Languages
@@ -121,11 +121,11 @@ const Education: React.FC<Props> = ({ flag }) => {
     "Emp_Language_Write",
   ];
   const constraints2 = {
-    Emp_Language: { type: "TEXT", required: true, max: 25 },
-    Emp_Language_Understand: { type: "TEXT", max: 10 },
-    Emp_Language_Speak: { type: "TEXT", max: 10 },
-    Emp_Language_Read: { type: "TEXT", max: 10 },
-    Emp_Language_Write: { type: "TEXT", max: 10 },
+    Emp_Language: { type: "TEXT", required: true, max: 25, placeholder: "e.g. English / Hindi" },
+    Emp_Language_Understand: { type: "TEXT", max: 10, placeholder: "Yes / No" },
+    Emp_Language_Speak: { type: "TEXT", max: 10, placeholder: "Yes / No" },
+    Emp_Language_Read: { type: "TEXT", max: 10, placeholder: "Yes / No" },
+    Emp_Language_Write: { type: "TEXT", max: 10, placeholder: "Yes / No" },
   };
 
   return (

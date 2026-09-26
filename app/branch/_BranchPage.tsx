@@ -23,6 +23,7 @@ import { fetchBranch } from "@/action/branch";
 import { logoutAction } from "@/action/loginAction";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import ReleaseNotesDialog from "@/components/shared/ReleaseNotesDialog";
+import { useSecureStorage } from "../hooks/comp-key-data";
 
 type Company = {
   Comp_Code: string | number;
@@ -57,7 +58,6 @@ const STATS = [
   },
 ];
 
-// ✅ Correct (Initialized with array):
 const PEOPLE: Array<{
   initials: string;
   name: string;
@@ -93,6 +93,7 @@ const BranchCom = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [err, setErr] = useState("");
   const loadedOnce = useRef(false);
+  const {setcompdata} = useSecureStorage()
 
 
   useEffect(() => {
@@ -107,7 +108,8 @@ const BranchCom = () => {
       const response = await fetchBranch(user);
       const data: Company[] = response?.data || [];
       setCompanies(data);
-      if (data[0]) setCompCode(String(data[0].Comp_Code));
+      if (data[0]) setCompCode(String(data[0].Comp_Code))
+      if (response?.compKeyData) setcompdata(response.compKeyData[0]);
     } catch (err) {
       setErr("Couldn't load your branches. Please try again.");
     } finally {

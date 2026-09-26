@@ -959,12 +959,7 @@ export default function Page() {
     setTab(next);
     setEmpView(next);
     setCurrentPage(1);
-    setDashbord((prev) => ({
-      ...prev,
-      Joining_DateFROM: "",
-      Joining_DateTO: "",
-    }));
-    showapi(next, 1, pageSize, {}, true);
+    showapi(next, 1, pageSize, {}, true, dashbord);
   };
 
   return (

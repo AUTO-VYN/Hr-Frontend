@@ -267,6 +267,11 @@ const TableComponent: React.FC<TableComponentProps> = ({
                               ? "image/*,application/pdf"
                               : undefined
                           }
+                          placeholder={
+                            constraints[column]?.placeholder ||
+                            columnsShow?.[columnIndex] ||
+                            ""
+                          }
                           onKeyDown={(e) => handleKeyDown(e, rowIndex, columnIndex)}
                           onChange={(e: any) =>
                             handleInputChange(

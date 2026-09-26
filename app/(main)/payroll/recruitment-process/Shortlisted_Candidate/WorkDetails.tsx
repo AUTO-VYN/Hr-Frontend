@@ -58,14 +58,14 @@ const WorkDetails: React.FC<Props> = ({ flag }) => {
   ];
 
   const constraints = {
-    Emp_Company: { type: "TEXT", required: true, max: 30 },
-    Emp_Designation: { type: "TEXT", required: true, max: 30 },
-    Emp_Responsibility: { type: "TEXT", max: 50 },
-    Emp_From_Date: { type: "DATE", required: true },
-    Emp_To_Date: { type: "DATE" },
-    Emp_Settlement_Done: { type: "TEXT", max: 30 },
-    Emp_Drawn_Salary: { type: "NUMBER", max: 9 },
-    Emp_Leaving_Reason: { type: "TEXT", max: 50 },
+    Emp_Company: { type: "TEXT", required: true, max: 30, minWidth: "160px" },
+    Emp_Designation: { type: "TEXT", required: true, max: 30, minWidth: "160px" },
+    Emp_Responsibility: { type: "TEXT", max: 50, minWidth: "180px" },
+    Emp_From_Date: { type: "DATE", required: true, placeholder: "dd/mm/yyyy", minWidth: "140px" },
+    Emp_To_Date: { type: "DATE", placeholder: "dd/mm/yyyy", minWidth: "140px" },
+    Emp_Settlement_Done: { type: "TEXT", max: 30, minWidth: "160px" },
+    Emp_Drawn_Salary: { type: "NUMBER", max: 9, minWidth: "140px" },
+    Emp_Leaving_Reason: { type: "TEXT", max: 50, minWidth: "180px" },
   };
 
   return (
