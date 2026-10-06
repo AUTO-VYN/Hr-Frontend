@@ -682,7 +682,7 @@ export default function LetterCreatorPage() {
   }, [wordCount]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-4 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-24">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-24">
 
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER & MAIN ACTION BUTTONS */}
@@ -697,10 +697,10 @@ export default function LetterCreatorPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end">
           <AButton
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={handlePrint}
             icon={<Printer className="h-4 w-4" />}
             className="!rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xs"
@@ -708,38 +708,8 @@ export default function LetterCreatorPage() {
             <span>Print letter</span>
           </AButton>
 
-          <AButton
-            variant="primary"
-            size="sm"
-            disabled={Boolean(fetchdata.TEMPLATENAME)}
-            onClick={save}
-            loading={isSaving}
-            icon={<Save className="h-4 w-4" />}
-            className="!rounded-xl !bg-[#4338CA] hover:!bg-[#3730a3] text-white shadow-xs disabled:opacity-50"
-          >
-            <span>Save template</span>
-          </AButton>
+          
 
-          <AButton
-            variant="secondary"
-            size="sm"
-            disabled={!fetchdata.TEMPLATENAME}
-            onClick={update}
-            loading={isUpdating}
-            className="!rounded-xl shadow-xs disabled:opacity-50"
-          >
-            <span>Update</span>
-          </AButton>
-
-          <AButton
-            variant="ghost"
-            size="sm"
-            onClick={() => history.back()}
-            icon={<ArrowLeft className="h-4 w-4" />}
-            className="!rounded-xl"
-          >
-            <span>Back</span>
-          </AButton>
         </div>
       </div>
 
@@ -748,14 +718,14 @@ export default function LetterCreatorPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: SETUP, TOKENS, RICH EDITOR */}
-        <div className="lg:col-span-6 space-y-4">
+        <div className="lg:col-span-6 space-y-4 min-w-0">
           {/* Card 1: Template setup */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
                 <FileText className="h-4 w-4" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                 Template setup
               </h2>
             </div>
@@ -826,10 +796,10 @@ export default function LetterCreatorPage() {
                   <span className="font-mono font-bold text-sm">{"{}"}</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                     Merge tokens
                   </h2>
-                  <p className="text-lg text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Click to append at the end of the letter
                   </p>
                 </div>
@@ -854,7 +824,7 @@ export default function LetterCreatorPage() {
                     type="button"
                     onClick={() => handleInsertToken(token.key)}
                     title={`Click to insert {${token.key}}`}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-lg font-semibold border transition-all cursor-pointer select-none active:scale-95 ${isUsed
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-pointer select-none active:scale-95 ${isUsed
                         ? "bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
                         : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300"
                       }`}
@@ -896,7 +866,7 @@ export default function LetterCreatorPage() {
         </div>
 
         {/* RIGHT COLUMN: LIVE GENERATED LETTER PREVIEW */}
-        <div className="lg:col-span-6 space-y-4">
+        <div className="lg:col-span-6 space-y-4 min-w-0">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
             {/* Header of Preview Card */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -904,7 +874,7 @@ export default function LetterCreatorPage() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
                   <Eye className="h-4 w-4" />
                 </div>
-                <h2 className="text-xl  font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   Generated Letter
                 </h2>
               </div>
@@ -936,7 +906,7 @@ export default function LetterCreatorPage() {
             <div className="pt-3 pb-2">
               <label
                 htmlFor="KEYWORDS"
-                className="block uppercase text-lg font-semibold  mb-1.5 text-[#193A69] dark:text-[#E2E8F0]"
+                className="block uppercase text-lg sm:text-lg font-semibold mb-1.5 text-[#193A69] dark:text-[#E2E8F0]"
               >
                 Example (Title:Mr/Mrs, Name:Himanshu, ...):
               </label>
@@ -945,16 +915,16 @@ export default function LetterCreatorPage() {
                 name="KEYWORDS"
                 handleInputChange={handleSelectChange}
                 value={formData.KEYWORDS}
-                className="px-3.5 py-3 dark:bg-slate-900 rounded-xl text-lg font-normal leading-relaxed border border-slate-200 dark:border-slate-700 shadow-xs focus:outline-none focus:ring w-full transition-all min-h-[110px]"
+                className="px-3.5 py-3 dark:bg-slate-900 rounded-xl text-sm sm:text-base font-normal leading-relaxed border border-slate-200 dark:border-slate-700 shadow-xs focus:outline-none focus:ring w-full transition-all min-h-[110px]"
               />
             </div>
 
             {/* Generated Letter Container matching componentRef */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0E1524] p-3 sm:p-5 overflow-hidden">
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0E1524] p-2 sm:p-5 overflow-hidden">
               <div
                 ref={componentRef}
                 id="generatedLetter"
-                className="break-words font-sans bg-white dark:bg-[#101827] text-[#0F172A] dark:text-[#E2E8F0] rounded-xl border border-slate-200 dark:border-slate-800 shadow-md p-6 sm:p-9 min-h-[700px] flex flex-col"
+                className="break-words font-sans bg-white dark:bg-[#101827] text-[#0F172A] dark:text-[#E2E8F0] rounded-xl border border-slate-200 dark:border-slate-800 shadow-md p-3 sm:p-6 lg:p-9 min-h-[700px] flex flex-col w-full min-w-0"
                 style={{
                   paddingTop: showHeader ? "10px" : "120px",
                   paddingLeft: "10px",
@@ -963,16 +933,16 @@ export default function LetterCreatorPage() {
                   lineHeight: "1.8",
                   overflowY: "auto",
                   whiteSpace: "pre-wrap",
-                  minHeight: "100vh",
+                  minHeight: "700px",
                 }}
               >
                 {showHeader && (
                   <>
-                    <div className="grid grid-cols-12 mb-4">
+                    <div className="grid grid-cols-12 mb-4 min-w-0">
                       <div className="col-span-12">
-                        <div className="grid grid-cols-12 items-center">
+                        <div className="grid grid-cols-12 items-center min-w-0">
                           {/* Company Logo */}
-                          <div className="col-span-4 flex items-center">
+                          <div className="col-span-4 min-w-0 flex items-center">
                             <Image
                               src={compLogo || "/logo.png"}
                               alt="company logo"
@@ -983,14 +953,14 @@ export default function LetterCreatorPage() {
                           </div>
 
                           {/* Company Name & Location */}
-                          <div className="col-span-4 flex flex-col items-center justify-center text-center">
-                            <h2 className="font-bold text-lg">{SelectEmployeedata?.COMPANY_NAME_EMP || company?.Comp_Name || ""}</h2>
+                          <div className="col-span-4 min-w-0 flex flex-col items-center justify-center text-center px-1">
+                            <h2 className="font-bold text-xs sm:text-lg break-words">{SelectEmployeedata?.COMPANY_NAME_EMP || company?.Comp_Name || ""}</h2>
                             <p>{SelectEmployeedata?.EMPLOCATION || ""}</p>
                           </div>
 
                           {/* Maruti / Partner Logo */}
-                          <div className="col-span-4 flex justify-end">
-                            <div className="h-full flex items-center justify-end">
+                          <div className="col-span-4 min-w-0 flex justify-end">
+                            <div className="h-full min-w-0 flex items-center justify-end">
                               <Image
                                 src={MarutiLogo || "/maruti.png"}
                                 alt="company logo"
@@ -1006,7 +976,7 @@ export default function LetterCreatorPage() {
                     </div>
                   </>
                 )}
-                <div dangerouslySetInnerHTML={{ __html: generatedLetter }} className="mt-8" />
+                <div dangerouslySetInnerHTML={{ __html: generatedLetter }} className="mt-8 min-w-0 break-words overflow-wrap-anywhere" />
               </div>
             </div>
           </div>
@@ -1016,9 +986,9 @@ export default function LetterCreatorPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 3. BOTTOM FLOATING ACTION BAR */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3 px-6 shadow-lg">
-        <div className="max-w-[1780px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xl">
+      <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3 px-3 sm:px-6 shadow-lg transition-[left] duration-150 ease-in-out">
+        <div className="max-w-[1780px] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="text-xl text-slate-500 dark:text-slate-400 truncate max-w-xl">
             <span className="font-semibold text-slate-700 dark:text-slate-200">
               {formData.TEMPLATE_NAME || "Untitled Template"}
             </span>
@@ -1030,19 +1000,19 @@ export default function LetterCreatorPage() {
             <span className="tabular-nums">{wordCount} words</span>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
             <AButton
               variant="outline"
-              size="sm"
+              size="lg"
               onClick={refresh}
-              className="!rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+              className="!rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 max-w-full"
             >
               <span>Discard changes</span>
             </AButton>
 
             <AButton
               variant="secondary"
-              size="sm"
+              size="lg"
               disabled={!fetchdata.TEMPLATENAME}
               onClick={update}
               loading={isUpdating}
@@ -1053,7 +1023,7 @@ export default function LetterCreatorPage() {
 
             <AButton
               variant="primary"
-              size="sm"
+              size="lg"
               disabled={Boolean(fetchdata.TEMPLATENAME)}
               onClick={save}
               loading={isSaving}
