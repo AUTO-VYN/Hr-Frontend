@@ -51,6 +51,8 @@ const Printout = forwardRef<HTMLDivElement, any>((props, ref) => {
     return Object.values(rows);
   };
 
+  const evaluationRows = buildEvaluationTable(formData1?.EvaluationCriteria);
+
   const getCompCode = () => {
     return (
       user?.Comp_Code ||

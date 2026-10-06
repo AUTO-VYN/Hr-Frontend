@@ -46,7 +46,7 @@ export async function AddMaster(data: any, user: any) {
 export async function AddMaster1(data: any, user: any) {
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/master/addmaster1`,
+      `${process.env.NEXT_PUBLIC_URL}/master/insertData1`,
       data,
       {
         headers: {
@@ -65,7 +65,7 @@ export async function AddMaster1(data: any, user: any) {
 export async function UpdateMaster(data: any, user: any) {
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/master/updateMaster`,
+      `${process.env.NEXT_PUBLIC_URL}/master/updateMaster1`,
       data,
       {
         headers: {

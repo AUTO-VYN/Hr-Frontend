@@ -37,19 +37,19 @@ export default function HrMasterPage() {
   const [saveDisabledMisPunch, setSaveDisabledMisPunch] = useState(false);
   const [updateDisabledMisPunch, setUpdateDisabledMisPunch] = useState(true);
 
-  const [formDataMisPunch, setFormDataMisPunch] = useState({
+  const [ formDataMisPunch, setFormDataMisPunch] = useState({
     Misc_Name: "",
     Misc_Abbr: "",
-    Misc_Dtl1: "Actual",
-    Misc_Dtl3: "0",
-    Misc_Dtl2: "Actual",
-    Misc_Num1: "0",
-    MISC_NUM2: "0",
-    Misc_Mob: "0",
+    Misc_Dtl1: "",
+    Misc_Dtl3: "",
+    Misc_Dtl2: "",
+    Misc_Num1: "",
+    MISC_NUM2: "",
+    Misc_Mob: "",
     UTD: "",
     Exp_Date: null as any,
-    CC_Group: "0",
-    CC_Ledg: "0",
+    CC_Group: "",
+    CC_Ledg: "",
     Created_By: user?.name,
     Loc_Code: user?.branch,
   });
@@ -132,25 +132,25 @@ export default function HrMasterPage() {
     setUpdateDisabledMisPunch(true);
   };
 
-  const handleSaveMisPunch = async () => {
-    if (user?.branch?.toString().includes(",")) {
-      Swal.fire({
-        icon: "warning",
-        title: "Not Allowed",
-        text: "Multi branch not allowed to save entry",
-      });
-      return;
-    }
+const handlesaveMisPunch = async () => {
+  console.log(formDataMisPunch, "hjhjdgfdjg");
 
-    if (!formDataMisPunch.Misc_Name || formDataMisPunch.Misc_Name.trim() === "") {
-      Swal.fire({
-        icon: "warning",
-        title: "Please Ensure",
-        text: "Mispunch Reason cannot be empty",
-      });
-      return;
-    }
+  if (user?.branch?.toString().includes(",")) {
+    Swal.fire({
+      icon: "warning",
+      title: "Not Allowed",
+      text: "Multi branch not allowed to save entry",
+    });
+    return;
+  }
 
+  if (formDataMisPunch.Misc_Name == null || formDataMisPunch.Misc_Name == "") {
+    Swal.fire({
+      icon: "warning",
+      title: "Please Ensure",
+      text: "Name can not be Empty ",
+    });
+  } else {
     const BodyData = {
       Created_by: user?.name,
       MiscMst: {
@@ -170,28 +170,73 @@ export default function HrMasterPage() {
       },
     };
 
+    console.log(BodyData, "BodyData");
+
     setIsLoading(true);
+
     try {
-      const response = await AddMaster1(BodyData, user);
-      if (response === 200) {
+      const response: any = await AddMaster1(BodyData, user);
+
+      console.log("AddMaster1 Response:", response);
+
+      if (
+        response === 200 ||
+        response?.status === 200 ||
+        response?.success === true
+      ) {
         Swal.fire({
           icon: "success",
           title: "Success!",
-          text: "Mispunch reason saved successfully.",
+          text: "Master saved successfully.",
         });
-        await fetchMisPunchData();
-        handleClearMisPunch();
+
+        await fetchtabledata();
+
+        setFormData({
+          Misc_Name: "",
+          Misc_Abbr: "",
+          Misc_Dtl1: "",
+          Misc_Dtl3: "",
+          Misc_Dtl2: "",
+          Misc_Num1: "",
+          MISC_NUM2: "",
+          Misc_Mob: "",
+          UTD: "",
+          Exp_Date: null,
+          CC_Group: "",
+          CC_Ledg: "",
+          Created_By: user?.name,
+          Loc_Code: user?.branch,
+        });
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Wait!",
+          text:
+            response?.message ||
+            response?.data?.Message ||
+            "There is something Wrong please check data",
+        });
       }
     } catch (error: any) {
+      console.error(
+        "Error in AddMaster1:",
+        error?.response?.data || error?.message
+      );
+
       Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error?.response?.data?.message || "Failed to save mispunch reason",
+        icon: "warning",
+        title: "Wait!",
+        text:
+          error?.response?.data?.Message ||
+          error?.response?.data?.message ||
+          "There is something Wrong please check data",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+};
 
   const handleUpdateMisPunch = async () => {
     if (!formDataMisPunch.Misc_Name || formDataMisPunch.Misc_Name.trim() === "") {
@@ -211,7 +256,7 @@ export default function HrMasterPage() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/master/updateMaster1/${formDataMisPunch?.UTD}`,
+        `${process.env.NEXT_PUBLIC_URL}/master/insertData1/${formDataMisPunch?.UTD}`,
         BodyData,
         {
           headers: {
@@ -1025,20 +1070,18 @@ export default function HrMasterPage() {
         <button
           type="button"
           onClick={() => setActiveTab(1)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${
-            activeTab === 1
+          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 1
               ? "bg-[#4F46E5] text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-          }`}
+            }`}
         >
           <ScanLine className="h-4.5 w-4.5" />
           <span>MisPunch Reason</span>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === 1
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 1
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-            }`}
+              }`}
           >
             {tableMisPunch.length}
           </span>
@@ -1048,20 +1091,18 @@ export default function HrMasterPage() {
         <button
           type="button"
           onClick={() => setActiveTab(2)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${
-            activeTab === 2
+          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 2
               ? "bg-[#4F46E5] text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-          }`}
+            }`}
         >
           <Clock className="h-4.5 w-4.5" />
           <span>Shift</span>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === 2
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 2
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-            }`}
+              }`}
           >
             {tableShift.length}
           </span>
@@ -1071,20 +1112,18 @@ export default function HrMasterPage() {
         <button
           type="button"
           onClick={() => setActiveTab(3)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${
-            activeTab === 3
+          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 3
               ? "bg-[#4F46E5] text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-          }`}
+            }`}
         >
           <Calendar className="h-4.5 w-4.5" />
           <span>Holiday</span>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === 3
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 3
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-            }`}
+              }`}
           >
             {tableHoliday.length}
           </span>
@@ -1136,7 +1175,7 @@ export default function HrMasterPage() {
                 ) : (
                   <button
                     type="button"
-                    onClick={handleSaveMisPunch}
+                    onClick={handlesaveMisPunch}
                     disabled={saveDisabledMisPunch}
                     className="h-11 px-6 rounded-xl bg-[#4F46E5] hover:bg-[#433df0] text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
                   >
@@ -1595,11 +1634,10 @@ export default function HrMasterPage() {
                           key={r.value}
                           type="button"
                           onClick={() => toggleChipSelection("Rel_Code", r)}
-                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${
-                            selected
+                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
                               ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                               : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
+                            }`}
                         >
                           {r.label}
                         </button>
@@ -1638,11 +1676,10 @@ export default function HrMasterPage() {
                           key={d.value}
                           type="button"
                           onClick={() => toggleChipSelection("Dept_Code", d)}
-                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${
-                            selected
+                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
                               ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                               : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
+                            }`}
                         >
                           {d.label}
                         </button>
@@ -1678,11 +1715,10 @@ export default function HrMasterPage() {
                         key={b.value}
                         type="button"
                         onClick={() => toggleChipSelection("Loc_Code", b)}
-                        className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${
-                          selected
+                        className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
                             ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
                             : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                          }`}
                       >
                         {b.label}
                       </button>
