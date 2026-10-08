@@ -50,6 +50,7 @@ export default function PrintLetterPage() {
   const componentRef = useRef<HTMLDivElement>(null);
   const fullLetterRef = useRef<string>("");
   const isChunkPrintRef = useRef<boolean>(false);
+  const hasFetchedRef = useRef<boolean>(false);
   const [chunkIndex, setChunkIndex] = useState<number>(0);
   const [generatedLetter, setGeneratedLetter] = useState<string>("");
 
@@ -295,6 +296,19 @@ export default function PrintLetterPage() {
         empLoc = `Branch - ${empLoc}`;
       }
 
+      let rawStatus = emp.LETTER_STATUS || emp.STATUS || emp.Letter_Status || emp.status || "";
+      let statusVal = "null";
+      if (rawStatus) {
+        const s = String(rawStatus).trim().toLowerCase();
+        if (s === "approve" || s === "approved" || s === "issued") {
+          statusVal = "Issued";
+        } else if (s === "reject" || s === "rejected" || s === "not issued" || s === "not_issued") {
+          statusVal = "Not issued";
+        } else if (s === "in approval" || s === "in_approval") {
+          statusVal = "In approval";
+        }
+      }
+
       return {
         ...emp,
         id: String(empCode || index),
@@ -305,7 +319,7 @@ export default function PrintLetterPage() {
         EMPLOYEEDESIGNATION: empDesig,
         DESIGNATION: empDesig,
         EMPLOCATION: empLoc,
-        LETTER_STATUS: emp.STATUS || emp.LETTER_STATUS || emp.Letter_Status || "Not issued",
+        LETTER_STATUS: statusVal,
         GENDER: emp.GENDER || emp.Gender || "",
         JOININGDATE: emp.JOININGDATE || emp.Joining_Date || "",
         COMPANY_NAME_EMP: emp.COMPANY_NAME_EMP || company?.Comp_Name || "",
@@ -338,8 +352,12 @@ export default function PrintLetterPage() {
     }
   }, [getCompCode, user?.name, formatEmployeeRecord]);
 
-  // Initial load
+  // Initial load - runs only once when compCode is available
   useEffect(() => {
+    const compCode = getCompCode();
+    if (!compCode || hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     fetchCompLogoAndMarutiLogo();
     fetchHeaderInfo();
     fetchSignatory();
@@ -347,6 +365,7 @@ export default function PrintLetterPage() {
     fetchEmployees();
     setIsDataLoaded(true);
   }, [
+    getCompCode,
     fetchCompLogoAndMarutiLogo,
     fetchHeaderInfo,
     fetchSignatory,
@@ -602,7 +621,7 @@ export default function PrintLetterPage() {
         accessor: "EMPLOCATION",
         Cell: ({ row }: any) => (
           <span className="text-slate-500 dark:text-slate-400 text-sm truncate">
-            {row.original.EMPLOCATION || "Branch - 1"}
+            {row.original.EMPLOCATION  }
           </span>
         ),
       },
@@ -610,19 +629,22 @@ export default function PrintLetterPage() {
         Header: "LETTER STATUS",
         accessor: "LETTER_STATUS",
         Cell: ({ row }: any) => {
-          const status = row.original.LETTER_STATUS || "Not issued";
+          const status = row.original.LETTER_STATUS || "null";
           let badgeClass =
-            "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400";
-          if (status === "Issued") {
+            "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800";
+          if (status === "In approval") {
             badgeClass =
-              "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400";
-          } else if (status === "In approval") {
+              "bg-yellow-100 text-yellow-900 border border-yellow-400 dark:bg-yellow-950/70 dark:text-yellow-300 dark:border-yellow-600 font-semibold";
+          } else if (status === "Issued") {
             badgeClass =
-              "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400";
+              "bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800 font-semibold";
+          } else if (status === "Not issued") {
+            badgeClass =
+              "bg-red-50 text-red-700 border border-red-300 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800 font-semibold";
           }
           return (
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${badgeClass}`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${badgeClass}`}
             >
               {status}
             </span>
@@ -895,18 +917,20 @@ export default function PrintLetterPage() {
             throw new Error("Upload failed");
           }
 
-          // ✅ 4. Send to backend for THIS employee
-          const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_URL}/template/confirmationMSZ`,
-            {
-              SRNO: empCode, // ✅ SINGLE employee, NOT comma-separated
-              TEMPLATE_NAME: formData?.TEMPLATE_NAME || selectedTemplate,
-              CONTENT: singleEmployeeHtml,
-              pdf: uploadedPdfPath,
-              PDF_PATH: uploadedPdfPath,
-              LOC_CODE: user?.branch,
-              Created_By: user?.EMPCODE || user?.name,
-            },
+            // ✅ Send template ID (TEMPLATE_NO) as expected by backend
+            const templateIdToSend = selectedTemplate || formData?.TEMPLATE_NAME;
+
+            const response = await axios.post(
+              `${process.env.NEXT_PUBLIC_URL}/template/confirmationMSZ`,
+              {
+                SRNO: empCode, // ✅ SINGLE employee, NOT comma-separated
+                TEMPLATE_NAME: templateIdToSend,
+                CONTENT: singleEmployeeHtml,
+                pdf: uploadedPdfPath,
+                PDF_PATH: uploadedPdfPath,
+                LOC_CODE: user?.branch,
+                Created_By: user?.EMPCODE || user?.name,
+              },
             {
               headers: {
                 compcode: compCode,
@@ -935,6 +959,35 @@ export default function PrintLetterPage() {
       const generatedLetterDiv = document.getElementById("generatedLetter");
       if (generatedLetterDiv) {
         generatedLetterDiv.innerHTML = fullHtml;
+      }
+
+      // ✅ Update status to "In approval" for successfully processed employees
+      const successfulEmpCodes = new Set(
+        results.filter((r) => r.status === true).map((r) => String(r.empCode))
+      );
+
+      if (successfulEmpCodes.size > 0) {
+        setEmployeedata((prev) =>
+          prev.map((emp) =>
+            successfulEmpCodes.has(String(emp.EMPCODE || emp.id))
+              ? { ...emp, LETTER_STATUS: "In approval", STATUS: "In approval" }
+              : emp
+          )
+        );
+        setSelectedRows((prev) =>
+          prev.map((emp) =>
+            successfulEmpCodes.has(String(emp.EMPCODE || emp.id))
+              ? { ...emp, LETTER_STATUS: "In approval", STATUS: "In approval" }
+              : emp
+          )
+        );
+        setSelectEmployeedata((prev) =>
+          prev.map((emp) =>
+            successfulEmpCodes.has(String(emp.EMPCODE || emp.id))
+              ? { ...emp, LETTER_STATUS: "In approval", STATUS: "In approval" }
+              : emp
+          )
+        );
       }
 
       // ✅ 6. Show final result
@@ -1066,50 +1119,52 @@ export default function PrintLetterPage() {
               </span>
             </div>
 
-            {/* Template Selection Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {templates.map((tmpl) => {
-                const isSelected = selectedTemplate === tmpl.value;
-                const IconComponent = tmpl.icon || FileText;
+            {/* Template Selection Cards Grid (6 items visible, scroll for rest) */}
+            <div className="max-h-[148px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                {templates.map((tmpl) => {
+                  const isSelected = selectedTemplate === tmpl.value;
+                  const IconComponent = tmpl.icon || FileText;
 
-                return (
-                  <div
-                    key={tmpl.id || tmpl.value}
-                    onClick={() => selectTemplateHandler(tmpl)}
-                    className={`relative rounded-xl border p-3 flex items-center gap-3 cursor-pointer select-none transition-all duration-150 ${isSelected
-                        ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40 shadow-xs"
-                        : "border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-2xs"
-                      }`}
-                  >
+                  return (
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${tmpl.iconBg || "bg-indigo-50 text-indigo-600"
-                        } ${isSelected ? "ring-2 ring-[#4F46E5]/30" : ""}`}
+                      key={tmpl.id || tmpl.value}
+                      onClick={() => selectTemplateHandler(tmpl)}
+                      className={`relative rounded-xl border p-3 flex items-center gap-3 cursor-pointer select-none transition-all duration-150 ${isSelected
+                          ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40 shadow-xs"
+                          : "border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-2xs"
+                        }`}
                     >
-                      <IconComponent className="w-4 h-4" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        className={`text-base font-bold truncate ${isSelected
-                            ? "text-[#4F46E5] dark:text-indigo-400"
-                            : "text-slate-800 dark:text-slate-200"
-                          }`}
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${tmpl.iconBg || "bg-indigo-50 text-indigo-600"
+                          } ${isSelected ? "ring-2 ring-[#4F46E5]/30" : ""}`}
                       >
-                        {tmpl.Label}
-                      </h3>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                        {tmpl.tokens} tokens · {tmpl.pages} page
-                      </p>
-                    </div>
-
-                    {isSelected && (
-                      <div className="w-4 h-4 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        <IconComponent className="w-4 h-4" />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className={`text-base font-bold truncate ${isSelected
+                              ? "text-[#4F46E5] dark:text-indigo-400"
+                              : "text-slate-800 dark:text-slate-200"
+                            }`}
+                        >
+                          {tmpl.Label}
+                        </h3>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                          {tmpl.tokens} tokens · {tmpl.pages} page
+                        </p>
+                      </div>
+
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
