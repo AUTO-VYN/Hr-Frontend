@@ -104,6 +104,7 @@ input::placeholder {
 /* Chrome/Edge/Safari */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
   /* yaha 4px/5px bhi kar sakte ho */
 }
 
