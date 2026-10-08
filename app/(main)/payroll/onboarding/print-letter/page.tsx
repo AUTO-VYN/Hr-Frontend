@@ -582,7 +582,7 @@ export default function PrintLetterPage() {
         Header: "EMP CODE",
         accessor: "EMPCODE",
         Cell: ({ row }: any) => (
-          <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
+          <span className="font-semibold text-slate-700 dark:text-slate-200 text-lg">
             {row.original.EMPCODE}
           </span>
         ),
@@ -595,12 +595,12 @@ export default function PrintLetterPage() {
           return (
             <div className="flex items-center gap-2.5">
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 select-none shadow-2xs"
+                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none shadow-2xs"
                 style={{ backgroundColor: color.bg, color: color.text }}
               >
                 {initial}
               </div>
-              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate max-w-[130px]">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-lg truncate max-w-[220px]">
                 {row.original.EMPLOYEENAME}
               </span>
             </div>
@@ -611,7 +611,7 @@ export default function PrintLetterPage() {
         Header: "DESIGNATION",
         accessor: "EMPLOYEEDESIGNATION",
         Cell: ({ row }: any) => (
-          <span className="text-slate-600 dark:text-slate-300 text-sm truncate block max-w-[140px]">
+          <span className="text-slate-600 dark:text-slate-300 text-lg truncate block max-w-[200px]">
             {row.original.EMPLOYEEDESIGNATION || "—"}
           </span>
         ),
@@ -620,8 +620,8 @@ export default function PrintLetterPage() {
         Header: "LOCATION",
         accessor: "EMPLOCATION",
         Cell: ({ row }: any) => (
-          <span className="text-slate-500 dark:text-slate-400 text-sm truncate">
-            {row.original.EMPLOCATION  }
+          <span className="text-slate-500 dark:text-slate-400 text-lg truncate">
+            {row.original.EMPLOCATION}
           </span>
         ),
       },
@@ -644,7 +644,7 @@ export default function PrintLetterPage() {
           }
           return (
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${badgeClass}`}
+              className={`inline-flex items-center px-3 py-0.5 rounded-full text-base font-semibold tracking-wide ${badgeClass}`}
             >
               {status}
             </span>
@@ -917,20 +917,20 @@ export default function PrintLetterPage() {
             throw new Error("Upload failed");
           }
 
-            // ✅ Send template ID (TEMPLATE_NO) as expected by backend
-            const templateIdToSend = selectedTemplate || formData?.TEMPLATE_NAME;
+          // ✅ Send template ID (TEMPLATE_NO) as expected by backend
+          const templateIdToSend = selectedTemplate || formData?.TEMPLATE_NAME;
 
-            const response = await axios.post(
-              `${process.env.NEXT_PUBLIC_URL}/template/confirmationMSZ`,
-              {
-                SRNO: empCode, // ✅ SINGLE employee, NOT comma-separated
-                TEMPLATE_NAME: templateIdToSend,
-                CONTENT: singleEmployeeHtml,
-                pdf: uploadedPdfPath,
-                PDF_PATH: uploadedPdfPath,
-                LOC_CODE: user?.branch,
-                Created_By: user?.EMPCODE || user?.name,
-              },
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_URL}/template/confirmationMSZ`,
+            {
+              SRNO: empCode, // ✅ SINGLE employee, NOT comma-separated
+              TEMPLATE_NAME: templateIdToSend,
+              CONTENT: singleEmployeeHtml,
+              pdf: uploadedPdfPath,
+              PDF_PATH: uploadedPdfPath,
+              LOC_CODE: user?.branch,
+              Created_By: user?.EMPCODE || user?.name,
+            },
             {
               headers: {
                 compcode: compCode,
@@ -1120,7 +1120,7 @@ export default function PrintLetterPage() {
             </div>
 
             {/* Template Selection Cards Grid (6 items visible, scroll for rest) */}
-            <div className="max-h-[148px] overflow-y-auto pr-1">
+            <div className="max-h-[132px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                 {templates.map((tmpl) => {
                   const isSelected = selectedTemplate === tmpl.value;
@@ -1131,8 +1131,8 @@ export default function PrintLetterPage() {
                       key={tmpl.id || tmpl.value}
                       onClick={() => selectTemplateHandler(tmpl)}
                       className={`relative rounded-xl border p-3 flex items-center gap-3 cursor-pointer select-none transition-all duration-150 ${isSelected
-                          ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40 shadow-xs"
-                          : "border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-2xs"
+                        ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40 shadow-xs"
+                        : "border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-2xs"
                         }`}
                     >
                       <div
@@ -1145,8 +1145,8 @@ export default function PrintLetterPage() {
                       <div className="min-w-0 flex-1">
                         <h3
                           className={`text-base font-bold truncate ${isSelected
-                              ? "text-[#4F46E5] dark:text-indigo-400"
-                              : "text-slate-800 dark:text-slate-200"
+                            ? "text-[#4F46E5] dark:text-indigo-400"
+                            : "text-slate-800 dark:text-slate-200"
                             }`}
                         >
                           {tmpl.Label}
@@ -1203,8 +1203,8 @@ export default function PrintLetterPage() {
                   <div
                     onClick={() => setDeliveryWhatsApp((prev) => !prev)}
                     className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryWhatsApp
-                        ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                      ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
                       }`}
                   >
                     <div
@@ -1220,8 +1220,8 @@ export default function PrintLetterPage() {
                   <div
                     onClick={() => setDeliveryEmail((prev) => !prev)}
                     className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryEmail
-                        ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                      ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
                       }`}
                   >
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
@@ -1232,8 +1232,8 @@ export default function PrintLetterPage() {
                   <div
                     onClick={() => setDeliveryHardCopy((prev) => !prev)}
                     className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryHardCopy
-                        ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                      ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
                       }`}
                   >
                     <Printer className="w-3.5 h-3.5 text-slate-400" />
@@ -1247,8 +1247,8 @@ export default function PrintLetterPage() {
                 <div
                   onClick={() => setRouteForApproval((prev) => !prev)}
                   className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all w-fit ${routeForApproval
-                      ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                    ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
                     }`}
                 >
                   <ShieldCheck className="w-4 h-4 text-[#4F46E5] dark:text-indigo-400" />
@@ -1374,7 +1374,7 @@ export default function PrintLetterPage() {
           </div>
 
           {/* The Paper Preview Document */}
-          <div className="mt-2 flex-1 bg-white border border-slate-200/90 rounded-xl p-6 sm:p-7 shadow-xs text-slate-900 overflow-y-auto max-h-[620px]">
+          <div className="mt-2 flex-1 bg-white border border-slate-200/90 rounded-xl p-6 sm:p-7 shadow-xs text-slate-900 overflow-y-auto max-h-[620px] custom-scrollbar">
             {/* Document Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-3">

@@ -184,10 +184,10 @@ export default function ServiceTablePagination({
       typeof column.Header === "string"
         ? column.Header
         : typeof column.id === "string"
-        ? column.id
-        : typeof column.accessor === "string"
-        ? column.accessor
-        : "";
+          ? column.id
+          : typeof column.accessor === "string"
+            ? column.accessor
+            : "";
     if (headerTitle && headerTitle !== "_selection") {
       return `All ${headerTitle.toLowerCase()}`;
     }
@@ -312,10 +312,10 @@ export default function ServiceTablePagination({
               role="checkbox"
               aria-checked={isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"}
               className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isAllSelected
-                  ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
-                  : isIndeterminate
-                    ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
-                    : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
+                ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
+                : isIndeterminate
+                  ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
+                  : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
                 }`}
             >
               {isAllSelected ? (
@@ -343,8 +343,8 @@ export default function ServiceTablePagination({
               role="checkbox"
               aria-checked={isChecked}
               className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isChecked
-                  ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
-                  : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
+                ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
+                : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
                 }`}
             >
               {isChecked && <Check className="w-3.5 h-3.5 stroke-[3] text-white" />}
@@ -472,30 +472,30 @@ export default function ServiceTablePagination({
     : allRows.length;
 
   // ✅ rendering rows: normal mode => page, allMode(server) => allRows (loaded so far)
-const rowsToRender = useMemo(() => {
-  // ALL mode
-  if (serverMode && allMode) {
-    return allRows;
-  }
+  const rowsToRender = useMemo(() => {
+    // ALL mode
+    if (serverMode && allMode) {
+      return allRows;
+    }
 
-  // SERVER mode
-  if (serverMode) {
-    const size = serverPagination?.pageSize || 10;
+    // SERVER mode
+    if (serverMode) {
+      const size = serverPagination?.pageSize || 10;
 
-    return allRows.slice(0, size);
-  }
+      return allRows.slice(0, size);
+    }
 
-  // CLIENT mode
-  return page;
-}, [
-  serverMode,
-  allMode,
-  allRows,
-  page,
-  serverPagination?.pageSize,
-]);
+    // CLIENT mode
+    return page;
+  }, [
+    serverMode,
+    allMode,
+    allRows,
+    page,
+    serverPagination?.pageSize,
+  ]);
 
-const displayedCount = rowsToRender.length;
+  const displayedCount = rowsToRender.length;
 
   const clientCanPrev = pageIndex > 0;
   const clientCanNext = pageIndex + 1 < (pageOptions.length || clientCalculatedPageCount);
@@ -624,11 +624,10 @@ const displayedCount = rowsToRender.length;
 
   return (
     <div
-      className={`w-full flex flex-col bg-white dark:bg-[#0B1220] ${
-        containerClassName
+      className={`w-full flex flex-col bg-white dark:bg-[#0B1220] ${containerClassName
           ? containerClassName
           : "rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs"
-      }`}
+        }`}
     >
       {(title || showTopSearch || searchValue !== undefined || onSearchChange || showExcelExport) && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 gap-2.5 bg-slate-50/50 dark:bg-slate-900/50">
@@ -693,7 +692,7 @@ const displayedCount = rowsToRender.length;
       <div
         ref={scrollWrapRef}
         onScroll={handleScroll}
-        className="w-full overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700"
+        className="w-full overflow-x-auto overflow-y-auto custom-scrollbar"
         style={{ maxHeight: uiHeight }}
       >
         <table
@@ -716,10 +715,10 @@ const displayedCount = rowsToRender.length;
                           isSelectionCol ? {} : column.getSortByToggleProps()
                         )}
                         className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${isSelectionCol
-                            ? "w-12 text-center !px-3"
-                            : isEmpNameCol
-                              ? "text-[#4F46E5] dark:text-indigo-400"
-                              : "text-slate-500 dark:text-slate-400"
+                          ? "w-12 text-center !px-3"
+                          : isEmpNameCol
+                            ? "text-[#4F46E5] dark:text-indigo-400"
+                            : "text-slate-500 dark:text-slate-400"
                           } ${headerClassName || ""}`}
                       >
                         {isSelectionCol ? (
@@ -771,10 +770,10 @@ const displayedCount = rowsToRender.length;
                         !isFilterDisabled &&
                         Boolean(
                           column.filterPlaceholder ||
-                            column.placeholder ||
-                            column.filterable === true ||
-                            column.showFilter === true ||
-                            (showColumnFilters && typeof column.Header !== "function")
+                          column.placeholder ||
+                          column.filterable === true ||
+                          column.showFilter === true ||
+                          (showColumnFilters && typeof column.Header !== "function")
                         );
 
                       const placeholder = getColumnPlaceholder(column);
@@ -783,9 +782,8 @@ const displayedCount = rowsToRender.length;
                       return (
                         <th
                           key={`${column.id}_filter`}
-                          className={`px-3 py-1.5 font-normal ${
-                            isSelectionCol ? "w-12 text-center !px-3" : ""
-                          }`}
+                          className={`px-3 py-1.5 font-normal ${isSelectionCol ? "w-12 text-center !px-3" : ""
+                            }`}
                         >
                           {shouldShowInput ? (
                             <div
@@ -827,8 +825,8 @@ const displayedCount = rowsToRender.length;
                   key={row.id}
                   {...row.getRowProps()}
                   className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${isRowSelected
-                      ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
-                      : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
+                    ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
+                    : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
                     }`}
                   onDoubleClick={() => onRowDoubleClick?.(row.original)}
                 >
