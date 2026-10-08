@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Download } from "lucide-react";
 
@@ -9,12 +9,22 @@ import axios from "axios";
 
 import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
-
+import Eselect from "@/components/atoms/Eselect";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import FileViewer from "@/components/atoms/FileviewerBank";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
+
+type MasterOption = {
+  value: string;
+  label?: string;
+  Field?: string;
+  From_Field?: string;
+  Table_Name?: string;
+  Misc_Abbr?: string;
+  [key: string]: any;
+};
 
 export default function Page() {
   const user = useCurrentUser();
@@ -37,6 +47,58 @@ export default function Page() {
     return `${year}-${month}-${day}`;
   };
 
+  const HandleMasters = async () => {
+    try {
+      console.log("===== MASTERS API START =====");
+      console.log("URL:", `${process.env.NEXT_PUBLIC_URL}/DocManage/Masters`);
+      console.log("Comp Code:", user?.Comp_Code);
+      console.log("User Name:", user?.name);
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/DocManage/Masters`,
+        {},
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        },
+      );
+
+      console.log("===== MASTERS API RESPONSE =====");
+      console.log("Status:", response.status);
+      console.log("Data:", response.data);
+      console.log("Result:", response.data?.Result);
+
+      const result = response.data?.Result || [];
+
+      if (result.length > 0) {
+        setMastersOption(result);
+      } else {
+        setMastersOption([]);
+
+        showSideAlert("No document masters found", "warning");
+      }
+    } catch (error: any) {
+      console.error("===== MASTERS API ERROR =====");
+      console.error(error);
+      console.error("Response:", error?.response?.data);
+
+      showSideAlert(
+        error?.response?.data?.message || "Failed to load document masters",
+        "error",
+      );
+    }
+  };
+  useEffect(() => {
+    if (!user?.Comp_Code) {
+      console.log("Comp_Code not available yet");
+      return;
+    }
+
+    HandleMasters();
+  }, [user?.Comp_Code, user?.name]);
+
   // =========================================================
   // STATES
   // =========================================================
@@ -57,7 +119,7 @@ export default function Page() {
   const [searchInput, setSearchInput] = useState("");
 
   const [pageSize, setPageSize] = useState<number>(20);
-
+  const [docRef, setDocRef] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -67,17 +129,14 @@ export default function Page() {
   // =========================================================
 
   const [docReference, setDocReference] = useState("");
-
+  const [MastersOption, setMastersOption] = useState<MasterOption[]>([]);
   const [uploadedBy, setUploadedBy] = useState("");
 
   // =========================================================
   // DATE CHANGE
   // =========================================================
 
-  const handleDateChange = (
-    name: string,
-    value: string | null
-  ) => {
+  const handleDateChange = (name: string, value: string | null) => {
     setDates((prevData) => ({
       ...prevData,
       [name]: value || "",
@@ -90,7 +149,7 @@ export default function Page() {
 
   const showSideAlert = (
     message: string,
-    type: "success" | "error" | "warn" | "info" = "info"
+    type: "success" | "error" | "warn" | "info" = "info",
   ) => {
     Swal.fire({
       toast: true,
@@ -110,6 +169,12 @@ export default function Page() {
     });
   };
 
+  const documentReferenceOptions = useMemo(() => {
+    return MastersOption.map((item) => ({
+      value: item.value,
+      label: item.label || item.value,
+    })).filter((item) => item.value);
+  }, [MastersOption]);
   // =========================================================
   // TABLE COLUMNS
   // =========================================================
@@ -230,7 +295,7 @@ export default function Page() {
         },
       },
     ],
-    []
+    [],
   );
 
   // =========================================================
@@ -240,12 +305,12 @@ export default function Page() {
   const totalPages = useMemo(() => {
     const size = pageSize === -1 ? 1000000 : pageSize;
 
-    return Math.max(
-      1,
-      Math.ceil((totalCount || 0) / (size || 1))
-    );
+    return Math.max(1, Math.ceil((totalCount || 0) / (size || 1)));
   }, [totalCount, pageSize]);
 
+  const handleDocRefChange = useCallback((name: string, value: any) => {
+    setDocRef(value ?? "");
+  }, []);
   // =========================================================
   // SERVER PAGINATION OBJECT
   // =========================================================
@@ -257,7 +322,7 @@ export default function Page() {
       totalPages,
       totalRecords: totalCount,
     }),
-    [currentPage, pageSize, totalPages, totalCount]
+    [currentPage, pageSize, totalPages, totalCount],
   );
 
   // =========================================================
@@ -282,42 +347,21 @@ export default function Page() {
       RefId: item.RefId ?? "",
 
       uploadedBy:
-        item.UploadedByName ??
-        item.UploadedBy ??
-        item.uploadedBy ??
-        "",
+        item.UploadedByName ?? item.UploadedBy ?? item.uploadedBy ?? "",
 
-      uploadedAt:
-        item.CreatedNewDate ??
-        item.CreatedAt ??
-        item.createdAt ??
-        "",
+      uploadedAt: item.CreatedNewDate ?? item.CreatedAt ?? item.createdAt ?? "",
 
-      name:
-        item.OriginalName ??
-        item.DOC_NAME ??
-        item.name ??
-        "",
+      name: item.OriginalName ?? item.DOC_NAME ?? item.name ?? "",
 
-      SMBPath:
-        item.SMBPath ??
-        item.DOC_PATH ??
-        "",
+      SMBPath: item.SMBPath ?? item.DOC_PATH ?? "",
 
       Utd: item.Utd,
 
-      TRAN_ID:
-        item.TRAN_ID ??
-        item.Utd,
+      TRAN_ID: item.TRAN_ID ?? item.Utd,
 
-      SRNO:
-        item.SRNO ??
-        item.Utd,
+      SRNO: item.SRNO ?? item.Utd,
 
-      Doc_Type:
-        item.Doc_Type ??
-        item.DocType ??
-        "",
+      Doc_Type: item.Doc_Type ?? item.DocType ?? "",
     }));
   };
 
@@ -333,9 +377,7 @@ export default function Page() {
     // =======================================================
 
     if (docReference.trim()) {
-      const search = docReference
-        .trim()
-        .toLowerCase();
+      const search = docReference.trim().toLowerCase();
 
       rows = rows.filter((item: any) => {
         const value =
@@ -345,9 +387,7 @@ export default function Page() {
           item.Doc_Type ??
           "";
 
-        return String(value)
-          .toLowerCase()
-          .includes(search);
+        return String(value).toLowerCase().includes(search);
       });
     }
 
@@ -356,20 +396,13 @@ export default function Page() {
     // =======================================================
 
     if (uploadedBy.trim()) {
-      const search = uploadedBy
-        .trim()
-        .toLowerCase();
+      const search = uploadedBy.trim().toLowerCase();
 
       rows = rows.filter((item: any) => {
         const value =
-          item.UploadedByName ??
-          item.UploadedBy ??
-          item.uploadedBy ??
-          "";
+          item.UploadedByName ?? item.UploadedBy ?? item.uploadedBy ?? "";
 
-        return String(value)
-          .toLowerCase()
-          .includes(search);
+        return String(value).toLowerCase().includes(search);
       });
     }
 
@@ -378,9 +411,7 @@ export default function Page() {
     // =======================================================
 
     if (searchInput.trim()) {
-      const search = searchInput
-        .trim()
-        .toLowerCase();
+      const search = searchInput.trim().toLowerCase();
 
       rows = rows.filter((item: any) => {
         const values = [
@@ -402,7 +433,7 @@ export default function Page() {
         return values.some((value) =>
           String(value ?? "")
             .toLowerCase()
-            .includes(search)
+            .includes(search),
         );
       });
     }
@@ -419,30 +450,17 @@ export default function Page() {
     // PAGINATION
     // =======================================================
 
-    const size =
-      pageSize === -1
-        ? mappedRows.length || 1
-        : pageSize;
+    const size = pageSize === -1 ? mappedRows.length || 1 : pageSize;
 
-    const start =
-      (currentPage - 1) * size;
+    const start = (currentPage - 1) * size;
 
     const end = start + size;
 
     const paginatedRows =
-      pageSize === -1
-        ? mappedRows
-        : mappedRows.slice(start, end);
+      pageSize === -1 ? mappedRows : mappedRows.slice(start, end);
 
     setDisplayedFiles(paginatedRows);
-  }, [
-    tabledata,
-    searchInput,
-    docReference,
-    uploadedBy,
-    currentPage,
-    pageSize,
-  ]);
+  }, [tabledata, searchInput, docReference, uploadedBy, currentPage, pageSize]);
 
   // =========================================================
   // OLD WORKING DOCUMENT VIEW API
@@ -465,16 +483,12 @@ export default function Page() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
-      console.log(
-        result.data,
-        "result.data?.Result"
-      );
+      console.log(result.data, "result.data?.Result");
 
-      const resultData =
-        result.data?.Result;
+      const resultData = result.data?.Result;
 
       if (Array.isArray(resultData)) {
         setTabledata(resultData);
@@ -482,10 +496,7 @@ export default function Page() {
         setCurrentPage(1);
 
         if (resultData.length === 0) {
-          showSideAlert(
-            "No documents found.",
-            "warn"
-          );
+          showSideAlert("No documents found.", "warn");
         }
       } else {
         setTabledata([]);
@@ -494,16 +505,10 @@ export default function Page() {
 
         setTotalCount(0);
 
-        showSideAlert(
-          "No documents found.",
-          "warn"
-        );
+        showSideAlert("No documents found.", "warn");
       }
     } catch (error: any) {
-      console.error(
-        "Error occurred while making the get request:",
-        error
-      );
+      console.error("Error occurred while making the get request:", error);
 
       setTabledata([]);
 
@@ -512,9 +517,8 @@ export default function Page() {
       setTotalCount(0);
 
       showSideAlert(
-        error?.response?.data?.message ||
-          "Unable to load documents.",
-        "error"
+        error?.response?.data?.message || "Unable to load documents.",
+        "error",
       );
     } finally {
       setIsClicked(false);
@@ -531,7 +535,7 @@ export default function Page() {
       return;
     }
 
-    
+    OutServiceView();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.Comp_Code]);
@@ -556,51 +560,35 @@ export default function Page() {
 
   const handleExport = () => {
     try {
-      const rows = displayedFiles.map(
-        (file, index) => ({
-          "SR NO":
-            (currentPage - 1) *
-              (pageSize === -1
-                ? displayedFiles.length
-                : pageSize) +
-            index +
-            1,
+      const rows = displayedFiles.map((file, index) => ({
+        "SR NO":
+          (currentPage - 1) *
+            (pageSize === -1 ? displayedFiles.length : pageSize) +
+          index +
+          1,
 
-          "DOC REFERENCE":
-            file.refType || "",
+        "DOC REFERENCE": file.refType || "",
 
-          "REFERENCE ID":
-            file.refNo || "",
+        "REFERENCE ID": file.refNo || "",
 
-          KEYWORD:
-            file.Keywords || "",
+        KEYWORD: file.Keywords || "",
 
-          EMPLOYEE:
-            file.RefId || "",
+        EMPLOYEE: file.RefId || "",
 
-          "UPLOADED BY":
-            file.uploadedBy || "",
+        "UPLOADED BY": file.uploadedBy || "",
 
-          "CREATED AT":
-            file.uploadedAt || "",
+        "CREATED AT": file.uploadedAt || "",
 
-          FILE:
-            file.name || "",
-        })
-      );
+        FILE: file.name || "",
+      }));
 
       if (!rows.length) {
-        showSideAlert(
-          "No documents available to export.",
-          "warn"
-        );
+        showSideAlert("No documents available to export.", "warn");
 
         return;
       }
 
-      const headers = Object.keys(
-        rows[0]
-      );
+      const headers = Object.keys(rows[0]);
 
       const csv = [
         headers.join(","),
@@ -608,16 +596,11 @@ export default function Page() {
         ...rows.map((row) =>
           headers
             .map((header) => {
-              const value =
-                row[
-                  header as keyof typeof row
-                ];
+              const value = row[header as keyof typeof row];
 
-              return `"${String(
-                value ?? ""
-              ).replace(/"/g, '""')}"`
+              return `"${String(value ?? "").replace(/"/g, '""')}"`;
             })
-            .join(",")
+            .join(","),
         ),
       ].join("\n");
 
@@ -625,16 +608,13 @@ export default function Page() {
         type: "text/csv;charset=utf-8;",
       });
 
-      const url =
-        URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
 
-      const link =
-        document.createElement("a");
+      const link = document.createElement("a");
 
       link.href = url;
 
-      link.download =
-        "Document_View.csv";
+      link.download = "Document_View.csv";
 
       document.body.appendChild(link);
 
@@ -644,15 +624,9 @@ export default function Page() {
 
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(
-        "Export error:",
-        error
-      );
+      console.error("Export error:", error);
 
-      showSideAlert(
-        "Export failed.",
-        "error"
-      );
+      showSideAlert("Export failed.", "error");
     }
   };
 
@@ -717,8 +691,8 @@ export default function Page() {
               sm:text-[12.5px]
             "
           >
-            Every file uploaded against an employee
-            or reference, searchable by keyword.
+            Every file uploaded against an employee or reference, searchable by
+            keyword.
           </p>
         </div>
 
@@ -783,9 +757,7 @@ export default function Page() {
             "
           >
             <Download size={16} />
-            <span className="whitespace-nowrap">
-              Export to Excel
-            </span>
+            <span className="whitespace-nowrap">Export to Excel</span>
           </AButton>
         </div>
       </div>
@@ -829,9 +801,7 @@ export default function Page() {
               name="DATE_FROM"
               type="date"
               value={dates.DATE_FROM}
-              handleInputChange={
-                handleDateChange
-              }
+              handleInputChange={handleDateChange}
             />
           </div>
 
@@ -843,30 +813,23 @@ export default function Page() {
               name="DATE_TO"
               type="date"
               value={dates.DATE_TO}
-              handleInputChange={
-                handleDateChange
-              }
+              handleInputChange={handleDateChange}
             />
           </div>
 
           {/* DOC REFERENCE */}
 
           <div className="min-w-0">
-            <Einput
+            <Eselect
               title="DOC REFERENCE"
-              name="DOC_REFERENCE"
-              placeholder="ALL"
-              value={docReference}
-              handleInputChange={(
-                name,
-                value
-              ) => {
-                setDocReference(
-                  value || ""
-                );
-
-                setCurrentPage(1);
-              }}
+              name="Doc reference"
+              redlabel="*"
+              required
+              ShortName
+              placeholder="Select a reference type"
+              option={documentReferenceOptions}
+              initialValue={docRef}
+              handleInputChange={handleDocRefChange}
             />
           </div>
 
@@ -878,13 +841,8 @@ export default function Page() {
               type="text"
               name="UPLOADED_BY"
               value={uploadedBy}
-              handleInputChange={(
-                name,
-                value
-              ) => {
-                setUploadedBy(
-                  value || ""
-                );
+              handleInputChange={(name, value) => {
+                setUploadedBy(value || "");
 
                 setCurrentPage(1);
               }}
@@ -980,9 +938,7 @@ export default function Page() {
                 sm:text-[12px]
               "
             >
-              {totalCount > 0
-                ? `${totalCount} records`
-                : ""}
+              {totalCount > 0 ? `${totalCount} records` : ""}
             </span>
           </div>
 
@@ -1023,33 +979,20 @@ export default function Page() {
                 text-[var(--fg)]
                 outline-none
               "
-              value={
-                pageSize === -1
-                  ? "100"
-                  : String(pageSize)
-              }
+              value={pageSize === -1 ? "100" : String(pageSize)}
               onChange={(e) => {
-                const size =
-                  Number(
-                    e.target.value
-                  );
+                const size = Number(e.target.value);
 
                 setPageSize(size);
 
                 setCurrentPage(1);
               }}
             >
-              <option value="20">
-                20
-              </option>
+              <option value="20">20</option>
 
-              <option value="50">
-                50
-              </option>
+              <option value="50">50</option>
 
-              <option value="100">
-                100
-              </option>
+              <option value="100">100</option>
             </select>
           </div>
         </div>
@@ -1059,7 +1002,7 @@ export default function Page() {
         ======================================================= */}
 
         <div
-  className="
+          className="
     w-full
     overflow-hidden
     border
@@ -1069,34 +1012,34 @@ export default function Page() {
     dark:border-slate-800
     dark:bg-[#0B1220]
   "
->
-  {/* TABLE / SEARCH AREA */}
-  <div className="w-full">
-    <ServiceTablePagination
-      title=""
-      columns={columns}
-      data={displayedFiles}
-      height={580}
-      serverMode={true}
-      serverPagination={serverPagination}
-      showPageSizeInFooter={true}
-      showTopSearch={true}
-      searchValue={searchInput}
-      onSearchChange={(val) => {
-        setSearchInput(val);
-        setCurrentPage(1);
-      }}
-      searchPlaceholder="Search by file, keyword or reference..."
-      onServerPageChange={(page, showLoader = true) => {
-        setCurrentPage(page);
-      }}
-      onServerPageSizeChange={(size) => {
-        setPageSize(size);
-        setCurrentPage(1);
-      }}
-    />
-  </div>
-</div>
+        >
+          {/* TABLE / SEARCH AREA */}
+          <div className="w-full">
+            <ServiceTablePagination
+              title=""
+              columns={columns}
+              data={displayedFiles}
+              height={580}
+              serverMode={true}
+              serverPagination={serverPagination}
+              showPageSizeInFooter={true}
+              showTopSearch={true}
+              searchValue={searchInput}
+              onSearchChange={(val) => {
+                setSearchInput(val);
+                setCurrentPage(1);
+              }}
+              searchPlaceholder="Search by file, keyword or reference..."
+              onServerPageChange={(page, showLoader = true) => {
+                setCurrentPage(page);
+              }}
+              onServerPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* =========================================================
@@ -1104,9 +1047,7 @@ export default function Page() {
       ========================================================= */}
 
       {(isLoading || isClicked) && (
-        <HashloaderComponent
-          isLoading={isClicked}
-        />
+        <HashloaderComponent isLoading={isClicked} />
       )}
     </div>
   );
