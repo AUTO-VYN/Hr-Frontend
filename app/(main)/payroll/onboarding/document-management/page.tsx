@@ -62,16 +62,20 @@ type StoredFile = {
   uploadedAt: string;
   kind: FileKind;
 
-  /* API DATA */
   Utd?: number | string;
   TRAN_ID?: number | string;
   SRNO?: number | string;
   Doc_Type?: string;
   SMBPath?: string;
+
   Keywords?: string;
+  Seq_No?: number | string;
+
   CreatedAt?: string;
   DocumentType?: string;
   RefId?: string;
+
+  file?: File;
 };
 
 type QueueFile = {
@@ -144,11 +148,16 @@ export default function DocumentManagementPage() {
   const [isUploaded, setIsUploaded] = useState(false);
 
   const [isLoadingonpage, setisLoadingonpage] = useState(false);
+  const [previewFile, setPreviewFile] = useState<StoredFile | null>(null);
+
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   /* =======================================================
      OLD SEARCH FUNCTIONALITY
   ======================================================= */
-
+  const [seqNo, setSeqNo] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,6 +182,28 @@ export default function DocumentManagementPage() {
     Excel: false,
     ExcelLocaton: false,
   });
+
+  const KEYWORD_SEQUENCE_OPTIONS = [
+    { value: "1", label: "PROFILE PHOTO" },
+    { value: "2", label: "AADHAR IMAGE" },
+    { value: "3", label: "PAN IMAGE" },
+    { value: "4", label: "SALARY IMAGE" },
+    { value: "5", label: "OTHER 1" },
+    { value: "6", label: "OTHER 2" },
+    { value: "7", label: "OTHER 3" },
+    { value: "8", label: "OTHER 4" },
+    { value: "9", label: "OTHER PDF" },
+    { value: "10", label: "SEPARATION 1" },
+    { value: "11", label: "SEPARATION 2" },
+  ];
+
+  const getKeywordBySeqNo = (seqNo: string | number) => {
+    return (
+      KEYWORD_SEQUENCE_OPTIONS.find(
+        (item) => String(item.value) === String(seqNo),
+      )?.label || "OTHER"
+    );
+  };
 
   /* =======================================================
      FILE ICON CONFIG
@@ -212,24 +243,98 @@ export default function DocumentManagementPage() {
     const search = query.trim().toLowerCase();
 
     return files.filter((file) => {
-      if (scope === "ref" && docRef && refNo.trim()) {
-        if (file.refType !== docRef || file.refNo !== refNo.trim()) {
+      // =======================================================
+      // SHOW THIS REFERENCE
+      // =======================================================
+      if (scope === "ref") {
+        const currentDocRef = String(docRef || "").trim();
+        const currentRefNo = String(refNo || "").trim();
+
+        if (currentDocRef && currentRefNo) {
+          const fileRefNo = String(file.RefId || file.refNo || "").trim();
+
+          const fileDocumentType = String(file.DocumentType || "").trim();
+
+          const fileDocType = String(file.Doc_Type || "").trim();
+
+          const fileRefType = String(file.refType || "").trim();
+
+          const selectedMaster = MastersOption.find(
+            (item) => String(item.value).trim() === currentDocRef,
+          );
+
+          const masterValue = String(selectedMaster?.value || "").trim();
+
+          const masterLabel = String(selectedMaster?.label || "").trim();
+
+          const masterMiscAbbr = String(selectedMaster?.Misc_Abbr || "").trim();
+
+          const currentValues = [
+            currentDocRef,
+            masterValue,
+            masterLabel,
+            masterMiscAbbr,
+          ]
+            .filter(Boolean)
+            .map((value) => value.toLowerCase());
+
+          const fileValues = [fileDocumentType, fileDocType, fileRefType]
+            .filter(Boolean)
+            .map((value) => value.toLowerCase());
+
+          const documentMatched = fileValues.some((fileValue) =>
+            currentValues.includes(fileValue),
+          );
+
+          const referenceMatched = fileRefNo === currentRefNo;
+
+          console.log("========== REFERENCE FILE CHECK ==========");
+
+          console.log({
+            fileName: file.name,
+            currentDocRef,
+            currentRefNo,
+            masterValue,
+            masterLabel,
+            masterMiscAbbr,
+            fileDocumentType,
+            fileDocType,
+            fileRefType,
+            fileRefNo,
+            documentMatched,
+            referenceMatched,
+          });
+
+          if (!documentMatched || !referenceMatched) {
+            return false;
+          }
+        }
+      }
+
+      // =======================================================
+      // SEARCH
+      // =======================================================
+
+      if (search) {
+        const searchableText = `
+        ${file.name || ""}
+        ${file.refType || ""}
+        ${file.refNo || ""}
+        ${file.RefId || ""}
+        ${file.uploadedBy || ""}
+        ${file.Keywords || ""}
+        ${file.DocumentType || ""}
+        ${file.Doc_Type || ""}
+      `.toLowerCase();
+
+        if (!searchableText.includes(search)) {
           return false;
         }
       }
 
-      if (
-        search &&
-        !`${file.name} ${file.refType} ${file.refNo} ${file.uploadedBy} ${file.Keywords || ""}`
-          .toLowerCase()
-          .includes(search)
-      ) {
-        return false;
-      }
-
       return true;
     });
-  }, [files, scope, docRef, refNo, query]);
+  }, [files, scope, docRef, refNo, query, MastersOption]);
 
   /* =======================================================
      GET MASTERS
@@ -265,7 +370,7 @@ export default function DocumentManagementPage() {
       } else {
         setMastersOption([]);
 
-        showSideAlert("No document masters found", "warning");
+        showSideAlert("No document masters found", "warn");
       }
     } catch (error: any) {
       console.error("===== MASTERS API ERROR =====");
@@ -305,17 +410,7 @@ export default function DocumentManagementPage() {
     }
 
     const selectedFiles = Array.from(fileList);
-
-    const validExtensions = ["png", "jpeg", "jpg", "pdf", "xls", "xlsx"];
-
-    if (queue.length + selectedFiles.length > 20) {
-      showSideAlert(
-        "More than 20 documents are selected, can't proceed",
-        "warn",
-      );
-      return;
-    }
-
+    const validExtensions = ["png", "jpeg", "jpg", "pdf"];
     const validFiles: QueueFile[] = [];
     const invalidFiles: string[] = [];
 
@@ -323,6 +418,11 @@ export default function DocumentManagementPage() {
       const extension = file.name.split(".").pop()?.toLowerCase() || "";
 
       if (!validExtensions.includes(extension)) {
+        invalidFiles.push(file.name);
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
         invalidFiles.push(file.name);
         return;
       }
@@ -348,9 +448,23 @@ export default function DocumentManagementPage() {
     }
 
     if (validFiles.length > 0) {
-      setQueue((previous) => [...previous, ...validFiles]);
+      setQueue((previous) => {
+        const available = Math.max(0, 20 - previous.length);
+        const filesToAdd = validFiles.slice(0, available);
 
-      setIsUploaded(true);
+        if (filesToAdd.length < validFiles.length) {
+          showSideAlert(
+            "More than 20 documents are selected, can't proceed",
+            "warn",
+          );
+        }
+
+        if (filesToAdd.length > 0) {
+          setIsUploaded(true);
+        }
+
+        return [...previous, ...filesToAdd];
+      });
     }
 
     if (fileInputRef.current) {
@@ -430,6 +544,20 @@ export default function DocumentManagementPage() {
     }
   }, []);
 
+  const referenceFieldLabel = useMemo(() => {
+    const master = MastersOption.find(
+      (item) => String(item.value) === String(docRef),
+    );
+
+    const isEmployee =
+      String(master?.Table_Name || "").toUpperCase() === "EMPLOYEEMASTER" ||
+      String(master?.From_Field || "").toUpperCase() === "EMPCODE" ||
+      String(master?.Field || "").toUpperCase() === "EMPCODE" ||
+      String(master?.Misc_Abbr || "").toUpperCase() === "EMPLOYEE";
+
+    return isEmployee ? "Employee Code" : "Reference Number";
+  }, [MastersOption, docRef]);
+
   /* =======================================================
      DOCUMENT TYPE CHANGE
      
@@ -440,6 +568,7 @@ export default function DocumentManagementPage() {
 
   const handleDocRefChange = useCallback((name: string, value: any) => {
     setDocRef(value ?? "");
+    setScope("ref");
   }, []);
   /* =======================================================
      REFERENCE NUMBER CHANGE
@@ -447,6 +576,7 @@ export default function DocumentManagementPage() {
 
   const handleRefNoChange = useCallback((name: string, value: any) => {
     setRefNo(value ?? "");
+    setScope("ref");
   }, []);
 
   /* =======================================================
@@ -454,7 +584,18 @@ export default function DocumentManagementPage() {
   ======================================================= */
 
   const handleKeywordsChange = useCallback((name: string, value: any) => {
-    setKeywords(value ?? "");
+    const selectedSeqNo = String(value ?? "");
+
+    const selectedOption = KEYWORD_SEQUENCE_OPTIONS.find(
+      (item) => String(item.value) === selectedSeqNo,
+    );
+
+    if (!selectedOption) {
+      return;
+    }
+
+    setSeqNo(String(selectedOption.value));
+    setKeywords(selectedOption.label);
   }, []);
   /* =======================================================
      GET MASTER DETAILS
@@ -471,26 +612,33 @@ export default function DocumentManagementPage() {
 
   const ViewPreviousData = useCallback(
     async (vin: string, RefNum: string) => {
-      if (!RefNum) {
+      const documentReference = String(vin || "").trim();
+      const referenceNumber = String(RefNum || "").trim();
+
+      if (!referenceNumber) {
         showSideAlert("Please select Reference No.", "warn");
         return;
       }
 
-      if (!vin) {
+      if (!documentReference) {
         showSideAlert("Please select Doc Reference", "warn");
         return;
       }
 
       try {
+        console.log("==========================================");
         console.log("===== VIEW PREVIOUS DATA START =====");
-        console.log("Doc Type:", vin);
-        console.log("Reference:", RefNum);
+        console.log("==========================================");
+
+        console.log("Doc Type:", documentReference);
+
+        console.log("Reference:", referenceNumber);
 
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}/DocManage/ViewPreviousData`,
           {
-            RefNum: RefNum,
-            vin: vin,
+            RefNum: referenceNumber,
+            vin: documentReference,
           },
           {
             headers: {
@@ -501,88 +649,220 @@ export default function DocumentManagementPage() {
         );
 
         console.log("===== VIEW PREVIOUS DATA RESPONSE =====");
-        console.log("Status:", response.status);
-        console.log("Data:", response.data);
 
-        /*
-         * Backend response:
-         *
-         * Result: {
-         *   MI_REASON: [],
-         *   dealer_details: []
-         * }
-         */
+        console.log("Status:", response.status);
+
+        console.log("Data:", response.data);
 
         const result =
           response.data?.Result?.MI_REASON || response.data?.Result || [];
 
+        console.log("========== VIEW PREVIOUS DATA ==========");
+
+        console.log("API RESPONSE:", response.data);
+
+        console.log("MI_REASON:", result);
+
+        // =====================================================
+        // API HAS DOCUMENTS
+        // =====================================================
+
         if (Array.isArray(result) && result.length > 0) {
           const selectedMaster = MastersOption.find(
-            (item) => String(item.value) === String(vin),
+            (item) => String(item.value) === String(documentReference),
           );
 
           const mappedFiles: StoredFile[] = result.map((item: any) => {
-            const extension = item.OriginalName?.split(".")
-              .pop()
-              ?.toLowerCase();
+            const fileName =
+              item.OriginalName ||
+              item.File_Name ||
+              item.FileName ||
+              item.filename ||
+              item.name ||
+              "Document";
 
-            return {
-              name: item.OriginalName || "Document",
+            const extension = fileName.split(".").pop()?.toLowerCase() || "";
 
-              refType: selectedMaster?.label || item.DocumentType || vin,
+            const fileRefNo = String(
+              item.RefId || item.refId || item.RefNum || referenceNumber || "",
+            ).trim();
 
-              refNo: String(item.RefId || RefNum),
+            const fileDocumentType = String(
+              item.DocumentType ||
+                item.DocType ||
+                item.Doc_Type ||
+                selectedMaster?.value ||
+                documentReference ||
+                "",
+            ).trim();
 
-              uploadedBy: item.UploadedBy || user?.name || "",
+            const fileRefType = String(
+              selectedMaster?.label ||
+                item.DocumentType ||
+                item.DocType ||
+                item.Doc_Type ||
+                documentReference ||
+                "",
+            ).trim();
+
+            const mappedFile: StoredFile = {
+              name: fileName,
+
+              refType: fileRefType,
+
+              refNo: fileRefNo,
+
+              uploadedBy:
+                item.UploadedBy ||
+                item.User_Name ||
+                item.UserName ||
+                user?.name ||
+                "",
 
               uploadedAt: item.CreatedAt
                 ? new Date(item.CreatedAt).toLocaleString()
-                : "",
+                : item.Upload_Date
+                  ? new Date(item.Upload_Date).toLocaleString()
+                  : "",
 
               kind: extension === "pdf" ? "pdf" : "img",
 
-              Utd: item.Utd ?? item.UTD,
+              Utd: item.Utd ?? item.UTD ?? item.utd,
 
-              TRAN_ID: item.TRAN_ID,
+              TRAN_ID: item.TRAN_ID ?? item.TranId ?? item.tran_id,
 
-              SRNO: item.SRNO,
+              SRNO: item.SRNO ?? item.SrNo ?? item.srno,
 
-              Doc_Type: item.Doc_Type,
+              Doc_Type:
+                item.Doc_Type ||
+                item.DocType ||
+                selectedMaster?.Misc_Abbr ||
+                selectedMaster?.value ||
+                documentReference,
 
-              SMBPath: item.SMBPath,
+              SMBPath: item.SMBPath || item.path || item.Path || "",
 
-              Keywords: item.Keywords,
+              Seq_No:
+                item.Seq_No ??
+                item.SEQ_NO ??
+                item.SeqNo ??
+                item.seq_no ??
+                item.sequence_no ??
+                item.Sequence_No ??
+                "",
 
-              CreatedAt: item.CreatedAt,
+              Keywords:
+                item.Keywords ||
+                item.keywords ||
+                getKeywordBySeqNo(
+                  item.Seq_No ??
+                item.SEQ_NO ??
+                item.SeqNo ??
+                item.seq_no ??
+                item.sequence_no ??
+                item.Sequence_No ??
+                "",
+                ),
 
-              DocumentType: item.DocumentType,
+              CreatedAt: item.CreatedAt || item.Upload_Date || "",
 
-              RefId: item.RefId || RefNum,
+              DocumentType:
+                item.DocumentType ||
+                item.DocType ||
+                selectedMaster?.value ||
+                documentReference,
+
+              RefId: item.RefId || item.refId || item.RefNum || referenceNumber,
             };
+
+            return mappedFile;
           });
 
-          setFiles(mappedFiles);
+          console.log("========== MAPPED API FILES ==========");
 
-          console.log("Mapped previous files:", mappedFiles);
-        } else {
-          setFiles([]);
+          console.log(mappedFiles);
 
-          console.log("No previous documents found");
+          // =====================================================
+          // MERGE API FILES + LOCAL FILES
+          // =====================================================
+
+          setFiles((previousFiles) => {
+            // Backend records are intentionally placed first. If a local
+            // temporary record and the backend record represent the same
+            // document, the backend record wins because it contains SMBPath,
+            // Utd, TRAN_ID, etc.
+            const combinedFiles = [...mappedFiles, ...previousFiles];
+
+            const seen = new Set<string>();
+            const uniqueFiles: StoredFile[] = [];
+
+            for (const file of combinedFiles) {
+              const stableKey = [
+                String(file.name || "").trim().toLowerCase(),
+                String(file.RefId || file.refNo || "").trim().toLowerCase(),
+                String(
+                  file.Doc_Type ||
+                    file.DocumentType ||
+                    file.refType ||
+                    "",
+                )
+                  .trim()
+                  .toLowerCase(),
+                String(file.Seq_No || file.SRNO || "").trim(),
+              ].join("|");
+
+              if (seen.has(stableKey)) {
+                continue;
+              }
+
+              seen.add(stableKey);
+              uniqueFiles.push(file);
+            }
+
+            console.log("========== MERGED FILES ==========");
+            console.log(uniqueFiles);
+
+            return uniqueFiles.sort(
+              (a, b) => Number(a.Seq_No || a.SRNO || 999) -
+                Number(b.Seq_No || b.SRNO || 999),
+            );
+          });
+
+          setScope("ref");
+          setRefNo(referenceNumber);
+
+          return;
         }
+
+        // =====================================================
+        // API RETURNS NO DOCUMENTS
+        // =====================================================
+
+        console.log("==========================================");
+
+        console.log("NO DOCUMENTS RETURNED BY BACKEND");
+
+        console.log("Keeping existing frontend files.");
+
+        console.log("Current frontend files will NOT be cleared.");
+
+        console.log("==========================================");
       } catch (error: any) {
-        console.error("Error in getting previous document data:", error);
+        console.error("==========================================");
 
-        console.error("Backend response:", error?.response?.data);
+        console.error("VIEW PREVIOUS DATA ERROR", error);
 
-        /*
-         * Don't throw again.
-         * Throwing here causes the UI flow to break.
-         */
+        console.error("BACKEND RESPONSE", error?.response?.data);
 
-        setFiles([]);
+        console.error("==========================================");
+
+        // DO NOT:
+        // setFiles([]);
 
         showSideAlert(
-          error?.response?.data?.message || "Unable to load previous documents",
+          error?.response?.data?.message ||
+            error?.response?.data?.Message ||
+            "Unable to load previous documents",
           "error",
         );
       }
@@ -597,35 +877,46 @@ export default function DocumentManagementPage() {
   const [debouncedRefNum] = useDebounce(refNo, 500);
 
   useEffect(() => {
-    if (debouncedRefNum && refNo && docRef) {
-      ViewPreviousData(docRef, refNo);
+    const documentReference = String(docRef || "").trim();
+    const referenceNumber = String(debouncedRefNum || "").trim();
+
+    if (!documentReference || !referenceNumber) {
+      return;
     }
-  }, [debouncedRefNum, refNo, docRef, ViewPreviousData]);
+
+    // As soon as the employee/reference number settles, automatically
+    // load its saved documents. No Show button click is required.
+    setScope("ref");
+    void ViewPreviousData(documentReference, referenceNumber);
+  }, [debouncedRefNum, docRef, ViewPreviousData]);
 
   /* =======================================================
      UPLOAD
      SAME API
   ======================================================= */
-
   const handleUpload = async () => {
     try {
-      setIsLoading((prev) => ({
-        ...prev,
-        Show: true,
-      }));
+      // =========================================================
+      // VALIDATION
+      // =========================================================
 
       if (!docRef) {
-        showSideAlert("Please select the Document Type", "error");
+        showSideAlert("Please select document reference.", "warn");
         return;
       }
 
       if (!refNo.trim()) {
-        showSideAlert("Please select the Reference Number", "error");
+        showSideAlert("Please enter reference number.", "warn");
         return;
       }
 
-      if (queue.length === 0) {
-        showSideAlert("Please select document to upload", "error");
+      if (!seqNo) {
+        showSideAlert("Please select document keyword.", "warn");
+        return;
+      }
+
+      if (!queue.length) {
+        showSideAlert("Please select at least one file.", "warn");
         return;
       }
 
@@ -634,43 +925,59 @@ export default function DocumentManagementPage() {
       );
 
       if (!selectedMaster) {
-        showSideAlert("Document master not found", "error");
+        showSideAlert("Selected document reference not found.", "warn");
         return;
       }
 
-      console.log("===== DOCUMENT SAVE START =====");
+      // =========================================================
+      // SEQUENCE -> KEYWORD
+      // Never depend on manually typed keyword.
+      // =========================================================
 
-      console.log("Doc Reference:", docRef);
+      const selectedSeqNo = String(seqNo).trim();
+      const selectedKeyword = getKeywordBySeqNo(selectedSeqNo);
 
-      console.log("Reference Number:", refNo);
+      if (!selectedKeyword || selectedKeyword === "OTHER") {
+        showSideAlert("Invalid document sequence selected.", "warn");
+        return;
+      }
 
-      console.log("Selected Master:", selectedMaster);
+      setIsUploaded(true);
 
-      console.log("Queue Files:", queue);
+      // =========================================================
+      // FORM DATA
+      // =========================================================
 
       const formData = new FormData();
 
-      /*
-       * IMPORTANT:
-       * Upload selected files from queue,
-       * NOT from files.
-       */
+      // Existing API expects files with the `files` field.
       queue.forEach((queueFile) => {
         formData.append("files", queueFile.file);
-
-        formData.append("keywords", keywords || "");
       });
 
-      /*
-       * Same metadata as old working page
-       */
+      // =========================================================
+      // SEQUENCE + KEYWORD
+      // =========================================================
+
+      formData.append("Seq_No", selectedSeqNo);
+      formData.append("seq_no", selectedSeqNo);
+      formData.append("keywords", selectedKeyword);
+      formData.append("Keywords", selectedKeyword);
+
+      // =========================================================
+      // EXISTING API DATA - PRESERVED
+      // =========================================================
+
       formData.append("refId", refNo.trim());
 
-      formData.append("user_id", String(user?.id || ""));
+      formData.append(
+        "user_id",
+        String(user?.EMPCODE || user?.id || user?.name || ""),
+      );
 
-      formData.append("doc_type", String(docRef));
+      formData.append("EmpCode", refNo.trim());
 
-      formData.append("EmpCode", String(user?.EMPCODE || ""));
+      formData.append("doc_type", String(selectedMaster.value || docRef));
 
       formData.append("Field", String(selectedMaster.Field || ""));
 
@@ -678,83 +985,222 @@ export default function DocumentManagementPage() {
 
       formData.append("Table_Name", String(selectedMaster.Table_Name || ""));
 
-      formData.append("Misc_Abbr", String(selectedMaster.Misc_Abbr || ""));
+      formData.append(
+        "Misc_Abbr",
+        String(
+          selectedMaster.Misc_Abbr ||
+            selectedMaster.label ||
+            selectedMaster.value ||
+            docRef,
+        ),
+      );
 
-      console.log("===== DOCUMENT SAVE FORM DATA =====");
+      formData.append("SRNO", selectedSeqNo);
+
+      // =========================================================
+      // DEBUG
+      // =========================================================
+
+      console.log("========== DOCUMENT UPLOAD ==========");
+      console.log("docRef:", docRef);
+      console.log("refNo:", refNo.trim());
+      console.log("Seq_No:", selectedSeqNo);
+      console.log("Keywords:", selectedKeyword);
+      console.log("selectedMaster:", selectedMaster);
+      console.log("queue:", queue);
 
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(key, value.name, value.size);
+          console.log(`${key}:`, value.name, value.type, value.size);
         } else {
-          console.log(key, value);
+          console.log(`${key}:`, value);
         }
       }
+
+      // =========================================================
+      // SAVE API - SAME API
+      // =========================================================
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/DocManage/Save`,
         formData,
         {
           headers: {
-            /*
-             * Don't manually set boundary.
-             * Axios/browser will create it correctly.
-             */
             compcode: user?.Comp_Code,
             name: user?.name,
-            token: user?.email,
+            // Do NOT manually set multipart Content-Type.
           },
         },
       );
 
-      console.log("===== DOCUMENT SAVE RESPONSE =====");
+      console.log("========== DOCUMENT UPLOAD RESPONSE ==========");
+      console.log(response.data);
 
-      console.log("Status:", response.status);
+      const statusValue =
+        response.data?.Status ??
+        response.data?.status ??
+        response.data?.success ??
+        response.data?.Success;
 
-      console.log("Data:", response.data);
+      const isSuccess =
+        statusValue === true ||
+        statusValue === 1 ||
+        statusValue === "1" ||
+        String(statusValue || "").toLowerCase() === "true";
 
-      await Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Document Uploaded successfully.",
-        timer: 1800,
-        showConfirmButton: false,
+      if (!isSuccess) {
+        throw new Error(
+          response.data?.Message ||
+            response.data?.message ||
+            "Document upload failed.",
+        );
+      }
+
+      // =========================================================
+      // CREATE FRONTEND FILE RECORDS
+      // =========================================================
+
+      const uploadedAt = new Date();
+
+      const documentTypeValue = String(docRef || "").trim();
+
+      const documentTypeLabel = String(
+        selectedMaster.label ||
+          selectedMaster.Misc_Abbr ||
+          selectedMaster.value ||
+          docRef ||
+          "",
+      ).trim();
+
+      const miscAbbr = String(
+        selectedMaster.Misc_Abbr ||
+          selectedMaster.label ||
+          selectedMaster.value ||
+          docRef ||
+          "",
+      ).trim();
+
+      const referenceNumber = String(refNo || "").trim();
+
+      const uploadedFiles: StoredFile[] = queue.map((queueFile) => ({
+        name: queueFile.name,
+        kind: queueFile.kind,
+        file: queueFile.file,
+
+        uploadedBy: user?.name || "",
+        uploadedAt: uploadedAt.toLocaleString(),
+        CreatedAt: uploadedAt.toISOString(),
+
+        refType: documentTypeLabel,
+        refNo: referenceNumber,
+        DocumentType: documentTypeValue,
+        RefId: referenceNumber,
+        Doc_Type: miscAbbr,
+
+        // Sequence-wise saved values
+        Seq_No: Number(selectedSeqNo),
+        Keywords: selectedKeyword,
+
+        SMBPath: "",
+        Utd: undefined,
+        TRAN_ID: undefined,
+        SRNO: Number(selectedSeqNo),
+      }));
+
+      console.log("========== FRONTEND UPLOADED FILES ==========");
+      console.log(uploadedFiles);
+
+      // =========================================================
+      // ADD FILES TO RIGHT-SIDE DOCUMENT CARD
+      // =========================================================
+
+      setFiles((previousFiles) => {
+        const combinedFiles = [...uploadedFiles, ...previousFiles];
+        const seen = new Set<string>();
+        const uniqueFiles: StoredFile[] = [];
+
+        for (const file of combinedFiles) {
+          const stableKey = [
+            String(file.name || "").trim().toLowerCase(),
+            String(file.RefId || file.refNo || "").trim().toLowerCase(),
+            String(
+              file.Doc_Type ||
+                file.DocumentType ||
+                file.refType ||
+                "",
+            )
+              .trim()
+              .toLowerCase(),
+            String(file.Seq_No || file.SRNO || "").trim(),
+          ].join("|");
+
+          if (seen.has(stableKey)) {
+            continue;
+          }
+
+          seen.add(stableKey);
+          uniqueFiles.push(file);
+        }
+
+        return uniqueFiles.sort(
+          (a, b) =>
+            Number(a.Seq_No || a.SRNO || 999) -
+            Number(b.Seq_No || b.SRNO || 999),
+        );
       });
 
-      /*
-       * Refresh previous documents
-       */
-      await ViewPreviousData(docRef, refNo.trim());
+      // =========================================================
+      // RELOAD FROM BACKEND
+      // This confirms the document was actually persisted and also
+      // brings back Utd / TRAN_ID / SMBPath returned by the backend.
+      // =========================================================
 
-      /*
-       * Clear upload queue
-       */
+      await ViewPreviousData(documentTypeValue, referenceNumber);
+
+      // =========================================================
+      // RESET
+      // =========================================================
+
+      setScope("ref");
       setQueue([]);
-
-      setIsUploaded(false);
-
       setKeywords("");
+      setSeqNo("");
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+
+      // =========================================================
+      // SUCCESS
+      // =========================================================
+
+      await Swal.fire({
+        icon: "success",
+        title: "Uploaded Successfully",
+        text:
+          queue.length === 1
+            ? `${selectedKeyword} uploaded successfully.`
+            : `${queue.length} documents uploaded as ${selectedKeyword}.`,
+        confirmButtonText: "OK",
+      });
     } catch (error: any) {
-      console.error("===== DOCUMENT SAVE ERROR =====");
-
+      console.error("========== DOCUMENT UPLOAD ERROR ==========");
       console.error(error);
-
       console.error("Backend response:", error?.response?.data);
 
-      showSideAlert(
-        error?.response?.data?.message || "Error uploading files",
-        "error",
-      );
+      const errorMessage =
+        error?.response?.data?.Message ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Unable to upload document.";
+
+      showSideAlert(String(errorMessage), "error");
     } finally {
-      setIsLoading((prev) => ({
-        ...prev,
-        Show: false,
-      }));
+      setIsUploaded(false);
     }
   };
+
   /* =======================================================
      DELETE FILE
      SAME API
@@ -810,16 +1256,71 @@ export default function DocumentManagementPage() {
      SAME BACKEND FETCH
   ======================================================= */
 
-  const handleView = useCallback((file: StoredFile) => {
-    if (!file.SMBPath) {
-      showSideAlert("File path not available.", "warn");
-      return;
+  const handleView = useCallback(
+    (file: StoredFile) => {
+      try {
+        // =========================================================
+        // CLEAN PREVIOUS PREVIEW URL
+        // =========================================================
+
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl("");
+        }
+
+        // =========================================================
+        // LOCAL UPLOADED FILE
+        // =========================================================
+
+        if (file.file) {
+          const localUrl = URL.createObjectURL(file.file);
+
+          setPreviewFile(file);
+          setPreviewUrl(localUrl);
+          setIsPreviewOpen(true);
+
+          return;
+        }
+
+        // =========================================================
+        // BACKEND FILE
+        // =========================================================
+
+        if (file.SMBPath) {
+          const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${encodeURIComponent(
+            file.SMBPath,
+          )}`;
+
+          setPreviewFile(file);
+          setPreviewUrl(fileUrl);
+          setIsPreviewOpen(true);
+
+          return;
+        }
+
+        // =========================================================
+        // NO FILE SOURCE
+        // =========================================================
+
+        showSideAlert("File preview path is not available.", "warn");
+      } catch (error) {
+        console.error("FILE PREVIEW ERROR:", error);
+
+        showSideAlert("Unable to preview document.", "error");
+      }
+    },
+    [previewUrl],
+  );
+
+  const closePreview = useCallback(() => {
+    if (previewUrl && previewFile?.file) {
+      URL.revokeObjectURL(previewUrl);
     }
 
-    const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${file.SMBPath}`;
-
-    window.open(fileUrl, "_blank", "noopener,noreferrer");
-  }, []);
+    setIsPreviewOpen(false);
+    setPreviewFile(null);
+    setPreviewUrl("");
+  }, [previewUrl, previewFile]);
 
   /* =======================================================
      DOWNLOAD FILE
@@ -827,28 +1328,75 @@ export default function DocumentManagementPage() {
   ======================================================= */
 
   const handleDownload = useCallback((file: StoredFile) => {
-    if (!file.SMBPath) {
-      showSideAlert("File path not available.", "warn");
-      return;
+    try {
+      // =======================================================
+      // LOCAL FRONTEND FILE
+      // =======================================================
+
+      if (file.file) {
+        const url = URL.createObjectURL(file.file);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+
+        link.download = file.name || "document";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 1000);
+
+        showSideAlert(`Downloading ${file.name}...`);
+
+        return;
+      }
+
+      // =======================================================
+      // BACKEND FILE
+      // =======================================================
+
+      if (file.SMBPath) {
+        const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${encodeURIComponent(
+          file.SMBPath,
+        )}`;
+
+        const link = document.createElement("a");
+
+        link.href = fileUrl;
+
+        link.download = file.name || "document";
+
+        link.target = "_blank";
+
+        link.rel = "noopener noreferrer";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        showSideAlert(`Downloading ${file.name}...`);
+
+        return;
+      }
+
+      // =======================================================
+      // NO FILE
+      // =======================================================
+
+      showSideAlert("File path is not available.", "warn");
+    } catch (error) {
+      console.error("DOWNLOAD ERROR:", error);
+
+      showSideAlert("Unable to download document.", "error");
     }
-
-    const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${file.SMBPath}`;
-
-    const link = document.createElement("a");
-
-    link.href = fileUrl;
-
-    link.download = file.name || "document";
-
-    link.target = "_blank";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-    showSideAlert(`Downloading ${file.name}...`);
   }, []);
 
   /* =======================================================
@@ -884,9 +1432,268 @@ export default function DocumentManagementPage() {
   };
 
   /* =======================================================
+   SHOW ALL / CURRENT REFERENCE
+   FRONTEND ONLY
+======================================================= */
+  const handleScopeChange = useCallback(async () => {
+    const nextScope = scope === "ref" ? "all" : "ref";
+
+    // =========================================================
+    // SHOW THIS REFERENCE
+    // =========================================================
+
+    if (nextScope === "ref") {
+      setScope("ref");
+
+      if (!docRef || !refNo.trim()) {
+        console.log("Reference type/number not selected.");
+        return;
+      }
+
+      console.log("===== SHOW THIS REFERENCE =====");
+
+      console.log("docRef:", docRef);
+
+      console.log("refNo:", refNo.trim());
+
+      await ViewPreviousData(docRef, refNo.trim());
+
+      return;
+    }
+
+    // =========================================================
+    // SHOW ALL REFERENCES
+    // =========================================================
+
+    try {
+      setScope("all");
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/DocManage/SearchingView`,
+        {
+          EmpCode: user?.EMPCODE,
+          searchQuery: "",
+        },
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        },
+      );
+
+      console.log("========== SEARCHING VIEW ==========");
+
+      console.log("STATUS:", response.status);
+
+      console.log("FULL RESPONSE:", response.data);
+
+      const result = response.data?.Result;
+
+      // =======================================================
+      // API CAN RETURN ARRAY DIRECTLY
+      // =======================================================
+
+      let documents: any[] = [];
+
+      if (Array.isArray(result)) {
+        documents = result;
+      } else if (Array.isArray(result?.data)) {
+        documents = result.data;
+      } else if (Array.isArray(result?.MI_REASON)) {
+        documents = result.MI_REASON;
+      } else if (Array.isArray(result?.dealer_details)) {
+        documents = result.dealer_details;
+      }
+
+      console.log("Documents returned:", documents);
+
+      // =======================================================
+      // IMPORTANT
+      //
+      // DO NOT setFiles([]) here.
+      //
+      // SearchingView can return Result: []
+      // even when newly uploaded files are already
+      // present in frontend state.
+      // =======================================================
+
+      if (documents.length === 0) {
+        console.log("SearchingView returned Result: [].");
+
+        console.log("Keeping existing frontend files.");
+
+        return;
+      }
+
+      // =======================================================
+      // MAP API DOCUMENTS
+      // =======================================================
+
+      const mappedFiles: StoredFile[] = documents.map((item: any) => {
+        const fileName =
+          item.OriginalName ||
+          item.File_Name ||
+          item.FileName ||
+          item.filename ||
+          item.name ||
+          "Document";
+
+        const extension = fileName.split(".").pop()?.toLowerCase() || "";
+
+        return {
+          name: fileName,
+
+          refType:
+            item.DocReference ||
+            item.DocumentType ||
+            item.DocType ||
+            item.Doc_Type ||
+            item.Misc_Abbr ||
+            "",
+
+          refNo: String(
+            item.RefId ||
+              item.refId ||
+              item.RefNum ||
+              item.ReferenceNo ||
+              item.EMPCODE ||
+              "",
+          ),
+
+          uploadedBy:
+            item.UploadedBy ||
+            item.User_Name ||
+            item.UserName ||
+            user?.name ||
+            "",
+
+          uploadedAt: item.CreatedAt
+            ? new Date(item.CreatedAt).toLocaleString()
+            : item.Upload_Date
+              ? new Date(item.Upload_Date).toLocaleString()
+              : "",
+
+          kind: extension === "pdf" ? "pdf" : "img",
+
+          Utd: item.Utd ?? item.UTD ?? item.utd,
+
+          TRAN_ID: item.TRAN_ID ?? item.TranId,
+
+          SRNO: item.SRNO ?? item.SrNo,
+
+          Doc_Type: item.DocType ?? item.Doc_Type,
+
+          SMBPath: item.SMBPath ?? item.path ?? item.Path ?? "",
+
+          Seq_No: item.Seq_No ??
+                item.SEQ_NO ??
+                item.SeqNo ??
+                item.seq_no ??
+                item.sequence_no ??
+                item.Sequence_No ??
+                "",
+
+          Keywords:
+            item.Keywords ??
+            item.keywords ??
+            getKeywordBySeqNo(
+              item.Seq_No ??
+                item.SEQ_NO ??
+                item.SeqNo ??
+                item.seq_no ??
+                item.sequence_no ??
+                item.Sequence_No ??
+                "",
+            ),
+
+          CreatedAt: item.CreatedAt ?? item.Upload_Date ?? "",
+
+          DocumentType:
+            item.DocReference ??
+            item.DocumentType ??
+            item.DocType ??
+            item.Doc_Type ??
+            "",
+
+          RefId: item.RefId ?? item.refId ?? item.RefNum ?? "",
+        };
+      });
+
+      console.log("Mapped all reference files:", mappedFiles);
+
+      // =======================================================
+      // MERGE API FILES + FRONTEND UPLOADED FILES
+      // =======================================================
+
+      setFiles((previousFiles) => {
+        const combined = [...mappedFiles, ...previousFiles];
+        const seen = new Set<string>();
+        const unique: StoredFile[] = [];
+
+        for (const file of combined) {
+          const stableKey = [
+            String(file.name || "").trim().toLowerCase(),
+            String(file.RefId || file.refNo || "").trim().toLowerCase(),
+            String(
+              file.Doc_Type ||
+                file.DocumentType ||
+                file.refType ||
+                "",
+            )
+              .trim()
+              .toLowerCase(),
+            String(file.Seq_No || file.SRNO || "").trim(),
+          ].join("|");
+
+          if (seen.has(stableKey)) {
+            continue;
+          }
+
+          seen.add(stableKey);
+          unique.push(file);
+        }
+
+        return unique.sort(
+          (a, b) =>
+            Number(a.Seq_No || a.SRNO || 999) -
+            Number(b.Seq_No || b.SRNO || 999),
+        );
+      });
+    } catch (error: any) {
+      console.error("SEARCHING VIEW ERROR:", error);
+
+      console.error("BACKEND RESPONSE:", error?.response?.data);
+
+      // IMPORTANT:
+      // Don't clear frontend files on API error.
+      showSideAlert(
+        error?.response?.data?.message ||
+          error?.response?.data?.Message ||
+          "Unable to load all documents",
+        "error",
+      );
+    }
+  }, [
+    scope,
+    docRef,
+    refNo,
+    user?.EMPCODE,
+    user?.Comp_Code,
+    user?.name,
+    ViewPreviousData,
+  ]);
+  /* =======================================================
      SEARCH DIALOG
   ======================================================= */
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
   const handleDialogOpen = useCallback((isOpen: boolean) => {
     setIsDialogOpen(isOpen);
 
@@ -987,7 +1794,7 @@ export default function DocumentManagementPage() {
 
           {/* REFERENCE NUMBER */}
           <Einput
-            title="REFERENCE NUMBER"
+            title={`${referenceFieldLabel}`}
             redlabel="*"
             type="text"
             name="RefNum"
@@ -996,12 +1803,14 @@ export default function DocumentManagementPage() {
           />
 
           {/* KEYWORDS */}
-
-          <Einput
+          <Eselect
             title="KEYWORDS"
-            type="text"
             name="Keywords"
-            value={keywords}
+            redlabel="*"
+            required
+            placeholder="Select document keyword"
+            option={KEYWORD_SEQUENCE_OPTIONS}
+            initialValue={seqNo}
             handleInputChange={handleKeywordsChange}
           />
         </div>
@@ -1013,11 +1822,28 @@ export default function DocumentManagementPage() {
 
       <div className="grid grid-cols-1 items-start gap-[14px] min-[901px]:grid-cols-[minmax(0,2fr)_minmax(460px,1fr)]">
         {/* =================================================
-            LEFT - UPLOAD
-        ================================================= */}
+    LEFT - UPLOAD
+================================================= */}
 
-        <div className="rounded-[12px] border border-[var(--border)] bg-[var(--card)] p-[22px] shadow-[var(--shadow)]">
-          {/* DROP AREA */}
+        <div
+          className="
+    flex
+    h-[400px]
+    min-h-[400px]
+    max-h-[400px]
+    flex-col
+    overflow-hidden
+    rounded-[12px]
+    border
+    border-[var(--border)]
+    bg-[var(--card)]
+    p-[18px]
+    shadow-[var(--shadow)]
+  "
+        >
+          {/* =================================================
+      DROP AREA
+  ================================================= */}
 
           <div
             onDragOver={handleDragOver}
@@ -1025,11 +1851,11 @@ export default function DocumentManagementPage() {
             onDrop={handleDrop}
             onClick={handleBrowse}
             className={[
-              "flex h-[200px] cursor-pointer flex-col items-center justify-center",
-              "rounded-[14px] border border-dashed hover:border-[var(--brand)]",
-              "px-5 py-[30px] text-center",
+              "flex h-[200px] shrink-0 cursor-pointer flex-col items-center justify-center",
+              "rounded-[14px] border border-dashed",
+              "px-5 py-[22px] text-center",
               "transition-all duration-200 ease-in-out",
-              "bg-[var(--field)]",
+              "bg-[var(--field)] hover:border-[var(--brand)]",
               isDragOver
                 ? "border-[var(--brand)] bg-[var(--brand-soft)]"
                 : "border-[#D9E1EC]",
@@ -1037,28 +1863,59 @@ export default function DocumentManagementPage() {
           >
             {/* CLOUD ICON */}
 
-            <div className="mb-[14px] grid h-[60px] w-[60px] place-items-center rounded-[16px] bg-[#EEF2FF] text-[#4F46E5]">
-              <UploadCloud size={24} strokeWidth={1.8} />
+            <div
+              className="
+        mb-[10px]
+        grid
+        h-[52px]
+        w-[52px]
+        shrink-0
+        place-items-center
+        rounded-[14px]
+        bg-[#EEF2FF]
+        text-[#4F46E5]
+      "
+            >
+              <UploadCloud size={22} strokeWidth={1.8} />
             </div>
 
             {/* TITLE */}
 
-            <div className="mb-[13px] text-[13px] font-[650] leading-[1.2] text-[var(--fg)]">
+            <div
+              className="
+        mb-[8px]
+        text-[13px]
+        font-[650]
+        leading-[1.2]
+        text-[var(--fg)]
+      "
+            >
               Upload documents
             </div>
 
             {/* DESCRIPTION */}
 
-            <div className="mb-[14px] text-[13px] text-[#64748B]">
+            <div
+              className="
+        mb-[9px]
+        text-[12px]
+        text-[#64748B]
+      "
+            >
               Drag and drop files here, or click to browse
             </div>
 
             {/* FILE INFO */}
 
-            <div className="text-[12px] text-[#4F6F9D]">
+            <div
+              className="
+        text-[11px]
+        text-[#4F6F9D]
+      "
+            >
               PDF, JPG, PNG · up to 10 MB each ·{" "}
               <strong className="font-[650]">{queue.length}</strong>{" "}
-              {queue.length === 1 ? "file" : "files"} selected for the reference
+              {queue.length === 1 ? "file" : "files"} selected
             </div>
 
             {/* FILE INPUT */}
@@ -1066,7 +1923,7 @@ export default function DocumentManagementPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,application/pdf,image/jpeg,image/png,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
               multiple
               hidden
               onChange={handleFileChange}
@@ -1074,70 +1931,145 @@ export default function DocumentManagementPage() {
           </div>
 
           {/* =================================================
-              QUEUE
-          ================================================= */}
+      QUEUE
+      AVAILABLE SPACE + SCROLL
+  ================================================= */}
 
-          {queue.length > 0 && (
-            <div className="mt-3 flex flex-col gap-[7px]">
-              {queue.map((file, index) => {
-                const config = getFileConfig(file.kind);
+          <div
+            className="
+      min-h-0
+      flex-1
+      overflow-y-auto
+      overflow-x-hidden
+      pr-[2px]
+      pt-2
+    "
+          >
+            {queue.length > 0 && (
+              <div className="flex flex-col gap-[6px]">
+                {queue.map((file, index) => {
+                  const config = getFileConfig(file.kind);
 
-                return (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="flex items-center gap-[10px] rounded-[9px] border border-[var(--border)] bg-[var(--sub)] px-[11px] py-[9px]"
-                  >
-                    {/* ICON */}
-
-                    <span
-                      className={[
-                        "grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px]",
-                        config.backgroundClass,
-                        config.colorClass,
-                      ].join(" ")}
+                  return (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="
+                flex
+                min-w-0
+                items-center
+                gap-[9px]
+                rounded-[9px]
+                border
+                border-[var(--border)]
+                bg-[var(--sub)]
+                px-[10px]
+                py-[7px]
+              "
                     >
-                      {config.icon}
-                    </span>
+                      {/* ICON */}
 
-                    {/* FILE NAME */}
-
-                    <span className="min-w-0 flex-1 text-left">
-                      <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-[550] text-[var(--fg)]">
-                        {file.name}
+                      <span
+                        className={[
+                          "grid h-[28px] w-[28px] shrink-0 place-items-center rounded-[7px]",
+                          config.backgroundClass,
+                          config.colorClass,
+                        ].join(" ")}
+                      >
+                        {config.icon}
                       </span>
 
-                      <span className="mt-[2px] block text-[11px] text-[var(--muted)]">
-                        {file.size}
+                      {/* FILE NAME */}
+
+                      <span className="min-w-0 flex-1 text-left">
+                        <span
+                          className="
+                    block
+                    overflow-hidden
+                    text-ellipsis
+                    whitespace-nowrap
+                    text-[12px]
+                    font-[550]
+                    text-[var(--fg)]
+                  "
+                        >
+                          {file.name}
+                        </span>
+
+                        <span
+                          className="
+                    mt-[1px]
+                    block
+                    text-[10px]
+                    text-[var(--muted)]
+                  "
+                        >
+                          {file.size}
+                        </span>
                       </span>
-                    </span>
 
-                    {/* REMOVE */}
+                      {/* REMOVE */}
 
-                    <button
-                      type="button"
-                      title="Remove"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeFile(index);
-                      }}
-                      className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[7px] border border-[var(--border)] bg-[var(--card)] text-[var(--muted)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--fg)]"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                      <button
+                        type="button"
+                        title="Remove"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeFile(index);
+                        }}
+                        className="
+                  grid
+                  h-[28px]
+                  w-[28px]
+                  shrink-0
+                  place-items-center
+                  rounded-[7px]
+                  border
+                  border-[var(--border)]
+                  bg-[var(--card)]
+                  text-[var(--muted)]
+                  transition-colors
+                  hover:bg-[var(--hover)]
+                  hover:text-[var(--fg)]
+                "
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* =================================================
-              FOOTER
-          ================================================= */}
+      FOOTER
+      FIXED AT BOTTOM
+  ================================================= */}
 
-          <div className="mt-5 flex flex-col items-start justify-between gap-3 min-[641px]:flex-row min-[641px]:items-center">
+          <div
+            className="
+      mt-[10px]
+      flex
+      shrink-0
+      items-center
+      justify-between
+      gap-3
+      border-t
+      border-[var(--border)]
+      pt-[10px]
+    "
+          >
             {/* MESSAGE */}
 
-            <div className="text-[10.5px] text-[#4F6F9D]">
+            <div
+              className="
+        min-w-0
+        flex-1
+        truncate
+        text-[10.5px]
+        text-[#4F6F9D]
+      "
+            >
               {docRef && refNo.trim()
                 ? "Ready to upload against this reference."
                 : "Pick a reference type and number before uploading."}
@@ -1145,24 +2077,35 @@ export default function DocumentManagementPage() {
 
             {/* BUTTONS */}
 
-            <div className="flex shrink-0 items-center gap-3">
+            <div
+              className="
+        flex
+        shrink-0
+        items-center
+        gap-2
+      "
+            >
               {/* CLEAR */}
 
               <AButton
                 onClick={clearQueue}
                 className="
-    h-12
-    rounded-[12px]
-    border border-[#D9E1EC]
-    bg-[var(--card)]
-    px-[17px]
-    text-[13.5px]
-    hover:bg-[var(--hover)]
-    font-[550]
-    text-[#475569]
-    dark:border-[#334155]
-    dark:text-white
-  "
+          inline-flex
+          h-[38px]
+          items-center
+          justify-center
+          rounded-[10px]
+          border
+          border-[#D9E1EC]
+          bg-[var(--card)]
+          px-[15px]
+          text-[13px]
+          font-[550]
+          text-[#475569]
+          hover:bg-[var(--hover)]
+          dark:border-[#334155]
+          dark:text-white
+        "
               >
                 Clear
               </AButton>
@@ -1173,16 +2116,24 @@ export default function DocumentManagementPage() {
                 onClick={handleUpload}
                 disabled={queue.length === 0}
                 className={[
-                  "inline-flex h-12 items-center justify-center",
-                  "gap-[9px] rounded-[12px] px-[17px]",
-                  "bg-[#64748B] text-[13.5px] font-[650] text-white",
-                  "hover:bg-[#64748B] active:bg-[#64748B]",
+                  `
+            inline-flex
+            h-[38px]
+            items-center
+            justify-center
+            gap-[7px]
+            rounded-[10px]
+            px-[16px]
+            text-[13px]
+            font-[650]
+            text-white
+          `,
                   queue.length > 0
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-90",
+                    ? "cursor-pointer bg-[#64748B] hover:bg-[#475569]"
+                    : "cursor-not-allowed bg-[#94A3B8] opacity-90",
                 ].join(" ")}
               >
-                <Upload size={17} />
+                <Upload size={16} />
                 Upload
               </AButton>
             </div>
@@ -1190,168 +2141,301 @@ export default function DocumentManagementPage() {
         </div>
 
         {/* =================================================
-            RIGHT - PREVIOUSLY UPLOADED
-        ================================================= */}
+      RIGHT - PREVIOUSLY UPLOADED
+      EXACT 400px HEIGHT
+  ================================================= */}
 
-        <div className="overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)]">
-          {/* HEADER */}
-
-          {/* HEADER */}
+        <div
+          className="
+      flex
+      h-[400px]
+      min-h-[400px]
+      max-h-[400px]
+      flex-col
+      overflow-hidden
+      rounded-[12px]
+      border
+      border-[var(--border)]
+      bg-[var(--card)]
+      shadow-[var(--shadow)]
+    "
+        >
+          {/* HEADER - FIXED */}
 
           <div
             className="
-    flex min-h-[64px] w-full
-    flex-col gap-3
-    border-b border-[var(--border)]
-    px-4 py-3
-    sm:flex-row sm:items-center sm:gap-[10px]
-    sm:px-5 sm:py-[13px]
-  "
+        flex
+        min-h-[64px]
+        w-full
+        shrink-0
+        flex-col
+        gap-3
+        border-b
+        border-[var(--border)]
+        px-4
+        py-3
+        sm:flex-row
+        sm:items-center
+        sm:gap-[10px]
+        sm:px-5
+        sm:py-[13px]
+      "
           >
-            {/* TITLE + COUNT */}
-
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <h2
                 className="
-        m-0 min-w-0
-        truncate
-        text-[14px] font-[600]
-        text-[var(--fg)]
-      "
+            m-0
+            min-w-0
+            truncate
+            text-[14px]
+            font-[600]
+            text-[var(--fg)]
+          "
               >
                 Previously uploaded
               </h2>
 
               <span
                 className="
-        shrink-0
-        whitespace-nowrap
-        text-[11.5px]
-        text-[var(--muted)]
-      "
+            shrink-0
+            whitespace-nowrap
+            text-[11.5px]
+            text-[var(--muted)]
+          "
               >
                 {displayedFiles.length} files
               </span>
             </div>
 
-            {/* SCOPE BUTTON */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setScope((previous) => (previous === "ref" ? "all" : "ref"))
-              }
+            <AButton
+              onClick={handleScopeChange}
               className="
-      h-[34px]
-      w-full
-      shrink-0
-      rounded-[10px]
-      border border-[#D9E1EC]
-      bg-[var(--card)]
-      px-[13px]
-      text-[10.5px]
-      font-[550]
-      text-[#334155]
-      transition-colors
-      hover:bg-[var(--hover)]
-      sm:w-auto
-    "
+          h-[34px]
+          w-full
+          shrink-0
+          rounded-[10px]
+          border
+          border-[#D9E1EC]
+          bg-[var(--card)]
+          px-[13px]
+          text-[10.5px]
+          font-[550]
+          text-[#334155]
+          transition-colors
+          hover:bg-[var(--hover)]
+          sm:w-auto
+        "
             >
               {scope === "ref"
                 ? "Showing this reference"
                 : "Showing all references"}
-            </button>
+            </AButton>
           </div>
 
-          {/* FILE LIST */}
+          {/* =================================================
+        FILE LIST
+        SCROLL ONLY THIS AREA
+    ================================================= */}
 
-          <div className="flex max-h-[480px] flex-col gap-2 overflow-y-auto px-5 pb-4 pt-3">
-            {displayedFiles.map((file) => {
-              const config = getFileConfig(file.kind);
+          <div
+            className="
+        min-h-0
+        flex-1
+        overflow-y-auto
+        overflow-x-hidden
+        px-5
+        pb-4
+        pt-3
 
-              return (
-                <div
-                  key={`${file.name}-${file.refNo}-${file.Utd || ""}`}
-                  className="flex min-w-0 items-center gap-[11px] rounded-[10px] border border-[var(--border)] px-3 py-[10px] transition-colors hover:bg-[var(--hover)]"
-                >
-                  {/* ICON */}
+        scrollbar-thin
+        scrollbar-track-transparent
+        scrollbar-thumb-[#CBD5E1]
+        dark:scrollbar-thumb-[#475569]
+      "
+          >
+            <div className="flex flex-col gap-2">
+              {displayedFiles.map((file) => {
+                const config = getFileConfig(file.kind);
 
+                return (
+                  <div
+                    key={`${file.name}-${file.refNo}-${file.Utd || ""}`}
+                    className="
+                flex
+                min-w-0
+                items-center
+                gap-[11px]
+                rounded-[10px]
+                border
+                border-[var(--border)]
+                px-3
+                py-[10px]
+                transition-colors
+                hover:bg-[var(--hover)]
+              "
+                  >
+                    {/* ICON */}
+
+                    <span
+                      className={[
+                        "grid h-[40px] w-[40px] shrink-0 place-items-center rounded-[11px]",
+                        config.backgroundClass,
+                        config.colorClass,
+                      ].join(" ")}
+                    >
+                      {config.icon}
+                    </span>
+
+                    {/* FILE DETAILS */}
+
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className="
+                    block
+                    overflow-hidden
+                    text-ellipsis
+                    whitespace-nowrap
+                    text-[12.5px]
+                    font-[550]
+                    text-[var(--fg)]
+                  "
+                      >
+                        {file.name}
+                      </span>
+
+                      <span
+                        className="
+                    mt-[2px]
+                    block
+                    overflow-hidden
+                    text-ellipsis
+                    whitespace-nowrap
+                    text-[10.5px]
+                    text-[var(--muted)]
+                  "
+                      >
+                        {file.Keywords || "OTHER"} · Seq {file.Seq_No || "-"} ·{" "}
+                        {file.refType} · {file.refNo} · {file.uploadedAt} ·{" "}
+                        {file.uploadedBy}
+                      </span>
+                    </span>
+
+                    {/* VIEW */}
+
+                    <AButton
+                      title="View"
+                      onClick={() => handleView(file)}
+                      className="
+                  grid
+                  h-[34px]
+                  w-[34px]
+                  shrink-0
+                  place-items-center
+                  rounded-[9px]
+                  border
+                  border-[#D9E1EC]
+                  bg-[var(--card)]
+                  text-[#64748B]
+                  transition-colors
+                  hover:bg-[var(--hover)]
+                  hover:text-[var(--fg)]
+                "
+                    >
+                      <Eye size={15} />
+                    </AButton>
+
+                    {/* DOWNLOAD */}
+
+                    <AButton
+                      title="Download"
+                      onClick={() => handleDownload(file)}
+                      className="
+                  grid
+                  h-[34px]
+                  w-[34px]
+                  shrink-0
+                  place-items-center
+                  rounded-[9px]
+                  border
+                  border-[#D9E1EC]
+                  bg-[var(--card)]
+                  text-[#64748B]
+                  transition-colors
+                  hover:bg-[var(--hover)]
+                  hover:text-[var(--fg)]
+                "
+                    >
+                      <Download size={15} />
+                    </AButton>
+
+                    {/* DELETE */}
+
+                    <AButton
+                      title="Delete"
+                      onClick={() => handleDelete(file)}
+                      className="
+                  grid
+                  h-[34px]
+                  w-[34px]
+                  shrink-0
+                  place-items-center
+                  rounded-[9px]
+                  border
+                  border-[#D9E1EC]
+                  bg-[var(--card)]
+                  text-[#64748B]
+                  transition-colors
+                  hover:bg-[#FFF1F2]
+                  hover:text-[#E11D48]
+                "
+                    >
+                      <Trash2 size={15} />
+                    </AButton>
+                  </div>
+                );
+              })}
+
+              {/* EMPTY */}
+
+              {displayedFiles.length === 0 && (
+                <div className="px-3 py-10 text-center">
                   <span
-                    className={[
-                      "grid h-[40px] w-[40px] shrink-0 place-items-center rounded-[11px]",
-                      config.backgroundClass,
-                      config.colorClass,
-                    ].join(" ")}
+                    className="
+                inline-grid
+                h-10
+                w-10
+                place-items-center
+                rounded-[11px]
+                bg-[var(--sub)]
+                text-[var(--muted)]
+              "
                   >
-                    {config.icon}
+                    <FolderOpen size={18} />
                   </span>
 
-                  {/* FILE DETAILS */}
-
-                  <span className="min-w-0 flex-1">
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-[550] text-[var(--fg)]">
-                      {file.name}
-                    </span>
-
-                    <span className="mt-[2px] block overflow-hidden text-ellipsis whitespace-nowrap text-[10.5px] text-[var(--muted)]">
-                      {file.refType} · {file.refNo} · {file.uploadedAt} ·{" "}
-                      {file.uploadedBy}
-                    </span>
-                  </span>
-
-                  {/* VIEW */}
-
-                  <button
-                    type="button"
-                    title="View"
-                    onClick={() => handleView(file)}
-                    className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] border border-[#D9E1EC] bg-[var(--card)] text-[#64748B] transition-colors hover:bg-[var(--hover)] hover:text-[var(--fg)]"
+                  <div
+                    className="
+                mt-3
+                text-[13px]
+                font-[550]
+                text-[var(--fg)]
+              "
                   >
-                    <Eye size={15} />
-                  </button>
+                    No files for this reference yet
+                  </div>
 
-                  {/* DOWNLOAD */}
-
-                  <button
-                    type="button"
-                    title="Download"
-                    onClick={() => handleDownload(file)}
-                    className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] border border-[#D9E1EC] bg-[var(--card)] text-[#64748B] transition-colors hover:bg-[var(--hover)] hover:text-[var(--fg)]"
+                  <div
+                    className="
+                mt-1
+                text-[12px]
+                text-[var(--muted)]
+              "
                   >
-                    <Download size={15} />
-                  </button>
-
-                  {/* DELETE */}
-
-                  <button
-                    type="button"
-                    title="Delete"
-                    onClick={() => handleDelete(file)}
-                    className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] border border-[#D9E1EC] bg-[var(--card)] text-[#64748B] transition-colors hover:bg-[#FFF1F2] hover:text-[#E11D48]"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                    Upload on the left, or switch to all references.
+                  </div>
                 </div>
-              );
-            })}
-
-            {/* EMPTY */}
-
-            {displayedFiles.length === 0 && (
-              <div className="px-3 py-10 text-center">
-                <span className="inline-grid h-10 w-10 place-items-center rounded-[11px] bg-[var(--sub)] text-[var(--muted)]">
-                  <FolderOpen size={18} />
-                </span>
-
-                <div className="mt-3 text-[13px] font-[550] text-[var(--fg)]">
-                  No files for this reference yet
-                </div>
-
-                <div className="mt-1 text-[12px] text-[var(--muted)]">
-                  Upload on the left, or switch to all references.
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1427,6 +2511,165 @@ export default function DocumentManagementPage() {
               )}
             </div>
           </DialogDescription>
+        </DialogContent>
+      </Dialog>
+
+      {/* =================================================
+    DOCUMENT PREVIEW DIALOG
+================================================= */}
+
+      <Dialog
+        open={isPreviewOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closePreview();
+          }
+        }}
+      >
+        <DialogContent
+          className="
+      w-[95vw]
+      max-w-[1000px]
+      overflow-hidden
+      rounded-[14px]
+      border
+      border-[var(--border)]
+      bg-[var(--card)]
+      p-0
+    "
+        >
+          {/* =================================================
+        HEADER
+    ================================================= */}
+
+          <DialogHeader
+            className="
+        flex
+        flex-row
+        items-center
+        justify-between
+        border-b
+        border-[var(--border)]
+        px-5
+        py-4
+      "
+          >
+            <div className="min-w-0">
+              <DialogTitle
+                className="
+            truncate
+            text-[14px]
+            font-[650]
+            text-[var(--fg)]
+          "
+              >
+                {previewFile?.name || "Document Preview"}
+              </DialogTitle>
+
+              <DialogDescription
+                className="
+            mt-1
+            text-[11px]
+            text-[var(--muted)]
+          "
+              >
+                {previewFile?.refType || ""}
+                {previewFile?.refNo ? ` · ${previewFile.refNo}` : ""}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {/* =================================================
+        PREVIEW AREA
+    ================================================= */}
+
+          <div
+            className="
+        flex
+        h-[70vh]
+        min-h-[400px]
+        w-full
+        items-center
+        justify-center
+        overflow-auto
+        bg-[#F8FAFC]
+        p-3
+        dark:bg-[#0F172A]
+      "
+          >
+            {previewFile && previewUrl ? (
+              previewFile.kind === "pdf" ? (
+                <iframe
+                  src={previewUrl}
+                  title={previewFile.name || "PDF Preview"}
+                  className="
+              h-full
+              w-full
+              rounded-[8px]
+              border
+              border-[var(--border)]
+              bg-white
+            "
+                />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt={previewFile.name || "Image Preview"}
+                  className="
+              max-h-full
+              max-w-full
+              rounded-[8px]
+              object-contain
+              shadow-sm
+            "
+                />
+              )
+            ) : (
+              <div
+                className="
+            text-[13px]
+            text-[var(--muted)]
+          "
+              >
+                Unable to preview this document.
+              </div>
+            )}
+          </div>
+
+          {/* =================================================
+        FOOTER
+    ================================================= */}
+
+          <div
+            className="
+        flex
+        items-center
+        justify-end
+        border-t
+        border-[var(--border)]
+        px-5
+        py-3
+      "
+          >
+            <AButton
+              type="button"
+              onClick={closePreview}
+              className="
+          h-[36px]
+          rounded-[9px]
+          border
+          border-[#D9E1EC]
+          bg-[var(--card)]
+          px-4
+          text-[12px]
+          font-[550]
+          text-[var(--fg)]
+          hover:bg-[var(--hover)]
+        "
+            >
+              Close
+            </AButton>
+          </div>
         </DialogContent>
       </Dialog>
 
