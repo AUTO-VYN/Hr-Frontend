@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  useState,
+} from "react";
 
 import { Download } from "lucide-react";
+import { FaFolderOpen } from "react-icons/fa";
+import { LuFolderOpen } from "react-icons/lu";
 
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -16,13 +24,53 @@ import FileViewer from "@/components/atoms/FileviewerBank";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+import { useDebounce } from "use-debounce";
+
 type MasterOption = {
   value: string;
   label?: string;
+  Misc_Dtl1?: string;
+  Misc_Hod?: number | string;
   Field?: string;
   From_Field?: string;
   Table_Name?: string;
   Misc_Abbr?: string;
+  [key: string]: any;
+};
+
+type DealerOption = {
+  value: string;
+  label: string;
+  Ledger_Name?: string;
+  Bill_Date?: string;
+};
+
+type DocumentItem = {
+  Utd?: number | string;
+  TRAN_ID?: number | string;
+  SRNO?: number | string;
+  DocType?: string;
+  DocTypeName?: string;
+  DocumentType?: string;
+  Doc_Type?: string;
+  RefId?: string | number;
+  Keywords?: string;
+  OriginalName?: string;
+  CreatedAt?: string;
+  CreatedNewDate?: string;
+  SMBPath?: string;
+  DOC_PATH?: string;
+  DOC_NAME?: string;
+  UploadedBy?: string;
+  UploadedByName?: string;
+  uploadedBy?: string;
+  name?: string;
   [key: string]: any;
 };
 
@@ -47,58 +95,6 @@ export default function Page() {
     return `${year}-${month}-${day}`;
   };
 
-  const HandleMasters = async () => {
-    try {
-      console.log("===== MASTERS API START =====");
-      console.log("URL:", `${process.env.NEXT_PUBLIC_URL}/DocManage/Masters`);
-      console.log("Comp Code:", user?.Comp_Code);
-      console.log("User Name:", user?.name);
-
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/DocManage/Masters`,
-        {},
-        {
-          headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
-          },
-        },
-      );
-
-      console.log("===== MASTERS API RESPONSE =====");
-      console.log("Status:", response.status);
-      console.log("Data:", response.data);
-      console.log("Result:", response.data?.Result);
-
-      const result = response.data?.Result || [];
-
-      if (result.length > 0) {
-        setMastersOption(result);
-      } else {
-        setMastersOption([]);
-
-        showSideAlert("No document masters found", "warning");
-      }
-    } catch (error: any) {
-      console.error("===== MASTERS API ERROR =====");
-      console.error(error);
-      console.error("Response:", error?.response?.data);
-
-      showSideAlert(
-        error?.response?.data?.message || "Failed to load document masters",
-        "error",
-      );
-    }
-  };
-  useEffect(() => {
-    if (!user?.Comp_Code) {
-      console.log("Comp_Code not available yet");
-      return;
-    }
-
-    HandleMasters();
-  }, [user?.Comp_Code, user?.name]);
-
   // =========================================================
   // STATES
   // =========================================================
@@ -108,40 +104,32 @@ export default function Page() {
     DATE_TO: getCurrentDate(),
   });
 
+  const [MastersOption, setMastersOption] = useState<MasterOption[]>([]);
+  const [ViewPrevious, setViewPrevious] = useState<DocumentItem[]>([]);
+  const [dealerOptions, setDealerOptions] = useState<DealerOption[]>([]);
+
+  const [tabledata, setTabledata] = useState<DocumentItem[]>([]);
   const [displayedFiles, setDisplayedFiles] = useState<any[]>([]);
 
-  const [tabledata, setTabledata] = useState<any[]>([]);
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isClicked, setIsClicked] = useState(false);
+  const [docRef, setDocRef] = useState("");
+  const [refNum, setRefNum] = useState("");
+  const [selectedDealer, setSelectedDealer] = useState("");
+  const [selectedMaster, setSelectedMaster] = useState<MasterOption | null>(
+    null,
+  );
 
   const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState<DocumentItem[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const [pageSize, setPageSize] = useState<number>(20);
-  const [docRef, setDocRef] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-
   const [totalCount, setTotalCount] = useState<number>(0);
-
-  // =========================================================
-  // FILTER STATES
-  // =========================================================
-
-  const [docReference, setDocReference] = useState("");
-  const [MastersOption, setMastersOption] = useState<MasterOption[]>([]);
-  const [uploadedBy, setUploadedBy] = useState("");
-
-  // =========================================================
-  // DATE CHANGE
-  // =========================================================
-
-  const handleDateChange = (name: string, value: string | null) => {
-    setDates((prevData) => ({
-      ...prevData,
-      [name]: value || "",
-    }));
-  };
+  const [tranId, setTranId] = useState<number | null>(null);
 
   // =========================================================
   // SIDE ALERT
@@ -149,13 +137,13 @@ export default function Page() {
 
   const showSideAlert = (
     message: string,
-    type: "success" | "error" | "warn" | "info" = "info",
+    type: "success" | "error" | "warn" | "info" | "warning" = "info",
   ) => {
     Swal.fire({
       toast: true,
       position: "top-end",
       icon:
-        type === "warn"
+        type === "warn" || type === "warning"
           ? "warning"
           : type === "error"
             ? "error"
@@ -169,12 +157,774 @@ export default function Page() {
     });
   };
 
+  // =========================================================
+  // API HEADERS
+  // =========================================================
+
+  const getHeaders = useCallback(
+    () => ({
+      compcode: user?.Comp_Code,
+      name: user?.name,
+    }),
+    [user?.Comp_Code, user?.name],
+  );
+
+  // =========================================================
+  // MASTERS API
+  // Existing API and request preserved
+  // =========================================================
+
+  const HandleMasters = useCallback(async () => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/DocManage/Masters`,
+        {},
+        {
+          headers: getHeaders(),
+        },
+      );
+
+      const result: MasterOption[] = response.data?.Result || [];
+
+      if (Array.isArray(result) && result.length > 0) {
+        const formattedMasters = result.map((item: any) => ({
+          ...item,
+          value: String(item.value ?? item.Misc_Code ?? item.MISC_CODE ?? ""),
+          label:
+            item.label ??
+            item.Misc_Name ??
+            item.MISC_NAME ??
+            item.Misc_Desc ??
+            item.value ??
+            "",
+        }));
+
+        setMastersOption(
+          formattedMasters.filter((item) => Boolean(item.value)),
+        );
+      } else {
+        setMastersOption([]);
+        showSideAlert("No document masters found", "warning");
+      }
+    } catch (error: any) {
+      console.error("Masters API error:", error);
+      console.error("Response:", error?.response?.data);
+
+      showSideAlert(
+        error?.response?.data?.message || "Failed to load document masters",
+        "error",
+      );
+    }
+  }, [getHeaders]);
+
+  useEffect(() => {
+    if (user?.Comp_Code) {
+      HandleMasters();
+    }
+  }, [user?.Comp_Code, HandleMasters]);
+
+  // =========================================================
+  // SELECTED MASTER
+  // =========================================================
+
+  const handleDocRefChange = useCallback(
+    (name: string, value: any) => {
+      const selectedValue = String(value ?? "");
+
+      setDocRef(selectedValue);
+      setRefNum("");
+      setSelectedDealer("");
+      setDealerOptions([]);
+      setViewPrevious([]);
+
+      const master = MastersOption.find(
+        (item) => String(item.value) === selectedValue,
+      );
+
+      setSelectedMaster(master || null);
+
+      setCurrentPage(1);
+    },
+    [MastersOption],
+  );
+
+  // =========================================================
+  // DYNAMIC REFERENCE FIELD TITLE
+  // =========================================================
+
+  const referenceFieldLabel = useMemo(() => {
+    const master =
+      selectedMaster ||
+      MastersOption.find((item) => String(item.value) === String(docRef));
+
+    const isEmployee =
+      String(master?.Table_Name || "").toUpperCase() === "EMPLOYEEMASTER" ||
+      String(master?.From_Field || "").toUpperCase() === "EMPCODE" ||
+      String(master?.Field || "").toUpperCase() === "EMPCODE" ||
+      String(master?.Misc_Abbr || "").toUpperCase() === "EMPLOYEE";
+
+    if (isEmployee) {
+      return "Employee Code";
+    }
+
+    return master?.Misc_Dtl1 || "Reference Number";
+  }, [MastersOption, docRef, selectedMaster]);
+
   const documentReferenceOptions = useMemo(() => {
     return MastersOption.map((item) => ({
-      value: item.value,
-      label: item.label || item.value,
+      value: String(item.value),
+      label: item.label || String(item.value),
     })).filter((item) => item.value);
   }, [MastersOption]);
+
+  // =========================================================
+  // DATE CHANGE
+  // =========================================================
+
+  const handleDateChange = (name: string, value: string | null) => {
+    setDates((prevData) => ({
+      ...prevData,
+      [name]: value || "",
+    }));
+  };
+
+  // =========================================================
+  // MAP API RESPONSE TO TABLE DATA
+  // =========================================================
+
+
+const getDocumentReferenceName = (seqNo: any): string => {
+  const documentNames: Record<number, string> = {
+    1: "PROFILE PHOTO",
+    2: "AADHAR IMAGE",
+    3: "PAN IMAGE",
+    4: "SALARY IMAGE",
+    5: "OTHER 1",
+    6: "OTHER 2",
+    7: "OTHER 3",
+    8: "OTHER 4",
+    9: "OTHER PDF",
+    10: "SEPARATION 1",
+    11: "SEPARATION 2",
+  };
+
+  const normalizedSeqNo = Number(
+    String(seqNo ?? "").trim()
+  );
+
+  return documentNames[normalizedSeqNo] || "OTHER";
+};
+
+const mapDocumentData = useCallback((data: DocumentItem[]) => {
+  return (data || []).map((item: DocumentItem, index: number) => {
+    // API response mein Seq_No ke possible field names
+    const seqNo =
+      item.Seq_No ??
+      item.SeqNo ??
+      item.SEQ_NO ??
+      item.seq_no ??
+      item.seqNo ??
+      item.SEQNO;
+
+    // Seq_No milne par document name hi DOC REFERENCE mein show hoga
+    const docReference =
+      seqNo !== undefined && seqNo !== null && String(seqNo).trim() !== ""
+        ? getDocumentReferenceName(seqNo)
+        : getDocumentReferenceName(
+            item.Keywords ??
+            item.KEYWORDS ??
+            item.DocTypeName ??
+            item.DocumentType ??
+            item.DocType ??
+            item.Doc_Type
+          );
+
+    const referenceId =
+      item.RefId ??
+      item.RefNum ??
+      item.REF_ID ??
+      item.ReferenceNo ??
+      item.Reference_No ??
+      item.Ref_No ??
+      "";
+
+    const filePath =
+      item.SMBPath ??
+      item.DOC_PATH ??
+      item.FilePath ??
+      item.FILE_PATH ??
+      item.SMB_PATH ??
+      "";
+
+    const employeeName =
+      item.EmployeeName ??
+      item.EMPNAME ??
+      item.EmpName ??
+      item.Employee ??
+      item.EMPLOYEE ??
+      "";
+
+    const uploadedBy =
+      item.UploadedByName ??
+      item.UploadedBy ??
+      item.uploadedBy ??
+      item.Uploaded_By ??
+      "";
+
+    const uploadedAt =
+      item.CreatedNewDate ??
+      item.CreatedAt ??
+      item.CREATED_AT ??
+      item.UploadDate ??
+      "";
+
+    const fileName =
+      item.OriginalName ??
+      item.DOC_NAME ??
+      item.FileName ??
+      item.FILE_NAME ??
+      item.name ??
+      "";
+
+    return {
+      ...item,
+
+      srNo: item.SRNO ?? item.Utd ?? item.TRAN_ID ?? index + 1,
+
+      // Correct document reference name
+      refType: docReference,
+
+      refNo: referenceId,
+
+      Keywords:
+        item.Keywords ??
+        item.KEYWORDS ??
+        item.Remark ??
+        item.MI_REASON ??
+        "",
+
+      RefId: referenceId,
+
+      Employee: employeeName || referenceId || "—",
+
+      uploadedBy,
+      uploadedAt,
+      name: fileName,
+      SMBPath: filePath,
+
+      Seq_No: seqNo,
+
+      TRAN_ID: item.TRAN_ID ?? item.Utd,
+
+      // Don't overwrite original type if API supplies one
+      Doc_Type: item.Doc_Type ?? item.DocType ?? docReference,
+    };
+  });
+}, []);
+
+  // =========================================================
+  // DOCUMENT VIEW API
+  // Existing endpoint, body and headers preserved
+  // =========================================================
+
+  const OutServiceView = useCallback(async () => {
+    if (!user?.Comp_Code) {
+      showSideAlert("Company code is not available", "warning");
+      return;
+    }
+
+    setIsClicked(true);
+    setIsLoading(true);
+
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/DocManage/DocmentView`,
+        {
+          EmpCode: user?.EMPCODE,
+          DateFrom: dates.DATE_FROM,
+          DateTo: dates.DATE_TO,
+        },
+        {
+          headers: getHeaders(),
+        },
+      );
+
+      const resultData = result.data?.Result;
+
+      if (Array.isArray(resultData)) {
+        setTabledata(resultData);
+        setCurrentPage(1);
+
+        if (resultData.length === 0) {
+          showSideAlert("No documents found.", "warning");
+        }
+      } else {
+        setTabledata([]);
+        setDisplayedFiles([]);
+        setTotalCount(0);
+
+        showSideAlert("No documents found.", "warning");
+      }
+    } catch (error: any) {
+      console.error("Document View API error:", error);
+      console.error("Response:", error?.response?.data);
+
+      setTabledata([]);
+      setDisplayedFiles([]);
+      setTotalCount(0);
+
+      showSideAlert(
+        error?.response?.data?.message || "Unable to load documents.",
+        "error",
+      );
+    } finally {
+      setIsClicked(false);
+      setIsLoading(false);
+    }
+  }, [
+    user?.Comp_Code,
+    user?.EMPCODE,
+    dates.DATE_FROM,
+    dates.DATE_TO,
+    getHeaders,
+  ]);
+
+  // =========================================================
+  // AUTO LOAD
+  // =========================================================
+
+  useEffect(() => {
+    if (!user?.Comp_Code) {
+      return;
+    }
+
+    OutServiceView();
+  }, [user?.Comp_Code, OutServiceView]);
+
+  // =========================================================
+  // VIEW PREVIOUS FILES API
+  // Existing endpoint and request properties preserved
+  // =========================================================
+
+  const ViewPreviousData = useCallback(
+    async (vin: string, referenceNumber: string) => {
+      if (!referenceNumber) {
+        showSideAlert(`Please enter ${referenceFieldLabel}`, "info");
+        return;
+      }
+
+      if (!vin) {
+        showSideAlert("Please select Doc Reference", "info");
+        return;
+      }
+
+      const selectedDealerObj = dealerOptions.find(
+        (dealer) => dealer.value === selectedDealer,
+      );
+
+      const Ledger_Name = selectedDealerObj?.Ledger_Name || "";
+      const Bill_Date = selectedDealerObj?.Bill_Date || "";
+
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/DocManage/ViewPreviousData`,
+          {
+            RefNum: referenceNumber,
+            vin,
+            ledger_name: Ledger_Name,
+            bill_date: Bill_Date,
+          },
+          {
+            headers: getHeaders(),
+          },
+        );
+
+        setTranId(response.data?.TranId ?? null);
+
+        const result = response.data?.Result;
+
+        if (
+          Array.isArray(result?.dealer_details) &&
+          result.dealer_details.length > 0
+        ) {
+          const formattedDealerOptions: DealerOption[] =
+            result.dealer_details.map((dealer: any) => ({
+              value: String(dealer.TRAN_ID),
+              label: String(dealer.dealer_details ?? ""),
+              Ledger_Name: dealer.Ledger_Name,
+              Bill_Date: dealer.Bill_Date,
+            }));
+
+          setDealerOptions(formattedDealerOptions);
+        } else {
+          setDealerOptions([]);
+        }
+
+        if (Array.isArray(result?.MI_REASON) && result.MI_REASON.length > 0) {
+          setViewPrevious(result.MI_REASON);
+        } else {
+          setViewPrevious([]);
+          showSideAlert("No Previous Files", "warning");
+        }
+      } catch (error: any) {
+        console.error("ViewPreviousData API error:", error);
+        console.error("Response:", error?.response?.data);
+
+        setViewPrevious([]);
+
+        showSideAlert(
+          error?.response?.data?.message || "Unable to load previous files.",
+          "error",
+        );
+      }
+    },
+    [dealerOptions, selectedDealer, getHeaders, referenceFieldLabel],
+  );
+
+  // =========================================================
+  // DEALER CHANGE
+  // =========================================================
+
+  const handleDealerChange = useCallback(
+    async (name: string, value: any) => {
+      setSelectedDealer(String(value ?? ""));
+
+      if (docRef && refNum) {
+        const selected = dealerOptions.find(
+          (dealer) => dealer.value === String(value ?? ""),
+        );
+
+        try {
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_URL}/DocManage/ViewPreviousData`,
+            {
+              RefNum: refNum,
+              vin: docRef,
+              ledger_name: selected?.Ledger_Name || "",
+              bill_date: selected?.Bill_Date || "",
+            },
+            {
+              headers: getHeaders(),
+            },
+          );
+
+          setTranId(response.data?.TranId ?? null);
+
+          const reasons = response.data?.Result?.MI_REASON;
+
+          if (Array.isArray(reasons)) {
+            setViewPrevious(reasons);
+          } else {
+            setViewPrevious([]);
+          }
+        } catch (error: any) {
+          console.error("Dealer selection API error:", error);
+
+          showSideAlert(
+            error?.response?.data?.message ||
+              "Unable to load dealer documents.",
+            "error",
+          );
+        }
+      }
+    },
+    [docRef, refNum, dealerOptions, getHeaders],
+  );
+
+  // =========================================================
+  // DEBOUNCED PREVIOUS FILE LOOKUP
+  // =========================================================
+
+  const [debouncedRefNum] = useDebounce(refNum, 500);
+
+  const lastRequestedRef = useRef("");
+
+  useEffect(() => {
+    if (!docRef || !debouncedRefNum?.trim()) {
+      lastRequestedRef.current = "";
+      setViewPrevious([]);
+      setDealerOptions([]);
+      return;
+    }
+
+    const requestKey = `${docRef}::${debouncedRefNum.trim()}`;
+
+    // Same document reference aur employee code par repeat API call nahi hogi
+    if (lastRequestedRef.current === requestKey) {
+      return;
+    }
+
+    lastRequestedRef.current = requestKey;
+
+    ViewPreviousData(docRef, debouncedRefNum.trim());
+  }, [docRef, debouncedRefNum]);
+
+  // =========================================================
+  // SEARCH API
+  // Existing endpoint and request body preserved
+  // =========================================================
+
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      if (!user?.Comp_Code) {
+        return;
+      }
+
+      setIsSearching(true);
+
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/DocManage/SearchingView`,
+          {
+            EmpCode: user?.EMPCODE,
+            searchQuery: query,
+          },
+          {
+            headers: getHeaders(),
+          },
+        );
+
+        setSearchResults(
+          Array.isArray(response.data?.Result) ? response.data.Result : [],
+        );
+      } catch (error: any) {
+        console.error("SearchingView API error:", error);
+
+        setSearchResults([]);
+
+        showSideAlert(
+          error?.response?.data?.message || "Unable to search documents.",
+          "error",
+        );
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [user?.Comp_Code, user?.EMPCODE, getHeaders],
+  );
+
+  // =========================================================
+  // SEARCH RESULT SELECTION
+  // =========================================================
+
+  const handleCardClick = useCallback(
+    async (item: DocumentItem) => {
+      const documentType = String(item.DocType ?? item.Doc_Type ?? "");
+      const referenceId = String(item.RefId ?? "");
+
+      setDocRef(documentType);
+      setRefNum(referenceId);
+      setSearchInput("");
+      setSearchResults([]);
+      setIsDialogOpen(false);
+
+      const master = MastersOption.find(
+        (option) => String(option.value) === documentType,
+      );
+
+      setSelectedMaster(master || null);
+
+      await ViewPreviousData(documentType, referenceId);
+    },
+    [MastersOption, ViewPreviousData],
+  );
+
+  // =========================================================
+  // FILTER + PAGINATION
+  // =========================================================
+
+  useEffect(() => {
+    const combinedRows = [...(tabledata || []), ...(ViewPrevious || [])];
+
+    // Duplicate files ko avoid karein
+    const uniqueRows = Array.from(
+      new Map(
+        combinedRows.map((item: DocumentItem, index) => {
+          const uniqueKey = [
+            item.Utd ?? item.TRAN_ID ?? item.SRNO ?? "",
+            item.SMBPath ?? item.DOC_PATH ?? "",
+            item.OriginalName ?? item.DOC_NAME ?? "",
+            item.RefId ?? item.RefNum ?? "",
+          ].join("|");
+
+          return [uniqueKey === "|||" ? `row-${index}` : uniqueKey, item];
+        }),
+      ).values(),
+    );
+
+    let rows = uniqueRows;
+
+    if (docRef.trim()) {
+      const selectedMasterLabel =
+        selectedMaster?.label ||
+        MastersOption.find((item) => String(item.value) === docRef)?.label ||
+        "";
+
+      rows = rows.filter((item: DocumentItem) => {
+        const type =
+          item.DocTypeName ??
+          item.DocType ??
+          item.DocumentType ??
+          item.Doc_Type ??
+          "";
+
+        return (
+          String(type).toLowerCase().includes(docRef.toLowerCase()) ||
+          String(type)
+            .toLowerCase()
+            .includes(String(selectedMasterLabel).toLowerCase())
+        );
+      });
+    }
+
+    if (refNum.trim()) {
+      const search = refNum.trim().toLowerCase();
+
+      rows = rows.filter((item: DocumentItem) =>
+        String(item.RefId ?? "")
+          .toLowerCase()
+          .includes(search),
+      );
+    }
+
+    if (searchInput.trim()) {
+      const search = searchInput.trim().toLowerCase();
+
+      rows = rows.filter((item: DocumentItem) => {
+        const values = [
+          item.Utd,
+          item.DocTypeName,
+          item.DocType,
+          item.DocumentType,
+          item.RefId,
+          item.Keywords,
+          item.UploadedByName,
+          item.UploadedBy,
+          item.CreatedNewDate,
+          item.CreatedAt,
+          item.OriginalName,
+          item.DOC_NAME,
+          item.SMBPath,
+        ];
+
+        return values.some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(search),
+        );
+      });
+    }
+
+    const mappedRows = mapDocumentData(rows);
+
+    setTotalCount(mappedRows.length);
+
+    const size = pageSize === -1 ? mappedRows.length || 1 : pageSize;
+
+    const start = (currentPage - 1) * size;
+    const end = start + size;
+
+    const paginatedRows =
+      pageSize === -1 ? mappedRows : mappedRows.slice(start, end);
+
+    setDisplayedFiles(paginatedRows);
+  }, [
+    tabledata,
+    docRef,
+    ViewPrevious,
+    refNum,
+    searchInput,
+    currentPage,
+    pageSize,
+    mapDocumentData,
+    selectedMaster,
+    MastersOption,
+  ]);
+
+  // =========================================================
+  // RESET FILTERS
+  // =========================================================
+
+  const handleReset = () => {
+    setDocRef("");
+    setRefNum("");
+    setSelectedMaster(null);
+    setSelectedDealer("");
+    setDealerOptions([]);
+    setViewPrevious([]);
+    setSearchInput("");
+    setSearchResults([]);
+    setCurrentPage(1);
+  };
+
+  // =========================================================
+  // EXPORT CSV
+  // =========================================================
+
+  const handleExport = () => {
+    try {
+      const rows = displayedFiles.map((file, index) => ({
+        "SR NO":
+          (currentPage - 1) *
+            (pageSize === -1 ? displayedFiles.length : pageSize) +
+          index +
+          1,
+
+        "DOC REFERENCE": file.refType || "",
+        "REFERENCE ID": file.refNo || "",
+        KEYWORD: file.Keywords || "",
+        EMPLOYEE: file.RefId || "",
+        "UPLOADED BY": file.uploadedBy || "",
+        "CREATED AT": file.uploadedAt || "",
+        FILE: file.name || "",
+      }));
+
+      if (!rows.length) {
+        showSideAlert("No documents available to export.", "warning");
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) =>
+          headers
+            .map((header) => {
+              const value = row[header as keyof typeof row];
+
+              return `"${String(value ?? "").replace(/"/g, '""')}"`;
+            })
+            .join(","),
+        ),
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + csv], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "Document_View.csv";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export error:", error);
+      showSideAlert("Export failed.", "error");
+    }
+  };
+
   // =========================================================
   // TABLE COLUMNS
   // =========================================================
@@ -227,8 +977,7 @@ export default function Page() {
 
       {
         Header: "EMPLOYEE",
-        accessor: "RefId",
-
+        accessor: "Employee",
         Cell: ({ value }: any) => (
           <span className="whitespace-nowrap text-[13px] text-slate-600 dark:text-slate-300 sm:text-[14px]">
             {value || "—"}
@@ -236,16 +985,7 @@ export default function Page() {
         ),
       },
 
-      {
-        Header: "UPLOADED BY",
-        accessor: "uploadedBy",
-
-        Cell: ({ value }: any) => (
-          <span className="max-w-[150px] truncate text-[13px] text-slate-600 dark:text-slate-300 sm:max-w-[220px] sm:text-[14px]">
-            {value || "—"}
-          </span>
-        ),
-      },
+    
 
       {
         Header: "CREATED AT",
@@ -253,13 +993,13 @@ export default function Page() {
 
         Cell: ({ value }: any) => {
           if (!value) {
-            return "";
+            return "—";
           }
 
           const dateObj = new Date(value);
 
           if (isNaN(dateObj.getTime())) {
-            return "";
+            return "—";
           }
 
           const day = dateObj.getDate();
@@ -291,7 +1031,9 @@ export default function Page() {
                 fileLink={`https://erp.autovyn.com/backend/fetch?filePath=${SMBPath}`}
               />
             </div>
-          ) : null;
+          ) : (
+            <span>—</span>
+          );
         },
       },
     ],
@@ -299,21 +1041,14 @@ export default function Page() {
   );
 
   // =========================================================
-  // TOTAL PAGES
+  // SERVER PAGINATION OBJECT
   // =========================================================
 
   const totalPages = useMemo(() => {
-    const size = pageSize === -1 ? 1000000 : pageSize;
+    const size = pageSize === -1 ? totalCount || 1 : pageSize;
 
-    return Math.max(1, Math.ceil((totalCount || 0) / (size || 1)));
+    return Math.max(1, Math.ceil((totalCount || 0) / size));
   }, [totalCount, pageSize]);
-
-  const handleDocRefChange = useCallback((name: string, value: any) => {
-    setDocRef(value ?? "");
-  }, []);
-  // =========================================================
-  // SERVER PAGINATION OBJECT
-  // =========================================================
 
   const serverPagination = useMemo(
     () => ({
@@ -326,312 +1061,8 @@ export default function Page() {
   );
 
   // =========================================================
-  // MAP OLD API RESPONSE
-  // =========================================================
-
-  const mapDocumentData = (data: any[]) => {
-    return (data || []).map((item: any, index: number) => ({
-      srNo: item.Utd ?? index + 1,
-
-      refType:
-        item.DocTypeName ??
-        item.DocType ??
-        item.DocumentType ??
-        item.Doc_Type ??
-        "",
-
-      refNo: item.RefId ?? "",
-
-      Keywords: item.Keywords ?? "",
-
-      RefId: item.RefId ?? "",
-
-      uploadedBy:
-        item.UploadedByName ?? item.UploadedBy ?? item.uploadedBy ?? "",
-
-      uploadedAt: item.CreatedNewDate ?? item.CreatedAt ?? item.createdAt ?? "",
-
-      name: item.OriginalName ?? item.DOC_NAME ?? item.name ?? "",
-
-      SMBPath: item.SMBPath ?? item.DOC_PATH ?? "",
-
-      Utd: item.Utd,
-
-      TRAN_ID: item.TRAN_ID ?? item.Utd,
-
-      SRNO: item.SRNO ?? item.Utd,
-
-      Doc_Type: item.Doc_Type ?? item.DocType ?? "",
-    }));
-  };
-
-  // =========================================================
-  // FILTER + PAGINATION
-  // =========================================================
-
-  useEffect(() => {
-    let rows = [...(tabledata || [])];
-
-    // =======================================================
-    // DOC REFERENCE FILTER
-    // =======================================================
-
-    if (docReference.trim()) {
-      const search = docReference.trim().toLowerCase();
-
-      rows = rows.filter((item: any) => {
-        const value =
-          item.DocTypeName ??
-          item.DocType ??
-          item.DocumentType ??
-          item.Doc_Type ??
-          "";
-
-        return String(value).toLowerCase().includes(search);
-      });
-    }
-
-    // =======================================================
-    // UPLOADED BY FILTER
-    // =======================================================
-
-    if (uploadedBy.trim()) {
-      const search = uploadedBy.trim().toLowerCase();
-
-      rows = rows.filter((item: any) => {
-        const value =
-          item.UploadedByName ?? item.UploadedBy ?? item.uploadedBy ?? "";
-
-        return String(value).toLowerCase().includes(search);
-      });
-    }
-
-    // =======================================================
-    // SERVICE TABLE SEARCH
-    // =======================================================
-
-    if (searchInput.trim()) {
-      const search = searchInput.trim().toLowerCase();
-
-      rows = rows.filter((item: any) => {
-        const values = [
-          item.Utd,
-          item.DocTypeName,
-          item.DocType,
-          item.DocumentType,
-          item.RefId,
-          item.Keywords,
-          item.UploadedByName,
-          item.UploadedBy,
-          item.CreatedNewDate,
-          item.CreatedAt,
-          item.OriginalName,
-          item.DOC_NAME,
-          item.SMBPath,
-        ];
-
-        return values.some((value) =>
-          String(value ?? "")
-            .toLowerCase()
-            .includes(search),
-        );
-      });
-    }
-
-    // =======================================================
-    // MAP DATA
-    // =======================================================
-
-    const mappedRows = mapDocumentData(rows);
-
-    setTotalCount(mappedRows.length);
-
-    // =======================================================
-    // PAGINATION
-    // =======================================================
-
-    const size = pageSize === -1 ? mappedRows.length || 1 : pageSize;
-
-    const start = (currentPage - 1) * size;
-
-    const end = start + size;
-
-    const paginatedRows =
-      pageSize === -1 ? mappedRows : mappedRows.slice(start, end);
-
-    setDisplayedFiles(paginatedRows);
-  }, [tabledata, searchInput, docReference, uploadedBy, currentPage, pageSize]);
-
-  // =========================================================
-  // OLD WORKING DOCUMENT VIEW API
-  // =========================================================
-
-  const OutServiceView = async () => {
-    setIsClicked(true);
-    setIsLoading(true);
-
-    try {
-      const result = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/DocManage/DocmentView`,
-        {
-          EmpCode: user?.EMPCODE,
-          DateFrom: dates.DATE_FROM,
-          DateTo: dates.DATE_TO,
-        },
-        {
-          headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
-          },
-        },
-      );
-
-      console.log(result.data, "result.data?.Result");
-
-      const resultData = result.data?.Result;
-
-      if (Array.isArray(resultData)) {
-        setTabledata(resultData);
-
-        setCurrentPage(1);
-
-        if (resultData.length === 0) {
-          showSideAlert("No documents found.", "warn");
-        }
-      } else {
-        setTabledata([]);
-
-        setDisplayedFiles([]);
-
-        setTotalCount(0);
-
-        showSideAlert("No documents found.", "warn");
-      }
-    } catch (error: any) {
-      console.error("Error occurred while making the get request:", error);
-
-      setTabledata([]);
-
-      setDisplayedFiles([]);
-
-      setTotalCount(0);
-
-      showSideAlert(
-        error?.response?.data?.message || "Unable to load documents.",
-        "error",
-      );
-    } finally {
-      setIsClicked(false);
-      setIsLoading(false);
-    }
-  };
-
-  // =========================================================
-  // AUTO LOAD
-  // =========================================================
-
-  useEffect(() => {
-    if (!user?.Comp_Code) {
-      return;
-    }
-
-    OutServiceView();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.Comp_Code]);
-
-  // =========================================================
-  // RESET FILTERS
-  // =========================================================
-
-  const handleReset = () => {
-    setDocReference("");
-
-    setUploadedBy("");
-
-    setSearchInput("");
-
-    setCurrentPage(1);
-  };
-
-  // =========================================================
-  // EXPORT
-  // =========================================================
-
-  const handleExport = () => {
-    try {
-      const rows = displayedFiles.map((file, index) => ({
-        "SR NO":
-          (currentPage - 1) *
-            (pageSize === -1 ? displayedFiles.length : pageSize) +
-          index +
-          1,
-
-        "DOC REFERENCE": file.refType || "",
-
-        "REFERENCE ID": file.refNo || "",
-
-        KEYWORD: file.Keywords || "",
-
-        EMPLOYEE: file.RefId || "",
-
-        "UPLOADED BY": file.uploadedBy || "",
-
-        "CREATED AT": file.uploadedAt || "",
-
-        FILE: file.name || "",
-      }));
-
-      if (!rows.length) {
-        showSideAlert("No documents available to export.", "warn");
-
-        return;
-      }
-
-      const headers = Object.keys(rows[0]);
-
-      const csv = [
-        headers.join(","),
-
-        ...rows.map((row) =>
-          headers
-            .map((header) => {
-              const value = row[header as keyof typeof row];
-
-              return `"${String(value ?? "").replace(/"/g, '""')}"`;
-            })
-            .join(","),
-        ),
-      ].join("\n");
-
-      const blob = new Blob([csv], {
-        type: "text/csv;charset=utf-8;",
-      });
-
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-
-      link.href = url;
-
-      link.download = "Document_View.csv";
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Export error:", error);
-
-      showSideAlert("Export failed.", "error");
-    }
-  };
-
-  // =========================================================
   // UI
+  // Existing Document View layout and styling preserved
   // =========================================================
 
   return (
@@ -650,9 +1081,7 @@ export default function Page() {
         lg:px-[16px]
       "
     >
-      {/* =========================================================
-          PAGE HEADER
-      ========================================================= */}
+      {/* PAGE HEADER */}
 
       <div
         className="
@@ -707,8 +1136,6 @@ export default function Page() {
             sm:items-center
           "
         >
-          {/* RESET */}
-
           <AButton
             type="button"
             onClick={handleReset}
@@ -732,8 +1159,6 @@ export default function Page() {
           >
             Reset filters
           </AButton>
-
-          {/* EXPORT */}
 
           <AButton
             type="button"
@@ -762,9 +1187,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* =========================================================
-          FILTER CARD
-      ========================================================= */}
+      {/* FILTER CARD */}
 
       <div
         className="
@@ -793,30 +1216,6 @@ export default function Page() {
             xl:grid-cols-[210px_210px_minmax(220px,1.2fr)_minmax(220px,1.2fr)_96px]
           "
         >
-          {/* DATE FROM */}
-
-          <div className="min-w-0">
-            <Einput
-              title="DATE FROM"
-              name="DATE_FROM"
-              type="date"
-              value={dates.DATE_FROM}
-              handleInputChange={handleDateChange}
-            />
-          </div>
-
-          {/* DATE TO */}
-
-          <div className="min-w-0">
-            <Einput
-              title="DATE TO"
-              name="DATE_TO"
-              type="date"
-              value={dates.DATE_TO}
-              handleInputChange={handleDateChange}
-            />
-          </div>
-
           {/* DOC REFERENCE */}
 
           <div className="min-w-0">
@@ -830,24 +1229,40 @@ export default function Page() {
               option={documentReferenceOptions}
               initialValue={docRef}
               handleInputChange={handleDocRefChange}
+              className="h-[34px]"
             />
           </div>
 
-          {/* UPLOADED BY */}
+          {/* DYNAMIC REFERENCE FIELD */}
 
           <div className="min-w-0">
             <Einput
-              title="UPLOADED BY"
-              type="text"
-              name="UPLOADED_BY"
-              value={uploadedBy}
-              handleInputChange={(name, value) => {
-                setUploadedBy(value || "");
-
+              className="h-[34px]"
+              title={referenceFieldLabel}
+              name="ReferenceNumber"
+              redlabel="*"
+              value={refNum}
+              handleInputChange={(name: string, value: any) => {
+                setRefNum(value || "");
                 setCurrentPage(1);
               }}
             />
           </div>
+
+          {/* DEALER DETAILS - ONLY WHEN MISC_HOD IS 2 */}
+
+          {selectedMaster?.Misc_Hod == 2 && (
+            <div className="min-w-0">
+              <Eselect
+                title="Dealer Details"
+                name="dealer_details"
+                option={dealerOptions}
+                initialValue={selectedDealer}
+                handleInputChange={handleDealerChange}
+                className="h-[34px]"
+              />
+            </div>
+          )}
 
           {/* SHOW */}
 
@@ -862,12 +1277,19 @@ export default function Page() {
           >
             <AButton
               type="button"
-              onClick={OutServiceView}
+              onClick={async () => {
+                await OutServiceView();
+
+                if (docRef && refNum) {
+                  await ViewPreviousData(docRef, refNum);
+                }
+              }}
               disabled={isClicked}
               className="
                 w-full
                 xl:w-auto
-                text-lg
+                text-xl
+                h-[34px]
               "
             >
               Show
@@ -876,9 +1298,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* =========================================================
-          DOCUMENT TABLE CARD
-      ========================================================= */}
+      {/* DOCUMENT TABLE CARD */}
 
       <div
         className="
@@ -957,14 +1377,7 @@ export default function Page() {
               sm:justify-end
             "
           >
-            <span
-              className="
-                text-[12px]
-                text-[#64748B]
-              "
-            >
-              Rows
-            </span>
+            <span className="text-[12px] text-[#64748B]">Rows</span>
 
             <select
               className="
@@ -979,41 +1392,36 @@ export default function Page() {
                 text-[var(--fg)]
                 outline-none
               "
-              value={pageSize === -1 ? "100" : String(pageSize)}
+              value={String(pageSize)}
               onChange={(e) => {
                 const size = Number(e.target.value);
 
                 setPageSize(size);
-
                 setCurrentPage(1);
               }}
             >
               <option value="20">20</option>
-
               <option value="50">50</option>
-
               <option value="100">100</option>
+              <option value="-1">All</option>
             </select>
           </div>
         </div>
 
-        {/* =======================================================
-            SERVICE TABLE
-        ======================================================= */}
+        {/* SERVICE TABLE */}
 
         <div
           className="
-    w-full
-    overflow-hidden
-    border
-    border-slate-200/90
-    bg-white
-    shadow-2xs
-    dark:border-slate-800
-    dark:bg-[#0B1220]
-  "
+            w-full
+            overflow-hidden
+            border
+            border-slate-200/90
+            bg-white
+            shadow-2xs
+            dark:border-slate-800
+            dark:bg-[#0B1220]
+          "
         >
-          {/* TABLE / SEARCH AREA */}
           <div className="w-full">
             <ServiceTablePagination
               title=""
@@ -1025,15 +1433,15 @@ export default function Page() {
               showPageSizeInFooter={true}
               showTopSearch={true}
               searchValue={searchInput}
-              onSearchChange={(val) => {
+              onSearchChange={(val: string) => {
                 setSearchInput(val);
                 setCurrentPage(1);
               }}
               searchPlaceholder="Search by file, keyword or reference..."
-              onServerPageChange={(page, showLoader = true) => {
+              onServerPageChange={(page: number) => {
                 setCurrentPage(page);
               }}
-              onServerPageSizeChange={(size) => {
+              onServerPageSizeChange={(size: number) => {
                 setPageSize(size);
                 setCurrentPage(1);
               }}
@@ -1042,13 +1450,138 @@ export default function Page() {
         </div>
       </div>
 
-      {/* =========================================================
-          LOADER
-      ========================================================= */}
+      {/* SEARCH DIALOG */}
 
-      {(isLoading || isClicked) && (
-        <HashloaderComponent isLoading={isClicked} />
-      )}
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+
+          if (!open) {
+            setSearchResults([]);
+            setSearchInput("");
+          }
+        }}
+      >
+        <DialogContent
+          className="
+            w-full
+            max-w-screen-md
+            overflow-y-auto
+            p-0
+            overflow-hidden
+            bg-white
+            dark:bg-black
+            max-h-[90vh]
+            [&_button.absolute_svg]:w-8
+            [&_button.absolute_svg]:font-bold
+            [&_button.absolute_svg]:h-6
+            [&_button_svg]:text-header
+            [&_button_svg]:dark:text-white
+            border
+            dark:border-borderColor-dark
+          "
+        >
+          <div className="flex items-center justify-between border-b border-borderColor bg-[#F3F8FC] px-6 py-3 dark:border-borderColor-dark dark:bg-black">
+            <h2 className="text-xl font-bold text-[#1f3b73] dark:text-white">
+              Search Documents
+            </h2>
+          </div>
+
+          <div className="max-h-[75vh] overflow-y-auto bg-white px-5 py-4 dark:bg-black">
+            <DialogDescription>
+              <div className="mb-4">
+                <label className="mb-1 flex text-xs font-bold text-header dark:text-white">
+                  Search
+                </label>
+
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => {
+                    const query = e.target.value;
+
+                    setSearchInput(query);
+                    handleSearch(query);
+                  }}
+                  placeholder="Search in DocManage..."
+                  className="
+                    flex
+                    h-10
+                    w-full
+                    rounded-md
+                    border
+                    border-borderColor
+                    bg-white
+                    px-4
+                    py-2
+                    text-sm
+                    text-header
+                    shadow-sm
+                    outline-none
+                    dark:border-borderColor-dark
+                    dark:bg-input
+                    dark:text-white
+                  "
+                />
+              </div>
+
+              {isSearching && (
+                <div className="py-4 text-center text-sm text-slate-500">
+                  Searching documents...
+                </div>
+              )}
+
+              <div className="mt-4 grid max-h-[500px] grid-cols-1 gap-3 overflow-y-auto">
+                {searchInput && searchResults.length > 0 ? (
+                  searchResults.map((item, index) => (
+                    <button
+                      key={item.Utd ?? item.TRAN_ID ?? index}
+                      type="button"
+                      onClick={() => handleCardClick(item)}
+                      className="
+                        rounded-lg
+                        border
+                        border-borderColor
+                        bg-gray-50
+                        p-4
+                        text-left
+                        shadow-sm
+                        transition-colors
+                        hover:bg-gray-100
+                        dark:border-borderColor-dark
+                        dark:bg-gray-800
+                        dark:hover:bg-gray-700
+                      "
+                    >
+                      {Object.entries(item).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="mb-1 break-words text-sm text-header dark:text-white"
+                        >
+                          <strong>{key}:</strong> {String(value ?? "")}
+                        </div>
+                      ))}
+                    </button>
+                  ))
+                ) : searchInput && !isSearching ? (
+                  <div className="col-span-12 py-10 text-center text-lg text-header opacity-70 dark:text-white">
+                    No results found.
+                  </div>
+                ) : !searchInput ? (
+                  <div className="col-span-12 py-10 text-center text-lg text-header opacity-70 dark:text-white">
+                    Start typing to search...
+                  </div>
+                ) : null}
+              </div>
+            </DialogDescription>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* LOADER */}
+
+      <HashloaderComponent isLoading={isLoading || isClicked} />
     </div>
   );
 }

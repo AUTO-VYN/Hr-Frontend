@@ -1790,6 +1790,7 @@ export default function DocumentManagementPage() {
             option={documentReferenceOptions}
             initialValue={docRef}
             handleInputChange={handleDocRefChange}
+             className="h-[34px] "
           />
 
           {/* REFERENCE NUMBER */}
@@ -1800,18 +1801,19 @@ export default function DocumentManagementPage() {
             name="RefNum"
             value={refNo}
             handleInputChange={handleRefNoChange}
+             className="h-[34px] "
           />
 
           {/* KEYWORDS */}
           <Eselect
             title="KEYWORDS"
             name="Keywords"
-            redlabel="*"
             required
             placeholder="Select document keyword"
             option={KEYWORD_SEQUENCE_OPTIONS}
             initialValue={seqNo}
             handleInputChange={handleKeywordsChange}
+             className="h-[34px] "
           />
         </div>
       </div>
