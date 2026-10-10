@@ -26,7 +26,7 @@ type Option = { value: any; label: string };
 
 // Helper formatters
 const renderDash = () => (
-  <span className="text-slate-400 font-normal select-none text-[14px]">—</span>
+  <span className="text-[#64748B] font-normal select-none text-[12.5px]">—</span>
 );
 
 const formatCellText = (val: any) => {
@@ -40,7 +40,7 @@ const formatCellText = (val: any) => {
     return renderDash();
   }
   return (
-    <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
+    <span className="text-[#1E293B] dark:text-slate-200 font-normal text-[12.5px]">
       {String(val)}
     </span>
   );
@@ -69,14 +69,14 @@ const formatCellDate = (val: any) => {
       const month = months[d.getMonth()];
       const year = d.getFullYear();
       return (
-        <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
+        <span className="text-[#1E293B] dark:text-slate-200 font-normal text-[12.5px]">
           {`${day} ${month} ${year}`}
         </span>
       );
     }
   } catch { }
   return (
-    <span className="text-slate-600 dark:text-slate-300 font-normal text-[14px]">
+    <span className="text-[#1E293B] dark:text-slate-200 font-normal text-[12.5px]">
       {String(val)}
     </span>
   );
@@ -365,9 +365,9 @@ export default function Page() {
         const opt = options.find(
           (o) =>
             String(o.value).trim().toLowerCase() ===
-              String(fallbackFilterVal).trim().toLowerCase() ||
+            String(fallbackFilterVal).trim().toLowerCase() ||
             String(o.label).trim().toLowerCase() ===
-              String(fallbackFilterVal).trim().toLowerCase()
+            String(fallbackFilterVal).trim().toLowerCase()
         );
         return formatCellText(opt?.label || fallbackFilterVal);
       }
@@ -415,11 +415,11 @@ export default function Page() {
 
     const hasActiveFilter = Boolean(
       clusterArr.length > 0 ||
-        sectionArr.length > 0 ||
-        locationArr.length > 0 ||
-        channelArr.length > 0 ||
-        dash.Joining_DateFROM ||
-        dash.Joining_DateTO
+      sectionArr.length > 0 ||
+      locationArr.length > 0 ||
+      channelArr.length > 0 ||
+      dash.Joining_DateFROM ||
+      dash.Joining_DateTO
     );
 
     try {
@@ -450,8 +450,8 @@ export default function Page() {
           pageSize: hasActiveFilter
             ? 10000
             : targetPageSize === -1
-            ? 10000
-            : targetPageSize,
+              ? 10000
+              : targetPageSize,
           pageNo: hasActiveFilter ? 1 : targetPage,
         },
         {
@@ -530,11 +530,11 @@ export default function Page() {
 
     const hasActiveFilter = Boolean(
       clusterArr.length > 0 ||
-        sectionArr.length > 0 ||
-        locationArr.length > 0 ||
-        channelArr.length > 0 ||
-        dash.Joining_DateFROM ||
-        dash.Joining_DateTO
+      sectionArr.length > 0 ||
+      locationArr.length > 0 ||
+      channelArr.length > 0 ||
+      dash.Joining_DateFROM ||
+      dash.Joining_DateTO
     );
 
     try {
@@ -658,8 +658,9 @@ export default function Page() {
       {
         Header: "Empcode",
         accessor: "EMPCODE",
+        id: "EMPLOYEENAME",
         Cell: ({ value, row }: any) => {
-          const val = value || row.original?.EMPCODE;
+          const val = row.original?.EMPCODE ?? value;
           if (!val) return renderDash();
           return (
             <span
@@ -667,7 +668,7 @@ export default function Page() {
                 e.stopPropagation();
                 doubleclick(row.original);
               }}
-              className="text-slate-600 dark:text-slate-300 font-normal hover:text-[#4338CA] dark:hover:text-indigo-400 hover:underline cursor-pointer"
+              className="text-[#1E293B] dark:text-slate-200 font-normal text-[12.5px] hover:text-[#4F46E5] dark:hover:text-indigo-400 hover:underline cursor-pointer"
             >
               {String(val)}
             </span>
@@ -677,12 +678,13 @@ export default function Page() {
       {
         Header: "Employee name",
         accessor: "EMPLOYEENAME",
+        id: "emp_full_name",
         Cell: ({ value, row }: any) => {
           const val =
-            value ||
             row.original?.EMPLOYEENAME ||
             row.original?.Employee_Name ||
-            row.original?.name;
+            row.original?.name ||
+            value;
           if (!val) return renderDash();
           return (
             <span
@@ -690,7 +692,7 @@ export default function Page() {
                 e.stopPropagation();
                 doubleclick(row.original);
               }}
-              className="font-bold text-[14px] text-slate-900 dark:text-slate-100 hover:text-[#4338CA] dark:hover:text-indigo-400 hover:underline cursor-pointer"
+              className="font-[600] text-[12.5px] text-[#1E293B] dark:text-slate-100 hover:text-[#4F46E5] dark:hover:text-indigo-400 hover:underline cursor-pointer"
             >
               {String(val)}
             </span>
@@ -894,11 +896,11 @@ export default function Page() {
 
     const hasActiveFilter = Boolean(
       clusterArr.length > 0 ||
-        sectionArr.length > 0 ||
-        locationArr.length > 0 ||
-        channelArr.length > 0 ||
-        dashbord.Joining_DateFROM ||
-        dashbord.Joining_DateTO
+      sectionArr.length > 0 ||
+      locationArr.length > 0 ||
+      channelArr.length > 0 ||
+      dashbord.Joining_DateFROM ||
+      dashbord.Joining_DateTO
     );
 
     try {
@@ -969,36 +971,29 @@ export default function Page() {
       {/* BODY */}
       <div className="mx-auto max-w-[1380px] px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {/* Title + actions */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between mb-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/90 text-[#4338CA] mb-2 shadow-2xs">
-              <Sparkles className="h-3.5 w-3.5 text-[#4338CA] shrink-0" />
-              <span>What can AI do here?</span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl lg:text-[26px] font-bold py-2 text-slate-900 dark:text-slate-100 tracking-tight leading-tight truncate">
-              Employee records
+            <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-slate-900 dark:text-slate-100 leading-tight truncate">
+              Employee master view
             </h1>
-            <div className="text-md text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-1">
               Manage your employee records ·{" "}
-              <span className="font-bold text-slate-700 dark:text-slate-200">
+              <span className="font-[550] text-slate-900 dark:text-slate-200 tabular-nums">
                 {totalCount}
               </span>{" "}
               rows in current filter
-            </div>
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[3px] dark:border-slate-800 dark:bg-[#0E1524]">
               <button
                 type="button"
                 onClick={() => setView("table")}
-                className={[
-                  "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 sm:gap-2 transition-all",
-                  view === "table"
-                    ? "bg-[#4338CA] text-white shadow-2xs"
-                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
-                ].join(" ")}
+                className={`h-auto px-[11px] py-[6px] rounded-[8px] text-[12px] font-[600] inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${view === "table"
+                    ? "bg-[#4F46E5] text-white shadow-2xs"
+                    : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800"
+                  }`}
               >
                 <Table2 className="h-3.5 w-3.5" />
                 Table
@@ -1006,43 +1001,39 @@ export default function Page() {
               <button
                 type="button"
                 onClick={() => setView("cards")}
-                className={[
-                  "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 sm:gap-2 transition-all",
-                  view === "cards"
-                    ? "bg-[#4338CA] text-white shadow-2xs"
-                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
-                ].join(" ")}
+                className={`h-auto px-[11px] py-[6px] rounded-[8px] text-[12px] font-[600] inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${view === "cards"
+                    ? "bg-[#4F46E5] text-white shadow-2xs"
+                    : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800"
+                  }`}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
                 Cards
               </button>
             </div>
 
-            <AButton
-              variant="primary"
-              size="md"
-              className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 text-xs font-semibold bg-[#4338CA] hover:bg-[#3730A3] text-white shadow-2xs flex items-center gap-1.5"
-              icon={<Plus className="h-4 w-4" />}
+            <button
+              type="button"
               onClick={() => router.push("/payroll/masters/Employee_Master")}
+              className="h-auto px-[14px] py-[8px] rounded-[10px] text-[12.5px] font-[600] bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-all"
             >
-              Add employee
-            </AButton>
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add employee</span>
+            </button>
 
-            <AButton
-              variant="outline"
-              size="md"
-              className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-xs"
-              icon={<ArrowLeft className="h-4 w-4" />}
+            <button
+              type="button"
               onClick={() => history.back()}
+              className="h-auto px-[12px] py-[8px] rounded-[10px] text-[12.5px] font-[550] border border-[#E2E8F0] bg-white hover:bg-[#F1F5F9] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-all"
             >
-              Back
-            </AButton>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back</span>
+            </button>
           </div>
         </div>
 
         {/* Filters card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-4 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.1fr_1.1fr_auto] gap-2.5 sm:gap-3 items-end">
+        <div className="filter-card-wrapper bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] p-3.5 sm:p-4 shadow-sm mb-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_150px_150px_auto] gap-3 items-end">
             <SelectSearch
               title="CLUSTER"
               name="Br_Location"
@@ -1053,7 +1044,8 @@ export default function Page() {
               }}
               placeholder="All cluster"
               ShortName
-              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <SelectSearch
@@ -1066,7 +1058,8 @@ export default function Page() {
               }}
               placeholder="All branch"
               ShortName
-              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <SelectSearch
@@ -1079,7 +1072,8 @@ export default function Page() {
               }}
               placeholder="All section"
               ShortName
-              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <SelectSearch
@@ -1092,7 +1086,8 @@ export default function Page() {
               }}
               placeholder="All channel"
               ShortName
-              className="h-12 rounded-xl dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <Ainput
@@ -1110,7 +1105,8 @@ export default function Page() {
                 const next = v ? String(v).slice(0, 10) : "";
                 setDashbord((p) => ({ ...p, Joining_DateFROM: next }));
               }}
-              className="h-12 rounded-xl text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <Ainput
@@ -1128,7 +1124,8 @@ export default function Page() {
                 const next = v ? String(v).slice(0, 10) : "";
                 setDashbord((p) => ({ ...p, Joining_DateTO: next }));
               }}
-              className="h-12 rounded-xl text-[15px] font-medium w-full"
+              className="!h-[38px] !rounded-[9px] !text-[12.5px] font-medium w-full"
+              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <div className="flex items-center gap-2 pb-0.5 col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-1">
@@ -1139,7 +1136,7 @@ export default function Page() {
                   showapi(empView, 1, pageSize, {}, true, dashbord);
                   refreshTabCounts(dashbord);
                 }}
-                className="h-12 flex-1 sm:flex-initial sm:px-7 rounded-xl bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-[15px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+                className="h-[38px] px-4 rounded-[9px] bg-[#4F46E5] hover:bg-[#4338CA] text-white font-[600] text-[12.5px] shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0"
               >
                 Show
               </button>
@@ -1147,7 +1144,7 @@ export default function Page() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="h-12 flex-1 sm:flex-initial sm:px-6 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[15px] shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
+                className="h-[38px] px-3.5 rounded-[9px] border border-[#E2E8F0] bg-white hover:bg-[#F1F5F9] text-slate-500 font-[550] text-[12.5px] shadow-2xs transition-all cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0"
               >
                 Reset
               </button>
@@ -1156,12 +1153,12 @@ export default function Page() {
         </div>
 
         {/* Tabs + Columns */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-          <div className="inline-flex items-center rounded-xl border border-slate-200/90 bg-white p-1 dark:border-slate-800 dark:bg-[#0B1220] shadow-2xs max-w-full overflow-x-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5 mb-3.5">
+          <div className="inline-flex items-center rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[3px] dark:border-slate-800 dark:bg-[#0E1524] shadow-2xs max-w-full overflow-x-auto">
             {[
-              { key: "ACTIVE" as const, label: "Active", fullLabel: "Active employees", count: activeCount },
-              { key: "LEFT" as const, label: "Left", fullLabel: "Left employees", count: leftCount },
-              { key: "ALL" as const, label: "All", fullLabel: "All employees", count: allCount },
+              { key: "ACTIVE" as const, label: "Active employees", count: activeCount },
+              { key: "LEFT" as const, label: "Left employees", count: leftCount },
+              { key: "ALL" as const, label: "All employees", count: allCount },
             ].map((t) => {
               const isActive = tab === t.key;
               return (
@@ -1169,29 +1166,29 @@ export default function Page() {
                   key={t.key}
                   type="button"
                   onClick={() => handleTab(t.key)}
-                  className={[
-                    "h-9 sm:h-10 px-2.5 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-[14px] font-semibold transition-all shrink-0 cursor-pointer",
-                    isActive
-                      ? "bg-[#4338CA] text-white shadow-2xs"
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
-                  ].join(" ")}
+                  className={`h-auto px-[13px] py-[7px] rounded-[8px] text-[12.5px] font-[600] inline-flex items-center gap-1.5 transition-all shrink-0 cursor-pointer whitespace-nowrap ${isActive
+                      ? "bg-[#4F46E5] text-white shadow-2xs"
+                      : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800"
+                    }`}
                 >
-                  <span className="inline sm:hidden">{t.label} ({t.count})</span>
-                  <span className="hidden sm:inline">{t.fullLabel} ({t.count})</span>
+                  <span>{t.label}</span>
+                  <span className="text-[11px] font-[600] opacity-75 tabular-nums">
+                    {t.count}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg sm:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs sm:text-[14px] font-semibold inline-flex items-center gap-1.5 sm:gap-2 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 shrink-0 cursor-pointer"
+              className="h-auto px-[12px] py-[8px] rounded-[10px] border border-[#E2E8F0] bg-white text-slate-700 hover:bg-[#F1F5F9] text-[12.5px] font-[550] inline-flex items-center gap-1.5 shadow-2xs transition-all dark:border-slate-800 dark:bg-[#0B1220] dark:text-slate-200 shrink-0 cursor-pointer"
             >
               <Columns3 className="h-4 w-4 text-slate-500" />
               <span>
                 Columns{" "}
-                <span className="text-slate-400 font-semibold text-xs sm:text-[13px]">
+                <span className="text-slate-400 font-[550] text-[12.5px] tabular-nums">
                   11/25
                 </span>
               </span>
@@ -1201,9 +1198,10 @@ export default function Page() {
 
         {/* TABLE */}
         {view === "table" ? (
-          <div className="rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden dark:border-slate-800 dark:bg-[#0B1220] w-full">
+          <div className="employee-view-table rounded-[12px] border border-[#E2E8F0] bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-[#111827] w-full">
             <ServiceTablePagination
               title=""
+              headerClassName="!text-[10.5px] !font-[700] !uppercase !tracking-[0.05em] !py-[11px] !px-[12px]"
               columns={columns}
               data={data}
               height={580}
@@ -1255,6 +1253,124 @@ export default function Page() {
         }
         .topbar-search > div {
           gap: 0 !important;
+        }
+
+        /* Employee View Table - Exact match with HTML prototype */
+        .employee-view-table {
+          background: #ffffff !important;
+          border: 1px solid #E2E8F0 !important;
+          border-radius: 12px !important;
+          box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 10px 26px -14px rgba(15,23,42,.14) !important;
+        }
+
+        .dark .employee-view-table {
+          background: #111827 !important;
+          border-color: #1F2937 !important;
+        }
+
+        /* Table Header */
+        .employee-view-table table thead tr {
+          background: #F8FAFC !important;
+          border-bottom: 1px solid #E2E8F0 !important;
+        }
+
+        .dark .employee-view-table table thead tr {
+          background: #0E1524 !important;
+          border-bottom: 1px solid #1F2937 !important;
+        }
+
+        .employee-view-table table thead th {
+          font-size: 10.5px !important;
+          font-weight: 700 !important;
+          letter-spacing: 0.05em !important;
+          text-transform: uppercase !important;
+          padding: 11px 12px !important;
+          color: #64748B !important;
+          white-space: nowrap !important;
+        }
+
+        .dark .employee-view-table table thead th {
+          color: #94A3B8 !important;
+        }
+
+        /* Active/Sorted Column Header (EMPCODE) */
+        .employee-view-table table thead th:first-child {
+          color: #4F46E5 !important;
+        }
+        .dark .employee-view-table table thead th:first-child {
+          color: #8B84FF !important;
+        }
+        .employee-view-table table thead th:first-child svg {
+          color: #4F46E5 !important;
+        }
+
+        /* Table Body Rows and Cells */
+        .employee-view-table table tbody tr {
+          border-bottom: 1px solid #E2E8F0 !important;
+        }
+
+        .dark .employee-view-table table tbody tr {
+          border-bottom: 1px solid #1F2937 !important;
+        }
+
+        .employee-view-table table tbody tr:hover {
+          background-color: #F8FAFC !important;
+        }
+
+        .dark .employee-view-table table tbody tr:hover {
+          background-color: #0E1524 !important;
+        }
+
+        .employee-view-table table tbody td {
+          font-size: 12.5px !important;
+          padding: 11px 12px !important;
+          white-space: nowrap !important;
+          color: #1E293B !important;
+        }
+
+        .dark .employee-view-table table tbody td {
+          color: #E7ECF3 !important;
+        }
+
+        .employee-view-table table tbody td > div {
+          font-size: 12.5px !important;
+          line-height: normal !important;
+        }
+
+        /* Table Footer / Pagination */
+        .employee-view-table .pagination-container,
+        .employee-view-table table + div {
+          font-size: 12px !important;
+          color: #64748B !important;
+          padding: 12px 18px !important;
+          background: #F8FAFC !important;
+          border-top: 1px solid #E2E8F0 !important;
+        }
+
+        .dark .employee-view-table .pagination-container,
+        .dark .employee-view-table table + div {
+          background: #0E1524 !important;
+          border-top: 1px solid #1F2937 !important;
+          color: #94A3B8 !important;
+        }
+
+        /* Filter Card input styling */
+        .filter-card-wrapper input,
+        .filter-card-wrapper select,
+        .filter-card-wrapper div[role="button"],
+        .filter-card-wrapper .custom-select-trigger {
+          height: 38px !important;
+          min-height: 38px !important;
+          font-size: 12.5px !important;
+          border-radius: 9px !important;
+          border-color: #E2E8F0 !important;
+        }
+
+        .dark .filter-card-wrapper input,
+        .dark .filter-card-wrapper select,
+        .dark .filter-card-wrapper div[role="button"],
+        .dark .filter-card-wrapper .custom-select-trigger {
+          border-color: #1F2937 !important;
         }
       `}</style>
     </div>

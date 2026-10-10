@@ -1366,7 +1366,7 @@ export default function EmployeeAssetPage() {
                 } else if (isConsumable) {
                   statusBadge = {
                     text: "Consumed",
-                    badgeClass: "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
+                    badgeClass: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-400",
                   };
                 }
 
@@ -1685,7 +1685,7 @@ export default function EmployeeAssetPage() {
                         : isValidDateValue(selectedHistoryAsset.Lost_Date)
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
                           : selectedHistoryAsset.Asset_Type === "Consumable"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-400"
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                       }`}
                   >

@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 type Option = { value: any; label: string };
 
 type Props = {
-  title: string;
+  title?: string;
   name: string;
   option: Option[];
   handleInputChange: (name: string, value: any) => void;
@@ -281,10 +281,12 @@ const Eselect = ({
       className={cn("w-full font-medium relative space-y-1", disabled && "opacity-60")}
       style={{ marginBottom: mbPx, ...style }}
     >
-      <label className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300">
-        {ShortName ? title : toTitleCase(title)}
-        {redlabel ? <span className="text-red-500">{redlabel}</span> : null}
-      </label>
+      {title ? (
+        <label className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300">
+          {ShortName ? title : toTitleCase(title)}
+          {redlabel ? <span className="text-red-500">{redlabel}</span> : null}
+        </label>
+      ) : null}
 
       <input
         type="hidden"

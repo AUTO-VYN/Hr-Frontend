@@ -183,11 +183,11 @@ const Page: React.FC = () => {
     "Revoke_Rem",
   ];
   const constraints = {
-    Asset_Serial_no: { type: "TEXT", required: true, disabled: true },
-    Aset_Code: { type: "TEXT", required: true, disabled: true },
-    Aset_Name: { type: "TEXT", required: true, disabled: true },
-    Asset_Type: { type: "Select", required: true, disabled: true },
-    Issue_Date: { type: "DATE", required: true, disabled: true, placeholder: "dd/mm/yyyy" },
+    Asset_Serial_no: { type: "TEXT", required: true, disabled: false },
+    Aset_Code: { type: "TEXT", required: true, disabled: false },
+    Aset_Name: { type: "TEXT", required: true, disabled: false },
+    Asset_Type: { type: "Select", required: true, disabled: false },
+    Issue_Date: { type: "DATE", required: true, disabled: false, placeholder: "dd/mm/yyyy" },
     Revoke_Date: { type: "DATE", placeholder: "dd/mm/yyyy" },
     Lost_Date: { type: "DATE", placeholder: "dd/mm/yyyy" },
     Revoke_Rem: { type: "TEXT" },

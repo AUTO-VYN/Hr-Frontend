@@ -304,10 +304,27 @@ export default function AssetImportPage() {
           await errorWb.xlsx.load(uint8Array.buffer);
           const errSheet = errorWb.worksheets[0];
 
+          const rawRows: { rowNumber: number; vals: any[] }[] = [];
           errSheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1) return;
             const vals = (row.values as any[]) || [];
-            const reasonVal = vals[vals.length - 1] || "Validation failed";
+            rawRows.push({ rowNumber, vals });
+          });
+
+          const isFullSheet = rawRows.length > nonInsertedCount;
+
+          rawRows.forEach(({ rowNumber, vals }) => {
+            const rawReason = vals[vals.length - 1];
+            const reasonStr = rawReason !== undefined && rawReason !== null ? String(rawReason).trim() : "";
+            const isSuccessCode = reasonStr === "1" || reasonStr === "0" || reasonStr === "true" || reasonStr.toLowerCase() === "success" || reasonStr.toLowerCase() === "imported" || reasonStr.toLowerCase() === "inserted" || reasonStr === "";
+
+            // If backend returned all rows in error sheet, filter out successfully imported rows
+            if (isFullSheet && isSuccessCode) {
+              return;
+            }
+
+            const cleanReason = !isSuccessCode && reasonStr ? reasonStr : "Validation failed";
+
             errorRowsParsed.push({
               row: rowNumber,
               empCode: vals[1] ? String(vals[1]).trim() : "—",
@@ -322,7 +339,7 @@ export default function AssetImportPage() {
               lostDate: vals[10] ? formatDateStr(vals[10]) : "—",
               remark: vals[11] ? String(vals[11]).trim() : "—",
               uploadImage: vals[12] ? String(vals[12]).trim() : "—",
-              reason: String(reasonVal),
+              reason: cleanReason,
             });
           });
         } catch (e) {
@@ -384,13 +401,19 @@ export default function AssetImportPage() {
           }));
         } else {
           // Segregate only valid inserted rows
+          const errorRowNumbers = new Set(errorRowsParsed.map((e) => e.row));
+          const errorAssetCodes = new Set(
+            errorRowsParsed
+              .filter((e) => e.assetCode && e.assetCode !== "—")
+              .map((e) => e.assetCode)
+          );
+
           importedParsed = clientRows
-            .filter((r) => {
-              const hasError = errorRowsParsed.some(
-                (e) => (e.assetCode !== "—" && e.assetCode === r.assetCode) || e.row === r.rowNum
-              );
-              return !hasError;
-            })
+            .filter(
+              (r) =>
+                !errorRowNumbers.has(r.rowNum) &&
+                (!r.assetCode || r.assetCode === "—" || !errorAssetCodes.has(r.assetCode))
+            )
             .slice(0, insertedCount)
             .map((r, i) => ({
               row: r.rowNum || i + 2,
@@ -407,6 +430,25 @@ export default function AssetImportPage() {
               remark: r.remark,
               uploadImage: r.uploadImage,
             }));
+
+          // Fallback if filter result is empty but insertedCount > 0
+          if (importedParsed.length === 0) {
+            importedParsed = clientRows.slice(0, insertedCount).map((r, i) => ({
+              row: r.rowNum || i + 2,
+              empCode: r.empCode,
+              category: r.category,
+              itCategory: r.itCategory,
+              serialNo: r.serialNo,
+              assetCode: r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
+              assetName: r.assetName || "Asset",
+              assetType: r.assetType,
+              issueDate: r.issueDate,
+              returnDate: r.returnDate,
+              lostDate: r.lostDate,
+              remark: r.remark,
+              uploadImage: r.uploadImage,
+            }));
+          }
         }
       }
 
@@ -453,23 +495,11 @@ export default function AssetImportPage() {
   // ── ReactTable Column Definitions ─────────────────────────────────────────
   const nonImportedColumns = useMemo(
     () => [
-  
-
       {
         Header: "ROW",
         accessor: "row",
         width: 70,
         Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
-      },
-           {
-        Header: "REASON",
-        accessor: "reason",
-        width: 260,
-        Cell: ({ value }: any) => (
-          <span className="font-semibold text-rose-500 dark:text-rose-400 text-[14px]">
-            {value}
-          </span>
-        ),
       },
       {
         Header: "ASSET CODE",
@@ -483,7 +513,17 @@ export default function AssetImportPage() {
         width: 220,
         Cell: ({ value }: any) => <span className="font-bold text-slate-900 dark:text-white text-[14.5px]">{value}</span>,
       },
-     
+      {
+        Header: "REASON",
+        accessor: "reason",
+        width: 280,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-rose-500 dark:text-rose-400 text-[14px]">
+            {value}
+          </span>
+        ),
+      },
+
       {
         Header: "Emp.Code",
         accessor: "empCode",
@@ -582,11 +622,10 @@ export default function AssetImportPage() {
           const emp = value && value !== "—" ? `Employee · ${value}` : "In store";
           return (
             <span
-              className={`font-semibold text-[14px] ${
-                emp === "In store"
+              className={`font-semibold text-[14px] ${emp === "In store"
                   ? "text-slate-500 dark:text-slate-400"
                   : "text-slate-700 dark:text-slate-300"
-              }`}
+                }`}
             >
               {emp}
             </span>
@@ -703,13 +742,12 @@ export default function AssetImportPage() {
                   const file = e.dataTransfer.files?.[0];
                   if (file) processUploadFile(file);
                 }}
-                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${
-                  selectedFile && stats
+                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${selectedFile && stats
                     ? "border-emerald-400/80 bg-emerald-50/20 dark:bg-emerald-950/10 dark:border-emerald-700/60"
                     : isDragging
-                    ? "border-[#4F46E5] bg-[#EEF2FF]/40 dark:bg-[#1E1B4B]/20"
-                    : "border-indigo-300/80 hover:border-[#4F46E5] bg-[#FAFAFE] hover:bg-[#F5F5FE] dark:bg-[#0B1220] dark:hover:bg-[#0E1524] dark:border-indigo-900/60"
-                }`}
+                      ? "border-[#4F46E5] bg-[#EEF2FF]/40 dark:bg-[#1E1B4B]/20"
+                      : "border-indigo-300/80 hover:border-[#4F46E5] bg-[#FAFAFE] hover:bg-[#F5F5FE] dark:bg-[#0B1220] dark:hover:bg-[#0E1524] dark:border-indigo-900/60"
+                  }`}
               >
                 {selectedFile && stats ? (
                   <>
@@ -798,22 +836,22 @@ export default function AssetImportPage() {
             {/* ── NON-IMPORTED ROWS CARD ────────────────────────────────────── */}
             {nonImportedData.length > 0 && (
               <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-2xs overflow-hidden">
-                <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111827]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-lg bg-[#FFE4E6] dark:bg-rose-950/60 text-[#F43F5E] flex items-center justify-center">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111827]">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-7 h-7 rounded-lg bg-[#FFE4E6] dark:bg-rose-950/60 text-[#F43F5E] flex items-center justify-center shrink-0">
                       <AlertCircle className="w-4 h-4" />
                     </span>
-                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
                       Non-imported rows
                     </h3>
                   </div>
 
                   <AButton
                     variant="outline"
-                    size="sm"
+                    size="md"
                     icon={<Download className="w-3.5 h-3.5" />}
                     onClick={handleDownloadErrorSheet}
-                    className="border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-2xs"
+                    className="border-slate-200 dark:border-slate-700 text-md sm:text-md font-semibold shadow-2xs whitespace-nowrap shrink-0"
                   >
                     Download error sheet
                   </AButton>
@@ -834,13 +872,13 @@ export default function AssetImportPage() {
             {/* ── IMPORTED THIS RUN CARD ─────────────────────────────────────── */}
             {importedData.length > 0 && (
               <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-2xs overflow-hidden">
-                <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111827]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-lg bg-[#DCFCE7] dark:bg-emerald-950/60 text-[#16A34A] flex items-center justify-center">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111827]">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-7 h-7 rounded-lg bg-[#DCFCE7] dark:bg-emerald-950/60 text-[#16A34A] flex items-center justify-center shrink-0">
                       <Check className="w-4 h-4" />
                     </span>
-                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
-                      Imported this run
+                    <h3 className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                      Imported Rows
                     </h3>
                   </div>
 
@@ -850,7 +888,7 @@ export default function AssetImportPage() {
                     icon={<ArrowRight className="w-3.5 h-3.5" />}
                     iconPosition="right"
                     onClick={() => router.push("/payroll/onboarding/employee-asset")}
-                    className="border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-2xs text-indigo-600 dark:text-indigo-400"
+                    className="border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-2xs text-indigo-600 dark:text-indigo-400 whitespace-nowrap shrink-0"
                   >
                     Open asset issue
                   </AButton>
@@ -884,7 +922,7 @@ export default function AssetImportPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2.5 font-bold text-[14px] text-slate-900 dark:text-slate-100">
+                  <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-900 dark:text-slate-100">
                     <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
                       <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" />
                     </span>
@@ -894,7 +932,7 @@ export default function AssetImportPage() {
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2.5 font-bold text-[14px] text-slate-900 dark:text-slate-100">
+                  <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-900 dark:text-slate-100">
                     <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
                       <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" />
                     </span>
@@ -904,7 +942,7 @@ export default function AssetImportPage() {
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2.5 font-bold text-[14px] text-slate-900 dark:text-slate-100">
+                  <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-900 dark:text-slate-100">
                     <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
                       <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" />
                     </span>
@@ -914,7 +952,7 @@ export default function AssetImportPage() {
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2.5 font-bold text-[14px] text-slate-900 dark:text-slate-100">
+                  <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-900 dark:text-slate-100">
                     <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
                       <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" />
                     </span>
@@ -980,7 +1018,7 @@ export default function AssetImportPage() {
               <span className="w-6 h-6 rounded-full bg-[#FEF3C7] dark:bg-amber-900/60 text-[#D97706] dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                 <AlertCircle className="w-4 h-4 text-[#D97706]" />
               </span>
-              <p className="text-[13.5px] font-medium text-[#78350F] dark:text-amber-200 leading-relaxed">
+              <p className="text-lg font-medium text-[#78350F] dark:text-amber-200 leading-relaxed">
                 Asset code must be unique. If a code already exists, the row is skipped rather than overwritten — use the asset issue screen to edit an existing record.
               </p>
             </div>

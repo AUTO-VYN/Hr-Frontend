@@ -4,6 +4,32 @@ import React, { useEffect } from "react";
 import { Trash2, Plus } from "lucide-react";
 import Swal from "sweetalert2";
 
+const toInputDateFormat = (val: any) => {
+  if (!val) return "";
+  const str = String(val).trim();
+  if (!str) return "";
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    return str.slice(0, 10);
+  }
+  const parts = str.split(/[/.-]/);
+  if (parts.length === 3 && parts[0].length <= 2 && parts[2].length === 4) {
+    const day = parts[0].padStart(2, "0");
+    const month = parts[1].padStart(2, "0");
+    const year = parts[2];
+    return `${year}-${month}-${day}`;
+  }
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+  } catch {}
+  return "";
+};
+
 export default function YNDynamicTable({
   columns,
   columnsShow,
@@ -149,32 +175,66 @@ export default function YNDynamicTable({
 
                 {/* CELLS */}
                 {columns?.map((colKey: string, cIdx: number) => {
-                  const minW = constraints?.[colKey]?.minWidth || "140px";
+                  const rule = constraints?.[colKey];
+                  const minW = rule?.minWidth || "140px";
+                  const isDateField = Boolean(
+                    rule?.type?.toUpperCase() === "DATE" ||
+                    rule?.placeholder?.toLowerCase()?.includes("dd/mm/yyyy") ||
+                    rule?.placeholder?.toLowerCase()?.includes("dd-mm-yyyy") ||
+                    columnsShow?.[cIdx]?.toLowerCase()?.includes("dd/mm/yyyy")
+                  );
+
                   return (
                     <td
                       key={colKey + cIdx}
                       style={{ minWidth: minW }}
                       className="px-4 py-4 text-[15px] text-slate-700 border-b border-slate-200 dark:text-slate-200 dark:border-slate-800"
                     >
-                      <input
-                        value={row?.[colKey] ?? ""}
-                        onChange={(e) => handleChange(idx, colKey, e.target.value)}
-                        placeholder={
-                          constraints?.[colKey]?.placeholder ||
-                          columnsShow?.[cIdx] ||
-                          ""
-                        }
-                        style={{ minWidth: minW }}
-                        className={[
-                          "w-full rounded-lg px-3 py-2",
-                          "border border-slate-200 bg-white",
-                          "text-[15px] text-slate-800",
-                          "placeholder:text-slate-400",
-                          "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400",
-                          "dark:border-slate-700 dark:bg-[#0F1A2D] dark:text-slate-100",
-                          "dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/25 dark:focus:border-indigo-400",
-                        ].join(" ")}
-                      />
+                      {isDateField ? (
+                        <input
+                          type="date"
+                          value={toInputDateFormat(row?.[colKey])}
+                          onChange={(e) => handleChange(idx, colKey, e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as any).showPicker?.();
+                            } catch {}
+                          }}
+                          disabled={rule?.disabled || false}
+                          style={{ minWidth: minW }}
+                          className={[
+                            "w-full rounded-lg px-3 py-2 cursor-pointer",
+                            "border border-slate-200 bg-white",
+                            "text-[15px] text-slate-800",
+                            "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400",
+                            "dark:border-slate-700 dark:bg-[#0F1A2D] dark:text-slate-100",
+                            "dark:focus:ring-indigo-400/25 dark:focus:border-indigo-400",
+                            rule?.disabled ? "opacity-50 cursor-not-allowed bg-slate-50 dark:bg-[#0B1220]" : "",
+                          ].filter(Boolean).join(" ")}
+                        />
+                      ) : (
+                        <input
+                          value={row?.[colKey] ?? ""}
+                          onChange={(e) => handleChange(idx, colKey, e.target.value)}
+                          placeholder={
+                            rule?.placeholder ||
+                            columnsShow?.[cIdx] ||
+                            ""
+                          }
+                          disabled={rule?.disabled || false}
+                          style={{ minWidth: minW }}
+                          className={[
+                            "w-full rounded-lg px-3 py-2",
+                            "border border-slate-200 bg-white",
+                            "text-[15px] text-slate-800",
+                            "placeholder:text-slate-400",
+                            "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400",
+                            "dark:border-slate-700 dark:bg-[#0F1A2D] dark:text-slate-100",
+                            "dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/25 dark:focus:border-indigo-400",
+                            rule?.disabled ? "opacity-50 cursor-not-allowed bg-slate-50 dark:bg-[#0B1220]" : "",
+                          ].filter(Boolean).join(" ")}
+                        />
+                      )}
                     </td>
                   );
                 })}
