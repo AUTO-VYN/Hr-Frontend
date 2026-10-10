@@ -3,7 +3,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useFormData } from "./Context/FormDataContext";
-import TableComponent from "@/components/atoms/DynamicTable";
 import YNDynamicTable from "@/components/atoms/YNDynamicTable";
 import CertificatesUpload from "@/components/atoms/CertificateUpload";
 
@@ -278,23 +277,23 @@ const YourComponent: React.FC = () => {
         <div className="mx-auto w-full max-w-[1200px] px-4 md:px-6 py-6 pb-28 min-h-0">
           <div className="space-y-6 min-h-0">
             <SectionCard title="EDUCATION" icon={<IconEducation />}>
-              <TableComponent
+              <YNDynamicTable
                 columns={columns}
                 tableData={tableData}
                 setTableData={setTableData}
                 constraints={constraints}
                 columnsShow={columnsShow}
-                AddBtn={true}
+                addLabel="Add Education"
               />
             </SectionCard>
             <SectionCard title="TECHNOLOGY / TOOLS" icon={<IconTools />}>
-              <TableComponent
+              <YNDynamicTable
                 columns={columns1}
                 tableData={tableData1}
                 setTableData={setTableData1}
                 constraints={constraints1}
                 columnsShow={columnsShow1}
-                AddBtn={true}
+                addLabel="Add Technology / Tool"
               />
             </SectionCard>
             <SectionCard

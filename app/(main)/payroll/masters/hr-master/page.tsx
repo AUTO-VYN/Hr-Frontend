@@ -181,33 +181,20 @@ const handlesaveMisPunch = async () => {
 
       if (
         response === 200 ||
+        response === 201 ||
         response?.status === 200 ||
+        response?.status === 201 ||
+        (typeof response === "number" && response >= 200 && response < 300) ||
         response?.success === true
       ) {
         Swal.fire({
           icon: "success",
           title: "Success!",
-          text: "Master saved successfully.",
+          text: "Mispunch reason saved successfully.",
         });
 
-        await fetchtabledata();
-
-        setFormData({
-          Misc_Name: "",
-          Misc_Abbr: "",
-          Misc_Dtl1: "",
-          Misc_Dtl3: "",
-          Misc_Dtl2: "",
-          Misc_Num1: "",
-          MISC_NUM2: "",
-          Misc_Mob: "",
-          UTD: "",
-          Exp_Date: null,
-          CC_Group: "",
-          CC_Ledg: "",
-          Created_By: user?.name,
-          Loc_Code: user?.branch,
-        });
+        await fetchMisPunchData();
+        handleClearMisPunch();
       } else {
         Swal.fire({
           icon: "warning",
@@ -256,7 +243,7 @@ const handlesaveMisPunch = async () => {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/master/insertData1/${formDataMisPunch?.UTD}`,
+        `${process.env.NEXT_PUBLIC_URL}/master/updateMaster1/${formDataMisPunch?.UTD}`,
         BodyData,
         {
           headers: {
@@ -266,7 +253,11 @@ const handlesaveMisPunch = async () => {
         }
       );
 
-      if (response?.status === 200) {
+      if (
+        response?.status === 200 ||
+        response?.status === 201 ||
+        (typeof response?.status === "number" && response.status >= 200 && response.status < 300)
+      ) {
         Swal.fire({
           icon: "success",
           title: "Success!",
@@ -497,7 +488,11 @@ const handlesaveMisPunch = async () => {
     setIsLoading(true);
     try {
       const response = await AddMaster1(BodyData, user);
-      if (response === 200) {
+      if (
+        response === 200 ||
+        response === 201 ||
+        (typeof response === "number" && response >= 200 && response < 300)
+      ) {
         Swal.fire({
           icon: "success",
           title: "Success!",

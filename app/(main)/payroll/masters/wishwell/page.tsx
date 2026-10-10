@@ -372,6 +372,7 @@ export default function WishWellPage() {
 
   // Selection handlers
   const handleSelectAll = (isChecked: boolean) => {
+    if (sendMode === "manual") return;
     if (isChecked) {
       const allCodes = new Set(tabledata.map((r) => String(r.empcode || r.id)));
       setSelectedCodes(allCodes);
@@ -381,6 +382,14 @@ export default function WishWellPage() {
   };
 
   const handleToggleRow = (empcode: string) => {
+    if (sendMode === "manual") {
+      const next = new Set<string>();
+      if (!selectedCodes.has(empcode)) {
+        next.add(empcode);
+      }
+      setSelectedCodes(next);
+      return;
+    }
     const next = new Set(selectedCodes);
     if (next.has(empcode)) {
       next.delete(empcode);
@@ -388,6 +397,19 @@ export default function WishWellPage() {
       next.add(empcode);
     }
     setSelectedCodes(next);
+  };
+
+  const handleSendModeChange = (mode: "auto" | "manual") => {
+    setSendMode(mode);
+    if (mode === "manual") {
+      setSelectedCodes((prev) => {
+        if (prev.size > 1) {
+          const first = Array.from(prev)[0];
+          return new Set(first ? [first] : []);
+        }
+        return prev;
+      });
+    }
   };
 
   const isAllSelected = tabledata.length > 0 && selectedCodes.size === tabledata.length;
@@ -773,23 +795,40 @@ export default function WishWellPage() {
                     {/* Checkbox Column */}
                     <th className="w-12 px-3 py-3 text-center">
                       <div
-                        className="flex items-center justify-center cursor-pointer"
-                        onClick={() => handleSelectAll(!isAllSelected)}
+                        className={`flex items-center justify-center ${
+                          sendMode === "manual"
+                            ? "cursor-not-allowed opacity-40"
+                            : "cursor-pointer"
+                        }`}
+                        onClick={() => {
+                          if (sendMode === "manual") return;
+                          handleSelectAll(!isAllSelected);
+                        }}
                       >
                         <div
                           role="checkbox"
-                          aria-checked={isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"}
+                          aria-checked={
+                            sendMode === "manual"
+                              ? "false"
+                              : isAllSelected
+                              ? "true"
+                              : isIndeterminate
+                              ? "mixed"
+                              : "false"
+                          }
                           className={`w-[18px] h-[18px] min-w-[18px] min-h-[18px] rounded-[4px] flex items-center justify-center transition-all select-none ${
-                            isAllSelected
+                            sendMode === "manual"
+                              ? "bg-slate-100 dark:bg-slate-800 border-[1.5px] border-slate-300 dark:border-slate-600 cursor-not-allowed"
+                              : isAllSelected
                               ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                               : isIndeterminate
                               ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500"
                               : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500 hover:border-[#4338CA]"
                           }`}
                         >
-                          {isAllSelected ? (
+                          {sendMode !== "manual" && isAllSelected ? (
                             <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
-                          ) : isIndeterminate ? (
+                          ) : sendMode !== "manual" && isIndeterminate ? (
                             <div className="w-2.5 h-[2px] bg-[#4338CA] rounded-full" />
                           ) : null}
                         </div>
@@ -824,6 +863,8 @@ export default function WishWellPage() {
                   {tabledata.map((row: any, idx: number) => {
                     const rowCode = String(row.empcode || row.id || idx);
                     const isChecked = selectedCodes.has(rowCode);
+                    const isManual = sendMode === "manual";
+                    const isRowDisabled = isManual && selectedCodes.size >= 1 && !isChecked;
                     const name = row.empname || "—";
                     const formattedName = toTitleCase(name);
                     const initials = getInitials(name);
@@ -837,24 +878,41 @@ export default function WishWellPage() {
                     return (
                       <tr
                         key={rowCode}
-                        onClick={() => handleToggleRow(rowCode)}
-                        className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${
+                        onClick={() => {
+                          if (isRowDisabled) return;
+                          handleToggleRow(rowCode);
+                        }}
+                        className={`transition-colors border-b border-slate-100 dark:border-slate-800/80 ${
+                          isRowDisabled
+                            ? "cursor-not-allowed opacity-50"
+                            : "cursor-pointer"
+                        } ${
                           isChecked
                             ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
+                            : isRowDisabled
+                            ? ""
                             : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
                         }`}
                       >
                         {/* Row Checkbox */}
                         <td className="w-12 px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <div
-                            className="flex items-center justify-center cursor-pointer"
-                            onClick={() => handleToggleRow(rowCode)}
+                            className={`flex items-center justify-center ${
+                              isRowDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                            onClick={() => {
+                              if (isRowDisabled) return;
+                              handleToggleRow(rowCode);
+                            }}
                           >
                             <div
                               role="checkbox"
                               aria-checked={isChecked}
+                              aria-disabled={isRowDisabled}
                               className={`w-[18px] h-[18px] min-w-[18px] min-h-[18px] rounded-[4px] flex items-center justify-center transition-all select-none ${
-                                isChecked
+                                isRowDisabled
+                                  ? "bg-slate-100 dark:bg-slate-800/60 border border-slate-300/70 dark:border-slate-700 opacity-50 cursor-not-allowed"
+                                  : isChecked
                                   ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                                   : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500 hover:border-[#4338CA]"
                               }`}
@@ -993,7 +1051,7 @@ export default function WishWellPage() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setSendMode("auto")}
+                onClick={() => handleSendModeChange("auto")}
                 className={`flex-1 py-1.5 !h-auto rounded-lg text-[12.5px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
                   sendMode === "auto"
                     ? "bg-[#4338CA] text-white shadow-2xs hover:bg-[#4338CA]"
@@ -1006,7 +1064,7 @@ export default function WishWellPage() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setSendMode("manual")}
+                onClick={() => handleSendModeChange("manual")}
                 className={`flex-1 py-1.5 !h-auto rounded-lg text-[12.5px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
                   sendMode === "manual"
                     ? "bg-[#25D366] text-white shadow-2xs hover:bg-[#25D366]"
