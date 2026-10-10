@@ -889,21 +889,37 @@ const handleOpenDocument = async (row: PolicyRow) => {
       },
 
 
-  {
-    Header: "Document",
-    accessor: "File_Name",
-    Cell: ({ row }: any) => {
-      const policy = row.original;
-
-      return (
-        <FileViewer
-          fileLink={getDocumentUrl(policy)}
-          celldata="View Document"
-          Title={getDocumentName(policy)}
-        />
-      );
-    },
-  },
+     {
+         Header: "DOCUMENT NAME",
+         accessor: "name",
+         Cell: ({ row, value }: any) => {
+           const extension = String(row.original?.File_Name || value || "")
+             .split(".")
+             .pop()
+             ?.toLowerCase();
+           const isImage = ["jpg", "jpeg", "png", "webp"].includes(
+             extension || "",
+           );
+           return (
+             <div className="flex min-w-[220px] items-center gap-3">
+               <div
+                 className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px] ${isImage ? "bg-sky-50 text-sky-500 dark:bg-sky-950/40" : "bg-rose-50 text-rose-500 dark:bg-rose-950/40"}`}
+               >
+                 {isImage ? <FileImage size={16} /> : <FileText size={16} />}
+               </div>
+               <div className="min-w-0">
+                 <button
+                   type="button"
+                   onClick={() => handleOpenDocument(row.original)}
+                   className="max-w-[300px] truncate text-left text-[12.5px] font-[600] text-slate-800 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
+                 >
+                   {value || "Untitled policy"}
+                 </button>
+               </div>
+             </div>
+           );
+         },
+       },
 
  
       {
@@ -927,6 +943,7 @@ const handleOpenDocument = async (row: PolicyRow) => {
           </span>
         ),
       },
+
 
       {
         Header: "ACKNOWLEDGED",
@@ -969,41 +986,58 @@ const handleOpenDocument = async (row: PolicyRow) => {
         },
       },
 
+      
+  {
+    Header: "View Document",
+    accessor: "File_Name",
+    Cell: ({ row }: any) => {
+      const policy = row.original;
+
+      return (
+        <FileViewer
+          fileLink={getDocumentUrl(policy)}
+          celldata="View Document"
+          Title={getDocumentName(policy)}
+        />
+      );
+    },
+  },
+
       {
-        Header: "DOCUMENT",
-        accessor: "Document",
+        Header: "Delete",
+        accessor: "Delete",
 
         Cell: ({ row }: any) => {
           const item = row.original;
 
           return (
             <div className="flex items-center gap-1.5">
-              <button
+              {/* <button
                 type="button"
                 title="View document"
                 onClick={() => handleOpenDocument(item)}
                 className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
               >
                 <Eye size={15} />
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 type="button"
                 title="Download document"
                 onClick={() => handleViewFileDownload(item)}
                 className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-emerald-950/40"
               >
                 <Download size={15} />
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 type="button"
                 title="Send acknowledgement"
                 onClick={() => handleNotify(item)}
                 className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
               >
                 <Bell size={15} />
-              </button>
+              </button> */}
 
               <button
                 type="button"
