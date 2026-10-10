@@ -376,6 +376,8 @@ const handleOpenDocument = (row: PolicyRow) => {
       };
     });
 
+
+    
   useEffect(() => {
     let rows = [...(tabledata || [])];
 
@@ -432,6 +434,7 @@ const handleOpenDocument = (row: PolicyRow) => {
         ),
       );
     }
+
 
     const mappedRows = mapDocumentData(rows);
     setTotalCount(mappedRows.length);
@@ -539,6 +542,140 @@ const handleOpenDocument = (row: PolicyRow) => {
     }
   };
 
+   const getFirstValue = useCallback((...values: any[]) => {
+      return values.find(
+        (value) =>
+          value !== null && value !== undefined && String(value).trim() !== "",
+      );
+    }, []);
+
+    const getDocumentName = useCallback(
+      (row: PolicyRow) => {
+        const value = getFirstValue(
+          row?.File_Name, // Actual API field
+          row?.file_name,
+          row?.FILE_NAME,
+          row?.OriginalName,
+          row?.ORIGINAL_NAME,
+          row?.originalName,
+          row?.DOC_NAME,
+          row?.Doc_Name,
+          row?.doc_name,
+          row?.DOCUMENT_NAME,
+          row?.FileName,
+          row?.filename,
+          row?.fileName,
+          row?.DocumentName,
+          row?.documentName,
+          row?.NAME,
+          row?.Name,
+          row?.name,
+        );
+  
+        if (value == null) return "";
+  
+        const name = String(value).trim();
+  
+        if (!name || name.toLowerCase() === "untitled policy") {
+          return "";
+        }
+  
+        return name;
+      },
+      [getFirstValue],
+    );
+   
+    // =========================================================
+    // DOCUMENT PATH
+    // Supports complete path or folder path + filename
+    // =========================================================
+    const getDocumentPath = useCallback(
+      (row: PolicyRow) => {
+        const rawPath = String(
+          getFirstValue(
+            row?.SMBPath,
+            row?.smbpath,
+            row?.DOC_PATH,
+            row?.doc_path,
+            row?.path,
+            row?.FilePath,
+            row?.filePath,
+            row?.FILE_PATH,
+            row?.file_path,
+          ) ?? "",
+        )
+          .trim()
+          .replace(/\\/g, "/")
+          .replace(/\/+$/, "");
+  
+        const fileName = getDocumentName(row).replace(/\\/g, "/").trim();
+  
+        if (!rawPath) {
+          console.error("Document folder path is missing:", row);
+          return "";
+        }
+  
+        if (!fileName) {
+          console.error("Document filename is missing:", row);
+          return "";
+        }
+  
+        // Avoid adding the filename twice.
+        const lastSegment = rawPath.split("/").pop() || "";
+  
+        if (lastSegment.toLowerCase() === fileName.toLowerCase()) {
+          return rawPath;
+        }
+  
+        return `${rawPath}/${fileName}`;
+      },
+      [getDocumentName, getFirstValue],
+    );
+
+    
+const getDocumentUrl = useCallback(
+  (row: PolicyRow): string => {
+    const filePath = getDocumentPath(row);
+
+    if (!filePath) return "";
+
+    const url = new URL("https://erp.autovyn.com/backend/fetch");
+    url.searchParams.set("filePath", filePath);
+
+    return url.toString();
+  },
+  [getDocumentPath],
+);
+
+useEffect(() => {
+  let rows = [...(tabledata || [])];
+
+  // Keep your existing docReference, uploadedBy,
+  // and searchInput filtering logic here.
+
+  const mappedRows = mapDocumentData(rows);
+
+  setTotalCount(mappedRows.length);
+
+  const size =
+    pageSize === -1 ? Math.max(mappedRows.length, 1) : pageSize;
+
+  const start = (currentPage - 1) * size;
+
+  setDisplayedFiles(
+    pageSize === -1
+      ? mappedRows
+      : mappedRows.slice(start, start + size),
+  );
+}, [
+  tabledata,
+  searchInput,
+  docReference,
+  uploadedBy,
+  currentPage,
+  pageSize,
+]);
+
   const columns = useMemo(
     () => [
       {
@@ -634,29 +771,31 @@ const handleOpenDocument = (row: PolicyRow) => {
           );
         },
       },
+
+ {
+  Header: "Document",
+  accessor: "File_Name",
+  Cell: ({ row }: any) => {
+    const policy = row.original;
+
+    return (
+      <FileViewer
+        fileLink={getDocumentUrl(policy)}
+        celldata="View Document"
+        Title={getDocumentName(policy)}
+      />
+    );
+  },
+},
       {
-        Header: "DOCUMENT",
-        accessor: "Document",
+        Header: "Delete",
+        accessor: "Delete",
         Cell: ({ row }: any) => {
           const item = row.original;
           return (
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                title="View document"
-                onClick={() => handleOpenDocument(item)}
-                className="flex h-[30px] w-[30px] items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
-              >
-                <Eye size={15} />
-              </button>
-              <button
-                type="button"
-                title="Send acknowledgement"
-                onClick={() => handleNotify(item)}
-                className="flex h-[30px] w-[30px] items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
-              >
-                <Bell size={15} />
-              </button>
+              
+              
               <button
                 type="button"
                 title="Delete"
@@ -841,7 +980,7 @@ const handleOpenDocument = (row: PolicyRow) => {
             type="button"
             onClick={handlePreview}
             disabled={!selectedFile}
-            className="h-[34px] w-full rounded-[8px] border border-slate-200 bg-white px-[12px] text-[11px] font-[600] text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-[#111827] dark:text-slate-300 dark:hover:bg-slate-800"
+            className="h-[34px] w-full overflow-hidden rounded-[8px] border border-slate-200 bg-white px-[12px] text-[11px] font-[600] text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-[#111827] dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Preview
           </AButton>
@@ -849,7 +988,7 @@ const handleOpenDocument = (row: PolicyRow) => {
             type="button"
             onClick={handlePublish}
             disabled={isLoading || !policyName.trim() || !selectedFile}
-            className="inline-flex h-[34px] w-full items-center justify-center gap-2 rounded-[8px] bg-[#64748B] px-[13px] text-[11px] font-[650] text-white shadow-sm transition hover:bg-[#475569] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-[34px] min-w-[70px] max-w-full items-center justify-center gap-2 rounded-[8px] bg-[#64748B] overflow-hidden px-[13px] text-[11px] font-[650] text-white shadow-sm transition hover:bg-[#475569] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <UploadCloud size={14} /> Publish
           </AButton>

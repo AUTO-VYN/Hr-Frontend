@@ -29,7 +29,7 @@ import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
-
+import certificate from "@/components/atoms/CertificateUpload";
 import {
   Dialog,
   DialogContent,
@@ -240,12 +240,14 @@ export default function DocumentManagementPage() {
   ======================================================= */
 
   const displayedFiles = useMemo(() => {
-    const search = query.trim().toLowerCase();
+    const search = String(query || "")
+      .trim()
+      .toLowerCase();
 
     return files.filter((file) => {
-      // =======================================================
-      // SHOW THIS REFERENCE
-      // =======================================================
+      // ============================================
+      // FILTER: CURRENT REFERENCE
+      // ============================================
       if (scope === "ref") {
         const currentDocRef = String(docRef || "").trim();
         const currentRefNo = String(refNo || "").trim();
@@ -253,79 +255,64 @@ export default function DocumentManagementPage() {
         if (currentDocRef && currentRefNo) {
           const fileRefNo = String(file.RefId || file.refNo || "").trim();
 
-          const fileDocumentType = String(file.DocumentType || "").trim();
-
-          const fileDocType = String(file.Doc_Type || "").trim();
-
-          const fileRefType = String(file.refType || "").trim();
-
           const selectedMaster = MastersOption.find(
-            (item) => String(item.value).trim() === currentDocRef,
+            (item) => String(item.value || "").trim() === currentDocRef,
           );
 
-          const masterValue = String(selectedMaster?.value || "").trim();
-
-          const masterLabel = String(selectedMaster?.label || "").trim();
-
-          const masterMiscAbbr = String(selectedMaster?.Misc_Abbr || "").trim();
+          const normalize = (value: unknown) =>
+            String(value || "")
+              .trim()
+              .toLowerCase();
 
           const currentValues = [
             currentDocRef,
-            masterValue,
-            masterLabel,
-            masterMiscAbbr,
+            selectedMaster?.value,
+            selectedMaster?.label,
+            selectedMaster?.Misc_Abbr,
           ]
-            .filter(Boolean)
-            .map((value) => value.toLowerCase());
+            .map(normalize)
+            .filter(Boolean);
 
-          const fileValues = [fileDocumentType, fileDocType, fileRefType]
-            .filter(Boolean)
-            .map((value) => value.toLowerCase());
+          const fileValues = [file.DocumentType, file.Doc_Type, file.refType]
+            .map(normalize)
+            .filter(Boolean);
 
-          const documentMatched = fileValues.some((fileValue) =>
-            currentValues.includes(fileValue),
-          );
+          // Reference number must match.
+          if (fileRefNo !== currentRefNo) {
+            return false;
+          }
 
-          const referenceMatched = fileRefNo === currentRefNo;
-
-          console.log("========== REFERENCE FILE CHECK ==========");
-
-          console.log({
-            fileName: file.name,
-            currentDocRef,
-            currentRefNo,
-            masterValue,
-            masterLabel,
-            masterMiscAbbr,
-            fileDocumentType,
-            fileDocType,
-            fileRefType,
-            fileRefNo,
-            documentMatched,
-            referenceMatched,
-          });
-
-          if (!documentMatched || !referenceMatched) {
+          // If the document type is known on both sides,
+          // require a match. Missing type data won't hide
+          // an otherwise matching reference.
+          if (
+            currentValues.length > 0 &&
+            fileValues.length > 0 &&
+            !fileValues.some((value) => currentValues.includes(value))
+          ) {
             return false;
           }
         }
       }
 
-      // =======================================================
-      // SEARCH
-      // =======================================================
-
+      // ============================================
+      // FILTER: SEARCH
+      // ============================================
       if (search) {
-        const searchableText = `
-        ${file.name || ""}
-        ${file.refType || ""}
-        ${file.refNo || ""}
-        ${file.RefId || ""}
-        ${file.uploadedBy || ""}
-        ${file.Keywords || ""}
-        ${file.DocumentType || ""}
-        ${file.Doc_Type || ""}
-      `.toLowerCase();
+        const searchableText = [
+          file.name,
+          file.refType,
+          file.refNo,
+          file.RefId,
+          file.uploadedBy,
+          file.Keywords,
+          file.DocumentType,
+          file.Doc_Type,
+          file.SMBPath,
+        ]
+          .map((value) => String(value || ""))
+          .join(" ")
+          .toLowerCase();
 
         if (!searchableText.includes(search)) {
           return false;
@@ -615,24 +602,14 @@ export default function DocumentManagementPage() {
       const documentReference = String(vin || "").trim();
       const referenceNumber = String(RefNum || "").trim();
 
-      if (!referenceNumber) {
-        showSideAlert("Please select Reference No.", "warn");
-        return;
-      }
-
-      if (!documentReference) {
-        showSideAlert("Please select Doc Reference", "warn");
+      if (!referenceNumber || !documentReference) {
         return;
       }
 
       try {
-        console.log("==========================================");
         console.log("===== VIEW PREVIOUS DATA START =====");
-        console.log("==========================================");
-
-        console.log("Doc Type:", documentReference);
-
-        console.log("Reference:", referenceNumber);
+        console.log("Document reference:", documentReference);
+        console.log("Reference number:", referenceNumber);
 
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}/DocManage/ViewPreviousData`,
@@ -648,216 +625,213 @@ export default function DocumentManagementPage() {
           },
         );
 
-        console.log("===== VIEW PREVIOUS DATA RESPONSE =====");
+        console.log("===== VIEW PREVIOUS DATA RESPONSE =====", response.data);
 
-        console.log("Status:", response.status);
+        const responseData = response.data;
+        const apiResult =
+          responseData?.Result ??
+          responseData?.result ??
+          responseData?.data ??
+          [];
 
-        console.log("Data:", response.data);
+        // ============================================
+        // NORMALIZE RESPONSE TO AN ARRAY
+        // ============================================
+        let result: any[] = [];
 
-        const result =
-          response.data?.Result?.MI_REASON || response.data?.Result || [];
+        if (Array.isArray(apiResult)) {
+          result = apiResult;
+        } else if (Array.isArray(apiResult?.MI_REASON)) {
+          result = apiResult.MI_REASON;
+        } else if (Array.isArray(apiResult?.dealer_details)) {
+          result = apiResult.dealer_details;
+        } else if (Array.isArray(apiResult?.data)) {
+          result = apiResult.data;
+        } else if (Array.isArray(responseData?.MI_REASON)) {
+          result = responseData.MI_REASON;
+        } else if (Array.isArray(responseData?.dealer_details)) {
+          result = responseData.dealer_details;
+        }
 
-        console.log("========== VIEW PREVIOUS DATA ==========");
+        console.log("Documents returned:", result);
 
-        console.log("API RESPONSE:", response.data);
+        const selectedMaster = MastersOption.find(
+          (item) => String(item.value || "").trim() === documentReference,
+        );
 
-        console.log("MI_REASON:", result);
+        const normalize = (value: unknown) => String(value || "").trim();
 
-        // =====================================================
-        // API HAS DOCUMENTS
-        // =====================================================
-
-        if (Array.isArray(result) && result.length > 0) {
-          const selectedMaster = MastersOption.find(
-            (item) => String(item.value) === String(documentReference),
-          );
-
-          const mappedFiles: StoredFile[] = result.map((item: any) => {
-            const fileName =
-              item.OriginalName ||
-              item.File_Name ||
-              item.FileName ||
-              item.filename ||
-              item.name ||
-              "Document";
+        // ============================================
+        // MAP BACKEND DOCUMENTS
+        // ============================================
+        const mappedFiles: StoredFile[] = result
+          .filter((item: any) => item && typeof item === "object")
+          .map((item: any) => {
+            const fileName = normalize(
+              item.OriginalName ??
+                item.File_Name ??
+                item.FileName ??
+                item.filename ??
+                item.name ??
+                "Document",
+            );
 
             const extension = fileName.split(".").pop()?.toLowerCase() || "";
 
-            const fileRefNo = String(
-              item.RefId || item.refId || item.RefNum || referenceNumber || "",
-            ).trim();
+            const rawPath =
+              item.SMBPath ??
+              item.path ??
+              item.Path ??
+              item.filePath ??
+              item.FilePath ??
+              "";
 
-            const fileDocumentType = String(
-              item.DocumentType ||
-                item.DocType ||
-                item.Doc_Type ||
-                selectedMaster?.value ||
-                documentReference ||
-                "",
-            ).trim();
+            const fileRefNo = normalize(
+              item.RefId ??
+                item.refId ??
+                item.RefNum ??
+                item.ReferenceNo ??
+                item.refNo ??
+                referenceNumber,
+            );
 
-            const fileRefType = String(
-              selectedMaster?.label ||
-                item.DocumentType ||
-                item.DocType ||
-                item.Doc_Type ||
-                documentReference ||
-                "",
-            ).trim();
+            const docType = normalize(
+              item.Doc_Type ??
+                item.DocType ??
+                item.DocumentType ??
+                item.Misc_Abbr ??
+                selectedMaster?.Misc_Abbr ??
+                selectedMaster?.value ??
+                documentReference,
+            );
 
-            const mappedFile: StoredFile = {
+            const refType = normalize(
+              item.DocReference ??
+                selectedMaster?.label ??
+                item.DocumentType ??
+                item.DocType ??
+                item.Doc_Type ??
+                documentReference,
+            );
+
+            const sequence =
+              item.Seq_No ??
+              item.SEQ_NO ??
+              item.SeqNo ??
+              item.seq_no ??
+              item.sequence_no ??
+              item.Sequence_No ??
+              item.SRNO ??
+              item.SrNo ??
+              item.srno ??
+              "";
+
+            const keyword =
+              normalize(item.Keywords ?? item.keywords) ||
+              getKeywordBySeqNo(sequence);
+
+            const tranId =
+              item.TRAN_ID ??
+              item.TranId ??
+              item.tran_id ??
+              item.Tran_Id ??
+              undefined;
+
+            const utd = item.Utd ?? item.UTD ?? item.utd ?? tranId;
+
+            const uploadDate =
+              item.CreatedAt ?? item.Upload_Date ?? item.UploadDate ?? "";
+
+            return {
               name: fileName,
-
-              refType: fileRefType,
-
+              refType,
               refNo: fileRefNo,
 
-              uploadedBy:
-                item.UploadedBy ||
-                item.User_Name ||
-                item.UserName ||
-                user?.name ||
-                "",
+              uploadedBy: normalize(
+                item.UploadedBy ??
+                  item.User_Name ??
+                  item.UserName ??
+                  item.Created_by ??
+                  "",
+              ),
 
-              uploadedAt: item.CreatedAt
-                ? new Date(item.CreatedAt).toLocaleString()
-                : item.Upload_Date
-                  ? new Date(item.Upload_Date).toLocaleString()
-                  : "",
+              uploadedAt: uploadDate
+                ? (() => {
+                    const date = new Date(uploadDate);
+                    return Number.isNaN(date.getTime())
+                      ? String(uploadDate)
+                      : date.toLocaleString();
+                  })()
+                : "",
 
               kind: extension === "pdf" ? "pdf" : "img",
 
-              Utd: item.Utd ?? item.UTD ?? item.utd,
+              Utd: utd,
+              TRAN_ID: tranId,
+              SRNO:
+                item.SRNO ?? item.SrNo ?? item.srno ?? sequence ?? undefined,
 
-              TRAN_ID: item.TRAN_ID ?? item.TranId ?? item.tran_id,
+              Doc_Type: docType,
+              SMBPath: normalize(rawPath),
 
-              SRNO: item.SRNO ?? item.SrNo ?? item.srno,
+              Seq_No: sequence,
+              Keywords: keyword,
 
-              Doc_Type:
-                item.Doc_Type ||
-                item.DocType ||
-                selectedMaster?.Misc_Abbr ||
-                selectedMaster?.value ||
-                documentReference,
+              CreatedAt: uploadDate,
+              DocumentType: normalize(
+                item.DocumentType ??
+                  item.DocType ??
+                  item.Doc_Type ??
+                  selectedMaster?.value ??
+                  documentReference,
+              ),
 
-              SMBPath: item.SMBPath || item.path || item.Path || "",
-
-              Seq_No:
-                item.Seq_No ??
-                item.SEQ_NO ??
-                item.SeqNo ??
-                item.seq_no ??
-                item.sequence_no ??
-                item.Sequence_No ??
-                "",
-
-              Keywords:
-                item.Keywords ||
-                item.keywords ||
-                getKeywordBySeqNo(
-                  item.Seq_No ??
-                item.SEQ_NO ??
-                item.SeqNo ??
-                item.seq_no ??
-                item.sequence_no ??
-                item.Sequence_No ??
-                "",
-                ),
-
-              CreatedAt: item.CreatedAt || item.Upload_Date || "",
-
-              DocumentType:
-                item.DocumentType ||
-                item.DocType ||
-                selectedMaster?.value ||
-                documentReference,
-
-              RefId: item.RefId || item.refId || item.RefNum || referenceNumber,
-            };
-
-            return mappedFile;
+              RefId: fileRefNo,
+            } satisfies StoredFile;
           });
 
-          console.log("========== MAPPED API FILES ==========");
+        console.log("Mapped backend files:", mappedFiles);
 
-          console.log(mappedFiles);
+        // ============================================
+        // MERGE WITHOUT DUPLICATES
+        // Backend version wins over a temporary local
+        // version of the same document.
+        // ============================================
+        setFiles((previousFiles) => {
+          const combined = [...mappedFiles, ...previousFiles];
+          const seen = new Set<string>();
+          const unique: StoredFile[] = [];
 
-          // =====================================================
-          // MERGE API FILES + LOCAL FILES
-          // =====================================================
+          for (const file of combined) {
+            const stableKey = [
+              normalize(file.name).toLowerCase(),
+              normalize(file.RefId || file.refNo).toLowerCase(),
+              normalize(
+                file.Doc_Type || file.DocumentType || file.refType,
+              ).toLowerCase(),
+              normalize(file.Seq_No || file.SRNO),
+            ].join("|");
 
-          setFiles((previousFiles) => {
-            // Backend records are intentionally placed first. If a local
-            // temporary record and the backend record represent the same
-            // document, the backend record wins because it contains SMBPath,
-            // Utd, TRAN_ID, etc.
-            const combinedFiles = [...mappedFiles, ...previousFiles];
-
-            const seen = new Set<string>();
-            const uniqueFiles: StoredFile[] = [];
-
-            for (const file of combinedFiles) {
-              const stableKey = [
-                String(file.name || "").trim().toLowerCase(),
-                String(file.RefId || file.refNo || "").trim().toLowerCase(),
-                String(
-                  file.Doc_Type ||
-                    file.DocumentType ||
-                    file.refType ||
-                    "",
-                )
-                  .trim()
-                  .toLowerCase(),
-                String(file.Seq_No || file.SRNO || "").trim(),
-              ].join("|");
-
-              if (seen.has(stableKey)) {
-                continue;
-              }
-
-              seen.add(stableKey);
-              uniqueFiles.push(file);
+            if (seen.has(stableKey)) {
+              continue;
             }
 
-            console.log("========== MERGED FILES ==========");
-            console.log(uniqueFiles);
+            seen.add(stableKey);
+            unique.push(file);
+          }
 
-            return uniqueFiles.sort(
-              (a, b) => Number(a.Seq_No || a.SRNO || 999) -
-                Number(b.Seq_No || b.SRNO || 999),
-            );
-          });
+          return unique.sort(
+            (a, b) =>
+              Number(a.Seq_No || a.SRNO || 999) -
+              Number(b.Seq_No || b.SRNO || 999),
+          );
+        });
 
-          setScope("ref");
-          setRefNo(referenceNumber);
-
-          return;
-        }
-
-        // =====================================================
-        // API RETURNS NO DOCUMENTS
-        // =====================================================
-
-        console.log("==========================================");
-
-        console.log("NO DOCUMENTS RETURNED BY BACKEND");
-
-        console.log("Keeping existing frontend files.");
-
-        console.log("Current frontend files will NOT be cleared.");
-
-        console.log("==========================================");
+        setScope("ref");
+        setRefNo(referenceNumber);
       } catch (error: any) {
-        console.error("==========================================");
-
-        console.error("VIEW PREVIOUS DATA ERROR", error);
-
-        console.error("BACKEND RESPONSE", error?.response?.data);
-
-        console.error("==========================================");
-
-        // DO NOT:
-        // setFiles([]);
+        console.error("VIEW PREVIOUS DATA ERROR:", error);
+        console.error("Backend response:", error?.response?.data);
 
         showSideAlert(
           error?.response?.data?.message ||
@@ -869,12 +843,16 @@ export default function DocumentManagementPage() {
     },
     [user?.Comp_Code, user?.name, MastersOption],
   );
+
   /* =======================================================
      DEBOUNCE REFERENCE NUMBER
      SAME FUNCTIONALITY
   ======================================================= */
 
-  const [debouncedRefNum] = useDebounce(refNo, 500);
+  const [debouncedRefNum] = useDebounce(refNo, 1000);
+
+  // Last API request ko track karega
+  const lastRequestedRef = useRef("");
 
   useEffect(() => {
     const documentReference = String(docRef || "").trim();
@@ -884,8 +862,15 @@ export default function DocumentManagementPage() {
       return;
     }
 
-    // As soon as the employee/reference number settles, automatically
-    // load its saved documents. No Show button click is required.
+    // Same reference ke liye dobara API call nahi hogi
+    const requestKey = `${documentReference}|${referenceNumber}`;
+
+    if (lastRequestedRef.current === requestKey) {
+      return;
+    }
+
+    lastRequestedRef.current = requestKey;
+
     setScope("ref");
     void ViewPreviousData(documentReference, referenceNumber);
   }, [debouncedRefNum, docRef, ViewPreviousData]);
@@ -894,6 +879,7 @@ export default function DocumentManagementPage() {
      UPLOAD
      SAME API
   ======================================================= */
+
   const handleUpload = async () => {
     try {
       // =========================================================
@@ -905,7 +891,9 @@ export default function DocumentManagementPage() {
         return;
       }
 
-      if (!refNo.trim()) {
+      const referenceNumber = String(refNo || "").trim();
+
+      if (!referenceNumber) {
         showSideAlert("Please enter reference number.", "warn");
         return;
       }
@@ -930,17 +918,106 @@ export default function DocumentManagementPage() {
       }
 
       // =========================================================
-      // SEQUENCE -> KEYWORD
-      // Never depend on manually typed keyword.
+      // SEQUENCE -> NUMERIC VALUE + KEYWORD
       // =========================================================
 
       const selectedSeqNo = String(seqNo).trim();
+      const selectedSeqNumber = Number(selectedSeqNo);
       const selectedKeyword = getKeywordBySeqNo(selectedSeqNo);
 
-      if (!selectedKeyword || selectedKeyword === "OTHER") {
+      if (
+        !Number.isInteger(selectedSeqNumber) ||
+        selectedSeqNumber < 1 ||
+        selectedSeqNumber > 11 ||
+        !selectedKeyword ||
+        selectedKeyword === "OTHER"
+      ) {
         showSideAlert("Invalid document sequence selected.", "warn");
         return;
       }
+
+      // =========================================================
+      // FIND EXISTING TRANSACTION ID
+      // =========================================================
+
+      const selectedDocumentTypes = [
+        selectedMaster.value,
+        selectedMaster.Misc_Abbr,
+        selectedMaster.label,
+      ]
+        .map((value) =>
+          String(value || "")
+            .trim()
+            .toLowerCase(),
+        )
+        .filter(Boolean);
+
+      const matchingFiles = files.filter((file) => {
+        const fileReference = String(file.RefId || file.refNo || "").trim();
+
+        const fileDocumentTypes = [
+          file.DocumentType,
+          file.Doc_Type,
+          file.refType,
+        ]
+          .map((value) =>
+            String(value || "")
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean);
+
+        return (
+          fileReference === referenceNumber &&
+          selectedDocumentTypes.some((value) =>
+            fileDocumentTypes.includes(value),
+          )
+        );
+      });
+
+      // Prefer an actual matching row with a valid transaction ID.
+      // Do not use the employee/reference number as TRAN_ID.
+      const matchingFile = matchingFiles.find((file) => {
+        const rawId = file.TRAN_ID;
+
+        if (
+          rawId === undefined ||
+          rawId === null ||
+          String(rawId).trim() === ""
+        ) {
+          return false;
+        }
+
+        const id = Number(rawId);
+
+        return Number.isSafeInteger(id) && id > 0;
+      });
+
+      const rawTranId = matchingFile?.TRAN_ID;
+      const existingTranId = Number(rawTranId);
+
+      if (
+        !matchingFile ||
+        !Number.isSafeInteger(existingTranId) ||
+        existingTranId <= 0
+      ) {
+        console.error("No matching document with a valid TRAN_ID.", {
+          referenceNumber,
+          selectedMaster,
+          matchingFiles,
+          allFiles: files,
+        });
+
+        showSideAlert(
+          "Valid transaction ID not found. Verify that ViewPreviousData returns the document's actual TRAN_ID.",
+          "error",
+        );
+
+        return;
+      }
+
+      console.log("Selected transaction record:", matchingFile);
+      console.log("Selected TRAN_ID:", existingTranId);
 
       setIsUploaded(true);
 
@@ -950,39 +1027,35 @@ export default function DocumentManagementPage() {
 
       const formData = new FormData();
 
-      // Existing API expects files with the `files` field.
+      // Attach files
       queue.forEach((queueFile) => {
         formData.append("files", queueFile.file);
       });
 
-      // =========================================================
-      // SEQUENCE + KEYWORD
-      // =========================================================
+      // Numeric sequence values: 1, 2, 3...
+      formData.append("Seq_No", String(selectedSeqNumber));
+      formData.append("seq_no", String(selectedSeqNumber));
+      formData.append("SRNO", String(selectedSeqNumber));
 
-      formData.append("Seq_No", selectedSeqNo);
-      formData.append("seq_no", selectedSeqNo);
+      // Keyword names: PROFILE PHOTO, AADHAR IMAGE, PAN IMAGE...
       formData.append("keywords", selectedKeyword);
       formData.append("Keywords", selectedKeyword);
 
-      // =========================================================
-      // EXISTING API DATA - PRESERVED
-      // =========================================================
-
-      formData.append("refId", refNo.trim());
+      // Existing API data
+      formData.append("refId", referenceNumber);
+      formData.append("tran_id", String(existingTranId));
 
       formData.append(
         "user_id",
         String(user?.EMPCODE || user?.id || user?.name || ""),
       );
 
-      formData.append("EmpCode", refNo.trim());
+      formData.append("EmpCode", referenceNumber);
 
       formData.append("doc_type", String(selectedMaster.value || docRef));
 
       formData.append("Field", String(selectedMaster.Field || ""));
-
       formData.append("From_Field", String(selectedMaster.From_Field || ""));
-
       formData.append("Table_Name", String(selectedMaster.Table_Name || ""));
 
       formData.append(
@@ -995,16 +1068,16 @@ export default function DocumentManagementPage() {
         ),
       );
 
-      formData.append("SRNO", selectedSeqNo);
-
       // =========================================================
       // DEBUG
       // =========================================================
 
       console.log("========== DOCUMENT UPLOAD ==========");
       console.log("docRef:", docRef);
-      console.log("refNo:", refNo.trim());
-      console.log("Seq_No:", selectedSeqNo);
+      console.log("refNo:", referenceNumber);
+      console.log("tran_id:", existingTranId);
+      console.log("Seq_No:", selectedSeqNumber);
+      console.log("SRNO:", selectedSeqNumber);
       console.log("Keywords:", selectedKeyword);
       console.log("selectedMaster:", selectedMaster);
       console.log("queue:", queue);
@@ -1018,23 +1091,25 @@ export default function DocumentManagementPage() {
       }
 
       // =========================================================
-      // SAVE API - SAME API
+      // SAVE API
       // =========================================================
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/DocManage/Save`,
+        `${process.env.NEXT_PUBLIC_URL_local}/DocManage/Save`,
         formData,
         {
           headers: {
             compcode: user?.Comp_Code,
             name: user?.name,
-            // Do NOT manually set multipart Content-Type.
+            // Axios sets the multipart Content-Type and boundary.
           },
         },
       );
 
-      console.log("========== DOCUMENT UPLOAD RESPONSE ==========");
-      console.log(response.data);
+      console.log(
+        "========== DOCUMENT UPLOAD RESPONSE ==========",
+        response.data,
+      );
 
       const statusValue =
         response.data?.Status ??
@@ -1062,25 +1137,21 @@ export default function DocumentManagementPage() {
 
       const uploadedAt = new Date();
 
-      const documentTypeValue = String(docRef || "").trim();
+      const documentTypeValue = String(docRef).trim();
 
       const documentTypeLabel = String(
         selectedMaster.label ||
           selectedMaster.Misc_Abbr ||
           selectedMaster.value ||
-          docRef ||
-          "",
+          docRef,
       ).trim();
 
       const miscAbbr = String(
         selectedMaster.Misc_Abbr ||
           selectedMaster.label ||
           selectedMaster.value ||
-          docRef ||
-          "",
+          docRef,
       ).trim();
-
-      const referenceNumber = String(refNo || "").trim();
 
       const uploadedFiles: StoredFile[] = queue.map((queueFile) => ({
         name: queueFile.name,
@@ -1097,21 +1168,20 @@ export default function DocumentManagementPage() {
         RefId: referenceNumber,
         Doc_Type: miscAbbr,
 
-        // Sequence-wise saved values
-        Seq_No: Number(selectedSeqNo),
+        // Keep sequence fields numeric.
+        Seq_No: selectedSeqNumber,
+        SRNO: selectedSeqNumber,
+
+        // Keep the descriptive keyword separate.
         Keywords: selectedKeyword,
 
         SMBPath: "",
         Utd: undefined,
-        TRAN_ID: undefined,
-        SRNO: Number(selectedSeqNo),
+        TRAN_ID: existingTranId,
       }));
 
-      console.log("========== FRONTEND UPLOADED FILES ==========");
-      console.log(uploadedFiles);
-
       // =========================================================
-      // ADD FILES TO RIGHT-SIDE DOCUMENT CARD
+      // UPDATE FRONTEND FILE LIST
       // =========================================================
 
       setFiles((previousFiles) => {
@@ -1121,14 +1191,13 @@ export default function DocumentManagementPage() {
 
         for (const file of combinedFiles) {
           const stableKey = [
-            String(file.name || "").trim().toLowerCase(),
-            String(file.RefId || file.refNo || "").trim().toLowerCase(),
-            String(
-              file.Doc_Type ||
-                file.DocumentType ||
-                file.refType ||
-                "",
-            )
+            String(file.name || "")
+              .trim()
+              .toLowerCase(),
+            String(file.RefId || file.refNo || "")
+              .trim()
+              .toLowerCase(),
+            String(file.Doc_Type || file.DocumentType || file.refType || "")
               .trim()
               .toLowerCase(),
             String(file.Seq_No || file.SRNO || "").trim(),
@@ -1151,14 +1220,12 @@ export default function DocumentManagementPage() {
 
       // =========================================================
       // RELOAD FROM BACKEND
-      // This confirms the document was actually persisted and also
-      // brings back Utd / TRAN_ID / SMBPath returned by the backend.
       // =========================================================
 
       await ViewPreviousData(documentTypeValue, referenceNumber);
 
       // =========================================================
-      // RESET
+      // RESET FORM
       // =========================================================
 
       setScope("ref");
@@ -1327,75 +1394,94 @@ export default function DocumentManagementPage() {
      SAME BACKEND FETCH
   ======================================================= */
 
-  const handleDownload = useCallback((file: StoredFile) => {
+  const handleDownload = useCallback(async (file: StoredFile) => {
+    let objectUrl = "";
+
     try {
-      // =======================================================
-      // LOCAL FRONTEND FILE
-      // =======================================================
-
+      // 1. Locally selected/uploaded file
       if (file.file) {
-        const url = URL.createObjectURL(file.file);
+        objectUrl = URL.createObjectURL(file.file);
 
         const link = document.createElement("a");
-
-        link.href = url;
-
+        link.href = objectUrl;
         link.download = file.name || "document";
-
         document.body.appendChild(link);
-
         link.click();
+        link.remove();
 
-        document.body.removeChild(link);
-
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 1000);
+        window.setTimeout(() => {
+          URL.revokeObjectURL(objectUrl);
+        }, 1500);
 
         showSideAlert(`Downloading ${file.name}...`);
-
         return;
       }
 
-      // =======================================================
-      // BACKEND FILE
-      // =======================================================
-
-      if (file.SMBPath) {
-        const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${encodeURIComponent(
-          file.SMBPath,
-        )}`;
-
-        const link = document.createElement("a");
-
-        link.href = fileUrl;
-
-        link.download = file.name || "document";
-
-        link.target = "_blank";
-
-        link.rel = "noopener noreferrer";
-
-        document.body.appendChild(link);
-
-        link.click();
-
-        document.body.removeChild(link);
-
-        showSideAlert(`Downloading ${file.name}...`);
-
+      // 2. Backend file
+      if (!file.SMBPath?.trim()) {
+        showSideAlert("File path is not available.", "warn");
         return;
       }
 
-      // =======================================================
-      // NO FILE
-      // =======================================================
+      const fileUrl = `https://erp.autovyn.com/backend/fetch?filePath=${encodeURIComponent(
+        file.SMBPath,
+      )}`;
 
-      showSideAlert("File path is not available.", "warn");
-    } catch (error) {
+      const response = await axios.get(fileUrl, {
+        responseType: "blob",
+      });
+
+      // Check if backend returned an error instead of a file.
+      const contentType = String(
+        response.headers["content-type"] || "",
+      ).toLowerCase();
+
+      if (
+        contentType.includes("text/html") ||
+        contentType.includes("application/json")
+      ) {
+        const errorText = await response.data.text();
+        console.error("Download API returned an error:", errorText);
+
+        showSideAlert(
+          "Server returned an error instead of the document.",
+          "error",
+        );
+        return;
+      }
+
+      if (!response.data || response.data.size === 0) {
+        showSideAlert("Downloaded file is empty.", "error");
+        return;
+      }
+
+      // 3. Trigger browser download without navigating away
+      objectUrl = URL.createObjectURL(response.data);
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = file.name || "document";
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+      }, 1500);
+
+      showSideAlert(`Downloading ${file.name}...`);
+    } catch (error: any) {
       console.error("DOWNLOAD ERROR:", error);
+      console.error("Backend response:", error?.response?.data);
 
-      showSideAlert("Unable to download document.", "error");
+      showSideAlert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to download document.",
+        "error",
+      );
     }
   }, []);
 
@@ -1586,13 +1672,14 @@ export default function DocumentManagementPage() {
 
           SMBPath: item.SMBPath ?? item.path ?? item.Path ?? "",
 
-          Seq_No: item.Seq_No ??
-                item.SEQ_NO ??
-                item.SeqNo ??
-                item.seq_no ??
-                item.sequence_no ??
-                item.Sequence_No ??
-                "",
+          Seq_No:
+            item.Seq_No ??
+            item.SEQ_NO ??
+            item.SeqNo ??
+            item.seq_no ??
+            item.sequence_no ??
+            item.Sequence_No ??
+            "",
 
           Keywords:
             item.Keywords ??
@@ -1633,14 +1720,13 @@ export default function DocumentManagementPage() {
 
         for (const file of combined) {
           const stableKey = [
-            String(file.name || "").trim().toLowerCase(),
-            String(file.RefId || file.refNo || "").trim().toLowerCase(),
-            String(
-              file.Doc_Type ||
-                file.DocumentType ||
-                file.refType ||
-                "",
-            )
+            String(file.name || "")
+              .trim()
+              .toLowerCase(),
+            String(file.RefId || file.refNo || "")
+              .trim()
+              .toLowerCase(),
+            String(file.Doc_Type || file.DocumentType || file.refType || "")
               .trim()
               .toLowerCase(),
             String(file.Seq_No || file.SRNO || "").trim(),
@@ -1790,18 +1876,19 @@ export default function DocumentManagementPage() {
             option={documentReferenceOptions}
             initialValue={docRef}
             handleInputChange={handleDocRefChange}
-             className="h-[34px] "
+            className="h-[34px] "
           />
 
           {/* REFERENCE NUMBER */}
           <Einput
+            placeholder="Employee code or document no."
             title={`${referenceFieldLabel}`}
             redlabel="*"
             type="text"
             name="RefNum"
             value={refNo}
             handleInputChange={handleRefNoChange}
-             className="h-[34px] "
+            className="h-[34px] "
           />
 
           {/* KEYWORDS */}
@@ -1809,11 +1896,11 @@ export default function DocumentManagementPage() {
             title="KEYWORDS"
             name="Keywords"
             required
-            placeholder="Select document keyword"
+            placeholder="Comma separated — helps future searches"
             option={KEYWORD_SEQUENCE_OPTIONS}
             initialValue={seqNo}
             handleInputChange={handleKeywordsChange}
-             className="h-[34px] "
+            className="h-[34px] "
           />
         </div>
       </div>
@@ -1853,7 +1940,7 @@ export default function DocumentManagementPage() {
             onDrop={handleDrop}
             onClick={handleBrowse}
             className={[
-              "flex h-[200px] shrink-0 cursor-pointer flex-col items-center justify-center",
+              "flex  w-full h-[240px] shrink-0 cursor-pointer flex-col items-center justify-center",
               "rounded-[14px] border border-dashed",
               "px-5 py-[22px] text-center",
               "transition-all duration-200 ease-in-out",
@@ -2304,27 +2391,35 @@ export default function DocumentManagementPage() {
                       >
                         {file.name}
                       </span>
-
                       <span
                         className="
-                    mt-[2px]
-                    block
-                    overflow-hidden
-                    text-ellipsis
-                    whitespace-nowrap
-                    text-[10.5px]
-                    text-[var(--muted)]
-                  "
+    mt-[2px]
+    block
+    overflow-hidden
+    text-ellipsis
+    whitespace-nowrap
+    text-[10.5px]
+    text-[var(--muted)]
+  "
                       >
-                        {file.Keywords || "OTHER"} · Seq {file.Seq_No || "-"} ·{" "}
-                        {file.refType} · {file.refNo} · {file.uploadedAt} ·{" "}
+                        {`${
+                          Number(
+                            file.Seq_No ||
+                              file.SRNO ||
+                              KEYWORD_SEQUENCE_OPTIONS.find(
+                                (item) => item.label === file.Keywords,
+                              )?.value ||
+                              0,
+                          ) || "-"
+                        } · Seq`}{" "}
+                        · {file.refType} · {file.refNo} · {file.uploadedAt} ·{" "}
                         {file.uploadedBy}
                       </span>
                     </span>
 
                     {/* VIEW */}
 
-                    <AButton
+                    <button
                       title="View"
                       onClick={() => handleView(file)}
                       className="
@@ -2344,14 +2439,18 @@ export default function DocumentManagementPage() {
                 "
                     >
                       <Eye size={15} />
-                    </AButton>
+                    </button>
 
                     {/* DOWNLOAD */}
 
-                    <AButton
-                      title="Download"
-                      onClick={() => handleDownload(file)}
-                      className="
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void handleDownload(file);
+                      }}
+                            className="
                   grid
                   h-[34px]
                   w-[34px]
@@ -2366,13 +2465,14 @@ export default function DocumentManagementPage() {
                   hover:bg-[var(--hover)]
                   hover:text-[var(--fg)]
                 "
+                      title="Download document"
                     >
-                      <Download size={15} />
-                    </AButton>
+                      <Download size={16} />
+                    </button>
 
                     {/* DELETE */}
 
-                    <AButton
+                    <button
                       title="Delete"
                       onClick={() => handleDelete(file)}
                       className="
@@ -2392,7 +2492,7 @@ export default function DocumentManagementPage() {
                 "
                     >
                       <Trash2 size={15} />
-                    </AButton>
+                    </button>
                   </div>
                 );
               })}
