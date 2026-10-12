@@ -297,16 +297,60 @@ const handlesaveMisPunch = async () => {
 
   const columnsMisPunch = useMemo(
     () => [
-      { Header: "SR NO", accessor: "Misc_Code", Cell: ({ value, row }: any) => value || row.index + 1 },
+      {
+        Header: "SR NO",
+        accessor: "Misc_Code",
+        Cell: ({ value, row }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+            {value || row.index + 1}
+          </span>
+        ),
+      },
       {
         Header: "MISPUNCH REASON",
         accessor: "Misc_Name",
-        Cell: ({ value }: any) => <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase text-base">
+            {value}
+          </span>
+        ),
       },
-      { Header: "STATUS", accessor: "Misc_Abbr", Cell: ({ value }: any) => value || "—" },
-      { Header: "PRESENT VALUE", accessor: "Misc_Dtl1", Cell: ({ value }: any) => value || "—" },
-      { Header: "ABSENT VALUE", accessor: "Misc_Dtl2", Cell: ({ value }: any) => value || "—" },
-      { Header: "LEAVE VALUE", accessor: "Misc_Dtl3", Cell: ({ value }: any) => value || "—" },
+      {
+        Header: "STATUS",
+        accessor: "Misc_Abbr",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "PRESENT VALUE",
+        accessor: "Misc_Dtl1",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "ABSENT VALUE",
+        accessor: "Misc_Dtl2",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "LEAVE VALUE",
+        accessor: "Misc_Dtl3",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {value || "—"}
+          </span>
+        ),
+      },
       {
         Header: "ACTIONS",
         id: "actions",
@@ -315,10 +359,10 @@ const handlesaveMisPunch = async () => {
             <button
               type="button"
               onClick={() => handleRowSelectMisPunch(row.original)}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-[#4F46E5] dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Edit record"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -332,10 +376,10 @@ const handlesaveMisPunch = async () => {
                   confirmButtonText: "Yes, delete",
                 });
               }}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:text-rose-600 hover:border-rose-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Delete record"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),
@@ -579,18 +623,42 @@ const handlesaveMisPunch = async () => {
         Header: "SR NO",
         accessor: "Misc_Code",
         Cell: ({ value, row }: any) => {
-          if (value) return value;
           const offset = shiftPageSize === -1 ? 0 : (shiftPage - 1) * shiftPageSize;
-          return offset + row.index + 1;
+          const displayVal = value || offset + row.index + 1;
+          return (
+            <span className="text-base font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+              {displayVal}
+            </span>
+          );
         },
       },
       {
         Header: "SHIFT NAME",
         accessor: "Misc_Name",
-        Cell: ({ value }: any) => <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase text-base">
+            {value}
+          </span>
+        ),
       },
-      { Header: "SHIFT IN TIME", accessor: "Misc_Add1", Cell: ({ value }: any) => formatTimeToColon(value) || "—" },
-      { Header: "SHIFT OUT TIME", accessor: "Misc_Add2", Cell: ({ value }: any) => formatTimeToColon(value) || "—" },
+      {
+        Header: "SHIFT IN TIME",
+        accessor: "Misc_Add1",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {formatTimeToColon(value) || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "SHIFT OUT TIME",
+        accessor: "Misc_Add2",
+        Cell: ({ value }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {formatTimeToColon(value) || "—"}
+          </span>
+        ),
+      },
       {
         Header: "ACTIONS",
         id: "actions",
@@ -599,10 +667,10 @@ const handlesaveMisPunch = async () => {
             <button
               type="button"
               onClick={() => handleRowSelectShift(row.original)}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-[#4F46E5] dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Edit record"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -616,10 +684,10 @@ const handlesaveMisPunch = async () => {
                   confirmButtonText: "Yes, delete",
                 });
               }}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:text-rose-600 hover:border-rose-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Delete record"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),
@@ -912,25 +980,45 @@ const handlesaveMisPunch = async () => {
 
   const columnsHoliday = useMemo(
     () => [
-      { Header: "SR NO", accessor: "Srno", Cell: ({ row }: any) => row.index + 1 },
+      {
+        Header: "SR NO",
+        accessor: "Srno",
+        Cell: ({ row }: any) => (
+          <span className="text-base font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+      },
       {
         Header: "HOLIDAY DESCRIPTION",
         accessor: "Holiday_Name",
-        Cell: ({ value }: any) => <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-[#4F46E5] dark:text-indigo-400 uppercase text-base">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "HOLIDAY DATE",
         accessor: "Rec_Date",
         Cell: ({ value }: any) => {
-          if (!value) return "—";
+          if (!value) return <span className="text-base font-medium text-slate-700 dark:text-slate-300">—</span>;
           try {
             const date = new Date(value);
             const day = String(date.getDate()).padStart(2, "0");
             const month = String(date.getMonth() + 1).padStart(2, "0");
             const year = date.getFullYear();
-            return `${day}-${month}-${year}`;
+            return (
+              <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+                {`${day}-${month}-${year}`}
+              </span>
+            );
           } catch (e) {
-            return String(value);
+            return (
+              <span className="text-base font-medium text-slate-700 dark:text-slate-300">
+                {String(value)}
+              </span>
+            );
           }
         },
       },
@@ -940,7 +1028,10 @@ const handlesaveMisPunch = async () => {
         Cell: ({ value, row }: any) => {
           const text = value || getDepartmentLabel(row.original.Dept_Code) || "—";
           return (
-            <div className="max-w-[200px] xl:max-w-[260px] truncate text-slate-700 dark:text-slate-300" title={text}>
+            <div
+              className="max-w-[200px] xl:max-w-[260px] truncate text-base font-medium text-slate-700 dark:text-slate-300"
+              title={text}
+            >
               {text}
             </div>
           );
@@ -952,7 +1043,10 @@ const handlesaveMisPunch = async () => {
         Cell: ({ value, row }: any) => {
           const text = value || getBranchLabel(row.original.Loc_Code) || "—";
           return (
-            <div className="max-w-[180px] xl:max-w-[230px] truncate text-slate-700 dark:text-slate-300" title={text}>
+            <div
+              className="max-w-[180px] xl:max-w-[230px] truncate text-base font-medium text-slate-700 dark:text-slate-300"
+              title={text}
+            >
               {text}
             </div>
           );
@@ -964,7 +1058,10 @@ const handlesaveMisPunch = async () => {
         Cell: ({ value }: any) => {
           const text = getReligionLabel(value) || "—";
           return (
-            <div className="max-w-[150px] xl:max-w-[200px] truncate text-slate-700 dark:text-slate-300" title={text}>
+            <div
+              className="max-w-[150px] xl:max-w-[200px] truncate text-base font-medium text-slate-700 dark:text-slate-300"
+              title={text}
+            >
               {text}
             </div>
           );
@@ -978,10 +1075,10 @@ const handlesaveMisPunch = async () => {
             <button
               type="button"
               onClick={() => handleRowSelectHoliday(row.original)}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-[#4F46E5] dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Edit record"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -995,10 +1092,10 @@ const handlesaveMisPunch = async () => {
                   confirmButtonText: "Yes, delete",
                 });
               }}
-              className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:text-rose-600 hover:border-rose-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 flex items-center justify-center transition-colors cursor-pointer"
               title="Delete record"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),
@@ -1017,112 +1114,83 @@ const handlesaveMisPunch = async () => {
   }, [user?.Comp_Code, user?.name, user?.branch]);
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#060911] text-slate-900 dark:text-white p-4 sm:p-6 lg:p-7 space-y-6">
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* Left: Brand + Back + Breadcrumb */}
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center font-bold text-sm select-none shadow-sm">
-            <h1 className="text-lg">HS</h1>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs inline-flex items-center gap-2 transition-colors text-lg"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
-        </div>
-
-        {/* Right: Branch Info & Avatar */}
-        <div className="flex items-center gap-2.5">
-          <div className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Branch - {user?.branch || "4"}
-          </div>
-
-          <div className="h-10 w-10 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-            {user?.name?.slice(0, 2).toUpperCase() || "AK"}
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#060911] text-slate-900 dark:text-white p-3 sm:p-5 lg:p-7 space-y-5 sm:space-y-6">
       {/* Page Title & Subtitle */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl lg:text-[28px] font-semibold tracking-tight text-slate-900 dark:text-white px-1 sm:px-2">
           Organisation Setup
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1 px-1 sm:px-2">
           Configure attendance reasons, work shifts and the holiday calendar for every branch.
         </p>
       </div>
 
-      {/* Main Tabs Switcher */}
-      <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs">
-        {/* Tab 1: MisPunch Reason */}
-        <button
-          type="button"
-          onClick={() => setActiveTab(1)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 1
-              ? "bg-[#4F46E5] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-        >
-          <ScanLine className="h-4.5 w-4.5" />
-          <span>MisPunch Reason</span>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 1
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+      {/* Main Tabs Switcher (Responsive Scrollable Container) */}
+      <div className="w-full overflow-x-auto no-scrollbar pb-1">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs min-w-max">
+          {/* Tab 1: MisPunch Reason */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(1)}
+            className={`h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl text-sm sm:text-base font-bold flex items-center gap-2 sm:gap-3 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 1
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
           >
-            {tableMisPunch.length}
-          </span>
-        </button>
+            <ScanLine className="h-4 w-4 sm:h-4.5 sm:w-4.5 shrink-0" />
+            <span>MisPunch Reason</span>
+            <span
+              className={`px-2 sm:px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold ${activeTab === 1
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+            >
+              {tableMisPunch.length}
+            </span>
+          </button>
 
-        {/* Tab 2: Shift */}
-        <button
-          type="button"
-          onClick={() => setActiveTab(2)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 2
-              ? "bg-[#4F46E5] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-        >
-          <Clock className="h-4.5 w-4.5" />
-          <span>Shift</span>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 2
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+          {/* Tab 2: Shift */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(2)}
+            className={`h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl text-sm sm:text-base font-bold flex items-center gap-2 sm:gap-3 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 2
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
           >
-            {tableShift.length}
-          </span>
-        </button>
+            <Clock className="h-4 w-4 sm:h-4.5 sm:w-4.5 shrink-0" />
+            <span>Shift</span>
+            <span
+              className={`px-2 sm:px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold ${activeTab === 2
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+            >
+              {tableShift.length}
+            </span>
+          </button>
 
-        {/* Tab 3: Holiday */}
-        <button
-          type="button"
-          onClick={() => setActiveTab(3)}
-          className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-3 transition-all ${activeTab === 3
-              ? "bg-[#4F46E5] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-        >
-          <Calendar className="h-4.5 w-4.5" />
-          <span>Holiday</span>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 3
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+          {/* Tab 3: Holiday */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(3)}
+            className={`h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl text-sm sm:text-base font-bold flex items-center gap-2 sm:gap-3 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeTab === 3
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
           >
-            {tableHoliday.length}
-          </span>
-        </button>
+            <Calendar className="h-4 w-4 sm:h-4.5 sm:w-4.5 shrink-0" />
+            <span>Holiday</span>
+            <span
+              className={`px-2 sm:px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold ${activeTab === 3
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+            >
+              {tableHoliday.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -1131,30 +1199,30 @@ const handlesaveMisPunch = async () => {
       {activeTab === 1 && (
         <div className="space-y-6 animate-in fade-in-50 duration-200">
           {/* Form Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 sm:p-7 shadow-xs space-y-6">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-4 sm:p-6 lg:p-7 shadow-xs space-y-5 sm:space-y-6">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-              <div className="flex items-center gap-3.5">
-                <div className="h-12 w-12 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
-                  <ScanLine className="h-6 w-6" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-3 sm:gap-3.5">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
+                  <ScanLine className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                     Mispunch Reason
                   </h2>
-                  <p className="text-[15px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm sm:text-base font-normal text-slate-500 dark:text-slate-400 mt-0.5">
                     How each punch exception counts toward present, absent and leave.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
                 <button
                   type="button"
                   onClick={handleClearMisPunch}
-                  className="h-11 px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-[15px] font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors"
+                  className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-4 sm:px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-base font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
                 >
-                  <Eraser className="h-4.5 w-4.5" />
+                  <Eraser className="h-4 w-4" />
                   Clear
                 </button>
 
@@ -1162,9 +1230,9 @@ const handlesaveMisPunch = async () => {
                   <button
                     type="button"
                     onClick={handleUpdateMisPunch}
-                    className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
                   >
-                    <CheckCircle2 className="h-4.5 w-4.5" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Update
                   </button>
                 ) : (
@@ -1172,10 +1240,10 @@ const handlesaveMisPunch = async () => {
                     type="button"
                     onClick={handlesaveMisPunch}
                     disabled={saveDisabledMisPunch}
-                    className="h-11 px-6 rounded-xl bg-[#4F46E5] hover:bg-[#433df0] text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <Plus className="h-4.5 w-4.5" />
-                    Save
+                    + Save
                   </button>
                 )}
               </div>
@@ -1183,22 +1251,22 @@ const handlesaveMisPunch = async () => {
 
             {/* Row 1: Mispunch Reason */}
             <div>
-              <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                Mispunch Reason <span className="text-rose-500">*</span>
+              <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                Mispunch Reason <span className="text-rose-500 font-bold">*</span>
               </label>
               <input
                 type="text"
                 placeholder="e.g. Casual Leave (CL)"
                 value={formDataMisPunch.Misc_Name}
                 onChange={(e) => handleInputMisPunch("Misc_Name", e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
               />
             </div>
 
             {/* Row 2: Status, Present, Leave, Absent, In Time, Out Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
                   Status
                 </label>
                 <input
@@ -1206,7 +1274,7 @@ const handlesaveMisPunch = async () => {
                   placeholder="CL"
                   value={formDataMisPunch.Misc_Abbr}
                   onChange={(e) => handleInputMisPunch("Misc_Abbr", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
@@ -1217,8 +1285,8 @@ const handlesaveMisPunch = async () => {
                   options={PresentValueOptions}
                   selectedValue={formDataMisPunch.Misc_Dtl1}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
+                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
                 />
               </div>
 
@@ -1229,8 +1297,8 @@ const handlesaveMisPunch = async () => {
                   options={LeaveValueOptions}
                   selectedValue={formDataMisPunch.Misc_Dtl3}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
+                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
                 />
               </div>
 
@@ -1241,8 +1309,8 @@ const handlesaveMisPunch = async () => {
                   options={AbsentValueOptions}
                   selectedValue={formDataMisPunch.Misc_Dtl2}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
+                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
                 />
               </div>
 
@@ -1253,8 +1321,8 @@ const handlesaveMisPunch = async () => {
                   options={InTimeOptions}
                   selectedValue={String(formDataMisPunch.Misc_Num1)}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
+                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
                 />
               </div>
 
@@ -1266,8 +1334,8 @@ const handlesaveMisPunch = async () => {
                   selectedValue={String(formDataMisPunch.MISC_NUM2)}
                   handleInputChange={handleInputMisPunch}
                   disabled={true}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
+                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
                 />
               </div>
             </div>
@@ -1275,7 +1343,7 @@ const handlesaveMisPunch = async () => {
             {/* Row 3: Minimum Bal, Expiry Date, Days Front, Days Back */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
                   Minimum Bal. Req.
                 </label>
                 <input
@@ -1283,24 +1351,24 @@ const handlesaveMisPunch = async () => {
                   placeholder="0"
                   value={formDataMisPunch.Misc_Mob}
                   onChange={(e) => handleInputMisPunch("Misc_Mob", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
               <div>
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
                   A/C Expiry Date
                 </label>
                 <input
                   type="date"
                   value={formDataMisPunch.Exp_Date || ""}
                   onChange={(e) => handleInputMisPunch("Exp_Date", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
               <div>
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
                   Days Front
                 </label>
                 <input
@@ -1308,12 +1376,12 @@ const handlesaveMisPunch = async () => {
                   placeholder="0"
                   value={formDataMisPunch.CC_Group}
                   onChange={(e) => handleInputMisPunch("CC_Group", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
               <div>
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
                   Days Back
                 </label>
                 <input
@@ -1321,14 +1389,14 @@ const handlesaveMisPunch = async () => {
                   placeholder="0"
                   value={formDataMisPunch.CC_Ledg}
                   onChange={(e) => handleInputMisPunch("CC_Ledg", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
             </div>
           </div>
 
           {/* Table Card */}
-          <div className="w-full">
+          <div className="w-full overflow-x-auto">
             <DataTable
               columns={columnsMisPunch}
               data={tableMisPunch}
@@ -1336,7 +1404,7 @@ const handlesaveMisPunch = async () => {
               showTopSearch={true}
               showExcelExport={true}
               searchPlaceholder="Search records..."
-              height="380px"
+              height="520px"
             />
           </div>
         </div>
@@ -1348,30 +1416,30 @@ const handlesaveMisPunch = async () => {
       {activeTab === 2 && (
         <div className="space-y-6 animate-in fade-in-50 duration-200">
           {/* Form Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 sm:p-7 shadow-xs space-y-6">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-4 sm:p-6 lg:p-7 shadow-xs space-y-5 sm:space-y-6">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-              <div className="flex items-center gap-3.5">
-                <div className="h-12 w-12 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
-                  <Clock className="h-6 w-6" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-3 sm:gap-3.5">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
+                  <Clock className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                     Shift Master
                   </h2>
-                  <p className="text-[15px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm sm:text-base font-normal text-slate-500 dark:text-slate-400 mt-0.5">
                     Define shift names with their in and out times.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
                 <button
                   type="button"
                   onClick={handleClearShift}
-                  className="h-11 px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-[15px] font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors"
+                  className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-4 sm:px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-base font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
                 >
-                  <Eraser className="h-4.5 w-4.5" />
+                  <Eraser className="h-4 w-4" />
                   Clear
                 </button>
 
@@ -1379,9 +1447,9 @@ const handlesaveMisPunch = async () => {
                   <button
                     type="button"
                     onClick={handleUpdateShift}
-                    className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
                   >
-                    <CheckCircle2 className="h-4.5 w-4.5" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Update
                   </button>
                 ) : (
@@ -1389,77 +1457,77 @@ const handlesaveMisPunch = async () => {
                     type="button"
                     onClick={handleSaveShift}
                     disabled={saveDisabledShift}
-                    className="h-11 px-6 rounded-xl bg-[#4F46E5] hover:bg-[#433df0] text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <Plus className="h-4.5 w-4.5" />
-                    Save
+                    + Save
                   </button>
                 )}
               </div>
             </div>
 
             {/* Inputs: Shift Name, Shift In Time, Shift Out Time, Night Shift Toggle */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
-              <div className="md:col-span-5">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                  Shift Name <span className="text-rose-500">*</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+              <div className="sm:col-span-2 lg:col-span-5">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  Shift Name <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. K22"
+                  placeholder="E.G. K22"
                   value={formDataShift.Misc_Name}
                   onChange={(e) => handleInputShift("Misc_Name", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                  Shift In Time <span className="text-rose-500">*</span>
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  Shift In Time <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <input
                   type="time"
                   value={formDataShift.Misc_Add1}
                   onChange={(e) => handleInputShift("Misc_Add1", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                  Shift Out Time <span className="text-rose-500">*</span>
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  Shift Out Time <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <input
                   type="time"
                   value={formDataShift.Misc_Add2}
                   onChange={(e) => handleInputShift("Misc_Add2", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
               {/* Night Shift Switch Toggle */}
-              <div className="md:col-span-3 flex items-center justify-start md:justify-end pb-2">
-                <label className="inline-flex items-center gap-3.5 cursor-pointer select-none">
-                  <div className="relative inline-flex items-center">
+              <div className="sm:col-span-2 lg:col-span-3">
+                <div className="h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black flex items-center justify-between">
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
                     <input
                       type="checkbox"
                       className="sr-only peer"
                       checked={Number(formDataShift.Misc_Num1) === 1}
                       onChange={(e) => handleInputShift("Misc_Num1", e.target.checked ? 1 : 0)}
                     />
-                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-slate-600 peer-checked:bg-[#4F46E5]"></div>
-                  </div>
-                  <span className="text-[15px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                    <Moon className="h-4.5 w-4.5 text-indigo-500" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
+                  </label>
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <Moon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                     Night shift
                   </span>
-                </label>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Table Card */}
-          <div className="w-full">
+          <div className="w-full overflow-x-auto">
             <DataTable
               columns={columnsShift}
               data={paginatedShiftData}
@@ -1485,7 +1553,7 @@ const handlesaveMisPunch = async () => {
                 setShiftPage(1);
               }}
               searchPlaceholder="Search records..."
-              height="380px"
+              height="520px"
             />
           </div>
         </div>
@@ -1497,30 +1565,30 @@ const handlesaveMisPunch = async () => {
       {activeTab === 3 && (
         <div className="space-y-6 animate-in fade-in-50 duration-200">
           {/* Form Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 sm:p-7 shadow-xs space-y-6">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-4 sm:p-6 lg:p-7 shadow-xs space-y-5 sm:space-y-6">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-              <div className="flex items-center gap-3.5">
-                <div className="h-12 w-12 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
-                  <Calendar className="h-6 w-6" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-3 sm:gap-3.5">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-[#4F46E5] text-white flex items-center justify-center shadow-xs">
+                  <Calendar className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                     Holiday Master
                   </h2>
-                  <p className="text-[15px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm sm:text-base font-normal text-slate-500 dark:text-slate-400 mt-0.5">
                     Set the holiday calendar per department, branch and religion.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
                 <button
                   type="button"
                   onClick={handleClearHoliday}
-                  className="h-11 px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-[15px] font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors"
+                  className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-4 sm:px-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-base font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
                 >
-                  <Eraser className="h-4.5 w-4.5" />
+                  <Eraser className="h-4 w-4" />
                   Clear
                 </button>
 
@@ -1528,9 +1596,9 @@ const handlesaveMisPunch = async () => {
                   <button
                     type="button"
                     onClick={handleUpdateHoliday}
-                    className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
                   >
-                    <CheckCircle2 className="h-4.5 w-4.5" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Update
                   </button>
                 ) : (
@@ -1538,45 +1606,45 @@ const handlesaveMisPunch = async () => {
                     type="button"
                     onClick={handleSaveHoliday}
                     disabled={saveDisabledHoliday}
-                    className="h-11 px-6 rounded-xl bg-[#4F46E5] hover:bg-[#433df0] text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                    className="flex-1 sm:flex-none justify-center h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-base font-semibold flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <Plus className="h-4.5 w-4.5" />
-                    Save
+                    + Save
                   </button>
                 )}
               </div>
             </div>
 
             {/* Row 1: Holiday Description, Holiday Date, Half Day Switch */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
-              <div className="md:col-span-6">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                  Holiday Description <span className="text-rose-500">*</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+              <div className="sm:col-span-2 lg:col-span-6">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  Holiday Description <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Independence Day"
                   value={formDataHoliday.Holiday_Name || ""}
                   onChange={(e) => setFormDataHoliday((prev: any) => ({ ...prev, Holiday_Name: e.target.value }))}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
-              <div className="md:col-span-3">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">
-                  Holiday Date <span className="text-rose-500">*</span>
+              <div className="sm:col-span-1 lg:col-span-3">
+                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  Holiday Date <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <input
                   type="date"
                   value={formDataHoliday.Rec_Date || ""}
                   onChange={(e) => setFormDataHoliday((prev: any) => ({ ...prev, Rec_Date: e.target.value }))}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
                 />
               </div>
 
-              <div className="md:col-span-3 flex items-center justify-start md:justify-end pb-2">
-                <label className="inline-flex items-center gap-3.5 cursor-pointer select-none">
-                  <div className="relative inline-flex items-center">
+              <div className="sm:col-span-1 lg:col-span-3">
+                <div className="h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black flex items-center justify-between">
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
                     <input
                       type="checkbox"
                       className="sr-only peer"
@@ -1588,12 +1656,12 @@ const handlesaveMisPunch = async () => {
                         }))
                       }
                     />
-                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-slate-600 peer-checked:bg-[#4F46E5]"></div>
-                  </div>
-                  <span className="text-[15px] font-bold text-slate-700 dark:text-slate-200">
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
+                  </label>
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-200">
                     Half day
                   </span>
-                </label>
+                </div>
               </div>
             </div>
 
@@ -1602,7 +1670,7 @@ const handlesaveMisPunch = async () => {
               {/* Religion Chips */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  <label className="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                     Religion
                   </label>
                   <button
@@ -1614,12 +1682,12 @@ const handlesaveMisPunch = async () => {
                         Rel_Code: prev.Rel_Code?.length === allSelected.length ? [] : allSelected,
                       }));
                     }}
-                    className="text-sm font-bold text-[#4F46E5] hover:underline"
+                    className="text-base font-bold text-[#4F46E5] hover:underline cursor-pointer"
                   >
                     Select All
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
                   {relCodeOptions
                     .filter((r) => r.value !== "1,2,3,4,5,6,7")
                     .map((r) => {
@@ -1629,9 +1697,9 @@ const handlesaveMisPunch = async () => {
                           key={r.value}
                           type="button"
                           onClick={() => toggleChipSelection("Rel_Code", r)}
-                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
+                          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm sm:text-base font-semibold border transition-all cursor-pointer ${selected
                               ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
-                              : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
+                              : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
                             }`}
                         >
                           {r.label}
@@ -1644,7 +1712,7 @@ const handlesaveMisPunch = async () => {
               {/* Department Chips */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  <label className="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                     Department
                   </label>
                   <button
@@ -1656,12 +1724,12 @@ const handlesaveMisPunch = async () => {
                         Dept_Code: prev.Dept_Code?.length === allDepts.length ? [] : allDepts,
                       }));
                     }}
-                    className="text-sm font-bold text-[#4F46E5] hover:underline"
+                    className="text-base font-bold text-[#4F46E5] hover:underline cursor-pointer"
                   >
                     Select All
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2.5 max-h-44 overflow-y-auto pr-1">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5 max-h-44 overflow-y-auto pr-1">
                   {departmentsList
                     .filter((d) => d.label !== "ALL DEPARTMENT")
                     .map((d) => {
@@ -1671,9 +1739,9 @@ const handlesaveMisPunch = async () => {
                           key={d.value}
                           type="button"
                           onClick={() => toggleChipSelection("Dept_Code", d)}
-                          className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
+                          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm sm:text-base font-semibold border transition-all cursor-pointer ${selected
                               ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
-                              : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
+                              : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
                             }`}
                         >
                           {d.label}
@@ -1686,7 +1754,7 @@ const handlesaveMisPunch = async () => {
               {/* Branch Location Chips */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  <label className="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                     Branch Location
                   </label>
                   <button
@@ -1697,12 +1765,12 @@ const handlesaveMisPunch = async () => {
                         Loc_Code: prev.Loc_Code?.length === branchesList.length ? [] : branchesList,
                       }));
                     }}
-                    className="text-sm font-bold text-[#4F46E5] hover:underline"
+                    className="text-base font-bold text-[#4F46E5] hover:underline cursor-pointer"
                   >
                     Select All
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2.5 max-h-44 overflow-y-auto pr-1">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5 max-h-44 overflow-y-auto pr-1">
                   {branchesList.map((b) => {
                     const selected = isChipSelected("Loc_Code", b.value);
                     return (
@@ -1710,9 +1778,9 @@ const handlesaveMisPunch = async () => {
                         key={b.value}
                         type="button"
                         onClick={() => toggleChipSelection("Loc_Code", b)}
-                        className={`px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all ${selected
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm sm:text-base font-semibold border transition-all cursor-pointer ${selected
                             ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
-                            : "bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                       >
                         {b.label}
@@ -1725,7 +1793,7 @@ const handlesaveMisPunch = async () => {
           </div>
 
           {/* Table Card */}
-          <div className="w-full">
+          <div className="w-full overflow-x-auto">
             <DataTable
               columns={columnsHoliday}
               data={tableHoliday}
@@ -1733,7 +1801,7 @@ const handlesaveMisPunch = async () => {
               showTopSearch={true}
               showExcelExport={true}
               searchPlaceholder="Search records..."
-              height="380px"
+              height="520px"
             />
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   RotateCw,
   ScanLine,
   History,
+  Shirt,
 } from "lucide-react";
 import Eselect from "@/components/atoms/Eselect";
 import { useFormData } from "./Context/FormDataContext";
@@ -23,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -33,6 +34,7 @@ import LottieAnimation from "@/components/atoms/LottieAnimation";
 import { useSecureStorage } from "@/app/hooks/comp-key-data";
 import { useToast } from "@/app/hooks/useToast";
 import Einput from "@/components/atoms/Einput";
+import DataTable from "@/components/Templates/reacttable";
 
 const SalaryDetails = ({
   disapleForSalary = false,
@@ -140,7 +142,7 @@ const SalaryDetails = ({
   const user = useCurrentUser();
   const { compdata } = useSecureStorage();
 
-  console.log('compdata',compdata)
+  console.log('compdata', compdata)
 
   const [SalRegionoption, setSalRegionoption] = useState([]);
   useEffect(() => {
@@ -300,6 +302,21 @@ const SalaryDetails = ({
     Number(v) !== 0;
 
   const handleInputChange = (name: string, value: any) => {
+    if (name === "UNIFORM_AVAILABLE" && value !== "1") {
+      setFormData((prev: any) => ({
+        ...prev,
+        EmpMst: {
+          ...prev.EmpMst,
+          UNIFORM_AVAILABLE: value,
+          UNIFORM_CATEGORY: null,
+          UNIFORM_ISSUE_DATE: null,
+          UNIFORM_QTY: null,
+          UNIFORM_REMARK: "",
+        },
+      }));
+      return;
+    }
+
     if (name === "Daily_Wages") {
       if (
         hasMeaningfulValue(value) &&
@@ -1618,24 +1635,219 @@ const SalaryDetails = ({
     }
   };
 
+  // Uniform options & Policy Type
+  const YES_NO_OPTIONS = [
+    { value: "1", label: "Yes" },
+    { value: "0", label: "No" },
+  ];
+
+  const UNIFORM_QTY_OPTIONS = [
+    { value: "1", label: "1" },
+    { value: "1+1", label: "1+1" },
+    { value: "2+2", label: "2+2" },
+    { value: "2+2+1", label: "2+2+1" },
+  ];
+
+  const [uniformCategoryOptions, setUniformCategoryOptions] = useState([]);
+  const PolicyTypeData = async () => {
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/PolicyTypeData`,
+        {},
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        }
+      );
+
+      if (result.data?.uniformCategory) {
+        setUniformCategoryOptions(result.data.uniformCategory);
+      }
+    } catch (error) {
+      console.error("Error fetching policy/uniform category data:", error);
+    }
+  };
+
+  useEffect(() => {
+    PolicyTypeData();
+  }, []);
+
+  // Bank History state & logic
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [bankHistoryData, setBankHistoryData] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"old" | "new">("new");
+
+  const fetchBankHistory = async () => {
+    const empCode = formData?.EmpMst?.EMPCODE;
+    if (!empCode) {
+      showSideAlert("Please select an employee first", "info");
+      return;
+    }
+
+    setHistoryLoading(true);
+    try {
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/GetBankDetailsHistory`,
+        { EmpCode: empCode },
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
+        }
+      );
+
+      if (result.data?.Status) {
+        const rows = result.data.Result;
+        const safeData = Array.isArray(rows) ? rows : rows ? [rows] : [];
+        setBankHistoryData(safeData);
+        setIsHistoryDialogOpen(true);
+        setActiveTab("new");
+      } else {
+        showSideAlert("No history found", "info");
+      }
+    } catch (error) {
+      console.error("Error fetching bank history:", error);
+      showSideAlert("Error fetching history", "error");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const bankHistoryColumns = useMemo(
+    () => [
+      {
+        Header: "#",
+        id: "index",
+        accessor: (_row: any, i: number) => i + 1,
+        Cell: ({ row }: any) => (
+          <span className="text-slate-500 font-semibold">
+            {row.index + 1}
+          </span>
+        ),
+        width: 50,
+      },
+      {
+        Header: "Bank Name",
+        id: "bankName",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_BANKNAME : row.NEW_BANKNAME) || "",
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-800 dark:text-slate-100">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "Account Type",
+        id: "accountType",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_ACCOUNT_TYPE : row.NEW_ACCOUNT_TYPE) || "",
+        Cell: ({ value }: any) => <span>{value || "—"}</span>,
+      },
+      {
+        Header: "Account No.",
+        id: "accountNo",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_BANKACCOUNTNO : row.NEW_BANKACCOUNTNO) || "",
+        Cell: ({ value }: any) => (
+          <span className="font-mono">{value || "—"}</span>
+        ),
+      },
+      {
+        Header: "Branch",
+        id: "branch",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_BRANCH : row.NEW_BRANCH) || "",
+        Cell: ({ value }: any) => <span>{value || "—"}</span>,
+      },
+      {
+        Header: "Payment Mode",
+        id: "paymentMode",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_PAYMENTMODE : row.NEW_PAYMENTMODE) || "",
+        Cell: ({ value }: any) => <span>{value || "—"}</span>,
+      },
+      {
+        Header: "IFSC Code",
+        id: "ifscCode",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_IFSC_CODE : row.NEW_IFSC_CODE) || "",
+        Cell: ({ value }: any) => (
+          <span className="font-mono">{value || "—"}</span>
+        ),
+      },
+      {
+        Header: "Account Holder",
+        id: "accountHolder",
+        accessor: (row: any) =>
+          (activeTab === "old" ? row.OLD_EMP_AC_NAME : row.NEW_EMP_AC_NAME) || "",
+        Cell: ({ value }: any) => <span>{value || "—"}</span>,
+      },
+      {
+        Header: "Changed By",
+        accessor: "CHANGED_BY",
+        id: "changedBy",
+        Cell: ({ value }: any) => (
+          <span className="text-slate-700 dark:text-slate-300">
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "Change Type",
+        accessor: "CHANGE_TYPE",
+        id: "changeType",
+        Cell: ({ value }: any) => (
+          <span
+            className={`text-sm font-semibold px-2.5 py-0.5 rounded ${value === "DIRECT"
+                ? "bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1E3A8A66] dark:text-[#93C5FD]"
+                : value === "APPROVAL"
+                  ? "bg-[#DCFCE7] text-[#15803D] dark:bg-[#14532D66] dark:text-[#86EFAC]"
+                  : "bg-[#F3F4F6] text-[#374151] dark:bg-[#1F2937] dark:text-[#D1D5DB]"
+              }`}
+          >
+            {value || "—"}
+          </span>
+        ),
+      },
+      {
+        Header: "Date",
+        accessor: "CREATED_AT",
+        id: "createdAt",
+        Cell: ({ value }: any) => (
+          <span className="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+            {value
+              ? value.replace("T", " ").replace("Z", "").split(".")[0]
+              : "—"}
+          </span>
+        ),
+      },
+    ],
+    [activeTab]
+  );
+
   // ---------- UI helper classes ----------
   const cardClass =
     "rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm overflow-hidden w-full";
   const cardHeaderClass =
-    "flex items-center justify-between gap-2 px-1 py-3.5 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19]";
-  const cardTitleWrapClass = "flex items-center gap-5 h-7";
+    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19]";
+  const cardTitleWrapClass = "flex items-center gap-2.5 sm:gap-3 min-w-0";
   const cardTitleClass =
-    "text-[12px] tracking-wide font-semibold uppercase text-[#0F172A] dark:text-white";
-  const cardBodyClass = "p-5";
+    "text-[12px] sm:text-[13px] tracking-wide font-semibold uppercase text-[#0F172A] dark:text-white whitespace-nowrap";
+  const cardBodyClass = "p-3.5 sm:p-5";
   const fieldGridClass =
     "grid grid-cols-1 md:grid-cols-2 gap-x-4 fluid-gap-md gap-y-4";
   const pillBtnClass =
-    "h-9 px-4 rounded-full text-sm font-semibold border border-[#D0D5DD] dark:border-[#2A2F3A] bg-white dark:bg-black text-slate-900 dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
+    "h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold border border-[#D0D5DD] dark:border-[#2A2F3A] bg-white dark:bg-black text-slate-900 dark:text-white hover:bg-[#F2F4F7] dark:hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0 whitespace-nowrap";
   const pillBtnPrimaryClass =
-    "h-9 px-4 rounded-full text-s font-semibold bg-[#4F46E5] text-white hover:bg-[#433df0] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5";
+    "h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold bg-[#4F46E5] text-white hover:bg-[#433df0] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0 whitespace-nowrap";
 
   return (
-    <div className="h-full w-full overflow-y-auto overflow-x-hidden pr-1.5 light-scroll">
+    <div className="w-full fluid-p-xs max-w-full overflow-x-hidden pb-24">
       <div className="grid grid-cols-12 gap-4 fluid-gap-md pb-6">
         {/* ===================== LEFT COLUMN - SALARY DETAIL FORM ===================== */}
         <div className="col-span-12 xl:col-span-6">
@@ -1643,8 +1855,8 @@ const SalaryDetails = ({
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
                 <SlidersHorizontal
-                  className="h-7 w-5 text-[#4F46E5]"
-                  strokeWidth={3}
+                  className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5] shrink-0"
+                  strokeWidth={2.5}
                 />
                 <span className={cardTitleClass}>Salary Detail Form</span>
               </div>
@@ -1867,11 +2079,11 @@ const SalaryDetails = ({
             <div className={cardClass}>
               <div className={cardHeaderClass}>
                 <div className={cardTitleWrapClass}>
-                  <Wallet className="h-7 w-5 text-[#4F46E5]" strokeWidth={3} />
+                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5] shrink-0" strokeWidth={2.5} />
                   <span className={cardTitleClass}>Salary Breakup</span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1879,7 +2091,7 @@ const SalaryDetails = ({
                     onClick={() => OutServiceView(formData.EmpMst.EMPCODE)}
                     disabled={disapleForSalary}
                   >
-                    <History className="h-3.5 w-3.5" />
+                    <History className="h-3.5 w-3.5 shrink-0" />
                     See history
                   </Button>
 
@@ -1889,7 +2101,7 @@ const SalaryDetails = ({
                       className={pillBtnPrimaryClass}
                       onClick={handleChangeSalaryDetails}
                     >
-                      <Save className="h-3.5 w-3.5" />
+                      <Save className="h-3.5 w-3.5 shrink-0" />
                       {isSalarySaved
                         ? "Change salary details"
                         : "Save salary details"}
@@ -2063,6 +2275,7 @@ const SalaryDetails = ({
                       Daily Wages (Alternative Salary Mode)
                     </div>
                     <Einput
+                      type="number"
                       title="Daily Wages"
                       name="Daily_Wages"
                       value={formData1.Daily_Wages}
@@ -2091,18 +2304,27 @@ const SalaryDetails = ({
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
-                <Landmark className="h-4 w-4 text-[#4F46E5]" strokeWidth={2} />
+                <Landmark className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5] shrink-0" strokeWidth={2} />
                 <span className={cardTitleClass}>Bank Details</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`${pillBtnClass} text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30`}
+                  onClick={fetchBankHistory}
+                  disabled={!formData?.EmpMst?.EMPCODE}
+                >
+                  <History className="h-3.5 w-3.5 shrink-0" />
+                  History
+                </button>
                 <button
                   type="button"
                   className={pillBtnClass}
                   onClick={handleLockBankDetails}
                   disabled={isBankLocked}
                 >
-                  <Lock className="h-3.5 w-3.5" />
+                  <Lock className="h-3.5 w-3.5 shrink-0" />
                   Lock
                 </button>
                 <button
@@ -2111,7 +2333,7 @@ const SalaryDetails = ({
                   onClick={SendOtp1}
                   disabled={!isBankLocked}
                 >
-                  <LockOpen className="h-3.5 w-3.5" />
+                  <LockOpen className="h-3.5 w-3.5 shrink-0" />
                   Unlock
                 </button>
 
@@ -2129,7 +2351,7 @@ const SalaryDetails = ({
                     className={pillBtnClass}
                     onClick={UpdateBankdetails}
                   >
-                    <RotateCw className="h-3.5 w-3.5" />
+                    <RotateCw className="h-3.5 w-3.5 shrink-0" />
                     Update
                   </button>
                 )}
@@ -2379,6 +2601,90 @@ const SalaryDetails = ({
                   Tick if Salary on Hold
                 </span>
               </label>
+            </div>
+          </div>
+        </div>
+
+        {/* ===================== UNIFORM SUPPLY DETAILS - FULL WIDTH ===================== */}
+        <div className="col-span-12 mb-8">
+          <div className={cardClass}>
+            <div className={cardHeaderClass}>
+              <div className={cardTitleWrapClass}>
+                <Shirt className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5] shrink-0" strokeWidth={2} />
+                <span className={cardTitleClass}>Uniform Supply Details</span>
+              </div>
+            </div>
+
+            <div className={cardBodyClass}>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-4">
+                {/* Uniform Available */}
+                <div>
+                  <Eselect
+                    title="Uniform Available"
+                    name="UNIFORM_AVAILABLE"
+                    option={YES_NO_OPTIONS}
+                    initialValue={(formData.EmpMst as any)?.UNIFORM_AVAILABLE?.toString()}
+                    handleInputChange={handleInputChange}
+                    redlabel={isMandatory("UNIFORM_AVAILABLE") ? "*" : ""}
+                  />
+                </div>
+
+                {/* Uniform Category */}
+                <div>
+                  <Eselect
+                    title="Uniform Category"
+                    name="UNIFORM_CATEGORY"
+                    option={uniformCategoryOptions}
+                    initialValue={(formData.EmpMst as any)?.UNIFORM_CATEGORY?.toString()}
+                    handleInputChange={handleInputChange}
+                    disabled={(formData.EmpMst as any)?.UNIFORM_AVAILABLE !== "1"}
+                    redlabel={isMandatory("UNIFORM_CATEGORY") ? "*" : ""}
+                  />
+                </div>
+
+                {/* Date of Issue */}
+                <div>
+                  <Einput
+                    type="date"
+                    title="Date of Issue"
+                    name="UNIFORM_ISSUE_DATE"
+                    value={
+                      (formData.EmpMst as any)?.UNIFORM_ISSUE_DATE
+                        ? (formData.EmpMst as any).UNIFORM_ISSUE_DATE.slice(0, 10)
+                        : ""
+                    }
+                    handleInputChange={handleInputChange}
+                    disabled={(formData.EmpMst as any)?.UNIFORM_AVAILABLE !== "1"}
+                    redlabel={isMandatory("UNIFORM_ISSUE_DATE") ? "*" : ""}
+                  />
+                </div>
+
+                {/* Qty Given */}
+                <div>
+                  <Eselect
+                    title="Qty Given"
+                    name="UNIFORM_QTY"
+                    option={UNIFORM_QTY_OPTIONS}
+                    initialValue={(formData.EmpMst as any)?.UNIFORM_QTY?.toString()}
+                    handleInputChange={handleInputChange}
+                    disabled={(formData.EmpMst as any)?.UNIFORM_AVAILABLE !== "1"}
+                    redlabel={isMandatory("UNIFORM_QTY") ? "*" : ""}
+                  />
+                </div>
+
+                {/* Remark */}
+                <div className="md:col-span-2 xl:col-span-4">
+                  <Einput
+                    type="text"
+                    title="Remark"
+                    name="UNIFORM_REMARK"
+                    value={(formData.EmpMst as any)?.UNIFORM_REMARK || ""}
+                    handleInputChange={handleInputChange}
+                    disabled={(formData.EmpMst as any)?.UNIFORM_AVAILABLE !== "1"}
+                    redlabel={isMandatory("UNIFORM_REMARK") ? "*" : ""}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2890,6 +3196,84 @@ const SalaryDetails = ({
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* ==================== BANK DETAILS HISTORY DIALOG ==================== */}
+        <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+          <DialogContent className="w-[95vw] max-w-7xl max-h-[90vh] overflow-hidden p-0 rounded-2xl bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 shadow-2xl">
+            <div className="bg-gradient-to-r from-[#193A69] to-[#2a5190] dark:from-black dark:to-black px-6 py-4 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                  📜 BANK DETAILS CHANGE HISTORY
+                </DialogTitle>
+                <p className="text-[#B3B3B3] text-sm mt-1">
+                  Total {bankHistoryData.length} change record(s) found for employee{" "}
+                  <span className="font-semibold text-[#FACC15]">
+                    {formData?.EmpMst?.EMPCODE}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 overflow-y-auto max-h-[75vh]">
+              {bankHistoryData.length === 0 ? (
+                <div className="text-center py-12 text-[#6B7280] dark:text-[#9CA3AF]">
+                  <p className="text-base font-semibold">No history found for this employee</p>
+                </div>
+              ) : (
+                <>
+                  {/* Tabs */}
+                  <div className="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("new")}
+                      className={`px-5 py-2 font-semibold text-sm rounded-t-lg transition-all ${activeTab === "new"
+                          ? "bg-[#DCFCE7] text-[#15803D] dark:bg-[#14532D4D] dark:text-[#4ADE80] border-b-2 border-[#22C55E]"
+                          : "text-[#4B5563] dark:text-[#9CA3AF] hover:bg-[#F3F4F6] dark:hover:bg-[#1F2937]"
+                        }`}
+                    >
+                      🟢 Bank Details History
+                    </button>
+                  </div>
+
+                  {/* Table Component */}
+                  <div className="w-full">
+                    <DataTable
+                      columns={bankHistoryColumns}
+                      data={bankHistoryData}
+                      showTopSearch={true}
+                      searchPlaceholder="Search in history records..."
+                      showExcelExport={false}
+                      height={460}
+                      initialPageSize={10}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50 dark:bg-slate-900/50">
+              <Button
+                variant="outline"
+                className="font-semibold"
+                onClick={() => setIsHistoryDialogOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Loading overlay for history */}
+        {historyLoading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000066] backdrop-blur-sm">
+            <div className="bg-white dark:bg-primaryop rounded-lg p-6 shadow-2xl">
+              <HashloaderComponent isLoading={true} />
+              <p className="mt-3 text-sm font-semibold text-[#374151] dark:text-[#E5E7EB]">
+                Loading history...
+              </p>
+            </div>
+          </div>
+        )}
 
         <HashloaderComponent isLoading={isLoading} />
       </div>
