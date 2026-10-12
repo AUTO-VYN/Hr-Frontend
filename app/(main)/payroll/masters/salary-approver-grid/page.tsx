@@ -1096,7 +1096,7 @@ export default function SalaryApproverGridPage() {
 
       {/* Fixed Footer Action Bar (Appears when >= 1 checkbox selected) */}
       {selectedrowdata.length > 0 && (
-        <div className="fixed bottom-0 left-0 sm:left-[68px] right-0 z-30 w-auto bg-white dark:bg-[#0B1220] border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-4 sm:px-8 py-3.5 sm:py-4 animate-in slide-in-from-bottom duration-200">
+        <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-30 w-auto bg-white dark:bg-[#0B1220] border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-4 sm:px-8 py-3.5 sm:py-4 animate-in slide-in-from-bottom duration-200 transition-[left] duration-150 ease-in-out">
           <div className="max-w-[1700px] mx-auto flex flex-col sm:flex-row items-center gap-3.5">
             <div className="flex-1 w-full">
               <input
@@ -1104,7 +1104,7 @@ export default function SalaryApproverGridPage() {
                 placeholder="Remark (applies to all selected records)"
                 value={remark}
                 onChange={(e) => setRemark(e.target.value)}
-                className="w-full h-12 px-4.5 text-[15px] border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs font-medium"
+                className="w-full h-12 px-4 sm:px-5 text-[15px] border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs font-medium"
               />
             </div>
 
@@ -1355,8 +1355,8 @@ export default function SalaryApproverGridPage() {
 
       {/* 3. Approver List Modal Dialog */}
       <Dialog open={isModalVisible1} onOpenChange={setIsModalVisible1}>
-        <DialogContent className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl p-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220]">
-          <div className="sticky top-0 z-10 bg-slate-900 text-white px-6 py-4.5 rounded-t-2xl flex items-center justify-between">
+        <DialogContent className="w-[96vw] max-w-5xl max-h-[85vh] overflow-y-auto light-scroll rounded-2xl p-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220]">
+          <div className="sticky top-0 z-10 bg-slate-900 text-white px-6 py-5 rounded-t-2xl flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold tracking-wide">
                 Approver List
@@ -1365,41 +1365,60 @@ export default function SalaryApproverGridPage() {
                 Hierarchical approver mapping
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsModalVisible1(false)}
+              className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 space-y-4">
             {apprData.length === 0 ? (
               <div className="text-center py-12 text-base text-slate-400">
                 No Approvers Found
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="overflow-x-auto light-scroll rounded-xl border border-slate-200 dark:border-slate-800">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-100 dark:bg-slate-800/60 font-bold uppercase tracking-wider text-[13px] text-slate-700 dark:text-slate-200">
+                  <thead className="bg-slate-100 dark:bg-slate-800/60 font-semibold uppercase tracking-wider text-sm text-slate-700 dark:text-slate-200 whitespace-nowrap">
                     <tr>
-                      <th className="px-4 py-3.5 border-b">Approver 1A</th>
-                      <th className="px-4 py-3.5 border-b">Approver 1B</th>
-                      <th className="px-4 py-3.5 border-b">Approver 2A</th>
-                      <th className="px-4 py-3.5 border-b">Approver 2B</th>
-                      <th className="px-4 py-3.5 border-b">Approver 3A</th>
-                      <th className="px-4 py-3.5 border-b">Approver 3B</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 1A</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 1B</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 2A</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 2B</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 3A</th>
+                      <th className="px-5 py-4.5 border-b font-semibold whitespace-nowrap min-w-[135px]">Approver 3B</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-[15px]">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm whitespace-nowrap">
                     {apprData.map((item, index) => (
                       <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                        <td className="px-4 py-3.5 capitalize font-semibold text-slate-900 dark:text-slate-100">{item.approver1_A || "—"}</td>
-                        <td className="px-4 py-3.5 capitalize font-medium text-slate-700 dark:text-slate-300">{item.approver1_B || "—"}</td>
-                        <td className="px-4 py-3.5 capitalize font-semibold text-slate-900 dark:text-slate-100">{item.approver2_A || "—"}</td>
-                        <td className="px-4 py-3.5 capitalize font-medium text-slate-700 dark:text-slate-300">{item.approver2_B || "—"}</td>
-                        <td className="px-4 py-3.5 capitalize font-semibold text-slate-900 dark:text-slate-100">{item.approver3_A || "—"}</td>
-                        <td className="px-4 py-3.5 capitalize font-medium text-slate-700 dark:text-slate-300">{item.approver3_B || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver1_A || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver1_B || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver2_A || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver2_B || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver3_A || "—"}</td>
+                        <td className="px-5 py-4 capitalize font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{item.approver3_B || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
+
+            {/* Cancel Button */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setIsModalVisible1(false)}
+                className="h-10 px-7 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-xs transition-colors cursor-pointer text-sm"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

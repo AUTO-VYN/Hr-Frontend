@@ -633,153 +633,148 @@ export default function WishWellPage() {
   const dateHeader = occasion === "1" ? "DOB" : occasion === "2" ? "DOJ" : "DOM";
 
   return (
-    <div className="w-full min-h-screen pb-16 space-y-5">
+    <div className="w-full min-h-screen pb-16 space-y-4 font-['Inter',system-ui,sans-serif] text-[#1E293B] dark:text-[#E7ECF3]">
       {/* 1. Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-[18px]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="m-0 text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
             WishWell
           </h1>
-          <p className="text-[13.5px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Send birthday, anniversary and work-anniversary wishes over WhatsApp
+          <p className="mt-[5px] text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+            Send birthday, anniversary and work-anniversary wishes over WhatsApp or SMS
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Date Picker */}
+        <div className="flex flex-wrap items-center gap-[9px]">
+          {/* Date Picker using AInput */}
           <AInput
             type="date"
             value={currentDate}
             onChange={(e) => setCurrentDate(e.target.value)}
             containerClassName="w-auto"
-            className="!h-9 text-[13.5px] font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-[#0B1220] border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-1.5 shadow-2xs cursor-pointer"
+            className="!h-[35px] !text-[12.5px] font-normal !border-[#E2E8F0] dark:!border-[#1F2937] !rounded-[10px] !bg-white dark:!bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] px-[11px] py-[8px] outline-none focus:!border-[#4F46E5] cursor-pointer"
           />
 
-          {/* Export to Excel */}
+          {/* Export to Excel using AButton */}
           <AButton
             type="button"
             variant="outline"
-            size="sm"
             onClick={handleExportExcel}
-            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-700 dark:text-slate-200 text-[13.5px] font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
-            icon={<Download className="w-4 h-4 text-slate-500" />}
+            className="!h-[35px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] !text-[12.5px] font-[550] px-[13px] py-[8px] !rounded-[10px] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] whitespace-nowrap cursor-pointer shadow-none gap-[7px]"
+            icon={<Download className="w-4 h-4 text-[#64748B] dark:text-[#94A3B8]" />}
           >
             Export to Excel
           </AButton>
 
-          {/* WhatsApp Channel Badge (Only WhatsApp) */}
-          <div className="flex items-center gap-2 pl-1">
-            <span className="text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              CHANNEL
-            </span>
-            <div className="h-9 px-3.5 rounded-xl bg-[#4338CA] text-white text-[13.5px] font-semibold inline-flex items-center gap-2 shadow-2xs">
-              <FaWhatsapp className="w-4 h-4 text-white" />
+          {/* Back button using AButton */}
+          <AButton
+            type="button"
+            variant="outline"
+            onClick={() => history.back()}
+            className="!h-[35px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] !text-[12.5px] font-[550] px-[12px] py-[8px] !rounded-[10px] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] whitespace-nowrap cursor-pointer shadow-none gap-[7px]"
+            icon={<ArrowLeft className="w-4 h-4" />}
+          >
+            Back
+          </AButton>
+        </div>
+      </div>
+
+      {/* 2. Occasion Tabs & Channel Badge */}
+      <div className="flex items-center gap-[10px] flex-wrap mb-[16px]">
+        <div className="flex gap-[3px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[3px]">
+          {/* Birthday Tab */}
+          <AButton
+            type="button"
+            variant={occasion === "1" ? "primary" : "ghost"}
+            onClick={() => handleOccasionChange("1")}
+            className={`!border-none !text-[12.5px] font-[600] px-[14px] py-[8px] !h-auto !rounded-[8px] cursor-pointer whitespace-nowrap transition-colors shadow-none gap-[7px] ${
+              occasion === "1"
+                ? "!bg-[#4F46E5] !text-white hover:!bg-[#4F46E5]"
+                : "!bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+            }`}
+            icon={<Cake className="w-4 h-4" />}
+          >
+            <span>Birthday</span>
+            <span className="text-[11px] opacity-75 font-mono ml-0.5">{counts["1"] || 0}</span>
+          </AButton>
+
+          {/* Marriage Anniversary Tab */}
+          <AButton
+            type="button"
+            variant={occasion === "3" ? "primary" : "ghost"}
+            onClick={() => handleOccasionChange("3")}
+            className={`!border-none !text-[12.5px] font-[600] px-[14px] py-[8px] !h-auto !rounded-[8px] cursor-pointer whitespace-nowrap transition-colors shadow-none gap-[7px] ${
+              occasion === "3"
+                ? "!bg-[#4F46E5] !text-white hover:!bg-[#4F46E5]"
+                : "!bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+            }`}
+            icon={<Heart className="w-4 h-4" />}
+          >
+            <span>Anniversary</span>
+            <span className="text-[11px] opacity-75 font-mono ml-0.5">{counts["3"] || 0}</span>
+          </AButton>
+
+          {/* Work Anniversary Tab */}
+          <AButton
+            type="button"
+            variant={occasion === "2" ? "primary" : "ghost"}
+            onClick={() => handleOccasionChange("2")}
+            className={`!border-none !text-[12.5px] font-[600] px-[14px] py-[8px] !h-auto !rounded-[8px] cursor-pointer whitespace-nowrap transition-colors shadow-none gap-[7px] ${
+              occasion === "2"
+                ? "!bg-[#4F46E5] !text-white hover:!bg-[#4F46E5]"
+                : "!bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+            }`}
+            icon={<Briefcase className="w-4 h-4" />}
+          >
+            <span>Work anniversary</span>
+            <span className="text-[11px] opacity-75 font-mono ml-0.5">{counts["2"] || 0}</span>
+          </AButton>
+        </div>
+
+        <div className="flex-1"></div>
+
+        {/* Channel Indicator */}
+        <div className="flex items-center gap-[8px]">
+          <span className="text-[11.5px] font-[600] text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase">
+            Channel
+          </span>
+          <div className="flex gap-[3px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[3px]">
+            <button
+              type="button"
+              className="flex items-center gap-[6px] border-none bg-[#4F46E5] text-white text-[12px] font-[600] px-[12px] py-[6px] rounded-[8px] whitespace-nowrap"
+            >
+              <FaWhatsapp className="w-3.5 h-3.5" />
               WhatsApp
-            </div>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Occasion Tabs */}
-      <div className="flex flex-wrap items-center gap-2.5">
-        {/* Birthday Tab */}
-        <AButton
-          type="button"
-          variant={occasion === "1" ? "primary" : "outline"}
-          onClick={() => handleOccasionChange("1")}
-          className={`h-10 px-4 rounded-xl font-semibold text-[13.5px] inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs ${
-            occasion === "1"
-              ? "bg-[#4338CA] text-white shadow-indigo-500/20 hover:bg-[#4338CA]"
-              : "bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80"
-          }`}
-          icon={<Cake className="w-4 h-4" />}
-        >
-          <span>Birthday</span>
-          <span
-            className={`px-2 py-0.5 rounded-md text-[11.5px] font-bold ${
-              occasion === "1"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {counts["1"] || 0}
-          </span>
-        </AButton>
-
-        {/* Marriage Anniversary Tab */}
-        <AButton
-          type="button"
-          variant={occasion === "3" ? "primary" : "outline"}
-          onClick={() => handleOccasionChange("3")}
-          className={`h-10 px-4 rounded-xl font-semibold text-[13.5px] inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs ${
-            occasion === "3"
-              ? "bg-[#4338CA] text-white shadow-indigo-500/20 hover:bg-[#4338CA]"
-              : "bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80"
-          }`}
-          icon={<Heart className="w-4 h-4 text-slate-400" />}
-        >
-          <span>Anniversary</span>
-          <span
-            className={`px-2 py-0.5 rounded-md text-[11.5px] font-bold ${
-              occasion === "3"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {counts["3"] || 0}
-          </span>
-        </AButton>
-
-        {/* Work Anniversary Tab */}
-        <AButton
-          type="button"
-          variant={occasion === "2" ? "primary" : "outline"}
-          onClick={() => handleOccasionChange("2")}
-          className={`h-10 px-4 rounded-xl font-semibold text-[13.5px] inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs ${
-            occasion === "2"
-              ? "bg-[#4338CA] text-white shadow-indigo-500/20 hover:bg-[#4338CA]"
-              : "bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80"
-          }`}
-          icon={<Briefcase className="w-4 h-4 text-slate-400" />}
-        >
-          <span>Work anniversary</span>
-          <span
-            className={`px-2 py-0.5 rounded-md text-[11.5px] font-bold ${
-              occasion === "2"
-                ? "bg-white/20 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {counts["2"] || 0}
-          </span>
-        </AButton>
-
-        <AButton
-            variant="outline"
-            size="md"
-            className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => history.back()}
-          >
-            Back
-          </AButton>
-      </div>
-
       {/* 3. Main Grid Layout (Left Table + Right Widgets) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Table Card (Single Unified Container) */}
-        <div className="lg:col-span-8 xl:col-span-8 bg-white dark:bg-[#0B1220] border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-          {/* Table Header Banner */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#0B1220]">
-            <div className="flex items-center gap-2.5">
-              <Cake className="w-4.5 h-4.5 text-[#4F46E5] dark:text-indigo-400" />
-              <h2 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
-                {occasionTitle}
-              </h2>
-            </div>
-            <div className="text-[13px] font-normal text-slate-500 dark:text-slate-400">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
+        {/* Left Column: Table Card */}
+        <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden">
+          {/* Card Header Banner */}
+          <div className="flex items-center gap-[10px] px-[18px] py-[13px] border-b border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+            <span className="text-[#4F46E5] dark:text-[#8B84FF] flex items-center">
+              {occasion === "1" ? (
+                <Cake className="w-4 h-4" />
+              ) : occasion === "2" ? (
+                <Briefcase className="w-4 h-4" />
+              ) : (
+                <Heart className="w-4 h-4" />
+              )}
+            </span>
+            <h2 className="m-0 flex-1 text-[13px] font-[600] tracking-[0.04em] uppercase text-[#1E293B] dark:text-[#E7ECF3]">
+              {occasion === "1"
+                ? "Birthdays today"
+                : occasion === "2"
+                ? "Work anniversaries"
+                : "Wedding anniversaries"}
+            </h2>
+            <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] font-mono whitespace-nowrap">
               {tabledata.length} {tabledata.length === 1 ? "employee" : "employees"}
-            </div>
+            </span>
           </div>
 
           {/* Skeleton Loading or Table */}
@@ -788,403 +783,382 @@ export default function WishWellPage() {
               <SkeletonLoader />
             </div>
           ) : (
-            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-white dark:bg-[#0B1220] border-b border-slate-200 dark:border-slate-800 select-none">
-                  <tr>
-                    {/* Checkbox Column */}
-                    <th className="w-12 px-3 py-3 text-center">
-                      <div
-                        className={`flex items-center justify-center ${
-                          sendMode === "manual"
-                            ? "cursor-not-allowed opacity-40"
-                            : "cursor-pointer"
-                        }`}
-                        onClick={() => {
-                          if (sendMode === "manual") return;
-                          handleSelectAll(!isAllSelected);
-                        }}
-                      >
-                        <div
-                          role="checkbox"
-                          aria-checked={
-                            sendMode === "manual"
-                              ? "false"
-                              : isAllSelected
-                              ? "true"
-                              : isIndeterminate
-                              ? "mixed"
-                              : "false"
-                          }
-                          className={`w-[18px] h-[18px] min-w-[18px] min-h-[18px] rounded-[4px] flex items-center justify-center transition-all select-none ${
-                            sendMode === "manual"
-                              ? "bg-slate-100 dark:bg-slate-800 border-[1.5px] border-slate-300 dark:border-slate-600 cursor-not-allowed"
-                              : isAllSelected
-                              ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
-                              : isIndeterminate
-                              ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500"
-                              : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500 hover:border-[#4338CA]"
+            <div className="overflow-x-auto">
+              <div className="min-w-[960px]">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-[#F8FAFC] dark:bg-[#0E1524] border-b border-[#E2E8F0] dark:border-[#1F2937] select-none">
+                    <tr>
+                      {/* Checkbox Column */}
+                      <th className="w-[44px] px-[11px] py-[11px] text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (sendMode === "manual") return;
+                            handleSelectAll(!isAllSelected);
+                          }}
+                          disabled={sendMode === "manual"}
+                          className="grid place-items-center border-none bg-transparent cursor-pointer p-0 m-auto"
+                        >
+                          <span
+                            className={`w-4 h-4 rounded-[4px] grid place-items-center border-[1.5px] transition-colors ${
+                              isAllSelected
+                                ? "border-[#4F46E5] bg-[#4F46E5] text-white"
+                                : "border-[#E2E8F0] dark:border-[#1F2937] bg-transparent"
+                            }`}
+                          >
+                            {isAllSelected ? (
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            ) : isIndeterminate ? (
+                              <div className="w-2 h-[2px] bg-[#4F46E5] rounded-full" />
+                            ) : null}
+                          </span>
+                        </button>
+                      </th>
+
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Emp. code
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Emp. name
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Location
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Designation
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Department
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        {dateHeader}
+                      </th>
+                      <th className="px-[12px] py-[11px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        Mobile no.
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1F2937] bg-white dark:bg-[#111827]">
+                    {tabledata.map((row: any, idx: number) => {
+                      const rowCode = String(row.empcode || row.id || idx);
+                      const isChecked = selectedCodes.has(rowCode);
+                      const isManual = sendMode === "manual";
+                      const isRowDisabled = isManual && selectedCodes.size >= 1 && !isChecked;
+                      const name = row.empname || "—";
+                      const formattedName = toTitleCase(name);
+                      const initials = getInitials(name);
+                      const avatarColor = getAvatarColor(name);
+                      const location = toTitleCase(row.branch || "Branch - 1");
+                      const designation = toTitleCase(row.employeedesignation || "—");
+                      const department = toTitleCase(row.labeldivision || "—");
+                      const dateVal =
+                        occasion === "1" ? row.dob : occasion === "2" ? row.currentjoindate : row.dom;
+
+                      return (
+                        <tr
+                          key={rowCode}
+                          onClick={() => {
+                            if (isRowDisabled) return;
+                            handleToggleRow(rowCode);
+                          }}
+                          className={`transition-colors border-b border-[#E2E8F0] dark:border-[#1F2937] ${
+                            isRowDisabled
+                              ? "cursor-not-allowed opacity-50"
+                              : "cursor-pointer"
+                          } ${
+                            isChecked
+                              ? "bg-[#EEF2FF] dark:bg-[#1E1B4B]"
+                              : "bg-transparent hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524]"
                           }`}
                         >
-                          {sendMode !== "manual" && isAllSelected ? (
-                            <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
-                          ) : sendMode !== "manual" && isIndeterminate ? (
-                            <div className="w-2.5 h-[2px] bg-[#4338CA] rounded-full" />
-                          ) : null}
-                        </div>
-                      </div>
-                    </th>
-
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      EMP. CODE
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      EMP. NAME
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      LOCATION
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      DESIGNATION
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      DEPARTMENT
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {dateHeader}
-                    </th>
-                    <th className="px-3.5 py-3 text-[11.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      MOBILE
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-[#0B1220]">
-                  {tabledata.map((row: any, idx: number) => {
-                    const rowCode = String(row.empcode || row.id || idx);
-                    const isChecked = selectedCodes.has(rowCode);
-                    const isManual = sendMode === "manual";
-                    const isRowDisabled = isManual && selectedCodes.size >= 1 && !isChecked;
-                    const name = row.empname || "—";
-                    const formattedName = toTitleCase(name);
-                    const initials = getInitials(name);
-                    const avatarColor = getAvatarColor(name);
-                    const location = toTitleCase(row.branch || "Branch - 1");
-                    const designation = toTitleCase(row.employeedesignation || "—");
-                    const department = toTitleCase(row.labeldivision || "—");
-                    const dateVal =
-                      occasion === "1" ? row.dob : occasion === "2" ? row.currentjoindate : row.dom;
-
-                    return (
-                      <tr
-                        key={rowCode}
-                        onClick={() => {
-                          if (isRowDisabled) return;
-                          handleToggleRow(rowCode);
-                        }}
-                        className={`transition-colors border-b border-slate-100 dark:border-slate-800/80 ${
-                          isRowDisabled
-                            ? "cursor-not-allowed opacity-50"
-                            : "cursor-pointer"
-                        } ${
-                          isChecked
-                            ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
-                            : isRowDisabled
-                            ? ""
-                            : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
-                        }`}
-                      >
-                        {/* Row Checkbox */}
-                        <td className="w-12 px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <div
-                            className={`flex items-center justify-center ${
-                              isRowDisabled ? "cursor-not-allowed" : "cursor-pointer"
-                            }`}
-                            onClick={() => {
-                              if (isRowDisabled) return;
-                              handleToggleRow(rowCode);
-                            }}
-                          >
-                            <div
-                              role="checkbox"
-                              aria-checked={isChecked}
-                              aria-disabled={isRowDisabled}
-                              className={`w-[18px] h-[18px] min-w-[18px] min-h-[18px] rounded-[4px] flex items-center justify-center transition-all select-none ${
-                                isRowDisabled
-                                  ? "bg-slate-100 dark:bg-slate-800/60 border border-slate-300/70 dark:border-slate-700 opacity-50 cursor-not-allowed"
-                                  : isChecked
-                                  ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
-                                  : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-500 hover:border-[#4338CA]"
-                              }`}
+                          {/* Row Checkbox */}
+                          <td className="w-[44px] px-[11px] py-[11px] text-center" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isRowDisabled) return;
+                                handleToggleRow(rowCode);
+                              }}
+                              disabled={isRowDisabled}
+                              className="grid place-items-center border-none bg-transparent cursor-pointer p-0 m-auto"
                             >
-                              {isChecked && <Check className="w-3.5 h-3.5 stroke-[3] text-white" />}
+                              <span
+                                className={`w-4 h-4 rounded-[4px] grid place-items-center border-[1.5px] transition-colors ${
+                                  isChecked
+                                    ? "border-[#4F46E5] bg-[#4F46E5] text-white"
+                                    : "border-[#E2E8F0] dark:border-[#1F2937] bg-transparent"
+                                }`}
+                              >
+                                {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                              </span>
+                            </button>
+                          </td>
+
+                          {/* EMP. CODE */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#64748B] dark:text-[#94A3B8] font-mono">
+                            {row.empcode || "—"}
+                          </td>
+
+                          {/* EMP. NAME */}
+                          <td className="px-[12px] py-[9px] whitespace-nowrap">
+                            <div className="flex items-center gap-[10px]">
+                              <span
+                                className={`w-7 h-7 min-w-[28px] min-h-[28px] rounded-full flex items-center justify-center text-[10.5px] font-[600] shrink-0 ${avatarColor}`}
+                              >
+                                {initials}
+                              </span>
+                              <span className="font-[550] text-[12.5px] text-[#1E293B] dark:text-[#E7ECF3] truncate max-w-[170px]">
+                                {formattedName}
+                              </span>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* EMP. CODE */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                          {row.empcode || "—"}
-                        </td>
+                          {/* LOCATION */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+                            {location}
+                          </td>
 
-                        {/* EMP. NAME */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-[12.5px] font-bold shrink-0 ${avatarColor}`}
-                            >
-                              {initials}
-                            </div>
-                            <span className="font-semibold text-[13.5px] text-slate-900 dark:text-slate-100 truncate max-w-[170px]">
-                              {formattedName}
-                            </span>
-                          </div>
-                        </td>
+                          {/* DESIGNATION */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#1E293B] dark:text-[#E7ECF3]">
+                            {designation}
+                          </td>
 
-                        {/* LOCATION */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-normal text-slate-500 dark:text-slate-400">
-                          {location}
-                        </td>
+                          {/* DEPARTMENT */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+                            {department}
+                          </td>
 
-                        {/* DESIGNATION */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-medium text-slate-800 dark:text-slate-200">
-                          {designation}
-                        </td>
+                          {/* DATE */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#1E293B] dark:text-[#E7ECF3] font-mono">
+                            {formatDisplayDate(dateVal)}
+                          </td>
 
-                        {/* DEPARTMENT */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-normal text-slate-500 dark:text-slate-400">
-                          {department}
-                        </td>
+                          {/* MOBILE */}
+                          <td className="px-[12px] py-[11px] whitespace-nowrap text-[12.5px] text-[#64748B] dark:text-[#94A3B8] font-mono">
+                            {row.mobileno || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-                        {/* DATE */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                          {formatDisplayDate(dateVal)}
-                        </td>
-
-                        {/* MOBILE */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[13.5px] font-normal text-slate-600 dark:text-slate-300 font-mono">
-                          {row.mobileno || "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-
-              {tabledata.length === 0 && (
-                <div className="w-full py-14 text-center text-base font-medium text-slate-400 dark:text-slate-500">
-                  No records found for today
-                </div>
-              )}
+                {tabledata.length === 0 && (
+                  <div className="py-[52px] px-[20px] text-center">
+                    <div className="w-[44px] h-[44px] mx-auto mb-[12px] rounded-[12px] bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] grid place-items-center">
+                      <Cake className="w-5 h-5" />
+                    </div>
+                    <div className="text-[13.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
+                      No {occasion === "1" ? "birthdays" : occasion === "2" ? "work anniversaries" : "anniversaries"} on this date
+                    </div>
+                    <div className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-[5px]">
+                      Pick another date or switch the tab above.
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Right Column: Message Config & This Month Stats */}
-        <div className="lg:col-span-4 xl:col-span-4 space-y-5">
+        <div className="flex flex-col gap-[16px]">
           {/* MESSAGE CARD */}
-          <div className="bg-white dark:bg-[#0B1220] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3.5">
+          <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <h3 className="text-[12.5px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                MESSAGE
-              </h3>
+            <div className="flex items-center gap-[10px] px-[18px] py-[13px] border-b border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+              <span className="text-[#4F46E5] dark:text-[#8B84FF] flex items-center">
+                <MessageSquare className="w-4 h-4" />
+              </span>
+              <h2 className="m-0 flex-1 text-[13px] font-[600] tracking-[0.04em] uppercase text-[#1E293B] dark:text-[#E7ECF3]">
+                Message
+              </h2>
             </div>
 
-            {/* Quick Template Chips */}
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {(TEMPLATES[occasion] || TEMPLATES["1"]).map((t, idx) => (
-                <AButton
-                  key={idx}
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleTemplateSelect(idx)}
-                  className={`px-3 py-1 !h-auto rounded-full text-[12.5px] font-medium transition-all cursor-pointer ${
-                    activeTemplateIdx === idx
-                      ? "bg-indigo-50 dark:bg-indigo-950/80 text-[#4338CA] dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                      : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent"
-                  }`}
-                >
-                  {t.label}
-                </AButton>
-              ))}
-            </div>
-
-            {/* Textarea */}
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
-                rows={4}
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Type wish message here..."
-                className="w-full p-3 text-[13.5px] leading-relaxed border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs resize-y"
-              />
-            </div>
-
-            {/* Variables helper */}
-            <div className="space-y-1">
-              <div className="text-[11.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                Variables
+            <div className="p-[14px_16px_16px_16px] space-y-[11px]">
+              {/* Quick Template Chips using AButton */}
+              <div className="flex gap-[6px] flex-wrap">
+                {(TEMPLATES[occasion] || TEMPLATES["1"]).map((t, idx) => (
+                  <AButton
+                    key={idx}
+                    type="button"
+                    variant="ghost"
+                    onClick={() => handleTemplateSelect(idx)}
+                    className={`font-inherit !text-[11.5px] font-[600] px-[11px] py-[5px] !h-auto !rounded-full border cursor-pointer whitespace-nowrap transition-all shadow-none ${
+                      activeTemplateIdx === idx
+                        ? "!border-[#4F46E5] !bg-[#EEF2FF] dark:!bg-[#1E1B4B] !text-[#4F46E5] dark:text-[#8B84FF]"
+                        : "!border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#111827] text-[#64748B] dark:text-[#94A3B8] hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235]"
+                    }`}
+                  >
+                    {t.label}
+                  </AButton>
+                ))}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+
+              {/* Textarea */}
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  rows={5}
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Type wish message here..."
+                  className="w-full resize-y border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] p-[10px_11px] outline-none leading-[1.6] focus:border-[#4F46E5] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]"
+                />
+              </div>
+
+              {/* Variables helper using AButton */}
+              <div className="flex items-center gap-[8px] flex-wrap mt-[9px]">
+                <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                  Variables
+                </span>
                 {["name", "desig", "dept", "years"].map((v) => (
                   <AButton
                     key={v}
                     type="button"
                     variant="ghost"
-                    size="sm"
                     onClick={() => insertVariable(v)}
-                    className="px-2 py-0.5 !h-auto rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[11.5px] font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="border !border-[#E2E8F0] dark:!border-[#1F2937] !bg-[#F8FAFC] dark:!bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] !text-[11px] font-[600] px-[8px] py-[3px] !h-auto !rounded-[6px] cursor-pointer whitespace-nowrap hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] transition-colors shadow-none"
                   >
                     &#123;{v}&#125;
                   </AButton>
                 ))}
               </div>
-            </div>
 
-            {/* Send Mode Switcher */}
-            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 gap-1">
-              <AButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSendModeChange("auto")}
-                className={`flex-1 py-1.5 !h-auto rounded-lg text-[12.5px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sendMode === "auto"
-                    ? "bg-[#4338CA] text-white shadow-2xs hover:bg-[#4338CA]"
-                    : "bg-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                }`}
-              >
-                <span>⚡ Auto (API Bulk)</span>
-              </AButton>
-              <AButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSendModeChange("manual")}
-                className={`flex-1 py-1.5 !h-auto rounded-lg text-[12.5px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sendMode === "manual"
-                    ? "bg-[#25D366] text-white shadow-2xs hover:bg-[#25D366]"
-                    : "bg-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                }`}
-              >
-                <span>💬 Manual (WhatsApp)</span>
-              </AButton>
-            </div>
-
-            {/* Preview Box */}
-            <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-900/50 p-3.5 space-y-1.5">
-              <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                PREVIEW
+              {/* Send Mode Switcher using AButton */}
+              <div className="flex items-center p-[3px] rounded-[10px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] gap-[3px] mt-[9px]">
+                <AButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => handleSendModeChange("auto")}
+                  className={`flex-1 py-[6px] !h-auto !rounded-[8px] !text-[12px] font-[600] transition-all flex items-center justify-center gap-[6px] cursor-pointer shadow-none ${
+                    sendMode === "auto"
+                      ? "!bg-[#4F46E5] !text-white hover:!bg-[#4F46E5]"
+                      : "!bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+                  }`}
+                >
+                  <span>⚡ Auto (API)</span>
+                </AButton>
+                <AButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => handleSendModeChange("manual")}
+                  className={`flex-1 py-[6px] !h-auto !rounded-[8px] !text-[12px] font-[600] transition-all flex items-center justify-center gap-[6px] cursor-pointer shadow-none ${
+                    sendMode === "manual"
+                      ? "!bg-[#10B981] !text-white hover:!bg-[#10B981]"
+                      : "!bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+                  }`}
+                >
+                  <span>💬 Manual</span>
+                </AButton>
               </div>
-              <p className="text-[13px] leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-normal">
-                {previewText}
-              </p>
-            </div>
 
-            {/* Action Button: Auto (API) vs Manual (WhatsApp Redirect) */}
-            {sendMode === "auto" ? (
-              <AButton
-                type="button"
-                variant="primary"
-                onClick={handleSendWhatsApp}
-                disabled={isSending || tabledata.length === 0}
-                loading={isSending}
-                loadingText="Sending via API..."
-                className="w-full h-10 px-4 rounded-xl bg-[#4338CA] hover:bg-[#3730a3] text-white font-bold text-[13.5px] shadow-sm"
-                icon={<FaWhatsapp className="w-4.5 h-4.5 text-white" />}
-              >
-                <span>
-                  {selectedCodes.size > 0
-                    ? `Send via API (${selectedCodes.size} Selected)`
-                    : "Send via API (Auto)"}
-                </span>
-              </AButton>
-            ) : (
-              <AButton
-                type="button"
-                onClick={() => handleManualWhatsApp()}
-                disabled={tabledata.length === 0}
-                className="w-full h-10 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-[13.5px] shadow-sm"
-                icon={<FaWhatsapp className="w-4.5 h-4.5 text-white" />}
-              >
-                <span>
-                  {selectedCodes.size > 0
-                    ? `Open Chat for ${toTitleCase(
-                        tabledata.find((r) => selectedCodes.has(String(r.empcode || r.id)))?.empname || "Selected"
-                      )}`
-                    : "Open in WhatsApp (Manual)"}
-                </span>
-              </AButton>
-            )}
+              {/* Preview Box */}
+              <div className="mt-[13px] p-[12px_13px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-[#F8FAFC] dark:bg-[#0E1524]">
+                <div className="text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[#64748B] dark:text-[#94A3B8] mb-[7px]">
+                  Preview
+                </div>
+                <p className="text-[12.5px] leading-[1.6] text-[#1E293B] dark:text-[#E7ECF3] whitespace-pre-wrap font-normal m-0">
+                  {previewText}
+                </p>
+              </div>
+
+              {/* Action Button using AButton: Auto (API) vs Manual (WhatsApp Redirect) */}
+              {sendMode === "auto" ? (
+                <AButton
+                  type="button"
+                  variant="primary"
+                  onClick={handleSendWhatsApp}
+                  disabled={isSending || tabledata.length === 0}
+                  loading={isSending}
+                  loadingText="Sending via API..."
+                  className="w-full !h-[38px] px-4 !rounded-[10px] !bg-[#4F46E5] hover:!bg-[#4338CA] !text-white font-[600] !text-[12.5px] flex items-center justify-center gap-[7px] cursor-pointer transition-colors disabled:opacity-50 shadow-none"
+                  icon={<FaWhatsapp className="w-4 h-4 text-white" />}
+                >
+                  <span>
+                    {isSending
+                      ? "Sending via API..."
+                      : selectedCodes.size > 0
+                      ? `Send via API (${selectedCodes.size} Selected)`
+                      : "Send via API (Auto)"}
+                  </span>
+                </AButton>
+              ) : (
+                <AButton
+                  type="button"
+                  onClick={() => handleManualWhatsApp()}
+                  disabled={tabledata.length === 0}
+                  className="w-full !h-[38px] px-4 !rounded-[10px] !bg-[#10B981] hover:brightness-105 !text-white font-[600] !text-[12.5px] flex items-center justify-center gap-[7px] cursor-pointer transition-colors disabled:opacity-50 shadow-none"
+                  icon={<FaWhatsapp className="w-4 h-4 text-white" />}
+                >
+                  <span>
+                    {selectedCodes.size > 0
+                      ? `Open Chat for ${toTitleCase(
+                          tabledata.find((r) => selectedCodes.has(String(r.empcode || r.id)))?.empname || "Selected"
+                        )}`
+                      : "Open in WhatsApp (Manual)"}
+                  </span>
+                </AButton>
+              )}
+            </div>
           </div>
 
-          {/* TODAY STATS CARD */}
-          <div className="bg-white dark:bg-[#0B1220] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3.5">
-            <h3 className="text-[12.5px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              TODAY
-            </h3>
+          {/* THIS MONTH STATS CARD */}
+          <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] p-[16px_18px]">
+            <h2 className="m-0 mb-[11px] text-[13px] font-[600] tracking-[0.04em] uppercase text-[#1E293B] dark:text-[#E7ECF3]">
+              This month
+            </h2>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/80 space-y-2.5 pt-0.5">
-              {/* Birthdays today */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
-                    <Cake className="w-4 h-4" />
-                  </span>
-                  <span className="text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                    Birthdays today
-                  </span>
-                </div>
-                <span className="text-[14px] font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex flex-col gap-[9px]">
+              {/* Birthdays this month */}
+              <div className="flex items-center gap-[10px] min-w-0">
+                <span className="w-[22px] h-[22px] rounded-[7px] shrink-0 grid place-items-center bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF]">
+                  <Cake className="w-3.5 h-3.5" />
+                </span>
+                <span className="flex-1 min-w-0 text-[12.5px] truncate text-[#1E293B] dark:text-[#E7ECF3]">
+                  Birthdays this month
+                </span>
+                <span className="shrink-0 text-[13px] font-[650] font-mono text-[#1E293B] dark:text-[#E7ECF3]">
                   {todayStats.birthdays}
                 </span>
               </div>
 
               {/* Work anniversaries */}
-              <div className="flex items-center justify-between pt-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                    <Briefcase className="w-4 h-4" />
-                  </span>
-                  <span className="text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                    Work anniversaries
-                  </span>
-                </div>
-                <span className="text-[14px] font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center gap-[10px] min-w-0">
+                <span className="w-[22px] h-[22px] rounded-[7px] shrink-0 grid place-items-center bg-[rgba(16,185,129,0.12)] text-[#10B981]">
+                  <Briefcase className="w-3.5 h-3.5" />
+                </span>
+                <span className="flex-1 min-w-0 text-[12.5px] truncate text-[#1E293B] dark:text-[#E7ECF3]">
+                  Work anniversaries
+                </span>
+                <span className="shrink-0 text-[13px] font-[650] font-mono text-[#1E293B] dark:text-[#E7ECF3]">
                   {todayStats.workAnniversaries}
                 </span>
               </div>
 
               {/* Marriage anniversaries */}
-              <div className="flex items-center justify-between pt-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
-                    <Heart className="w-4 h-4" />
-                  </span>
-                  <span className="text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                    Marriage anniversaries
-                  </span>
-                </div>
-                <span className="text-[14px] font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center gap-[10px] min-w-0">
+                <span className="w-[22px] h-[22px] rounded-[7px] shrink-0 grid place-items-center bg-[rgba(239,68,68,0.12)] text-[#EF4444]">
+                  <Heart className="w-3.5 h-3.5" />
+                </span>
+                <span className="flex-1 min-w-0 text-[12.5px] truncate text-[#1E293B] dark:text-[#E7ECF3]">
+                  Marriage anniversaries
+                </span>
+                <span className="shrink-0 text-[13px] font-[650] font-mono text-[#1E293B] dark:text-[#E7ECF3]">
                   {todayStats.marriageAnniversaries}
                 </span>
               </div>
 
               {/* Messages sent */}
-              <div className="flex items-center justify-between pt-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                    <Send className="w-4 h-4" />
-                  </span>
-                  <span className="text-[13.5px] font-normal text-slate-600 dark:text-slate-300">
-                    Messages sent today
-                  </span>
-                </div>
-                <span className="text-[14px] font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center gap-[10px] min-w-0">
+                <span className="w-[22px] h-[22px] rounded-[7px] shrink-0 grid place-items-center bg-[rgba(245,158,11,0.14)] text-[#F59E0B]">
+                  <Send className="w-3.5 h-3.5" />
+                </span>
+                <span className="flex-1 min-w-0 text-[12.5px] truncate text-[#1E293B] dark:text-[#E7ECF3]">
+                  Messages sent ({currentMonthName})
+                </span>
+                <span className="shrink-0 text-[13px] font-[650] font-mono text-[#1E293B] dark:text-[#E7ECF3]">
                   {todayStats.messagesSent}
                 </span>
               </div>
@@ -1192,6 +1166,35 @@ export default function WishWellPage() {
           </div>
         </div>
       </div>
+
+      {/* 4. Bottom Selection Floating Bar using AButton */}
+      {selectedCodes.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#111827] border-t border-[#E2E8F0] dark:border-[#1F2937] shadow-[0_-12px_30px_-18px_rgba(2,6,16,0.35)] px-6 py-3.5 flex items-center gap-3.5">
+          <span className="flex items-center gap-[9px] text-[13px] font-[600] whitespace-nowrap text-[#1E293B] dark:text-[#E7ECF3]">
+            <span className="min-w-[24px] h-[24px] px-[7px] rounded-[7px] bg-[#4F46E5] text-white grid place-items-center text-[12px] font-mono">
+              {selectedCodes.size}
+            </span>
+            selected · sending via WhatsApp
+          </span>
+          <div className="flex-1"></div>
+          <AButton
+            type="button"
+            variant="outline"
+            onClick={() => setSelectedCodes(new Set())}
+            className="!border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#111827] text-[#64748B] dark:text-[#94A3B8] !text-[12.5px] font-[550] px-[13px] py-[9px] !h-auto !rounded-[10px] cursor-pointer whitespace-nowrap hover:!bg-[#F1F5F9] dark:hover:!bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3] transition-colors shadow-none"
+          >
+            Clear
+          </AButton>
+          <AButton
+            type="button"
+            onClick={sendMode === "auto" ? handleSendWhatsApp : () => handleManualWhatsApp()}
+            className="flex items-center gap-[7px] !border-transparent !bg-[#10B981] !text-white !text-[12.5px] font-[600] px-[17px] py-[9px] !h-auto !rounded-[10px] cursor-pointer whitespace-nowrap hover:brightness-105 transition-all shadow-none"
+            icon={<Send className="w-4 h-4" />}
+          >
+            Send message
+          </AButton>
+        </div>
+      )}
     </div>
   );
 }

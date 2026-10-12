@@ -1082,32 +1082,88 @@ const SalaryDetails = ({
   const [messageShowFlage, setmessageShowFlage] = useState(false);
   const [GratuityCompKeyData, setGratuityCompKeyData] = useState(false);
 
-  const FetchBreakupRatio = async () => {
-    if (!formData?.EmpMst?.EMPCODE) return;
+  const FetchBreakupRatio = async (empCodeParam?: string) => {
+    const targetCode = empCodeParam || formData?.EmpMst?.EMPCODE;
+    if (!targetCode) return;
 
     try {
+      const compCode =
+        user?.Comp_Code ||
+        user?.compcode ||
+        user?.comp_code ||
+        user?.COMP_CODE ||
+        user?.company_code ||
+        user?.DB ||
+        user?.db ||
+        "";
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/ViewBreakUpRatio`,
         {
-          EmpCode: formData?.EmpMst.EMPCODE,
+          EmpCode: targetCode,
         },
         {
           headers: {
-            compcode: user?.Comp_Code,
+            compcode: compCode,
             name: user?.name,
           },
         },
       );
 
-      const ratioData = response.data.Result[0];
-      setRatios({
-        Basic: ratioData.Basic || 0,
-        Uniform: ratioData.Uniform || 0,
-        HRA: ratioData.HRA || 0,
-        Conveyance: ratioData.Conveyance || 0,
-        Medical: ratioData.Medical || 0,
-        DA: ratioData.DA || 0,
-        Washing: ratioData.Washing || 0,
+      const ratioData = response?.data?.Result?.[0] || {};
+      const newRatios = {
+        Basic: Number(ratioData.Basic || 0),
+        Uniform: Number(ratioData.Uniform || 0),
+        HRA: Number(ratioData.HRA || 0),
+        Conveyance: Number(ratioData.Conveyance || 0),
+        Medical: Number(ratioData.Medical || 0),
+        DA: Number(ratioData.DA || 0),
+        Washing: Number(ratioData.Washing || 0),
+      };
+      setRatios(newRatios);
+
+      // Auto-populate salary components if Gross_Salary already exists
+      setFormData1((prev: any) => {
+        const gross = Number(prev?.Gross_Salary || 0);
+        const hasComponents =
+          Number(prev?.Basic || 0) > 0 ||
+          Number(prev?.HRA || 0) > 0 ||
+          Number(prev?.Other || 0) > 0;
+
+        if (
+          gross > 0 &&
+          !hasComponents &&
+          (newRatios.Basic || newRatios.HRA || newRatios.DA || newRatios.Conveyance)
+        ) {
+          const basic = (gross * (newRatios.Basic || 0)) / 100;
+          const uniform = (gross * (newRatios.Uniform || 0)) / 100;
+          const hra = (gross * (newRatios.HRA || 0)) / 100;
+          const conveyance = (gross * (newRatios.Conveyance || 0)) / 100;
+          const medical = (gross * (newRatios.Medical || 0)) / 100;
+          const other = (gross * (newRatios.DA || 0)) / 100;
+          const washing = (gross * (newRatios.Washing || 0)) / 100;
+          const annualGross = gross * 12;
+          const ctc =
+            annualGross +
+            Number(prev?.BONUS_AMOUNT || 0) +
+            Number(prev?.LWF || 0) +
+            Number(prev?.PFSALARY_LIMIT || 0) +
+            Number(prev?.Gratuity || 0);
+
+          return {
+            ...prev,
+            Basic: basic,
+            Uniform: uniform,
+            HRA: hra,
+            Conveyance: conveyance,
+            Medical: medical,
+            Other: other,
+            Washing: washing,
+            ANNUAL_CTC: annualGross,
+            CTC: ctc,
+          };
+        }
+        return prev;
       });
     } catch (error) {
       console.error("Error fetching breakup ratio:", error);
@@ -1115,22 +1171,45 @@ const SalaryDetails = ({
   };
 
   useEffect(() => {
-    FetchBreakupRatio();
-  }, []);
+    if (formData?.EmpMst?.EMPCODE) {
+      FetchBreakupRatio(formData?.EmpMst?.EMPCODE);
+    }
+  }, [formData?.EmpMst?.EMPCODE]);
 
   const handleSplitSalary = (grossVal?: number) => {
     const gross = grossVal !== undefined ? grossVal : Number(formData1?.Gross_Salary || 0);
-    if (!gross || !ratios) return;
+    if (!gross) {
+      showSideAlert("Please enter Monthly Gross amount", "info");
+      return;
+    }
+    const basic = (gross * (ratios.Basic || 0)) / 100;
+    const uniform = (gross * (ratios.Uniform || 0)) / 100;
+    const hra = (gross * (ratios.HRA || 0)) / 100;
+    const conveyance = (gross * (ratios.Conveyance || 0)) / 100;
+    const medical = (gross * (ratios.Medical || 0)) / 100;
+    const other = (gross * (ratios.DA || 0)) / 100;
+    const washing = (gross * (ratios.Washing || 0)) / 100;
+
+    const annualGross = gross * 12;
+    const ctc =
+      annualGross +
+      Number(formData1?.BONUS_AMOUNT || 0) +
+      Number(formData1?.LWF || 0) +
+      Number(formData1?.PFSALARY_LIMIT || 0) +
+      Number(formData1?.Gratuity || 0);
+
     setFormData1((prev: any) => ({
       ...prev,
       Gross_Salary: gross,
-      Basic: (gross * (ratios.Basic || 0)) / 100,
-      Uniform: (gross * (ratios.Uniform || 0)) / 100,
-      HRA: (gross * (ratios.HRA || 0)) / 100,
-      Conveyance: (gross * (ratios.Conveyance || 0)) / 100,
-      Medical: (gross * (ratios.Medical || 0)) / 100,
-      Other: (gross * (ratios.DA || 0)) / 100,
-      Washing: (gross * (ratios.Washing || 0)) / 100,
+      Basic: basic,
+      Uniform: uniform,
+      HRA: hra,
+      Conveyance: conveyance,
+      Medical: medical,
+      Other: other,
+      Washing: washing,
+      ANNUAL_CTC: annualGross,
+      CTC: ctc,
     }));
   };
 
@@ -1348,7 +1427,15 @@ const SalaryDetails = ({
         },
         {
           headers: {
-            compcode: user?.Comp_Code,
+            compcode:
+              user?.Comp_Code ||
+              user?.compcode ||
+              user?.comp_code ||
+              user?.COMP_CODE ||
+              user?.company_code ||
+              user?.DB ||
+              user?.db ||
+              "",
             name: user?.name,
           },
         },
@@ -2593,7 +2680,7 @@ const SalaryDetails = ({
       </div>
 
       {/* ===================== BASIC INFO CARD ===================== */}
-    
+
 
       <div className="grid grid-cols-12 gap-4 fluid-gap-md pb-6">
         {/* ===================== LEFT COLUMN - SALARY DETAIL FORM & BANK DETAILS ===================== */}
@@ -3137,11 +3224,11 @@ const SalaryDetails = ({
               const pfPerc = Number(formData?.EmpMst?.pfper || 12);
               const employerPf = isPfYes
                 ? Math.round(
-                    (pfLimit > 0
-                      ? pfLimit
-                      : Number(formData1?.Basic || 0)) *
-                      (pfPerc / 100),
-                  )
+                  (pfLimit > 0
+                    ? pfLimit
+                    : Number(formData1?.Basic || 0)) *
+                  (pfPerc / 100),
+                )
                 : 0;
 
               const isEsicYes =
@@ -3155,10 +3242,10 @@ const SalaryDetails = ({
               const totalCtc = formData1?.CTC
                 ? Number(formData1.CTC)
                 : annualGross +
-                  Number(formData1?.BONUS_AMOUNT || 0) +
-                  Number(formData1?.LWF || 0) +
-                  (pfLimit > 0 ? pfLimit : employerPf * 12) +
-                  Number(formData1?.Gratuity || 0);
+                Number(formData1?.BONUS_AMOUNT || 0) +
+                Number(formData1?.LWF || 0) +
+                (pfLimit > 0 ? pfLimit : employerPf * 12) +
+                Number(formData1?.Gratuity || 0);
 
               return (
                 <div className="w-full rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm p-4 sm:p-5 flex flex-col gap-4">
@@ -3180,7 +3267,7 @@ const SalaryDetails = ({
                   {/* Effective from & Monthly Gross */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         EFFECTIVE FROM
                       </label>
                       <div className="relative">
@@ -3192,13 +3279,13 @@ const SalaryDetails = ({
                             handleInputChange("Effective_date", e.target.value)
                           }
                           disabled={isDailyWagesActive}
-                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         MONTHLY GROSS
                       </label>
                       <div className="relative flex items-center h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
@@ -3220,9 +3307,9 @@ const SalaryDetails = ({
                           type="button"
                           onClick={() => handleSplitSalary()}
                           disabled={isDailyWagesActive || !formData1?.Gross_Salary}
-                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-400 text-xs font-bold shrink-0 transition-colors disabled:opacity-50"
+                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-400 text-sm font-bold shrink-0 transition-colors disabled:opacity-50"
                         >
-                          <Wand2 className="h-3.5 w-3.5" />
+                          <Wand2 className="h-4 w-4" />
                           <span>Split</span>
                         </button>
                       </div>
@@ -3231,17 +3318,17 @@ const SalaryDetails = ({
 
                   {/* Allocation progress & badge */}
                   <div className="space-y-1.5 pt-0.5">
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold text-slate-600 dark:text-slate-400">
                         ₹{allocated.toLocaleString("en-IN")} of ₹
                         {monthlyGross.toLocaleString("en-IN")} allocated
                       </span>
                       {isBalanced ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
-                          <Check className="h-3 w-3" strokeWidth={3} /> Balanced
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} /> Balanced
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
                           Unbalanced (
                           {allocated > monthlyGross ? "+" : "-"}₹
                           {Math.abs(monthlyGross - allocated).toLocaleString(
@@ -3253,13 +3340,12 @@ const SalaryDetails = ({
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          isBalanced
+                        className={`h-full rounded-full transition-all duration-300 ${isBalanced
                             ? "bg-emerald-500"
                             : allocated > monthlyGross
                               ? "bg-rose-500"
                               : "bg-amber-500"
-                        }`}
+                          }`}
                         style={{
                           width: `${Math.min(
                             100,
@@ -3277,23 +3363,23 @@ const SalaryDetails = ({
                     {salaryBreakupItems.map((item) => {
                       const val = Number(formData1?.[item.name] || 0);
                       const pct =
-                        monthlyGross > 0
+                        monthlyGross > 0 && val > 0
                           ? Math.round((val / monthlyGross) * 100)
-                          : ratios[item.ratioKey] || 0;
+                          : (ratios[item.ratioKey] || 0);
                       return (
                         <div
                           key={item.name}
-                          className="flex items-center justify-between px-4 py-2 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                          className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                         >
-                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          <span className="text-base font-semibold text-slate-800 dark:text-slate-200">
                             {item.label}
                           </span>
                           <div className="flex items-center gap-3">
-                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 w-10 text-right">
+                            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 w-12 text-right">
                               {pct}%
                             </span>
-                            <div className="flex items-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 w-32 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
-                              <span className="text-slate-400 text-xs font-bold mr-1 select-none">
+                            <div className="flex items-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 w-36 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
+                              <span className="text-slate-400 text-sm font-bold mr-1 select-none">
                                 ₹
                               </span>
                               <input
@@ -3304,7 +3390,7 @@ const SalaryDetails = ({
                                   handleInputChange(item.name, e.target.value)
                                 }
                                 disabled={isDailyWagesActive}
-                                className="w-full bg-transparent text-right font-bold text-slate-800 dark:text-slate-100 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-full bg-transparent text-right font-bold text-slate-800 dark:text-slate-100 text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </div>
                           </div>
@@ -3316,7 +3402,7 @@ const SalaryDetails = ({
                   {/* 4 Bottom Inputs Grid */}
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                         EMP SALARY
                       </label>
                       <input
@@ -3327,12 +3413,12 @@ const SalaryDetails = ({
                           handleInputChange("Gross_Salary", e.target.value)
                         }
                         disabled={isDailyWagesActive}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                         PF SALARY LIMIT
                       </label>
                       <input
@@ -3343,12 +3429,12 @@ const SalaryDetails = ({
                           handleInputChange("PFSALARY_LIMIT", e.target.value)
                         }
                         disabled={isDailyWagesActive}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                         LWF
                       </label>
                       <input
@@ -3359,12 +3445,12 @@ const SalaryDetails = ({
                           handleInputChange("LWF", e.target.value)
                         }
                         disabled={isDailyWagesActive}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                         BONUS
                       </label>
                       <input
@@ -3375,14 +3461,14 @@ const SalaryDetails = ({
                           handleInputChange("BONUS_AMOUNT", e.target.value)
                         }
                         disabled={isDailyWagesActive || GratuityCompKeyData}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
                       />
                     </div>
                   </div>
 
                   {/* Summary Box */}
                   <div className="rounded-2xl bg-[#F8FAFC] dark:bg-[#0B0F19] border border-slate-200/80 dark:border-slate-800 p-4 space-y-2.5">
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-base">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">
                         Monthly gross
                       </span>
@@ -3391,7 +3477,7 @@ const SalaryDetails = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-base">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">
                         Employer PF
                       </span>
@@ -3402,7 +3488,7 @@ const SalaryDetails = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-base">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">
                         Employer ESIC
                       </span>
@@ -3413,7 +3499,7 @@ const SalaryDetails = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-base">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">
                         Bonus
                       </span>
@@ -3423,7 +3509,7 @@ const SalaryDetails = ({
                     </div>
 
                     <div className="border-t border-slate-200/80 dark:border-slate-800 pt-2.5 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-base">
                         <span className="font-bold text-slate-700 dark:text-slate-300">
                           Annual gross
                         </span>
@@ -3433,10 +3519,10 @@ const SalaryDetails = ({
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                        <span className="font-bold text-base text-slate-700 dark:text-slate-300">
                           Annual CTC
                         </span>
-                        <span className="font-extrabold text-xl text-[#4F46E5] dark:text-indigo-400">
+                        <span className="font-extrabold text-2xl text-[#4F46E5] dark:text-indigo-400">
                           ₹{totalCtc.toLocaleString("en-IN")}
                         </span>
                       </div>
@@ -3463,9 +3549,8 @@ const SalaryDetails = ({
                   {salaryMessage && (
                     <div className="flex text-left justify-center">
                       <p
-                        className={`text-[14px] font-semibold ${
-                          salarystatus == 2 ? "text-save" : "text-exit"
-                        }`}
+                        className={`text-[14px] font-semibold ${salarystatus == 2 ? "text-save" : "text-exit"
+                          }`}
                       >
                         {salaryMessage}
                       </p>

@@ -20,6 +20,7 @@ import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import { useFormData } from "./Context/FormDataContext";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
+import ReportingApprovalModal from "./ReportingApprovalModal";
 
 type AlertType = "success" | "error" | "warning" | "info" | "question";
 
@@ -103,6 +104,9 @@ export default function Page() {
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Reporting approval modal state
+  const [isReportingOpen, setIsReportingOpen] = useState(false);
 
   // ✅ Scroll fix (ONLY): make this tab content area take remaining viewport height and scroll fully
   const scrollWrapRef = useRef<HTMLDivElement | null>(null);
@@ -489,6 +493,31 @@ export default function Page() {
               <Card
                 title="Employee reporting tree"
                 icon={<GitBranch className="h-5 w-5" />}
+                right={
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!formData?.EmpMst?.EMPCODE) {
+                        showSideAlert("Please save or select an employee first", "warning");
+                        return;
+                      }
+                      setIsReportingOpen(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
+             text-xs font-semibold text-[#1D4ED8] dark:text-[#60A5FA]
+             bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-800
+             rounded-lg
+             hover:bg-[#DBEAFE] hover:border-[#93C5FD]
+             active:bg-[#BFDBFE]
+             focus:outline-none focus:ring-2 focus:ring-[#93C5FD]
+             transition-all duration-200"
+                  >
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563EB] text-white text-sm leading-none font-bold">
+                      +
+                    </span>
+                    Add Approver
+                  </button>
+                }
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
                   <Einput
@@ -670,7 +699,7 @@ export default function Page() {
                   <div className="h-[285px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-800 dark:bg-slate-900">
                     {filteredLocations.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-1">
-                        {[
+                          {[
                           filteredLocations.slice(
                             0,
                             Math.ceil(filteredLocations.length / 2),
@@ -841,6 +870,13 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* Reporting Approval Modal */}
+      <ReportingApprovalModal
+        open={isReportingOpen}
+        onClose={() => setIsReportingOpen(false)}
+        empcode={formData?.EmpMst?.EMPCODE}
+      />
     </>
   );
 }

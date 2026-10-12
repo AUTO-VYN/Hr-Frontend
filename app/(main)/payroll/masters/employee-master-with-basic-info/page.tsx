@@ -10,6 +10,8 @@ import {
   Sparkles,
   RotateCcw,
   CheckCircle2,
+  Check,
+  Wand2,
   Info,
   Building2,
   FileSpreadsheet,
@@ -808,7 +810,7 @@ const fetchMasters = async () => {
         Cell: ({ value, row }: any) => {
           const serialNo = (tablePage - 1) * (tablePageSize === -1 ? 0 : tablePageSize) + row.index + 1;
           return (
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] tabular-nums font-normal">
               {value || serialNo}
             </span>
           );
@@ -818,7 +820,7 @@ const fetchMasters = async () => {
         Header: "EMPCODE",
         accessor: "EMPCODE",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
+          <span className="text-[12.5px] text-[#1E293B] dark:text-[#E7ECF3] tabular-nums font-normal">
             {value || "—"}
           </span>
         ),
@@ -827,7 +829,7 @@ const fetchMasters = async () => {
         Header: "FIRST NAME",
         accessor: "EMPFIRSTNAME",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-900 dark:text-white">
+          <span className="text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
             {value || "—"}
           </span>
         ),
@@ -836,7 +838,7 @@ const fetchMasters = async () => {
         Header: "LAST NAME",
         accessor: "EMPLASTNAME",
         Cell: ({ value }: any) => (
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+          <span className="text-[12.5px] text-[#1E293B] dark:text-[#E7ECF3] font-normal">
             {value || "—"}
           </span>
         ),
@@ -845,7 +847,7 @@ const fetchMasters = async () => {
         Header: "MOBILE NO",
         accessor: "MOBILE_NO",
         Cell: ({ value }: any) => (
-          <span className="font-medium text-slate-600 dark:text-slate-400">
+          <span className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] tabular-nums font-normal">
             {value || "—"}
           </span>
         ),
@@ -857,9 +859,9 @@ const fetchMasters = async () => {
           const desig = getDesignationName(value);
           return (
             <span
-              className={`font-medium ${desig === "Not set"
-                ? "text-slate-400 dark:text-slate-500"
-                : "text-slate-800 dark:text-slate-200"
+              className={`text-[12.5px] font-normal ${desig === "Not set"
+                ? "text-[#64748B] dark:text-[#94A3B8]"
+                : "text-[#1E293B] dark:text-[#E7ECF3]"
                 }`}
             >
               {desig}
@@ -871,7 +873,7 @@ const fetchMasters = async () => {
         Header: "BRANCH",
         accessor: "LOCATION",
         Cell: ({ value }: any) => (
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+          <span className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] font-normal">
             {getLocationName(value)}
           </span>
         ),
@@ -883,7 +885,7 @@ const fetchMasters = async () => {
           <button
             type="button"
             onClick={() => handleEditEmployee(row.original)}
-            className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-300 hover:text-[#4F46E5] hover:border-indigo-300 dark:hover:text-indigo-400 flex items-center gap-1.5 font-semibold text-xs transition-colors shadow-2xs"
+            className="flex items-center gap-[6px] border border-[#E2E8F0] dark:border-[#1F2937] bg-transparent text-[#4F46E5] dark:text-[#8B84FF] text-[11.5px] font-[600] px-[11px] py-[5px] rounded-[8px] cursor-pointer whitespace-nowrap hover:bg-[#EEF2FF] dark:hover:bg-[#1E1B4B] transition-colors"
             title="Edit employee"
           >
             <Pencil className="h-3 w-3" />
@@ -912,60 +914,64 @@ const fetchMasters = async () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#060911] text-slate-900 dark:text-white p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-4 sm:p-6 lg:p-7 space-y-4 sm:space-y-5">
       {/* Top Header & Tab Pills */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
             Employee master · basic info
           </h1>
-          <p className="text-sm sm:text-[15px] text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1">
             Create a record with the minimum required fields, then complete it later in{" "}
             <Link
               href="/payroll/masters/Employee_Master"
-              className="text-[#4F46E5] dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+              className="text-[#4F46E5] dark:text-[#8B84FF] font-medium hover:underline inline-flex items-center gap-1"
             >
               full Employee Master
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3 w-3" />
             </Link>
             .
           </p>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs">
+        {/* Tab Buttons & Back Button */}
+        <div className="flex items-center gap-2">
           <AButton
+            type="button"
             variant="outline"
-            size="md"
-            className="h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
-            icon={<ArrowLeft className="h-4 w-4" />}
+            size="sm"
             onClick={() => router.push("/dashboard")}
+            icon={<ArrowLeft className="h-4 w-4" />}
+            className="h-[34px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] font-[550] px-3 py-2 cursor-pointer hover:bg-[#F1F5F9] dark:hover:bg-[#182235] whitespace-nowrap shadow-2xs transition-colors"
           >
             Back
           </AButton>
-          <button
-            type="button"
-            onClick={() => handleTabChange(1)}
-            className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-2.5 transition-all ${activeTab === 1
-              ? "bg-[#4F46E5] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-              }`}
-          >
-            <UserPlus className="h-4.5 w-4.5" />
-            <span>{isEditMode ? "Edit employee" : "+ Add employee"}</span>
-          </button>
 
-          <button
-            type="button"
-            onClick={() => handleTabChange(2)}
-            className={`h-11 px-5 rounded-xl text-sm sm:text-[15px] font-bold flex items-center gap-2.5 transition-all ${activeTab === 2
-              ? "bg-[#4F46E5] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-              }`}
-          >
-            <Pencil className="h-4.5 w-4.5" />
-            <span>Update employee</span>
-          </button>
+          <div className="flex gap-[3px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[3px]">
+            <button
+              type="button"
+              onClick={() => handleTabChange(1)}
+              className={`flex items-center gap-[7px] border-none rounded-[8px] text-[12.5px] font-[600] px-[15px] py-[8px] cursor-pointer whitespace-nowrap transition-all ${activeTab === 1
+                ? "bg-[#4F46E5] text-white shadow-xs"
+                : "bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+                }`}
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>{isEditMode ? "Edit employee" : "Add employee"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange(2)}
+              className={`flex items-center gap-[7px] border-none rounded-[8px] text-[12.5px] font-[600] px-[15px] py-[8px] cursor-pointer whitespace-nowrap transition-all ${activeTab === 2
+                ? "bg-[#4F46E5] text-white shadow-xs"
+                : "bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
+                }`}
+            >
+              <Pencil className="h-4 w-4" />
+              <span>Update employee</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -973,120 +979,111 @@ const fetchMasters = async () => {
       {/* TAB 1: ADD / EDIT EMPLOYEE FORM                                            */}
       {/* ========================================================================= */}
       {activeTab === 1 && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start animate-in fade-in-50 duration-200">
-          {/* Main Form Card (Col 8.5) */}
-          <div className="xl:col-span-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 sm:p-7 shadow-xs space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start animate-in fade-in-50 duration-200">
+          {/* Main Form Card */}
+          <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden">
             {/* Header & Filled Counter */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center font-bold shadow-2xs">
-                  <UserPlus className="h-6 w-6" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-slate-900 dark:text-white">
-                    {isEditMode ? `Edit Employee (${formData.EMPCODE})` : "+ Add Employee"}
-                  </h2>
-                </div>
-              </div>
-
-              <div className="text-sm sm:text-[15px] font-semibold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-[10px] px-[18px] py-[13px] border-b border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+              <span className="grid place-items-center text-[#4F46E5] dark:text-[#8B84FF]">
+                <UserPlus className="h-4 w-4" />
+              </span>
+              <h2 className="m-0 flex-1 text-[13px] font-[600] tracking-[0.04em] uppercase text-[#1E293B] dark:text-[#E7ECF3]">
+                {isEditMode ? `Edit employee (${formData.EMPCODE})` : "Add employee"}
+              </h2>
+              <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] tabular-nums whitespace-nowrap">
                 {filledCount}/8 filled
-              </div>
+              </span>
             </div>
 
-            {/* Row 1: Emp. code & First name */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
-              {/* Emp. Code */}
-              <div className="md:col-span-6 space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                  Emp. code <span className="text-rose-500">*</span>
-                </label>
-                <div className="flex items-center gap-2.5">
+            {/* Form Fields Grid: 3 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3.5 p-[18px]">
+              {/* Emp. Code: spans 2 columns */}
+              <div className="md:col-span-2 flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Emp. code<span className="text-[#EF4444]"> *</span>
+                </span>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="AU19796361"
                     value={formData.EMPCODE}
                     readOnly={Boolean(formData.EMPCODE || isEditMode)}
                     onChange={(e) => handleInputChange("EMPCODE", e.target.value)}
-                    className={`flex-1 h-12 px-4 rounded-xl border ${showValidationErrors && !formData.EMPCODE?.trim()
-                      ? "border-rose-300 dark:border-rose-800/80"
-                      : "border-slate-300 dark:border-slate-700"
+                    className={`flex-1 min-w-0 h-[37px] px-2.5 py-2 rounded-[9px] border ${showValidationErrors && !formData.EMPCODE?.trim()
+                      ? "border-red-400 dark:border-red-500/80"
+                      : "border-[#E2E8F0] dark:border-[#1F2937]"
                       } ${formData.EMPCODE
-                      ? "bg-slate-50/80 dark:bg-slate-900/60 text-slate-800 dark:text-slate-100 font-medium cursor-not-allowed select-all"
-                      : "bg-white dark:bg-black text-slate-900 dark:text-white"
-                      } placeholder:text-slate-400 text-base focus:outline-none focus:ring-2 focus:ring-[#4F46E5]`}
+                        ? "bg-[#F8FAFC] dark:bg-[#0E1524]/60 text-[#1E293B] dark:text-[#E7ECF3] cursor-not-allowed select-all"
+                        : "bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                      } text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]`}
                   />
                   {!isEditMode && (
                     <Button
                       type="button"
+                      variant="subtle"
+                      size="sm"
                       onClick={handleGenerateCode}
                       disabled={isGeneratingCode}
-                      className="h-12 w-40 px-4.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-[#EEF2FF] hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-400 font-bold text-lg flex items-center gap-1.5 shrink-0 transition-colors shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                      loading={isGeneratingCode}
+                      icon={!isGeneratingCode ? <Wand2 className="h-3.5 w-3.5 text-[#4F46E5] dark:text-[#8B84FF]" /> : undefined}
+                      className="shrink-0 flex items-center gap-1.5 border border-[#E2E8F0] dark:border-[#1F2937] bg-[#EEF2FF] hover:brightness-95 dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] text-[12px] font-[600] px-3.5 h-[37px] rounded-[9px] cursor-pointer whitespace-nowrap transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-none"
                     >
-                      {isGeneratingCode ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-[#4F46E5] dark:text-indigo-400" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 text-[#4F46E5] dark:text-indigo-400" />
-                      )}
-                      <span>Generate</span>
+                      Generate
                     </Button>
                   )}
                 </div>
               </div>
 
-              {/* First Name */}
-              <div className="md:col-span-6 space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                  First name <span className="text-rose-500">*</span>
-                </label>
+              {/* First Name: spans 1 column */}
+              <div className="flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  First name<span className="text-[#EF4444]"> *</span>
+                </span>
                 <input
                   type="text"
                   placeholder="First name"
                   value={formData.EMPFIRSTNAME}
                   onChange={(e) => handleInputChange("EMPFIRSTNAME", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${showValidationErrors && !formData.EMPFIRSTNAME?.trim()
-                    ? "border-rose-300 dark:border-rose-800/80"
-                    : "border-slate-300 dark:border-slate-700"
+                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] uppercase ${showValidationErrors && !formData.EMPFIRSTNAME?.trim()
+                    ? "border-red-400 dark:border-red-500/80"
+                    : "border-[#E2E8F0] dark:border-[#1F2937]"
                     }`}
                 />
               </div>
-            </div>
 
-            {/* Row 2: Last name, Designation, Location */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Last Name */}
-              <div className="space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                  Last name <span className="text-rose-500">*</span>
-                </label>
+              <div className="flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Last name<span className="text-[#EF4444]"> *</span>
+                </span>
                 <input
                   type="text"
                   placeholder="Last name"
                   value={formData.EMPLASTNAME}
                   onChange={(e) => handleInputChange("EMPLASTNAME", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] uppercase ${showValidationErrors && !formData.EMPLASTNAME?.trim()
-                    ? "border-rose-300 dark:border-rose-800/80"
-                    : "border-slate-300 dark:border-slate-700"
+                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] uppercase ${showValidationErrors && !formData.EMPLASTNAME?.trim()
+                    ? "border-red-400 dark:border-red-500/80"
+                    : "border-[#E2E8F0] dark:border-[#1F2937]"
                     }`}
                 />
               </div>
 
               {/* Designation */}
-              <div>
+              <div className="flex flex-col gap-[5px]">
                 <SelectSearch
                   title="Designation"
                   name="EMPLOYEEDESIGNATION"
                   options={designationOptions}
                   selectedValue={formData.EMPLOYEEDESIGNATION}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
+                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
                   placeholder="Select"
                 />
               </div>
 
               {/* Location */}
-              <div>
+              <div className="flex flex-col gap-[5px]">
                 <SelectSearch
                   title="Location"
                   redlabel="*"
@@ -1094,227 +1091,216 @@ const fetchMasters = async () => {
                   options={locationOptions}
                   selectedValue={formData.LOCATION}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className={`h-12 text-base font-medium rounded-xl ${showValidationErrors && !formData.LOCATION
-                    ? "border-rose-300 dark:border-rose-800"
-                    : "border-slate-300 dark:border-slate-700"
+                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
+                  className={`h-[37px] text-[13px] rounded-[9px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.LOCATION
+                    ? "border-red-400 dark:border-red-500/80"
+                    : "border-[#E2E8F0] dark:border-[#1F2937]"
                     }`}
                   placeholder="Select"
                 />
               </div>
-            </div>
 
-            {/* Row 3: Email, Mobile number, MSPIN */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Email */}
-              <div className="space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+              <div className="flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
                   Email
-                </label>
+                </span>
                 <input
                   type="email"
                   placeholder="name@autovyn.com"
                   value={formData.EMAILID}
                   onChange={(e) => handleInputChange("EMAILID", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-[37px] px-2.5 py-2 rounded-[9px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]"
                 />
               </div>
 
               {/* Mobile Number */}
-              <div className="space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                  Mobile number <span className="text-rose-500">*</span>
-                </label>
+              <div className="flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Mobile number<span className="text-[#EF4444]"> *</span>
+                </span>
                 <input
                   type="tel"
                   placeholder="+91"
                   maxLength={10}
                   value={formData.MOBILE_NO}
                   onChange={(e) => handleInputChange("MOBILE_NO", e.target.value)}
-                  className={`w-full h-12 px-4 rounded-xl border bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] ${showValidationErrors && !formData.MOBILE_NO?.trim()
-                    ? "border-rose-300 dark:border-rose-800/80"
-                    : "border-slate-300 dark:border-slate-700"
+                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] ${showValidationErrors && !formData.MOBILE_NO?.trim()
+                    ? "border-red-400 dark:border-red-500/80"
+                    : "border-[#E2E8F0] dark:border-[#1F2937]"
                     }`}
                 />
               </div>
 
               {/* MSPIN */}
-              <div className="space-y-2">
-                <label className="block text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+              <div className="flex flex-col gap-[5px]">
+                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
                   MSPIN
-                </label>
+                </span>
                 <input
                   type="text"
                   placeholder="MSPIN"
                   value={formData.MSPIN}
                   onChange={(e) => handleInputChange("MSPIN", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  className="w-full h-[37px] px-2.5 py-2 rounded-[9px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]"
                 />
               </div>
-            </div>
 
-            {/* Row 4: Reporting 1, Reporting 2, Reporting 3 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div>
+              {/* Reporting 1 */}
+              <div className="flex flex-col gap-[5px]">
                 <SelectSearch
                   title="Reporting 1"
                   name="REPORTING_1"
                   options={employeeOptions}
                   selectedValue={formData.REPORTING_1}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
+                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
                   placeholder="Select"
                 />
               </div>
 
-              <div>
+              {/* Reporting 2 */}
+              <div className="flex flex-col gap-[5px]">
                 <SelectSearch
                   title="Reporting 2"
                   name="REPORTING_2"
                   options={employeeOptions}
                   selectedValue={formData.REPORTING_2}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
+                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
                   placeholder="Select"
                 />
               </div>
 
-              <div>
+              {/* Reporting 3 */}
+              <div className="flex flex-col gap-[5px]">
                 <SelectSearch
                   title="Reporting 3"
                   name="REPORTING_3"
                   options={employeeOptions}
                   selectedValue={formData.REPORTING_3}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[14px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-300 dark:border-slate-700"
+                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
+                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
                   placeholder="Select"
                 />
               </div>
             </div>
 
             {/* Form Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
-              <div>
-                {showValidationErrors && requiredFields.length > 0 ? (
-                  <p className="text-sm font-semibold text-rose-500 dark:text-rose-400">
+            <div className="flex flex-wrap items-center gap-2.5 px-[18px] py-[14px] border-t border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+              <div className="flex-1 min-w-[200px]">
+                {requiredFields.length === 0 ? (
+                  <span className="text-[12px] font-normal text-[#10B981]">
+                    All required fields filled — ready to save.
+                  </span>
+                ) : showValidationErrors ? (
+                  <span className="text-[12px] font-normal text-[#EF4444]">
                     {requiredFields.length} required field(s) left: {requiredFields.join(", ")}
-                  </p>
-                ) : requiredFields.length === 0 ? (
-                  <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4" />
-                    All required fields filled
-                  </p>
+                  </span>
                 ) : null}
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
+              <div className="flex items-center gap-2.5">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleResetForm}
-                  className="h-12 px-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-[15px] font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs"
+                  className="border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3] text-[12.5px] font-[550] px-[13px] py-[8px] h-[35px] rounded-[10px] cursor-pointer whitespace-nowrap transition-colors"
                 >
-                  <RotateCcw className="h-4 w-4 inline mr-1.5" />
                   Reset
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="primary"
+                  size="sm"
                   onClick={handleSaveEmployee}
-                  className="h-12 px-7 rounded-xl bg-[#4F46E5] hover:bg-[#433df0] text-white text-[15px] font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                  icon={<Check className="h-4 w-4" />}
+                  className="flex items-center gap-[7px] border border-transparent bg-[#4F46E5] hover:brightness-105 text-white text-[12.5px] font-[600] px-[16px] py-[8px] h-[35px] rounded-[10px] cursor-pointer whitespace-nowrap shadow-xs transition-all"
                 >
-                  <CheckCircle2 className="h-4.5 w-4.5" />
-                  <span>{isEditMode ? "Update employee" : "Save employee"}</span>
-                </button>
+                  {isEditMode ? "Update employee" : "Save employee"}
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Right Sidebar Cards (Col 3.5) */}
-          <div className="xl:col-span-4 space-y-6">
+          {/* Right Sidebar Cards */}
+          <div className="flex flex-col gap-[14px]">
             {/* Card 1: What happens next */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2.5 text-slate-900 dark:text-white font-bold text-base">
-                <Info className="h-5 w-5 text-indigo-500 shrink-0" />
-                <span>What happens next</span>
+            <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] p-[16px_18px]">
+              <div className="flex items-center gap-2 mb-[11px]">
+                <Info className="h-4 w-4 text-[#4F46E5] dark:text-[#8B84FF] shrink-0" />
+                <h3 className="m-0 text-[13px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
+                  What happens next
+                </h3>
               </div>
-
-              <div className="space-y-4 pt-1">
-                {/* Step 1 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="h-7 w-7 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-indigo-100 dark:border-indigo-900">
+              <div className="flex flex-col gap-[10px]">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-[700] bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] mt-[1px]">
                     1
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  </span>
+                  <span className="flex-1 min-w-0 text-[12px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
                     Record is created with basic info and appears in Employee View immediately.
-                  </p>
+                  </span>
                 </div>
-
-                {/* Step 2 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="h-7 w-7 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-indigo-100 dark:border-indigo-900">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-[700] bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] mt-[1px]">
                     2
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  </span>
+                  <span className="flex-1 min-w-0 text-[12px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
                     HR completes salary, statutory and document sections in full Employee Master.
-                  </p>
+                  </span>
                 </div>
-
-                {/* Step 3 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="h-7 w-7 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-indigo-100 dark:border-indigo-900">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-[700] bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] mt-[1px]">
                     3
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  </span>
+                  <span className="flex-1 min-w-0 text-[12px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
                     Employee gets mobile app access once the punch code is assigned.
-                  </p>
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Card 2: Recently added */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black p-6 shadow-xs space-y-4">
-              <div className="text-slate-900 dark:text-white font-bold text-base">
+            <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] p-[16px_18px]">
+              <h3 className="m-0 mb-[11px] text-[13px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
                 Recently added
-              </div>
-
-              {recentlyAdded.length > 0 ? (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                  {recentlyAdded.map((emp, idx) => {
+              </h3>
+              <div className="flex flex-col">
+                {recentlyAdded.length > 0 ? (
+                  recentlyAdded.map((emp, idx) => {
                     const initials = `${emp.EMPFIRSTNAME?.[0] || ""}${emp.EMPLASTNAME?.[0] || ""}`.toUpperCase() || "EM";
                     return (
                       <div
                         key={emp.EMPCODE || idx}
                         onClick={() => handleEditEmployee(emp)}
-                        className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/40 p-2 rounded-xl transition-colors"
+                        className="flex items-center gap-2.5 py-2 border-b border-[#E2E8F0] dark:border-[#1F2937] last:border-b-0 min-w-0 cursor-pointer hover:bg-[#F1F5F9]/60 dark:hover:bg-[#182235]/60 px-1 rounded transition-colors"
                       >
-                        <div
-                          className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 select-none ${getAvatarColors(
-                            idx
-                          )}`}
-                        >
+                        <span className="w-[26px] h-[26px] rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-[600] bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF]">
                           {initials}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3] truncate">
                             {emp.EMPFIRSTNAME} {emp.EMPLASTNAME}
-                          </h4>
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-0.5">
+                          </div>
+                          <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] tabular-nums">
                             {emp.EMPCODE}
-                          </p>
+                          </div>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-400 dark:text-slate-500 py-3 text-center">
-                  No records yet
-                </p>
-              )}
+                  })
+                ) : (
+                  <div className="text-[12px] text-[#64748B] dark:text-[#94A3B8] py-2 text-center">
+                    No records yet
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1324,55 +1310,38 @@ const fetchMasters = async () => {
       {/* TAB 2: UPDATE EMPLOYEE (REACTTABLE VIEW)                                   */}
       {/* ========================================================================= */}
       {activeTab === 2 && (
-        <div className="space-y-4 animate-in fade-in-50 duration-200">
+        <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in-50 duration-200">
           {/* Top Search & Filter Bar */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3 flex-1">
-              {/* Search Box */}
-              <div className="relative flex-1 min-w-[280px] max-w-lg">
-                <Search className="h-5 w-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search name, code, mobile or designation..."
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all"
-                />
-              </div>
-
-              {/* Branch Filter Dropdown */}
-              {/* <div className="min-w-[180px]">
-                <select
-                  value={selectedBranchFilter}
-                  onChange={(e) => setSelectedBranchFilter(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5] cursor-pointer transition-all"
-                >
-                  {branchFilterOptions.map((b) => (
-                    <option key={b.value} value={b.value}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </div> */}
+          <div className="flex items-center gap-3 p-[14px_18px] border-b border-[#E2E8F0] dark:border-[#1F2937] flex-wrap">
+            <div className="flex items-center gap-[9px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-[#F8FAFC] dark:bg-[#0E1524] px-[11px] py-[7px] w-[300px]">
+              <Search className="h-4 w-4 text-[#64748B] dark:text-[#94A3B8] shrink-0" />
+              <input
+                type="text"
+                placeholder="Search name, code, mobile or designation"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="flex-1 min-w-0 border-none outline-none bg-transparent text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] placeholder:text-[#64748B]/70"
+              />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchFilter("");
-                  setSelectedBranchFilter("ALL");
-                }}
-                className="h-11 px-4.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
-                <span>Reset filters</span>
-              </button>
-            </div>
+            <div className="flex-1"></div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchFilter("");
+                setSelectedBranchFilter("ALL");
+              }}
+              className="border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#182235] hover:text-[#1E293B] dark:hover:text-[#E7ECF3] text-[12.5px] font-[550] px-[13px] py-[8px] h-[34px] rounded-[10px] cursor-pointer whitespace-nowrap transition-colors"
+            >
+              Reset filters
+            </Button>
           </div>
 
-          {/* Table */}
-          <div className="w-full">
+          {/* Table Container */}
+          <div className="p-3">
             <DataTable
               columns={columns}
               data={paginatedTableData}

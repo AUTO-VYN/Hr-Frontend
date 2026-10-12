@@ -12,7 +12,7 @@ import Docupload from "./DocUpload";
 import WorkDetails from "./WorkDetails";
 import employeview from "../employee-view/page"
 import { useCurrentUser } from "@/app/hooks/use-current-user";
-import{button} from "@/components/ui/button";
+import { button } from "@/components/ui/button";
 
 type EmpTabsProps = {
   masterData: any;
@@ -90,9 +90,8 @@ const EmpTabs = ({
             <div className="flex overflow-x-scroll xl:overflow-x-hidden justify-between gap-x-3">
               {user?.role1.includes("1.1.4") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 1 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 1 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="1"
                   onClick={handleTabClick}
                 >
@@ -102,9 +101,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.5") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 2 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 2 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="2"
                   onClick={handleTabClick}
                 >
@@ -114,9 +112,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.12") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 3 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  } ${disableSalaryTab ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 3 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    } ${disableSalaryTab ? "opacity-50 cursor-not-allowed" : ""}`}
                   data-tab-number="3"
                   onClick={handleTabClick}
                 >
@@ -126,9 +123,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.6") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 4 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 4 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="4"
                   onClick={handleTabClick}
                 >
@@ -138,9 +134,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.11") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 10 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 10 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="10"
                   onClick={handleTabClick}
                 >
@@ -150,9 +145,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.9") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 7 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 7 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="7"
                   onClick={handleTabClick}
                 >
@@ -162,9 +156,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.2.1") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 8 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 8 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="8"
                   onClick={handleTabClick}
                 >
@@ -174,9 +167,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.10") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 9 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 9 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="9"
                   onClick={handleTabClick}
                 >
@@ -186,9 +178,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.8") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 6 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 6 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="6"
                   onClick={handleTabClick}
                 >
@@ -198,9 +189,8 @@ const EmpTabs = ({
 
               {user?.role1.includes("1.1.7") && (
                 <button
-                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${
-                    activeTab === 5 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
-                  }`}
+                  className={`px-2 py-1 text-base mt-1 mb-1 font-semibold capitalize rounded whitespace-nowrap transition duration-300 ease-in-out transform hover:-translate-y-0.2 shadow hover:shadow-dark ${activeTab === 5 ? "bg-white text-[#193A69]" : "text-white dark:text-white"
+                    }`}
                   data-tab-number="5"
                   onClick={handleTabClick}
                 >
@@ -232,13 +222,13 @@ const EmpTabs = ({
           )}
 
           {activeTab === 3 && (
-             <div className="h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-2 light-scroll">
-            <SalaryDetails
-              disapleForSalary={disableSalaryTab}
-              isActiveTab={activeTab === 3}
-              isMandatory={isMandatory}
-              masterData={masterData}
-            />
+            <div className={employeeIdentityScroll}>
+              <SalaryDetails
+                disapleForSalary={disableSalaryTab}
+                isActiveTab={activeTab === 3}
+                isMandatory={isMandatory}
+                masterData={masterData}
+              />
             </div>
           )}
 
@@ -249,7 +239,7 @@ const EmpTabs = ({
           {activeTab === 8 && <Asset />}
           {activeTab === 9 && <Docupload />}
           {activeTab === 10 && <WorkDetails />}
-          
+
         </div>
       </div>
     </div>
