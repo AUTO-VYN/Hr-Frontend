@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import axios from "axios";
 import {
   Users,
@@ -52,7 +58,7 @@ function formatDateDisplay(dStr?: string) {
       const year = d.getFullYear();
       return `${day} ${month} ${year}`;
     }
-  } catch { }
+  } catch {}
   return String(dStr);
 }
 
@@ -88,7 +94,9 @@ function calculateDaysOverdue(dateStr?: string) {
   try {
     const target = new Date(dateStr);
     if (isNaN(target.getTime())) return 0;
-    const diff = Math.floor((new Date().getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.floor(
+      (new Date().getTime() - target.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return Math.max(diff, 0);
   } catch {
     return 0;
@@ -120,12 +128,12 @@ export default function EmployeeAssetReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>("EMPLOYEE_WISE");
 
   // Options from APIs
-  const [branchOptions, setBranchOptions] = useState<{ value: string; label: string }[]>([
-    { value: "ALL", label: "All branches" },
-  ]);
-  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([
-    { value: "ALL", label: "All categories" },
-  ]);
+  const [branchOptions, setBranchOptions] = useState<
+    { value: string; label: string }[]
+  >([{ value: "ALL", label: "All branches" }]);
+  const [categoryOptions, setCategoryOptions] = useState<
+    { value: string; label: string }[]
+  >([{ value: "ALL", label: "All categories" }]);
 
   // Raw API Data
   const [rawApiRecords, setRawApiRecords] = useState<any[]>([]);
@@ -147,7 +155,7 @@ export default function EmployeeAssetReportsPage() {
                   compcode: user?.Comp_Code,
                   name: user?.name,
                 },
-              }
+              },
             )
             .catch(() => null),
           axios
@@ -158,7 +166,7 @@ export default function EmployeeAssetReportsPage() {
                 headers: {
                   compcode: user?.Comp_Code,
                 },
-              }
+              },
             )
             .catch(() => null),
         ]);
@@ -173,7 +181,10 @@ export default function EmployeeAssetReportsPage() {
             value: String(loc.Loc_Code || loc.value || loc),
             label: String(loc.Loc_Desc || loc.label || loc),
           }));
-          setBranchOptions([{ value: "ALL", label: "All branches" }, ...mappedBranches]);
+          setBranchOptions([
+            { value: "ALL", label: "All branches" },
+            ...mappedBranches,
+          ]);
         }
 
         // Category options
@@ -183,7 +194,10 @@ export default function EmployeeAssetReportsPage() {
             value: String(cat.value || cat.label || cat),
             label: String(cat.label || cat.value || cat),
           }));
-          setCategoryOptions([{ value: "ALL", label: "All categories" }, ...mappedCategories]);
+          setCategoryOptions([
+            { value: "ALL", label: "All categories" },
+            ...mappedCategories,
+          ]);
         }
       } catch (err) {
         console.error("Error fetching report masters:", err);
@@ -206,14 +220,14 @@ export default function EmployeeAssetReportsPage() {
           dateto: dates.DATE_TO,
           branch: selectedBranch === "ALL" ? "" : selectedBranch,
           category: selectedCategory === "ALL" ? "" : selectedCategory,
-          flag: "1"
+          flag: "1",
         },
         {
           headers: {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const records =
@@ -233,7 +247,14 @@ export default function EmployeeAssetReportsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.Comp_Code, user?.name, dates.DATE_FROM, dates.DATE_TO, selectedBranch, selectedCategory]);
+  }, [
+    user?.Comp_Code,
+    user?.name,
+    dates.DATE_FROM,
+    dates.DATE_TO,
+    selectedBranch,
+    selectedCategory,
+  ]);
 
   useEffect(() => {
     if (user?.Comp_Code) {
@@ -267,7 +288,7 @@ export default function EmployeeAssetReportsPage() {
         const year = d.getFullYear();
         return `${day}/${month}/${year}`;
       }
-    } catch { }
+    } catch {}
     return dStr;
   };
 
@@ -283,8 +304,12 @@ export default function EmployeeAssetReportsPage() {
       const empCode = item.Emp_Code || item.EMP_CODE || "—";
       const empName = item.EMP_NAME || "—";
       const department = item.DEVISION || item.Department || "—";
-      const price = Number(item.Asset_Price || item.Price || item.price || item.Value || 0);
-      const isReturned = Boolean(item.Revoke_Date && item.Revoke_Date !== "null");
+      const price = Number(
+        item.Asset_Price || item.Price || item.price || item.Value || 0,
+      );
+      const isReturned = Boolean(
+        item.Revoke_Date && item.Revoke_Date !== "null",
+      );
       const isLost = Boolean(item.Lost_Date && item.Lost_Date !== "null");
       const issueDate = item.Issue_Date;
 
@@ -309,7 +334,10 @@ export default function EmployeeAssetReportsPage() {
       empEntry.totalValueNum += price;
 
       if (issueDate) {
-        if (!empEntry.oldestIssueDate || new Date(issueDate) < new Date(empEntry.oldestIssueDate)) {
+        if (
+          !empEntry.oldestIssueDate ||
+          new Date(issueDate) < new Date(empEntry.oldestIssueDate)
+        ) {
           empEntry.oldestIssueDate = issueDate;
         }
       }
@@ -330,7 +358,9 @@ export default function EmployeeAssetReportsPage() {
         DEVISION: emp.DEVISION,
         assetsHeld: emp.assetsHeld,
         totalValue: `₹ ${emp.totalValueNum.toLocaleString("en-IN")}`,
-        oldestIssue: emp.oldestIssueDate ? formatDateDisplay(emp.oldestIssueDate) : "—",
+        oldestIssue: emp.oldestIssueDate
+          ? formatDateDisplay(emp.oldestIssueDate)
+          : "—",
         status,
       };
     });
@@ -344,9 +374,13 @@ export default function EmployeeAssetReportsPage() {
 
     rawApiRecords.forEach((item: any) => {
       const category = item.Asset_category || item.It_category || "General";
-      const isReturned = Boolean(item.Revoke_Date && item.Revoke_Date !== "null");
+      const isReturned = Boolean(
+        item.Revoke_Date && item.Revoke_Date !== "null",
+      );
       const isLost = Boolean(item.Lost_Date && item.Lost_Date !== "null");
-      const price = Number(item.Asset_Price || item.Price || item.price || item.Value || 0);
+      const price = Number(
+        item.Asset_Price || item.Price || item.price || item.Value || 0,
+      );
 
       if (!catMap.has(category)) {
         catMap.set(category, {
@@ -367,7 +401,10 @@ export default function EmployeeAssetReportsPage() {
         catEntry.issued += 1;
       } else if (isReturned) {
         catEntry.inStore += 1;
-      } else if (item.status === "Under Repair" || item.Status === "Under Repair") {
+      } else if (
+        item.status === "Under Repair" ||
+        item.Status === "Under Repair"
+      ) {
         catEntry.underRepair += 1;
       } else {
         catEntry.inStore += 1;
@@ -389,9 +426,12 @@ export default function EmployeeAssetReportsPage() {
     if (!rawApiRecords.length) return [];
 
     return rawApiRecords.map((item: any) => {
-      const isReturned = Boolean(item.Revoke_Date && item.Revoke_Date !== "null");
+      const isReturned = Boolean(
+        item.Revoke_Date && item.Revoke_Date !== "null",
+      );
       const isLost = Boolean(item.Lost_Date && item.Lost_Date !== "null");
-      const isConsumable = item.Asset_Type === "Consumable" || item.assetType === "Consumable";
+      const isConsumable =
+        item.Asset_Type === "Consumable" || item.assetType === "Consumable";
       const issueDate = item.Issue_Date;
 
       let status = "In use";
@@ -417,9 +457,13 @@ export default function EmployeeAssetReportsPage() {
 
     return rawApiRecords
       .filter((item: any) => {
-        const isReturned = Boolean(item.Revoke_Date && item.Revoke_Date !== "null");
+        const isReturned = Boolean(
+          item.Revoke_Date && item.Revoke_Date !== "null",
+        );
         const isLost = Boolean(item.Lost_Date && item.Lost_Date !== "null");
-        const hasLeftDate = Boolean(item.LASTWOR_NEWDATE && item.LASTWOR_NEWDATE !== "null");
+        const hasLeftDate = Boolean(
+          item.LASTWOR_NEWDATE && item.LASTWOR_NEWDATE !== "null",
+        );
         return (!isReturned && hasLeftDate) || isLost;
       })
       .map((item: any) => {
@@ -532,7 +576,7 @@ export default function EmployeeAssetReportsPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   const categoryWiseColumns = useMemo(
@@ -598,7 +642,7 @@ export default function EmployeeAssetReportsPage() {
         ),
       },
     ],
-    []
+    [],
   );
 
   const assetAgeingColumns = useMemo(
@@ -691,7 +735,7 @@ export default function EmployeeAssetReportsPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   const notReturnedColumns = useMemo(
@@ -778,7 +822,7 @@ export default function EmployeeAssetReportsPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   // Active Report Meta
@@ -799,7 +843,8 @@ export default function EmployeeAssetReportsPage() {
           subtitle: `${categoryWiseData.length} rows · ${formatShortDate(dates.DATE_FROM)} – ${formatShortDate(dates.DATE_TO)}`,
           columns: categoryWiseColumns,
           data: categoryWiseData,
-          footerNote: "Category-wise stock position as on the end date of the selected range.",
+          footerNote:
+            "Category-wise stock position as on the end date of the selected range.",
         };
       case "ASSET_AGEING":
         return {
@@ -807,7 +852,8 @@ export default function EmployeeAssetReportsPage() {
           subtitle: `${assetAgeingData.length} rows · ${formatShortDate(dates.DATE_FROM)} – ${formatShortDate(dates.DATE_TO)}`,
           columns: assetAgeingColumns,
           data: assetAgeingData,
-          footerNote: "Assets older than 4 years are due for replacement as per the IT policy.",
+          footerNote:
+            "Assets older than 4 years are due for replacement as per the IT policy.",
         };
       case "NOT_RETURNED":
         return {
@@ -815,7 +861,8 @@ export default function EmployeeAssetReportsPage() {
           subtitle: `${notReturnedData.length} rows · ${formatShortDate(dates.DATE_FROM)} – ${formatShortDate(dates.DATE_TO)}`,
           columns: notReturnedColumns,
           data: notReturnedData,
-          footerNote: "Recovery of these assets should be settled before the full and final payout.",
+          footerNote:
+            "Recovery of these assets should be settled before the full and final payout.",
         };
     }
   }, [
@@ -832,7 +879,7 @@ export default function EmployeeAssetReportsPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pb-24 font-sans antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pb-24  antialiased">
       <main className="px-4 sm:px-8 pt-6 max-w-[1700px] mx-auto space-y-6">
         {/* ── 1. PAGE HEADER ────────────────────────────────────────────── */}
         <div>
@@ -840,64 +887,79 @@ export default function EmployeeAssetReportsPage() {
             Asset reports
           </h1>
           <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium mt-1">
-            Pick a period, choose a report, and export. Everything below reflects the selected date range.
+            Pick a period, choose a report, and export. Everything below
+            reflects the selected date range.
           </p>
         </div>
 
         {/* ── 2. FILTER BAR ─────────────────────────────────────────────── */}
+
         <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-5 sm:p-6 shadow-2xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5 items-end">
-            <div className="lg:col-span-2">
+            {/* Date From */}
+            <div className="lg:col-span-2 min-w-0">
               <Einput
                 title="DATE FROM"
                 type="date"
                 name="DATE_FROM"
                 value={dates.DATE_FROM}
                 handleInputChange={handleDateChange}
+                className="!h-10 w-full"
               />
             </div>
 
-            <div className="lg:col-span-2">
+            {/* Date To */}
+            <div className="lg:col-span-2 min-w-0">
               <Einput
                 title="DATE TO"
                 type="date"
                 name="DATE_TO"
                 value={dates.DATE_TO}
                 handleInputChange={handleDateChange}
+                className="!h-10 w-full"
               />
             </div>
 
-            <div className="lg:col-span-3">
+            {/* Branch */}
+            <div className="lg:col-span-3 min-w-0">
               <Eselect
                 title="BRANCH"
                 name="branch"
                 option={branchOptions}
+                className="!h-10 w-full"
                 initialValue={selectedBranch}
                 handleInputChange={(_, val) => setSelectedBranch(val)}
                 placeholder="All branches"
               />
             </div>
 
-            <div className="lg:col-span-3">
+            {/* Category */}
+            <div className="lg:col-span-3 min-w-0">
               <Eselect
                 title="CATEGORY"
                 name="category"
                 option={categoryOptions}
+                className="!h-10 w-full"
                 initialValue={selectedCategory}
                 handleInputChange={(_, val) => setSelectedCategory(val)}
                 placeholder="All categories"
               />
             </div>
 
-            <div className="lg:col-span-2 flex items-end">
+            {/* Show Button */}
+            <div className="lg:col-span-2 min-w-0">
               <AButton
                 type="button"
                 variant="primary"
                 size="sm"
                 fullWidth
-                icon={isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+                icon={
+                  isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : undefined
+                }
                 onClick={fetchReportData}
-                className="!bg-[#4338CA] hover:!bg-[#3730A3] text-white font-semibold !rounded-xl !h-10 text-lg shadow-sm"
+                className="!bg-[#4338CA] hover:!bg-[#3730A3] text-white font-semibold !rounded-xl !h-10 !min-h-10 text-base shadow-sm w-full"
               >
                 Show
               </AButton>
@@ -906,33 +968,39 @@ export default function EmployeeAssetReportsPage() {
         </div>
 
         {/* ── 3. FOUR REPORT SELECTION CARDS ───────────────────────────── */}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {/* Card 1: Employee wise asset */}
           <div
             onClick={() => setActiveReport("EMPLOYEE_WISE")}
-            className={`p-5 sm:p-6 rounded-2xl cursor-pointer select-none transition-all flex flex-col justify-between min-h-[145px] ${activeReport === "EMPLOYEE_WISE"
-                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm ring-1 ring-[#4F46E5]/20"
-                : "border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
-              }`}
+            className={`relative overflow-hidden p-5 rounded-2xl cursor-pointer select-none transition-all duration-200 flex flex-col justify-between min-h-[172px] ${
+              activeReport === "EMPLOYEE_WISE"
+                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm"
+                : "border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] hover:border-[#C7D2FE] shadow-sm"
+            }`}
           >
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#4F46E5]" />
+
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center shrink-0">
                   <Users className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-[15px] sm:text-base text-slate-900 dark:text-slate-100 truncate">
+                <h3 className="font-semibold text-[15px] text-[#0F172A] dark:text-slate-100 truncate">
                   Employee wise asset
                 </h3>
               </div>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed">
+
+              <p className="text-[13px] text-[#64748B] dark:text-slate-400 font-normal mt-3 leading-[1.55]">
                 What each employee is holding right now, with value.
               </p>
             </div>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[26px] leading-none font-bold text-[#0F172A] dark:text-white">
                 {employeeWiseData.length}
               </span>
-              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-[13px] font-normal text-[#64748B] dark:text-slate-400">
                 employees
               </span>
             </div>
@@ -941,29 +1009,34 @@ export default function EmployeeAssetReportsPage() {
           {/* Card 2: Category wise stock */}
           <div
             onClick={() => setActiveReport("CATEGORY_WISE")}
-            className={`p-5 sm:p-6 rounded-2xl cursor-pointer select-none transition-all flex flex-col justify-between min-h-[145px] ${activeReport === "CATEGORY_WISE"
-                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm ring-1 ring-[#4F46E5]/20"
-                : "border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
-              }`}
+            className={`relative overflow-hidden p-5 rounded-2xl cursor-pointer select-none transition-all duration-200 flex flex-col justify-between min-h-[172px] ${
+              activeReport === "CATEGORY_WISE"
+                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm"
+                : "border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] hover:border-[#C7D2FE] shadow-sm"
+            }`}
           >
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#059E91]" />
+
             <div>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/80 text-[#059669] dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#E5F7F4] dark:bg-emerald-950/80 text-[#059E91] dark:text-emerald-400 flex items-center justify-center shrink-0">
                   <Layers className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-[15px] sm:text-base text-slate-900 dark:text-slate-100 truncate">
+                <h3 className="font-semibold text-[15px] text-[#0F172A] dark:text-slate-100 truncate">
                   Category wise stock
                 </h3>
               </div>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed">
+
+              <p className="text-[13px] text-[#64748B] dark:text-slate-400 font-normal mt-3 leading-[1.55]">
                 Issued, in store and under repair, by asset category.
               </p>
             </div>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[26px] leading-none font-bold text-[#0F172A] dark:text-white">
                 {categoryWiseData.length}
               </span>
-              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-[13px] font-normal text-[#64748B] dark:text-slate-400">
                 categories
               </span>
             </div>
@@ -972,61 +1045,70 @@ export default function EmployeeAssetReportsPage() {
           {/* Card 3: Asset ageing */}
           <div
             onClick={() => setActiveReport("ASSET_AGEING")}
-            className={`p-5 sm:p-6 rounded-2xl cursor-pointer select-none transition-all flex flex-col justify-between min-h-[145px] ${activeReport === "ASSET_AGEING"
-                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm ring-1 ring-[#4F46E5]/20"
-                : "border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
-              }`}
+            className={`relative overflow-hidden p-5 rounded-2xl cursor-pointer select-none transition-all duration-200 flex flex-col justify-between min-h-[172px] ${
+              activeReport === "ASSET_AGEING"
+                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm"
+                : "border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] hover:border-[#C7D2FE] shadow-sm"
+            }`}
           >
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#F59E0B]" />
+
             <div>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] dark:bg-amber-950/80 text-[#D97706] dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF4DF] dark:bg-amber-950/80 text-[#D97706] dark:text-amber-400 flex items-center justify-center shrink-0">
                   <Hourglass className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-[15px] sm:text-base text-slate-900 dark:text-slate-100 truncate">
+                <h3 className="font-semibold text-[15px] text-[#0F172A] dark:text-slate-100 truncate">
                   Asset ageing
                 </h3>
               </div>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed">
+
+              <p className="text-[13px] text-[#64748B] dark:text-slate-400 font-normal mt-3 leading-[1.55]">
                 How old each asset is, oldest first — drives replacement.
               </p>
             </div>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[26px] leading-none font-bold text-[#0F172A] dark:text-white">
                 {assetAgeingData.length}
               </span>
-              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-[13px] font-normal text-[#64748B] dark:text-slate-400">
                 assets
               </span>
             </div>
           </div>
 
-          {/* Card 4: Not returned (with rose accent) */}
+          {/* Card 4: Not returned */}
           <div
             onClick={() => setActiveReport("NOT_RETURNED")}
-            className={`p-5 sm:p-6 rounded-2xl cursor-pointer select-none transition-all flex flex-col justify-between min-h-[145px] relative overflow-hidden ${activeReport === "NOT_RETURNED"
-                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm ring-1 ring-[#4F46E5]/20"
-                : "border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
-              }`}
+            className={`relative overflow-hidden p-5 rounded-2xl cursor-pointer select-none transition-all duration-200 flex flex-col justify-between min-h-[172px] ${
+              activeReport === "NOT_RETURNED"
+                ? "border-2 border-[#4F46E5] bg-white dark:bg-[#111827] shadow-sm"
+                : "border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] hover:border-[#C7D2FE] shadow-sm"
+            }`}
           >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500" />
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#F43F5E]" />
+
             <div>
-              <div className="flex items-center gap-3 pt-1">
-                <div className="w-9 h-9 rounded-xl bg-[#FFE4E6] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#FFE8EC] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-400 flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-[15px] sm:text-base text-slate-900 dark:text-slate-100 truncate">
+                <h3 className="font-semibold text-[15px] text-[#0F172A] dark:text-slate-100 truncate">
                   Not returned
                 </h3>
               </div>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed">
+
+              <p className="text-[13px] text-[#64748B] dark:text-slate-400 font-normal mt-3 leading-[1.55]">
                 Assets still out after the employee&apos;s last working date.
               </p>
             </div>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[26px] leading-none font-bold text-[#0F172A] dark:text-white">
                 {notReturnedData.length}
               </span>
-              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-[13px] font-normal text-[#64748B] dark:text-slate-400">
                 open cases
               </span>
             </div>

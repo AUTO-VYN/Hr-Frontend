@@ -1212,15 +1212,15 @@ const handleOpenDocument = async (row: PolicyRow) => {
           <h1
             className="
               m-0
-              text-[20px]
-              font-[700]
+              text-[15px]
+              font-[600]
               tracking-[-0.02em]
               text-slate-900
               dark:text-white
-              sm:text-[22px]
+              sm:text-[20px]
             "
           >
-            HR Policies View
+            HR policies 
           </h1>
 
           <p

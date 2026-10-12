@@ -970,11 +970,12 @@ export default function EmployeeAssetPage() {
             <Eselect
               title="EMPLOYEE CODE"
               name="selectedEmpCode"
+           
               option={empcodeOptions}
               handleInputChange={(_, value) => setSelectedEmpCode(value)}
               initialValue={selectedEmpCode}
               placeholder="Select employee code"
-              className="!h-10 !text-lg !bg-white dark:!bg-[#0E1524]"
+              className=" !text-lg !bg-white h-[32px] dark:!bg-[#0E1524]"
               redlabel="*"
             />
           </div>

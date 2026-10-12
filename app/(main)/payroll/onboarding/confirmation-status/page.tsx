@@ -97,7 +97,7 @@ export default function ConfirmationStatusPage() {
 
   const showSideAlert = (
     message: string,
-    type: "success" | "warning" | "error" | "info" = "info"
+    type: "success" | "warning" | "error" | "info" = "info",
   ) => {
     const Toast = Swal.mixin({
       toast: true,
@@ -145,14 +145,19 @@ export default function ConfirmationStatusPage() {
 
       let daysRemaining = 999;
       let elapsedDays = 0;
-      let computedStatus: "overdue" | "due_soon" | "in_probation" | "confirmed" =
-        "in_probation";
+      let computedStatus:
+        | "overdue"
+        | "due_soon"
+        | "in_probation"
+        | "confirmed" = "in_probation";
 
       if (isConfirmed) {
         computedStatus = "confirmed";
         elapsedDays = totalProbationDays;
       } else if (item.Prob_periodDate) {
-        const probDate = new Date(String(item.Prob_periodDate).replace("Z", ""));
+        const probDate = new Date(
+          String(item.Prob_periodDate).replace("Z", ""),
+        );
         probDate.setHours(0, 0, 0, 0);
 
         if (!isNaN(probDate.getTime())) {
@@ -174,7 +179,7 @@ export default function ConfirmationStatusPage() {
 
       const progressPercent = Math.min(
         100,
-        Math.round((elapsedDays / totalProbationDays) * 100)
+        Math.round((elapsedDays / totalProbationDays) * 100),
       );
 
       return {
@@ -210,7 +215,7 @@ export default function ConfirmationStatusPage() {
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
 
       const records = result?.data?.Result || result?.data?.data || [];
@@ -247,10 +252,12 @@ export default function ConfirmationStatusPage() {
       }
     });
 
-    const list = Array.from(deptSet).sort().map((d) => ({
-      value: d,
-      label: d,
-    }));
+    const list = Array.from(deptSet)
+      .sort()
+      .map((d) => ({
+        value: d,
+        label: d,
+      }));
 
     return [{ value: "ALL", label: "All departments" }, ...list];
   }, [tableData]);
@@ -292,7 +299,10 @@ export default function ConfirmationStatusPage() {
       // 2. Department Filter
       if (dates.department && dates.department !== "ALL") {
         const rowDept = row.Department || row.department || row.SECTION;
-        if (String(rowDept).toLowerCase() !== String(dates.department).toLowerCase()) {
+        if (
+          String(rowDept).toLowerCase() !==
+          String(dates.department).toLowerCase()
+        ) {
           return false;
         }
       }
@@ -332,7 +342,7 @@ export default function ConfirmationStatusPage() {
 
     const targetDate = confirmationDate || getDefaultDate(0);
     const empcodes = selectedRows.map(
-      (row) => row.rowData?.EMPCODE || row.EMPCODE || row.id
+      (row) => row.rowData?.EMPCODE || row.EMPCODE || row.id,
     );
 
     try {
@@ -348,7 +358,7 @@ export default function ConfirmationStatusPage() {
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
 
       Swal.fire({
@@ -384,7 +394,7 @@ export default function ConfirmationStatusPage() {
     }
 
     const empcodes = selectedRows.map(
-      (row) => row.rowData?.EMPCODE || row.EMPCODE || row.id
+      (row) => row.rowData?.EMPCODE || row.EMPCODE || row.id,
     );
 
     // Calculate +30 days date
@@ -406,7 +416,7 @@ export default function ConfirmationStatusPage() {
         },
         {
           headers: { compcode: user?.Comp_Code },
-        }
+        },
       );
 
       Swal.fire({
@@ -548,15 +558,12 @@ export default function ConfirmationStatusPage() {
         width: 200,
         disableSortBy: true,
         Cell: ({ row }: any) => {
-          const {
-            elapsedDays,
-            totalProbationDays,
-            computedStatus,
-          } = row.original;
+          const { elapsedDays, totalProbationDays, computedStatus } =
+            row.original;
 
           const fillPercent = Math.min(
             100,
-            Math.max(5, Math.round((elapsedDays / totalProbationDays) * 100))
+            Math.max(5, Math.round((elapsedDays / totalProbationDays) * 100)),
           );
 
           let barColor = "bg-[#0284C7]"; // Blue default
@@ -581,7 +588,9 @@ export default function ConfirmationStatusPage() {
                   style={{ width: `${fillPercent}%` }}
                 />
               </div>
-              <span className={`text-[13px] font-bold shrink-0 tabular-nums ${textStyle}`}>
+              <span
+                className={`text-[13px] font-bold shrink-0 tabular-nums ${textStyle}`}
+              >
                 {elapsedDays}/{totalProbationDays}
               </span>
             </div>
@@ -655,68 +664,86 @@ export default function ConfirmationStatusPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#070D18] px-3 sm:px-5 lg:px-7 py-5 text-slate-900 dark:text-slate-100 pb-28">
-      <div className="max-w-[1600px] mx-auto space-y-4">
+    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#F8FAFC] dark:bg-[#070D18] px-3 sm:px-5 lg:px-7 py-4 sm:py-5 text-slate-900 dark:text-slate-100 pb-64 sm:pb-40 lg:pb-28">
+      <div className="mx-auto w-full max-w-[1600px] min-w-0 space-y-4">
         {/* ── 1. HEADER ─────────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             Employee confirmation
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
-            Probation tracking with days remaining. Confirm, extend or issue the letter straight from the row.
+
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            Probation tracking with days remaining. Confirm, extend or issue the
+            letter straight from the row.
           </p>
         </div>
 
         {/* ── 2. TOP METRIC SUMMARY CARDS ───────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: CONFIRMATION OVERDUE */}
-          <StatCard
-            title="CONFIRMATION OVERDUE"
-            count={metricCounts.overdue}
-            variant="rose"
-            icon={<AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />}
-            isActive={activeStatCard === "overdue"}
-            onClick={() => handleStatCardClick("overdue")}
-          />
+       <div className="grid grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+  {/* Card 1: CONFIRMATION OVERDUE */}
+  <div className="[&>div]:!min-h-[112px] [&>div]:!rounded-2xl [&>div]:!border-slate-200 [&>div]:!bg-white [&>div]:!shadow-[0_2px_6px_rgba(15,23,42,0.05)] [&>div]:transition-all [&>div]:duration-200 [&>div]:hover:!shadow-md dark:[&>div]:!border-slate-700 dark:[&>div]:!bg-[#111827]">
+    <StatCard
+      title="CONFIRMATION OVERDUE"
+      count={metricCounts.overdue}
+      variant="rose"
+      icon={
+        <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+      }
+      isActive={activeStatCard === "overdue"}
+      onClick={() => handleStatCardClick("overdue")}
+    />
+  </div>
 
-          {/* Card 2: DUE WITHIN 15 DAYS */}
-          <StatCard
-            title="DUE WITHIN 15 DAYS"
-            count={metricCounts.dueSoon}
-            variant="amber"
-            icon={<Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
-            isActive={activeStatCard === "due_soon"}
-            onClick={() => handleStatCardClick("due_soon")}
-          />
+  {/* Card 2: DUE WITHIN 15 DAYS */}
+  <div className="[&>div]:!min-h-[112px] [&>div]:!rounded-2xl [&>div]:!border-slate-200 [&>div]:!bg-white [&>div]:!shadow-[0_2px_6px_rgba(15,23,42,0.05)] [&>div]:transition-all [&>div]:duration-200 [&>div]:hover:!shadow-md dark:[&>div]:!border-slate-700 dark:[&>div]:!bg-[#111827]">
+    <StatCard
+      title="DUE WITHIN 15 DAYS"
+      count={metricCounts.dueSoon}
+      variant="amber"
+      icon={
+        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+      }
+      isActive={activeStatCard === "due_soon"}
+      onClick={() => handleStatCardClick("due_soon")}
+    />
+  </div>
 
-          {/* Card 3: IN PROBATION */}
-          <StatCard
-            title="IN PROBATION"
-            count={metricCounts.inProbation}
-            variant="sky"
-            icon={<Hourglass className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
-            isActive={activeStatCard === "in_probation"}
-            onClick={() => handleStatCardClick("in_probation")}
-          />
+  {/* Card 3: IN PROBATION */}
+  <div className="[&>div]:!min-h-[112px] [&>div]:!rounded-2xl [&>div]:!border-slate-200 [&>div]:!bg-white [&>div]:!shadow-[0_2px_6px_rgba(15,23,42,0.05)] [&>div]:transition-all [&>div]:duration-200 [&>div]:hover:!shadow-md dark:[&>div]:!border-slate-700 dark:[&>div]:!bg-[#111827]">
+    <StatCard
+      title="IN PROBATION"
+      count={metricCounts.inProbation}
+      variant="sky"
+      icon={
+        <Hourglass className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+      }
+      isActive={activeStatCard === "in_probation"}
+      onClick={() => handleStatCardClick("in_probation")}
+    />
+  </div>
 
-          {/* Card 4: CONFIRMED */}
-          <StatCard
-            title="CONFIRMED"
-            count={metricCounts.confirmed}
-            variant="emerald"
-            icon={<UserCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-            isActive={activeStatCard === "confirmed"}
-            onClick={() => handleStatCardClick("confirmed")}
-          />
-        </div>
+  {/* Card 4: CONFIRMED */}
+  <div className="[&>div]:!min-h-[112px] [&>div]:!rounded-2xl [&>div]:!border-slate-200 [&>div]:!bg-white [&>div]:!shadow-[0_2px_6px_rgba(15,23,42,0.05)] [&>div]:transition-all [&>div]:duration-200 [&>div]:hover:!shadow-md dark:[&>div]:!border-slate-700 dark:[&>div]:!bg-[#111827]">
+    <StatCard
+      title="CONFIRMED"
+      count={metricCounts.confirmed}
+      variant="emerald"
+      icon={
+        <UserCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+      }
+      isActive={activeStatCard === "confirmed"}
+      onClick={() => handleStatCardClick("confirmed")}
+    />
+  </div>
+</div>
 
         {/* ── 3. FILTER BAR CARD ─────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[180px_180px_minmax(220px,1.2fr)_minmax(180px,1fr)_auto] gap-3.5 items-end">
+        <div className="w-full min-w-0 overflow-visible rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 sm:p-4 lg:p-5 shadow-2xs">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[160px_160px_minmax(180px,1.2fr)_minmax(150px,1fr)_auto] gap-3 sm:gap-3.5 items-end">
             {/* DATE FROM */}
             <div className="min-w-0">
               <Einput
@@ -724,6 +751,7 @@ export default function ConfirmationStatusPage() {
                 name="DATE_FROM"
                 type="date"
                 ShortName={true}
+                className="h-[32px]"
                 value={dates.DATE_FROM}
                 handleInputChange={handleDateChange}
               />
@@ -736,6 +764,7 @@ export default function ConfirmationStatusPage() {
                 name="DATE_TO"
                 type="date"
                 ShortName={true}
+                className="h-[32px]"
                 value={dates.DATE_TO}
                 handleInputChange={handleDateChange}
               />
@@ -748,6 +777,7 @@ export default function ConfirmationStatusPage() {
                 name="department"
                 ShortName={true}
                 placeholder="All departments"
+                className="h-[32px]"
                 option={departmentOptions}
                 initialValue={dates.department}
                 handleInputChange={(name, val) => {
@@ -765,6 +795,7 @@ export default function ConfirmationStatusPage() {
                 title="STATUS"
                 name="status"
                 ShortName={true}
+                className="h-[32px]"
                 placeholder="All"
                 option={statusOptions}
                 initialValue={dates.status}
@@ -777,14 +808,14 @@ export default function ConfirmationStatusPage() {
             </div>
 
             {/* SHOW BUTTON */}
-            <div className="flex items-end">
+            <div className="flex items-end min-w-0 min-[420px]:col-span-2 lg:col-span-4 xl:col-span-1">
               <AButton
                 type="button"
                 variant="primary"
                 size="lg"
                 loading={isLoading}
                 onClick={fetchConfirmationData}
-                className="!bg-[#4F46E5] hover:!bg-[#4338CA] text-white font-semibold !rounded-xl !h-10 !px-7 !text-base shadow-sm"
+                className="!h-10 sm:!h-12 w-full xl:w-auto !bg-[#4F46E5] hover:!bg-[#4338CA] text-white font-semibold !rounded-xl !px-5 sm:!px-7 text-base sm:text-lg shadow-sm"
               >
                 Show
               </AButton>
@@ -793,103 +824,119 @@ export default function ConfirmationStatusPage() {
         </div>
 
         {/* ── 4. DATA TABLE CARD WITH REACTTABLE ─────────────────────────── */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs overflow-hidden">
-          <DataTable
-            columns={columns}
-            data={filteredData}
-            check={true}
-            selectValue="row_id"
-            showColumnFilters={false}
-            showTopSearch={false}
-            showExcelExport={false}
-            showPageSizeInFooter={true}
-            setSelectedRows={setSelectedRows}
-            selectedRows={selectedRows}
-            initialPageSize={10}
-            footerTextMode="showing"
-          />
-
-          {/* Table Legend Footer (Matching Screenshot) */}
-          <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/40 text-sm sm:text-base text-slate-600 dark:text-slate-300">
-            <span className="font-semibold text-slate-800 dark:text-slate-200 text-base">
-              {filteredData.length} employees
-            </span>
-
-            <div className="flex items-center gap-5 mt-2 sm:mt-0 font-medium">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#E11D48]" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Overdue</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#D97706]" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Due in 15 days</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#059669]" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Confirmed</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 5. BOTTOM FIXED ACTION BAR ─────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 px-4 sm:px-8 py-3.5 shadow-xl transition-[left] duration-150 ease-in-out">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Left: Selected count + Remark input */}
-          <div className="flex items-center gap-4 flex-1 max-w-xl">
-            <span className="font-semibold text-slate-900 dark:text-white text-2xl whitespace-nowrap shrink-0">
-              {selectedRows.length} Selected
-            </span>
-
-            <div className="flex-1">
-              <Einput
-                title=""
-                ShortName={true}
-                name="confirmationRemark"
-                type="text"
-                placeholder="Remark for the confirmation / extension..."
-                value={confirmationRemark}
-                handleInputChange={(name, val) => setConfirmationRemark(val)}
-                className="w-full h-10 px-4 text-base font-medium border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-[#1E293B] text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs"
+        <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs">
+          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+            <div className="min-w-[1050px]">
+              <DataTable
+                columns={columns}
+                data={filteredData}
+                check={true}
+                selectValue="row_id"
+                showColumnFilters={false}
+                showTopSearch={false}
+                showExcelExport={false}
+                showPageSizeInFooter={true}
+                setSelectedRows={setSelectedRows}
+                selectedRows={selectedRows}
+                initialPageSize={10}
+                footerTextMode="showing"
               />
             </div>
           </div>
 
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-3 justify-end shrink-0">
-            {/* Extend probation 30 days */}
-            <AButton
-              type="button"
-              variant="outline"
-              size="lg"
-              disabled={selectedRows.length === 0}
-              onClick={handleExtendProbation}
-              icon={<CalendarPlus className="w-4 h-4 text-slate-700 dark:text-slate-300" />}
-              className="!h-10 !px-5 bg-white dark:bg-[#1E293B] border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs rounded-xl"
-            >
-              Extend probation 30 days
-            </AButton>
+          {/* Existing Table Legend Footer */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-3 sm:px-5 py-3.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/40 text-sm text-slate-600 dark:text-slate-300">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm sm:text-base">
+              {filteredData.length} employees
+            </span>
 
-            {/* Confirm employment */}
-            <AButton
-              type="button"
-              variant="primary"
-              size="lg"
-              disabled={selectedRows.length === 0}
-              onClick={handleConfirmEmployment}
-              icon={<UserCheck className="w-4 h-4 text-white" />}
-              className={`!h-10 !px-6 font-semibold shadow-sm rounded-xl text-white ${
-                selectedRows.length > 0
-                  ? "!bg-[#059669] hover:!bg-[#047857]"
-                  : "!bg-[#5A6A80] hover:!bg-[#475569]"
-              }`}
-            >
-              Confirm employment
-            </AButton>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#E11D48] shrink-0" />
+                <span>Overdue</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#D97706] shrink-0" />
+                <span>Due in 15 days</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#059669] shrink-0" />
+                <span>Confirmed</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+     
+{/* Bottom Fixed Action Bar */}
+{/* Bottom Fixed Action Bar - Responsive */}
+<div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 px-3 py-3 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] backdrop-blur-md transition-[left] duration-150 ease-in-out sm:left-[var(--sidebar-width,68px)] sm:px-5 sm:py-4 lg:px-8 dark:border-slate-800 dark:bg-[#0B1220]/95">
+  <div className="mx-auto flex w-full max-w-[1600px] min-w-0 flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-5">
+
+    {/* Selected Count + Remark */}
+    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 lg:flex-1">
+      <div className="flex items-center justify-between gap-3 sm:block">
+        <span className="whitespace-nowrap text-base font-bold text-slate-900 sm:text-lg lg:text-xl dark:text-white">
+          {selectedRows.length} Selected
+        </span>
+
+        <span className="text-xs text-slate-500 sm:hidden dark:text-slate-400">
+          Select employees from the table
+        </span>
+      </div>
+
+      <div className="w-full min-w-0">
+        <Einput
+          title=""
+          ShortName={true}
+          name="confirmationRemark"
+          type="text"
+          placeholder="Remark for the confirmation / extension..."
+          value={confirmationRemark}
+          handleInputChange={(name, val) => setConfirmationRemark(val)}
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-2xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] sm:px-4 dark:border-slate-700 dark:bg-[#1E293B] dark:text-slate-100"
+        />
+      </div>
+    </div>
+
+    {/* Action Buttons */}
+    <div className="grid w-full grid-cols-2 gap-2 sm:gap-3 lg:w-auto lg:shrink-0">
+      <AButton
+        type="button"
+        variant="outline"
+        size="lg"
+        disabled={selectedRows.length === 0}
+        onClick={handleExtendProbation}
+        icon={
+          <CalendarPlus className="h-4 w-4 shrink-0 text-slate-700 dark:text-slate-300" />
+        }
+        className="!h-auto !min-h-10 !w-full !whitespace-normal !rounded-xl !border-slate-300 !bg-white !px-2 !py-2 !text-[11px] !font-semibold leading-tight text-slate-800 shadow-2xs hover:!bg-slate-50 sm:!px-4 sm:!text-sm lg:!w-auto lg:!whitespace-nowrap dark:!border-slate-700 dark:!bg-[#1E293B] dark:!text-slate-200 dark:hover:!bg-slate-800"
+      >
+        <span className="text-center">Extend probation 30 days</span>
+      </AButton>
+
+      <AButton
+        type="button"
+        variant="primary"
+        size="lg"
+        disabled={selectedRows.length === 0}
+        onClick={handleConfirmEmployment}
+        icon={<UserCheck className="h-4 w-4 shrink-0 text-white" />}
+        className={`!h-auto !min-h-10 !w-full !whitespace-normal !rounded-xl !px-2 !py-2 !text-[11px] !font-semibold leading-tight text-white shadow-sm sm:!px-4 sm:!text-sm lg:!w-auto lg:!whitespace-nowrap ${
+          selectedRows.length > 0
+            ? "!bg-[#059669] hover:!bg-[#047857]"
+            : "!bg-[#5A6A80] hover:!bg-[#475569]"
+        }`}
+      >
+        <span className="text-center">Confirm employment</span>
+      </AButton>
+    </div>
+  </div>
+</div>
+
 
       {/* Global Loader */}
       <HashloaderComponent isLoading={isLoading} />
