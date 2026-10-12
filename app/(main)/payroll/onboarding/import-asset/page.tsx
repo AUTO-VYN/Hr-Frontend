@@ -686,36 +686,39 @@ export default function AssetImportPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pb-24 font-sans antialiased">
-      <main className="px-4 sm:px-6 pt-5 max-w-[1700px] mx-auto space-y-5">
+  
+<main className="w-full max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 pt-3 sm:pt-5 pb-6 space-y-4 sm:space-y-5 min-w-0">
+
         {/* ── HEADER TITLE & ACTIONS ────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-[22px] font-bold tracking-tight text-[#1E293B] dark:text-[#E7ECF3]">
-              Asset import
-            </h1>
-            <p className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 leading-relaxed">
-              Bring the asset register in from Excel. Rows that fail validation are listed with the exact reason so you can fix and re-import.
-            </p>
-          </div>
+    
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+  <div className="min-w-0">
+    <h1 className="text-xl sm:text-[22px] font-bold tracking-tight text-[#1E293B] dark:text-[#E7ECF3]">
+      Asset import
+    </h1>
+    <p className="text-xs sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 leading-relaxed max-w-3xl">
+      Bring the asset register in from Excel. Rows that fail validation are listed with the exact reason so you can fix and re-import.
+    </p>
+  </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
-            <AButton
-              variant="outline"
-              size="lg"
-              icon={<Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
-              onClick={handleDownloadSample}
-              className="border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs text-lg1 font-semibold"
-            >
-              Download sample
-            </AButton>
+  <div className="flex w-full sm:w-auto items-center gap-2 shrink-0">
+    <AButton
+      variant="outline"
+      size="lg"
+      icon={<Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+      onClick={handleDownloadSample}
+      className="w-full sm:w-auto justify-center border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs font-semibold"
+    >
+      Download sample
+    </AButton>
+  </div>
+</div>
 
-          </div>
-        </div>
 
         {/* ── 2-COLUMN MAIN LAYOUT ──────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_370px] gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_370px] gap-4 sm:gap-5 items-start min-w-0">
           {/* ── LEFT COLUMN: UPLOAD ZONE & RESULTS ──────────────────────────── */}
-          <div className="space-y-5 min-w-0">
+           <div className="space-y-4 sm:space-y-5 min-w-0">
             {/* Upload Box Card */}
             <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.12)] p-4 sm:p-5">
               <input
@@ -908,7 +911,7 @@ export default function AssetImportPage() {
           </div>
 
           {/* ── RIGHT COLUMN: EXPECTED COLUMNS & CALLOUT ──────────────────── */}
-          <div className="space-y-4">
+           <div className="space-y-4 min-w-0">
             {/* Expected Columns Card */}
             <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.12)] p-5">
               <div className="flex items-center gap-2.5 mb-5 pb-3.5 border-b border-slate-100 dark:border-slate-800">

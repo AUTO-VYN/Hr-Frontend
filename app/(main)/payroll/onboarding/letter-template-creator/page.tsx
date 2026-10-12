@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
 import Image from "next/image";
@@ -88,7 +94,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.data?.data && response.data.data.length > 0) {
         setSignatory(response.data.data[0]);
@@ -114,7 +120,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       setCompLogo(result.data?.complogo || null);
       setMarutiLogo(result.data?.MarutilogoImg || null);
@@ -139,7 +145,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (result.data?.company && result.data.company.length > 0) {
         setCompany(result.data.company[0]);
@@ -155,7 +161,8 @@ export default function LetterCreatorPage() {
       const compCode = getCompCode();
       if (!compCode) return;
       try {
-        const targetCode = codeToFetch !== undefined ? codeToFetch : (fetchdata.SRNO || "0003");
+        const targetCode =
+          codeToFetch !== undefined ? codeToFetch : fetchdata.SRNO || "0003";
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}/template/empdata`,
           { empcode: targetCode, compcode: compCode },
@@ -164,7 +171,7 @@ export default function LetterCreatorPage() {
               compcode: compCode,
               name: user?.name || "",
             },
-          }
+          },
         );
         if (response.data?.data && response.data.data.length > 0) {
           const emp = response.data.data[0];
@@ -174,7 +181,7 @@ export default function LetterCreatorPage() {
         console.error("Error fetching employee data:", error);
       }
     },
-    [getCompCode, fetchdata.SRNO, user?.name]
+    [getCompCode, fetchdata.SRNO, user?.name],
   );
 
   // ── 5. Fetch All Employees ──
@@ -190,7 +197,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.data?.data) {
         setEmployeedata(response.data.data);
@@ -213,7 +220,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.status === 200 && response.data?.data?.Template) {
         setExistingTemplateName(response.data.data.Template);
@@ -248,7 +255,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.status === 200 && response.data?.data?.Template?.[0]) {
         const templateData = response.data.data.Template[0];
@@ -257,7 +264,10 @@ export default function LetterCreatorPage() {
 
         setFormData((prev) => ({
           ...prev,
-          TEMPLATE_NAME: templateData?.Label || templateData?.TEMPLATE_NAME || prev.TEMPLATE_NAME,
+          TEMPLATE_NAME:
+            templateData?.Label ||
+            templateData?.TEMPLATE_NAME ||
+            prev.TEMPLATE_NAME,
           CONTENT: templateData.CONTENT || "",
           KEYWORDS: templateData.KEYWORDS || prev.KEYWORDS,
           SHOW_HEADER: Number(savedHeader),
@@ -296,7 +306,16 @@ export default function LetterCreatorPage() {
     fetchemployeedata();
     fetchExistingTemplateName();
     empdataapi();
-  }, [user, getCompCode, getSignatory, fetchCompLogoAndMarutiLogo, printapi, fetchemployeedata, fetchExistingTemplateName, empdataapi]);
+  }, [
+    user,
+    getCompCode,
+    getSignatory,
+    fetchCompLogoAndMarutiLogo,
+    printapi,
+    fetchemployeedata,
+    fetchExistingTemplateName,
+    empdataapi,
+  ]);
 
   useEffect(() => {
     empdataapi();
@@ -331,10 +350,13 @@ export default function LetterCreatorPage() {
       return `${day}-${month}-${year}`;
     };
 
-    const title =
-      formData?.TEMPLATE_NAME?.toUpperCase()?.includes("MARATHI")
-        ? (SelectEmployeedata?.GENDER?.toLowerCase() === "female" ? "सौ." : "श्री.")
-        : (SelectEmployeedata?.GENDER?.toLowerCase() === "female" ? "Ms." : "Mr.");
+    const title = formData?.TEMPLATE_NAME?.toUpperCase()?.includes("MARATHI")
+      ? SelectEmployeedata?.GENDER?.toLowerCase() === "female"
+        ? "सौ."
+        : "श्री."
+      : SelectEmployeedata?.GENDER?.toLowerCase() === "female"
+        ? "Ms."
+        : "Mr.";
 
     const signatureHTML = signatory?.File_Path
       ? `
@@ -357,7 +379,10 @@ export default function LetterCreatorPage() {
       TITLE: title,
       NAME: SelectEmployeedata?.NAME || SelectEmployeedata?.EMPNAME || "",
       EMPNAME: SelectEmployeedata?.EMPNAME || SelectEmployeedata?.NAME || "",
-      DESIGNATION: SelectEmployeedata?.DESIGNATION || SelectEmployeedata?.designation || "",
+      DESIGNATION:
+        SelectEmployeedata?.DESIGNATION ||
+        SelectEmployeedata?.designation ||
+        "",
       CTC: SelectEmployeedata?.CURRENT_CTC
         ? `₹ ${Number(SelectEmployeedata.CURRENT_CTC).toLocaleString("en-IN")}`
         : SelectEmployeedata?.CTC || "",
@@ -368,7 +393,13 @@ export default function LetterCreatorPage() {
       EMPJOINDATE: formatDateDDMMYYYY(SelectEmployeedata?.EMPJOINDATE),
       COMPNAME: company?.Comp_Name,
       TODAYDATE: formatDateDDMMYYYY(new Date()),
-      COMPCODE: SelectEmployeedata?.EMPCODE || (compCode || user?.Comp_Code ? String(compCode || user?.Comp_Code).toUpperCase().split("-")[0] : ""),
+      COMPCODE:
+        SelectEmployeedata?.EMPCODE ||
+        (compCode || user?.Comp_Code
+          ? String(compCode || user?.Comp_Code)
+              .toUpperCase()
+              .split("-")[0]
+          : ""),
       SIGN_IMAGE: signatureHTML,
     };
 
@@ -388,21 +419,40 @@ export default function LetterCreatorPage() {
       const regexWithBraces = new RegExp(`\\{${key}\\}`, "gi");
       content = content?.replace(
         regexWithBraces,
-        placeholdersMap[key] !== undefined && placeholdersMap[key] !== null ? placeholdersMap[key] : ""
+        placeholdersMap[key] !== undefined && placeholdersMap[key] !== null
+          ? placeholdersMap[key]
+          : "",
       );
       const regex = new RegExp(`\\b${key}\\b`, "gi");
       content = content?.replace(
         regex,
-        placeholdersMap[key] !== undefined && placeholdersMap[key] !== null ? placeholdersMap[key] : ""
+        placeholdersMap[key] !== undefined && placeholdersMap[key] !== null
+          ? placeholdersMap[key]
+          : "",
       );
     });
 
     setGeneratedLetter(content || "");
-  }, [formData.CONTENT, formData.KEYWORDS, SelectEmployeedata, formData.TEMPLATE_NAME, company, signatory, getCompCode, user?.Comp_Code]);
+  }, [
+    formData.CONTENT,
+    formData.KEYWORDS,
+    SelectEmployeedata,
+    formData.TEMPLATE_NAME,
+    company,
+    signatory,
+    getCompCode,
+    user?.Comp_Code,
+  ]);
 
   useEffect(() => {
     generateLetter();
-  }, [formData.CONTENT, formData.KEYWORDS, SelectEmployeedata, formData.TEMPLATE_NAME, generateLetter]);
+  }, [
+    formData.CONTENT,
+    formData.KEYWORDS,
+    SelectEmployeedata,
+    formData.TEMPLATE_NAME,
+    generateLetter,
+  ]);
 
   // ── Handlers ──
   const handleContentChange = (value: string) => {
@@ -479,7 +529,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.status === 200) {
         Swal.fire({
@@ -536,7 +586,7 @@ export default function LetterCreatorPage() {
             compcode: compCode,
             name: user?.name || "",
           },
-        }
+        },
       );
       if (response.status === 200) {
         Swal.fire({
@@ -585,18 +635,101 @@ export default function LetterCreatorPage() {
               size: A4 portrait;
               margin: 15mm 20mm;
             }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              color: #0f172a;
-              line-height: 1.8;
-              font-size: 14px;
-              margin: 0;
-              padding: 0;
-              background: #ffffff;
-            }
-            img { max-width: 100%; }
-            .grid { display: flex; justify-content: space-between; align-items: center; }
-            hr { border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0; }
+           {showHeader && (
+  <div
+    className="mb-4 w-full min-w-0"
+    style={{ width: "100%" }}
+  >
+    <div
+      className="grid grid-cols-12 items-center gap-2 w-full min-w-0"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "70px minmax(0, 1fr) 100px",
+        alignItems: "center",
+        columnGap: "10px",
+        width: "100%",
+      }}
+    >
+      {/* Company Logo */}
+      <div className="flex items-center justify-start min-w-0">
+        <Image
+          src={compLogo || "/logo.png"}
+          alt="Company logo"
+          className="object-contain"
+          width={65}
+          height={45}
+          style={{
+            width: "65px",
+            height: "45px",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+
+      {/* Company Name & Location */}
+      <div
+        className="flex flex-col items-center justify-center text-center min-w-0"
+        style={{
+          textAlign: "center",
+          overflowWrap: "anywhere",
+          minWidth: 0,
+        }}
+      >
+        <h2
+          className="font-bold text-xs sm:text-base"
+          style={{
+            margin: 0,
+            fontSize: "14px",
+            lineHeight: 1.35,
+            fontWeight: 700,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {company?.Comp_Name ||
+            SelectEmployeedata?.COMPANY_NAME_EMP ||
+            ""}
+        </h2>
+
+        <p
+          className="text-xs"
+          style={{
+            margin: "3px 0 0",
+            fontSize: "11px",
+            lineHeight: 1.4,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {SelectEmployeedata?.EMPLOCATION || ""}
+        </p>
+      </div>
+
+      {/* Maruti / Partner Logo */}
+      <div className="flex items-center justify-end min-w-0">
+        <Image
+          src={MarutiLogo || "/maruti.png"}
+          alt="Maruti logo"
+          className="object-contain"
+          width={95}
+          height={50}
+          style={{
+            width: "95px",
+            height: "50px",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+    </div>
+
+    <hr
+      className="mt-2 border-slate-200 dark:border-slate-700"
+      style={{
+        border: 0,
+        borderTop: "1px solid #cbd5e1",
+        marginTop: "8px",
+      }}
+    />
+  </div>
+)}
           </style>
         </head>
         <body>
@@ -610,6 +743,27 @@ export default function LetterCreatorPage() {
       printWindow.print();
       printWindow.close();
     }, 300);
+  };
+
+  type PreviewSpacing = {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+
+  const [previewSpacing, setPreviewSpacing] = useState<PreviewSpacing>({
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10,
+  });
+
+  const handlePreviewSpacing = (side: keyof PreviewSpacing, value: number) => {
+    setPreviewSpacing((prev) => ({
+      ...prev,
+      [side]: value,
+    }));
   };
 
   // ── Format Options ──
@@ -648,6 +802,49 @@ export default function LetterCreatorPage() {
     }));
   }, [existingTemplateName]);
 
+  const SuggestionToken = [
+    "SESSION",
+    "EMPNAME",
+    "EMPADDRESSP",
+    "EMPPAN",
+    "EMPDOB",
+    "EMPGENDER",
+    "EMPFATHERNAME",
+    "PROBATION_",
+    "EMPEMAIL",
+    "EMPMONTHLYCTC",
+    "EMPANNUALCTC",
+    "EMPBRANCH",
+    "EMPADDRESSC",
+    "EMPDESIGNATION",
+    "GENDER",
+    "EMPDEPARTMENT",
+    "EMPLOCATION",
+    "COMPANY_NAME_EMP",
+    "EMPCODE",
+    "EMPMOB",
+    "EMPJOINDATE",
+    "EMPLASTDATE",
+    "Basic_",
+    "HRA_",
+    "DA_",
+    "Medical_",
+    "Uniform_",
+    "Washing_",
+    "Gross_Salary_",
+    "Conveyance_",
+    "TITLE",
+    "NAME",
+    "DESIGNATION",
+    "CTC",
+    "CURRENT_CTC",
+    "PROBATION_PERIOD",
+    "COMPNAME",
+    "TODAYDATE",
+    "COMPCODE",
+    "SIGN_IMAGE",
+  ];
+
   // ── Available Merge Tokens ──
   const availableTokens = [
     { key: "TITLE", label: "TITLE", icon: User },
@@ -664,8 +861,10 @@ export default function LetterCreatorPage() {
 
   const usedTokensCount = useMemo(() => {
     const content = formData.CONTENT || "";
-    return availableTokens.filter((t) =>
-      content.includes(`{${t.key}}`) || new RegExp(`\\b${t.key}\\b`, "i").test(content)
+    return availableTokens.filter(
+      (t) =>
+        content.includes(`{${t.key}}`) ||
+        new RegExp(`\\b${t.key}\\b`, "i").test(content),
     ).length;
   }, [formData.CONTENT]);
 
@@ -683,7 +882,6 @@ export default function LetterCreatorPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-24">
-
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER & MAIN ACTION BUTTONS */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -693,23 +891,58 @@ export default function LetterCreatorPage() {
             Letter template creator
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Write once with merge tokens; every employee gets their own copy. The preview on the right uses a sample record.
+            Write once with merge tokens; every employee gets their own copy.
+            The preview on the right uses a sample record.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
           <AButton
+            type="button"
             variant="outline"
             size="lg"
             onClick={handlePrint}
-            icon={<Printer className="h-4 w-4" />}
-            className="!rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xs"
+            icon={<Printer className="h-4 w-4 shrink-0" />}
+            className="
+      !rounded-xl
+      border-slate-300 dark:border-slate-700
+      bg-white dark:bg-slate-900 shadow-xs
+      !h-11
+      w-full sm:w-[110px] md:w-[130px] lg:w-[140px]
+      min-w-0
+      !px-2 sm:!px-3
+      !justify-center
+      text-xs sm:text-sm
+      whitespace-nowrap
+    "
           >
             <span>Print letter</span>
           </AButton>
 
-          
-
+          <AButton
+            type="button"
+            variant="primary"
+            size="lg"
+            disabled={Boolean(fetchdata.TEMPLATENAME)}
+            onClick={save}
+            loading={isSaving}
+            icon={<Save className="h-4 w-4 shrink-0" />}
+            className="
+      !rounded-xl
+      !bg-[#4338CA] hover:!bg-[#3730a3]
+      text-white shadow-xs
+      disabled:opacity-50
+      !h-11
+      w-full sm:w-[110px] md:w-[130px] lg:w-[140px]
+      min-w-0
+      !px-2 sm:!px-3
+      !justify-center
+      text-xs sm:text-sm
+      whitespace-nowrap
+    "
+          >
+            <span>Save</span>
+          </AButton>
         </div>
       </div>
 
@@ -741,14 +974,17 @@ export default function LetterCreatorPage() {
                   handleInputChange={handleSelectChange}
                   placeholder="Select employee data..."
                   ShortName
+                  className="h-[32px]"
                 />
               </div>
 
               <div>
                 <Einput
-                  title="TEMPLATE NAME *"
+                  title="TEMPLATE NAME "
+                  redlabel="*"
                   type="text"
                   name="TEMPLATE_NAME"
+                  className="h-[30.5px]"
                   value={formData.TEMPLATE_NAME}
                   handleInputChange={handleSelectChange}
                   placeholder="e.g. Appointment letter — Sales"
@@ -767,6 +1003,7 @@ export default function LetterCreatorPage() {
                   handleInputChange={handleSelectChange}
                   placeholder="Select template..."
                   ShortName
+                  className="h-[32px]"
                 />
               </div>
 
@@ -776,11 +1013,15 @@ export default function LetterCreatorPage() {
                   title="HEADER & FOOTER"
                   name="HEADER_FOOTER"
                   option={headerFooterOptions}
+                  className="h-[32px]"
                   initialValue={showHeader ? "1" : "0"}
                   handleInputChange={(name, value) => {
                     const val = Number(value) === 1;
                     setShowHeader(val);
-                    setFormData((prev) => ({ ...prev, SHOW_HEADER: Number(value) }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      SHOW_HEADER: Number(value),
+                    }));
                   }}
                   ShortName
                 />
@@ -816,7 +1057,9 @@ export default function LetterCreatorPage() {
                 const IconComp = token.icon;
                 const isUsed =
                   (formData.CONTENT || "").includes(`{${token.key}}`) ||
-                  new RegExp(`\\b${token.key}\\b`, "i").test(formData.CONTENT || "");
+                  new RegExp(`\\b${token.key}\\b`, "i").test(
+                    formData.CONTENT || "",
+                  );
 
                 return (
                   <AButton
@@ -824,10 +1067,11 @@ export default function LetterCreatorPage() {
                     type="button"
                     onClick={() => handleInsertToken(token.key)}
                     title={`Click to insert {${token.key}}`}
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-pointer select-none active:scale-95 ${isUsed
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-pointer select-none active:scale-95 ${
+                      isUsed
                         ? "bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
                         : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300"
-                      }`}
+                    }`}
                   >
                     <IconComp className="h-3 w-3 shrink-0" />
                     <span>{token.label}</span>
@@ -856,10 +1100,10 @@ export default function LetterCreatorPage() {
               <CustomRichEditor
                 value={formData.CONTENT}
                 onChange={handleContentChange}
-                placeholder="Enter letter content here... (Ctrl+Space for keywords)"
-                keywordsList={formData.KEYWORDS}
+                placeholder="Enter letter content here..."
                 defaultHeight={420}
                 className="w-full"
+                keywordsList={SuggestionToken}
               />
             </div>
           </div>
@@ -919,6 +1163,76 @@ export default function LetterCreatorPage() {
               />
             </div>
 
+            {/* Preview Spacing Controls */}
+            <div className="mt-3 mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                    Preview Spacing
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Adjust content spacing from each side (in pixels).
+                  </p>
+                </div>
+
+                <AButton
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  onClick={() =>
+                    setPreviewSpacing({
+                      top: 10,
+                      bottom: 10,
+                      left: 10,
+                      right: 10,
+                    })
+                  }
+                  className="!rounded-lg"
+                >
+                  Reset spacing
+                </AButton>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+                {(
+                  [
+                    { key: "top", label: "Top spacing" },
+                    { key: "bottom", label: "Bottom spacing" },
+                    { key: "left", label: "Left spacing" },
+                    { key: "right", label: "Right spacing" },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-2">
+                      <label
+                        htmlFor={`preview-${key}`}
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                      >
+                        {label}
+                      </label>
+
+                      <span className="text-xs font-bold tabular-nums text-indigo-600 dark:text-indigo-400">
+                        {previewSpacing[key]} px
+                      </span>
+                    </div>
+
+                    <input
+                      id={`preview-${key}`}
+                      type="range"
+                      min={0}
+                      max={120}
+                      step={1}
+                      value={previewSpacing[key]}
+                      onChange={(e) =>
+                        handlePreviewSpacing(key, Number(e.target.value))
+                      }
+                      className="w-full cursor-pointer accent-indigo-600"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Generated Letter Container matching componentRef */}
             <div className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0E1524] p-2 sm:p-5 overflow-hidden">
               <div
@@ -926,9 +1240,10 @@ export default function LetterCreatorPage() {
                 id="generatedLetter"
                 className="break-words font-sans bg-white dark:bg-[#101827] text-[#0F172A] dark:text-[#E2E8F0] rounded-xl border border-slate-200 dark:border-slate-800 shadow-md p-3 sm:p-6 lg:p-9 min-h-[700px] flex flex-col w-full min-w-0"
                 style={{
-                  paddingTop: showHeader ? "10px" : "120px",
-                  paddingLeft: "10px",
-                  paddingRight: "10px",
+                  paddingTop: `${previewSpacing.top}px`,
+                  paddingBottom: `${previewSpacing.bottom}px`,
+                  paddingLeft: `${previewSpacing.left}px`,
+                  paddingRight: `${previewSpacing.right}px`,
                   fontSize: "14px",
                   lineHeight: "1.8",
                   overflowY: "auto",
@@ -937,101 +1252,228 @@ export default function LetterCreatorPage() {
                 }}
               >
                 {showHeader && (
-                  <>
-                    <div className="grid grid-cols-12 mb-4 min-w-0">
-                      <div className="col-span-12">
-                        <div className="grid grid-cols-12 items-center min-w-0">
-                          {/* Company Logo */}
-                          <div className="col-span-4 min-w-0 flex items-center">
-                            <Image
-                              src={compLogo || "/logo.png"}
-                              alt="company logo"
-                              className="object-contain"
-                              width={80}
-                              height={60}
-                            />
-                          </div>
-
-                          {/* Company Name & Location */}
-                          <div className="col-span-4 min-w-0 flex flex-col items-center justify-center text-center px-1">
-                            <h2 className="font-bold text-xs sm:text-lg break-words">{SelectEmployeedata?.COMPANY_NAME_EMP || company?.Comp_Name || ""}</h2>
-                            <p>{SelectEmployeedata?.EMPLOCATION || ""}</p>
-                          </div>
-
-                          {/* Maruti / Partner Logo */}
-                          <div className="col-span-4 min-w-0 flex justify-end">
-                            <div className="h-full min-w-0 flex items-center justify-end">
-                              <Image
-                                src={MarutiLogo || "/maruti.png"}
-                                alt="company logo"
-                                className="object-contain"
-                                width={180}
-                                height={120}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                  <div
+                    className="mb-4 w-full min-w-0"
+                    style={{ width: "100%" }}
+                  >
+                    <div
+                      className="grid grid-cols-12 items-center gap-2 w-full min-w-0"
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "70px minmax(0, 1fr) 100px",
+                        alignItems: "center",
+                        columnGap: "10px",
+                        width: "100%",
+                      }}
+                    >
+                      {/* Company Logo */}
+                      <div className="flex items-center justify-start min-w-0">
+                        <Image
+                          src={compLogo || "/logo.png"}
+                          alt="Company logo"
+                          className="object-contain"
+                          width={65}
+                          height={45}
+                          style={{
+                            width: "65px",
+                            height: "45px",
+                            objectFit: "contain",
+                          }}
+                        />
                       </div>
-                      <hr className="mt-2 col-span-12 border-slate-200 dark:border-slate-700" />
+
+                      {/* Company Name & Location */}
+                      <div
+                        className="flex flex-col items-center justify-center text-center min-w-0"
+                        style={{
+                          textAlign: "center",
+                          overflowWrap: "anywhere",
+                          minWidth: 0,
+                        }}
+                      >
+                        <h2
+                          className="font-bold text-xs sm:text-base"
+                          style={{
+                            margin: 0,
+                            fontSize: "14px",
+                            lineHeight: 1.35,
+                            fontWeight: 700,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {company?.Comp_Name ||
+                            SelectEmployeedata?.COMPANY_NAME_EMP ||
+                            ""}
+                        </h2>
+
+                        <p
+                          className="text-xs"
+                          style={{
+                            margin: "3px 0 0",
+                            fontSize: "11px",
+                            lineHeight: 1.4,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {SelectEmployeedata?.EMPLOCATION || ""}
+                        </p>
+                      </div>
+
+                      {/* Maruti / Partner Logo */}
+                      <div className="flex items-center justify-end min-w-0">
+                        <Image
+                          src={MarutiLogo || "/maruti.png"}
+                          alt="Maruti logo"
+                          className="object-contain"
+                          width={95}
+                          height={50}
+                          style={{
+                            width: "95px",
+                            height: "50px",
+                            objectFit: "contain",
+                          }}
+                        />
+                      </div>
                     </div>
-                  </>
+
+                    <hr
+                      className="mt-2 border-slate-200 dark:border-slate-700"
+                      style={{
+                        border: 0,
+                        borderTop: "1px solid #cbd5e1",
+                        marginTop: "8px",
+                      }}
+                    />
+                  </div>
                 )}
-                <div dangerouslySetInnerHTML={{ __html: generatedLetter }} className="mt-8 min-w-0 break-words overflow-wrap-anywhere" />
+                <div
+                  dangerouslySetInnerHTML={{ __html: generatedLetter }}
+                  className="mt-8 min-w-0 break-words overflow-wrap-anywhere"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────────────────────────────── */}
-      {/* 3. BOTTOM FLOATING ACTION BAR */}
-      {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3 px-3 sm:px-6 shadow-lg transition-[left] duration-150 ease-in-out">
-        <div className="max-w-[1780px] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="text-xl text-slate-500 dark:text-slate-400 truncate max-w-xl">
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              {formData.TEMPLATE_NAME || "Untitled Template"}
-            </span>
-            {" · "}
-            <span>
-              {showHeader ? "Header & Footer : Yes" : "Header & Footer : No"}
-            </span>
-            {" · "}
-            <span className="tabular-nums">{wordCount} words</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-            <AButton
-              variant="outline"
-              size="lg"
-              onClick={refresh}
-              className="!rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 max-w-full"
+      {/* ────────────────────────────────────────────────────────────── */}
+      {/* 3. RESPONSIVE BOTTOM FLOATING ACTION BAR */}
+      {/* ────────────────────────────────────────────────────────────── */}
+      <div
+        className="
+    fixed bottom-0
+    left-0 sm:left-[var(--sidebar-width,68px)]
+    right-0 z-40
+    bg-white/95 dark:bg-[#0B1220]/95
+    backdrop-blur-md
+    border-t border-slate-200 dark:border-slate-800
+    shadow-lg
+    transition-[left] duration-150 ease-in-out
+    px-3 sm:px-5 lg:px-6
+    py-3
+    max-h-[45vh] overflow-y-auto
+  "
+      >
+        <div className="w-full max-w-[1780px] mx-auto">
+          <div
+            className="
+        flex flex-col
+        lg:flex-row
+        lg:items-center
+        lg:justify-between
+        gap-3 lg:gap-5
+      "
+          >
+            {/* Template information */}
+            <div
+              className="
+          min-w-0 w-full lg:flex-1
+          text-xs sm:text-sm
+          text-slate-500 dark:text-slate-400
+          flex flex-wrap items-center gap-x-2 gap-y-1
+          leading-relaxed
+        "
             >
-              <span>Discard changes</span>
-            </AButton>
+              <span className="font-semibold text-slate-700 dark:text-slate-200 break-words">
+                {formData.TEMPLATE_NAME?.trim() || "Untitled Template"}
+              </span>
 
-            <AButton
-              variant="secondary"
-              size="lg"
-              disabled={!fetchdata.TEMPLATENAME}
-              onClick={update}
-              loading={isUpdating}
-              className="!rounded-xl shadow-xs disabled:opacity-50"
-            >
-              <span>Update template</span>
-            </AButton>
+              <span className="hidden sm:inline">·</span>
 
-            <AButton
-              variant="primary"
-              size="lg"
-              disabled={Boolean(fetchdata.TEMPLATENAME)}
-              onClick={save}
-              loading={isSaving}
-              icon={<Save className="h-4 w-4" />}
-              className="!rounded-xl !bg-[#4338CA] hover:!bg-[#3730a3] text-white shadow-xs disabled:opacity-50"
+              <span>
+                {showHeader ? "Header & Footer: Yes" : "Header & Footer: No"}
+              </span>
+
+              <span className="hidden sm:inline">·</span>
+
+              <span className="tabular-nums whitespace-nowrap">
+                {wordCount} words
+              </span>
+            </div>
+
+            {/* Action buttons */}
+            <div
+              className="
+          grid grid-cols-1
+          sm:grid-cols-3
+          gap-2
+          w-full lg:w-auto
+          lg:shrink-0
+        "
             >
-              <span>Save template</span>
-            </AButton>
+              <AButton
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={refresh}
+                className="
+            !rounded-xl
+            border-slate-300 dark:border-slate-700
+            bg-white dark:bg-slate-900
+            w-full !justify-center
+            whitespace-nowrap
+          "
+              >
+                <span>Discard changes</span>
+              </AButton>
+
+              <AButton
+                type="button"
+                variant="secondary"
+                size="lg"
+                disabled={!fetchdata.TEMPLATENAME}
+                onClick={update}
+                loading={isUpdating}
+                className="
+            !rounded-xl shadow-xs
+            disabled:opacity-50
+            w-full !justify-center
+            whitespace-nowrap
+          "
+              >
+                <span>Update template</span>
+              </AButton>
+
+              <AButton
+                type="button"
+                variant="primary"
+                size="lg"
+                disabled={Boolean(fetchdata.TEMPLATENAME)}
+                onClick={save}
+                loading={isSaving}
+                icon={<Save className="h-4 w-4" />}
+                className="
+            !rounded-xl
+            !bg-[#4338CA] hover:!bg-[#3730a3]
+            text-white shadow-xs
+            disabled:opacity-50
+            w-full !justify-center
+            whitespace-nowrap
+          "
+              >
+                <span>Save template</span>
+              </AButton>
+            </div>
           </div>
         </div>
       </div>

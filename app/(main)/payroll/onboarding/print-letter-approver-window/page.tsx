@@ -750,6 +750,7 @@ return (
               title="DATE FROM"
               type="date"
               name="DATE_FROM"
+              className="h-[30.5px]"
               value={dates.DATE_FROM}
               handleInputChange={handleInputChange}
             />
@@ -760,6 +761,7 @@ return (
               title="DATE TO"
               type="date"
               name="DATE_TO"
+              className="h-[30.5px]"
               value={dates.DATE_TO}
               handleInputChange={handleInputChange}
             />
@@ -769,6 +771,7 @@ return (
             <Eselect
               title="BRANCH"
               name="branch"
+              className="h-[32px]"
               option={[{ value: "", label: "All Branches" }, ...branch]}
               initialValue={dates.branch}
               handleInputChange={handleInputChange}
@@ -780,6 +783,7 @@ return (
             <Eselect
               title="STATUS"
               name="status"
+              className="h-[32px]"
               option={StatusOptions}
               initialValue={dates.status}
               handleInputChange={handleInputChange}
@@ -790,7 +794,7 @@ return (
           <div className="md:col-span-1">
             <button
               onClick={showdata}
-              className="h-9 w-full rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-sm shadow-xs flex items-center justify-center transition-all duration-150"
+              className="h-12 w-full rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-lg shadow-xs flex items-center justify-center transition-all duration-150"
             >
               Show
             </button>

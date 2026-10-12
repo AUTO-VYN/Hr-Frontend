@@ -53,7 +53,10 @@ export default function WhatsappConfirmationReportPage() {
     }
   };
 
-  const showSideAlert = (message: string, type: "success" | "warning" | "error" | "info" = "info") => {
+  const showSideAlert = (
+    message: string,
+    type: "success" | "warning" | "error" | "info" = "info",
+  ) => {
     const Toast = Swal.mixin({
       toast: true,
       position: "top-end",
@@ -100,7 +103,7 @@ export default function WhatsappConfirmationReportPage() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       if (response.data?.data?.Template) {
@@ -109,7 +112,10 @@ export default function WhatsappConfirmationReportPage() {
           return label ? { value: label, label } : null;
         }).filter(Boolean);
 
-        setExistingTemplateOptions([{ value: "ALL", label: "ALL" }, ...cleanList]);
+        setExistingTemplateOptions([
+          { value: "ALL", label: "ALL" },
+          ...cleanList,
+        ]);
       }
     } catch (err) {
       console.error("Error fetching template options:", err);
@@ -127,14 +133,18 @@ export default function WhatsappConfirmationReportPage() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const empList = response.data?.data || [];
       if (Array.isArray(empList)) {
         const cleanEmps = empList.map((emp: any) => ({
-          value: String(emp.value || emp.Emp_Code || emp.EMPCODE || emp.id || ""),
-          label: String(emp.label || emp.EMPNAME || emp.Empname || emp.value || ""),
+          value: String(
+            emp.value || emp.Emp_Code || emp.EMPCODE || emp.id || "",
+          ),
+          label: String(
+            emp.label || emp.EMPNAME || emp.Empname || emp.value || "",
+          ),
         }));
         setEmpCodeOptions([{ value: "ALL", label: "ALL" }, ...cleanEmps]);
       }
@@ -176,14 +186,16 @@ export default function WhatsappConfirmationReportPage() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
       const records = result?.data?.Result || result?.data?.data || [];
       if (Array.isArray(records)) {
         const enrichedRecords = records.map((rec: any, idx: number) => ({
           ...rec,
-          row_id: rec.id || `${rec.EMPCODE || "emp"}_${rec.Letter_Name || "let"}_${rec.Created_At || "date"}_${idx}`,
+          row_id:
+            rec.id ||
+            `${rec.EMPCODE || "emp"}_${rec.Letter_Name || "let"}_${rec.Created_At || "date"}_${idx}`,
         }));
         setTableData(enrichedRecords);
       } else {
@@ -244,7 +256,8 @@ export default function WhatsappConfirmationReportPage() {
         width: 140,
         filterPlaceholder: "All empcode",
         Cell: ({ value, row }: any) => {
-          const val = value || row.original?.Emp_Code || row.original?.empcode || "—";
+          const val =
+            value || row.original?.Emp_Code || row.original?.empcode || "—";
           return (
             <span className="font-medium text-slate-800 dark:text-slate-200 text-[14px]">
               {val}
@@ -258,7 +271,11 @@ export default function WhatsappConfirmationReportPage() {
         width: 200,
         filterPlaceholder: "All employee name",
         Cell: ({ value, row }: any) => {
-          const val = value || row.original?.EMPNAME || row.original?.Employee_Name || "—";
+          const val =
+            value ||
+            row.original?.EMPNAME ||
+            row.original?.Employee_Name ||
+            "—";
           return (
             <span className="font-medium text-slate-900 dark:text-slate-100 text-[14px]">
               {val}
@@ -272,7 +289,8 @@ export default function WhatsappConfirmationReportPage() {
         width: 200,
         filterPlaceholder: "All letter name",
         Cell: ({ value, row }: any) => {
-          const val = value || row.original?.Template || row.original?.template || "—";
+          const val =
+            value || row.original?.Template || row.original?.template || "—";
           return (
             <span className="font-normal text-slate-800 dark:text-slate-200 text-[14px]">
               {val}
@@ -301,7 +319,8 @@ export default function WhatsappConfirmationReportPage() {
           { value: "pdf", label: "View PDF" },
         ],
         Cell: ({ value, row }: any) => {
-          const filePath = value || row.original?.Path || row.original?.file_path;
+          const filePath =
+            value || row.original?.Path || row.original?.file_path;
           const publicUrl = filePath
             ? filePath.startsWith("http")
               ? filePath
@@ -348,7 +367,11 @@ export default function WhatsappConfirmationReportPage() {
           const raw = value ?? row.original?.STATUS;
 
           // Pending -> Yellow
-          if (raw === 0 || raw === "0" || String(raw).toLowerCase() === "pending") {
+          if (
+            raw === 0 ||
+            raw === "0" ||
+            String(raw).toLowerCase() === "pending"
+          ) {
             return (
               <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-400 dark:border-yellow-800/40">
                 <span className="w-2 h-2 rounded-full bg-yellow-500" />
@@ -358,7 +381,12 @@ export default function WhatsappConfirmationReportPage() {
           }
 
           // Delivered / Accepted -> Sky blue
-          if (raw === 1 || raw === "1" || String(raw).toLowerCase() === "delivered" || String(raw).toLowerCase() === "accepted") {
+          if (
+            raw === 1 ||
+            raw === "1" ||
+            String(raw).toLowerCase() === "delivered" ||
+            String(raw).toLowerCase() === "accepted"
+          ) {
             return (
               <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-sky-50 text-sky-700 border border-sky-200/80 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-800/40">
                 <span className="w-2 h-2 rounded-full bg-sky-500" />
@@ -368,7 +396,11 @@ export default function WhatsappConfirmationReportPage() {
           }
 
           // Read -> Emerald Green
-          if (raw === 3 || raw === "3" || String(raw).toLowerCase() === "read") {
+          if (
+            raw === 3 ||
+            raw === "3" ||
+            String(raw).toLowerCase() === "read"
+          ) {
             return (
               <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/40">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -378,7 +410,12 @@ export default function WhatsappConfirmationReportPage() {
           }
 
           // Failed / Rejected -> Red
-          if (raw === 2 || raw === "2" || String(raw).toLowerCase() === "failed" || String(raw).toLowerCase() === "rejected") {
+          if (
+            raw === 2 ||
+            raw === "2" ||
+            String(raw).toLowerCase() === "failed" ||
+            String(raw).toLowerCase() === "rejected"
+          ) {
             return (
               <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/40">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
@@ -397,7 +434,7 @@ export default function WhatsappConfirmationReportPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   // ── Export to Excel Handler ───────────────────────────────────────────────
@@ -421,9 +458,24 @@ export default function WhatsappConfirmationReportPage() {
       const rows = tableData.map((item, index) => {
         const rawStatus = item.STATUS;
         let statusStr = "Pending";
-        if (rawStatus === 1 || rawStatus === "1" || String(rawStatus).toLowerCase() === "delivered") statusStr = "Delivered";
-        else if (rawStatus === 2 || rawStatus === "2" || String(rawStatus).toLowerCase() === "failed") statusStr = "Failed";
-        else if (rawStatus === 3 || rawStatus === "3" || String(rawStatus).toLowerCase() === "read") statusStr = "Read";
+        if (
+          rawStatus === 1 ||
+          rawStatus === "1" ||
+          String(rawStatus).toLowerCase() === "delivered"
+        )
+          statusStr = "Delivered";
+        else if (
+          rawStatus === 2 ||
+          rawStatus === "2" ||
+          String(rawStatus).toLowerCase() === "failed"
+        )
+          statusStr = "Failed";
+        else if (
+          rawStatus === 3 ||
+          rawStatus === "3" ||
+          String(rawStatus).toLowerCase() === "read"
+        )
+          statusStr = "Read";
 
         return [
           index + 1,
@@ -431,23 +483,26 @@ export default function WhatsappConfirmationReportPage() {
           item.Empname || item.EMPNAME || "—",
           item.Letter_Name || item.Template || "—",
           formatDate(item.Created_At),
-          item.path ? `https://erp.autovyn.com/backend/fetch?filePath=${item.path}` : "No resume",
+          item.path
+            ? `https://erp.autovyn.com/backend/fetch?filePath=${item.path}`
+            : "No resume",
           statusStr,
         ];
       });
 
       const csvContent =
         "data:text/csv;charset=utf-8," +
-        [exportHeaders.join(","), ...rows.map((e) => e.map((val) => `"${val}"`).join(","))].join(
-          "\n"
-        );
+        [
+          exportHeaders.join(","),
+          ...rows.map((e) => e.map((val) => `"${val}"`).join(",")),
+        ].join("\n");
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
       link.setAttribute(
         "download",
-        `Letter_WhatsApp_Confirmation_${dates.DATE_FROM}_to_${dates.DATE_TO}.csv`
+        `Letter_WhatsApp_Confirmation_${dates.DATE_FROM}_to_${dates.DATE_TO}.csv`,
       );
       document.body.appendChild(link);
       link.click();
@@ -468,7 +523,8 @@ export default function WhatsappConfirmationReportPage() {
               Letter WhatsApp confirmation
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal mt-1">
-              Delivery and read status for every letter pushed to an employee over WhatsApp.
+              Delivery and read status for every letter pushed to an employee
+              over WhatsApp.
             </p>
           </div>
 
@@ -479,7 +535,9 @@ export default function WhatsappConfirmationReportPage() {
               variant="outline"
               size="sm"
               onClick={handleResetFilters}
-              icon={<SlidersHorizontal className="w-4 h-4 text-slate-600 dark:text-slate-300" />}
+              icon={
+                <SlidersHorizontal className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              }
               className="!h-10 !px-4 bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs"
             >
               Reset filters
@@ -508,6 +566,7 @@ export default function WhatsappConfirmationReportPage() {
                 title="DATE FROM"
                 name="DATE_FROM"
                 type="date"
+                className="h-[32px]"
                 ShortName={true}
                 value={dates.DATE_FROM}
                 handleInputChange={handleDateChange}
@@ -520,6 +579,7 @@ export default function WhatsappConfirmationReportPage() {
                 title="DATE TO"
                 name="DATE_TO"
                 type="date"
+                className="h-[32px]"
                 ShortName={true}
                 value={dates.DATE_TO}
                 handleInputChange={handleDateChange}
@@ -532,6 +592,7 @@ export default function WhatsappConfirmationReportPage() {
                 title="TEMPLATE NAME"
                 name="Template"
                 ShortName={true}
+                className="h-[32px]"
                 placeholder="ALL"
                 option={existingTemplateOptions}
                 initialValue={dates.Template}
@@ -550,6 +611,7 @@ export default function WhatsappConfirmationReportPage() {
                 title="EMPLOYEE CODE"
                 name="EmpCode"
                 ShortName={true}
+                className="h-[32px]"
                 placeholder="ALL"
                 option={empCodeOptions}
                 initialValue={dates.EmpCode}
@@ -563,14 +625,14 @@ export default function WhatsappConfirmationReportPage() {
             </div>
 
             {/* SHOW BUTTON */}
-            <div className="flex items-end">
+            <div className="flex items-end min-w-0 min-[420px]:col-span-2 lg:col-span-4 xl:col-span-1">
               <AButton
                 type="button"
                 variant="primary"
                 size="lg"
                 loading={isLoading}
                 onClick={fetchReportData}
-                className="!bg-[#4F46E5] hover:!bg-[#4338CA] text-white font-semibold !rounded-lg !h-10 !px-6 !text-lg shadow-sm"
+                className="!h-10 sm:!h-12 w-full xl:w-auto !bg-[#4F46E5] hover:!bg-[#4338CA] text-white font-semibold !rounded-xl !px-5 sm:!px-7 text-base sm:text-lg shadow-sm"
               >
                 Show
               </AButton>

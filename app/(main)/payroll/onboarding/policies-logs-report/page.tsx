@@ -774,7 +774,7 @@ export default function Page() {
 
       <div className="mb-[18px] flex flex-col gap-[16px] sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="m-0 text-[23px] font-[700] leading-[1.15] tracking-[-0.025em] text-[#102A43] dark:text-white sm:text-[26px]">
+          <h1 className="m-0 text-[20px] font-[600] leading-[1.15] tracking-[-0.025em] text-[#102A43] dark:text-white sm:text-[20px]">
             Policies logs report
           </h1>
 
