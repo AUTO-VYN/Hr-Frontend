@@ -1,63 +1,18 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   Download,
   RotateCcw,
   FileText,
   FileX,
-  ExternalLink,
-  X,
   ChevronDown,
 } from "lucide-react";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import useExcelDownload from "@/app/hooks/excel-download";
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
-
-// Separate Filter Input Component to preserve focus during typing
-const ColumnFilterInput = React.memo(
-  ({
-    columnKey,
-    placeholder,
-    resetTrigger,
-    onFilterChange,
-  }: {
-    columnKey: string;
-    placeholder: string;
-    resetTrigger: number;
-    onFilterChange: (key: string, val: string) => void;
-  }) => {
-    const [val, setVal] = useState("");
-
-    // Reset when resetTrigger increments
-    useEffect(() => {
-      setVal("");
-    }, [resetTrigger]);
-
-    return (
-      <div
-        className="mt-2 w-full font-normal normal-case"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <input
-          type="text"
-          value={val}
-          placeholder={placeholder}
-          onChange={(e) => {
-            const next = e.target.value;
-            setVal(next);
-            onFilterChange(columnKey, next);
-          }}
-          className="w-full h-8 px-2.5 text-xs sm:text-[13px] font-normal border border-slate-200 dark:border-slate-700/80 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal focus:outline-none focus:ring-1.5 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-2xs"
-        />
-      </div>
-    );
-  }
-);
-ColumnFilterInput.displayName = "ColumnFilterInput";
 
 export default function SearchResumePage() {
   const user = useCurrentUser() as any;
@@ -147,7 +102,6 @@ export default function SearchResumePage() {
     }
   }, [activePdf, pdfBlobUrl]);
 
-
   // Helper: Format CTC to 2 decimals
   const formatCtc = (val: any) => {
     if (val === null || val === undefined || val === "") return "0.00";
@@ -203,7 +157,30 @@ export default function SearchResumePage() {
           ? response.data.data
           : [];
 
-      const sorted = [...resData].sort((a, b) => (b.TRAN_ID || 0) - (a.TRAN_ID || 0));
+      const normalized = resData.map((cand: any) => ({
+        ...cand,
+        NAME: cand.NAME?.trim() || "",
+        EMAIL: cand.EMAIL?.trim() || "",
+        MOB_NO: cand.MOB_NO?.trim() || "",
+        HIGH_QUAL: cand.HIGH_QUAL?.trim() || cand.HIGH_QUALIFICATION?.trim() || cand.QUALIFICATION?.trim() || "",
+        PASSING_PER: cand.PASSING_PER !== undefined && cand.PASSING_PER !== null && cand.PASSING_PER !== ""
+          ? String(cand.PASSING_PER).trim()
+          : cand.PERCENTAGE !== undefined && cand.PERCENTAGE !== null && cand.PERCENTAGE !== ""
+            ? String(cand.PERCENTAGE).trim()
+            : "",
+        GENDER: cand.GENDER?.trim() || "",
+        EXP_IN_YEAR: cand.EXP_IN_YEAR !== undefined && cand.EXP_IN_YEAR !== null && cand.EXP_IN_YEAR !== ""
+          ? String(cand.EXP_IN_YEAR).trim()
+          : "0",
+        CURRENT_CTC: cand.CURRENT_CTC !== undefined && cand.CURRENT_CTC !== null && cand.CURRENT_CTC !== ""
+          ? formatCtc(cand.CURRENT_CTC)
+          : "0.00",
+        DESIGNATION: cand.DESIGNATION?.trim() || "",
+        SKILLS: cand.SKILLS?.trim() || "",
+        loc_code: cand.loc_code?.trim() || cand.LOC_CODE1?.trim() || cand.LOC_CODE?.trim() || cand.LOCATION?.trim() || cand.BRANCH?.trim() || "",
+      }));
+
+      const sorted = [...normalized].sort((a, b) => (b.TRAN_ID || 0) - (a.TRAN_ID || 0));
       setAllData(sorted);
     } catch (err: any) {
       console.error("Error fetching candidates in Search Resume:", err);
@@ -244,79 +221,18 @@ export default function SearchResumePage() {
 
   // Filtered dataset
   const filteredData = useMemo(() => {
-    return allData.filter((item) => {
-      // 1. Name
-      if (filters.NAME) {
-        const query = filters.NAME.toLowerCase().trim();
-        const val = String(item.NAME || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 2. Email
-      if (filters.EMAIL) {
-        const query = filters.EMAIL.toLowerCase().trim();
-        const val = String(item.EMAIL || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 3. Mobile
-      if (filters.MOB_NO) {
-        const query = filters.MOB_NO.toLowerCase().trim();
-        const val = String(item.MOB_NO || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 4. Qualification
-      if (filters.HIGH_QUALIFICATION) {
-        const query = filters.HIGH_QUALIFICATION.toLowerCase().trim();
-        const val = String(
-          item.HIGH_QUAL || item.HIGH_QUALIFICATION || item.QUALIFICATION || ""
-        ).toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 5. Percentage
-      if (filters.PERCENTAGE) {
-        const query = filters.PERCENTAGE.toLowerCase().trim();
-        const val = String(item.PASSING_PER ?? item.PERCENTAGE ?? "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 6. Gender
-      if (filters.GENDER) {
-        const query = filters.GENDER.toLowerCase().trim();
-        const val = String(item.GENDER || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 7. Experience
-      if (filters.EXP_IN_YEAR) {
-        const query = filters.EXP_IN_YEAR.toLowerCase().trim();
-        const val = String(item.EXP_IN_YEAR ?? "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 8. Current CTC
-      if (filters.CURRENT_CTC) {
-        const query = filters.CURRENT_CTC.toLowerCase().trim();
-        const val = String(item.CURRENT_CTC ?? "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 9. Designation
-      if (filters.DESIGNATION) {
-        const query = filters.DESIGNATION.toLowerCase().trim();
-        const val = String(item.DESIGNATION || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 10. Skills
-      if (filters.SKILLS) {
-        const query = filters.SKILLS.toLowerCase().trim();
-        const val = String(item.SKILLS || "").toLowerCase();
-        if (!val.includes(query)) return false;
-      }
-      // 11. Location
-      if (filters.LOC_CODE1) {
-        const query = filters.LOC_CODE1.toLowerCase().trim();
-        const val = String(
-          item.loc_code || item.LOC_CODE1 || item.LOC_CODE || item.LOCATION || item.BRANCH || ""
-        ).toLowerCase();
-        if (!val.includes(query)) return false;
-      }
+    const activeEntries = Object.entries(filters).filter(
+      ([_, v]) => v && String(v).trim() !== ""
+    );
+    if (activeEntries.length === 0) return allData;
 
-      return true;
+    return allData.filter((item) => {
+      return activeEntries.every(([key, filterVal]) => {
+        const query = String(filterVal).toLowerCase().trim();
+        const rawVal = item[key];
+        if (rawVal === undefined || rawVal === null) return false;
+        return String(rawVal).toLowerCase().includes(query);
+      });
     });
   }, [allData, filters]);
 
@@ -334,276 +250,225 @@ export default function SearchResumePage() {
       { Header: "DESIGNATION", accessor: "DESIGNATION" },
       { Header: "SKILLS", accessor: "SKILLS" },
       { Header: "LOCATION", accessor: "loc_code" },
-
     ];
     handleExcelDownload(exportCols, filteredData);
   };
 
-  // ReactTable Columns configuration
+  // ReactTable Columns configuration (Clean headers, dropdown filter placeholders, HTML-aligned font styles)
   const columns = useMemo(
     () => [
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[170px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              NAME
-            </span>
-            <ColumnFilterInput
-              columnKey="NAME"
-              placeholder="All name"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "NAME",
         accessor: "NAME",
-        Cell: ({ row }: any) => (
-          <span className="font-semibold text-slate-900 dark:text-white text-[15px] sm:text-base truncate block max-w-[210px]">
-            {row.original.NAME || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All name",
+        Cell: ({ value, row }: any) => {
+          const val = value || row.original?.NAME;
+          return (
+            <span
+              className="font-semibold text-slate-900 dark:text-slate-100 text-[12.5px] truncate block max-w-[200px]"
+              title={val}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[200px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              EMAIL
-            </span>
-            <ColumnFilterInput
-              columnKey="EMAIL"
-              placeholder="All email"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "EMAIL",
         accessor: "EMAIL",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base truncate block max-w-[230px]">
-            {row.original.EMAIL || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All email",
+        Cell: ({ value, row }: any) => {
+          const val = value || row.original?.EMAIL;
+          return (
+            <span
+              className={`text-[12.5px] font-normal truncate block max-w-[220px] ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+              title={val}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[130px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              MOBILE NO
-            </span>
-            <ColumnFilterInput
-              columnKey="MOB_NO"
-              placeholder="All mobile"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "MOBILE NO",
         accessor: "MOB_NO",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.MOB_NO || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All mobile",
+        Cell: ({ value, row }: any) => {
+          const val = value || row.original?.MOB_NO;
+          return (
+            <span
+              className={`text-[12.5px] font-normal whitespace-nowrap ${
+                val
+                  ? "text-slate-700 dark:text-slate-300 font-mono"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[140px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              QUALIFICATION
-            </span>
-            <ColumnFilterInput
-              columnKey="HIGH_QUALIFICATION"
-              placeholder="All qualification"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "QUALIFICATION",
         accessor: "HIGH_QUAL",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.HIGH_QUAL?.trim() ||
-              row.original.HIGH_QUALIFICATION?.trim() ||
-              row.original.QUALIFICATION?.trim() ||
-              "—"}
-          </span>
-        ),
+        filterPlaceholder: "All qualification",
+        Cell: ({ value, row }: any) => {
+          const val = value?.trim() || row.original?.HIGH_QUAL?.trim();
+          return (
+            <span
+              className={`text-[12.5px] font-normal whitespace-nowrap ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[110px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              PERCENTAGE
-            </span>
-            <ColumnFilterInput
-              columnKey="PERCENTAGE"
-              placeholder="All percent"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "PERCENTAGE",
         accessor: "PASSING_PER",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.PASSING_PER !== undefined &&
-              row.original.PASSING_PER !== null &&
-              row.original.PASSING_PER !== ""
-              ? row.original.PASSING_PER
-              : row.original.PERCENTAGE !== undefined &&
-                row.original.PERCENTAGE !== null &&
-                row.original.PERCENTAGE !== ""
-                ? row.original.PERCENTAGE
-                : "—"}
-          </span>
-        ),
+        filterPlaceholder: "All percent",
+        Cell: ({ value, row }: any) => {
+          const val =
+            value !== undefined && value !== null && value !== ""
+              ? value
+              : row.original?.PASSING_PER;
+          const hasVal = val !== undefined && val !== null && val !== "";
+          return (
+            <span
+              className={`text-[12.5px] font-normal whitespace-nowrap tabular-nums ${
+                hasVal
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {hasVal ? val : "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[110px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              GENDER
-            </span>
-            <ColumnFilterInput
-              columnKey="GENDER"
-              placeholder="All gender"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "GENDER",
         accessor: "GENDER",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.GENDER || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All gender",
+        Cell: ({ value, row }: any) => {
+          const val = value?.trim() || row.original?.GENDER?.trim();
+          return (
+            <span
+              className={`text-[12.5px] font-normal whitespace-nowrap ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[115px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              EXPERIENCE
-            </span>
-            <ColumnFilterInput
-              columnKey="EXP_IN_YEAR"
-              placeholder="All experience"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "EXPERIENCE",
         accessor: "EXP_IN_YEAR",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.EXP_IN_YEAR !== undefined &&
-              row.original.EXP_IN_YEAR !== null &&
-              row.original.EXP_IN_YEAR !== ""
-              ? row.original.EXP_IN_YEAR
-              : "0"}
-          </span>
-        ),
+        filterPlaceholder: "All experience",
+        Cell: ({ value, row }: any) => {
+          const val =
+            value !== undefined && value !== null && value !== ""
+              ? value
+              : row.original?.EXP_IN_YEAR;
+          return (
+            <span className="text-[12.5px] font-normal text-slate-700 dark:text-slate-300 whitespace-nowrap tabular-nums">
+              {val !== undefined && val !== null && val !== "" ? val : "0"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[125px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              CURRENT CTC
-            </span>
-            <ColumnFilterInput
-              columnKey="CURRENT_CTC"
-              placeholder="All ctc"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "CURRENT CTC",
         accessor: "CURRENT_CTC",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {formatCtc(row.original.CURRENT_CTC)}
-          </span>
-        ),
+        filterPlaceholder: "All ctc",
+        Cell: ({ value, row }: any) => {
+          const val =
+            value !== undefined && value !== null && value !== ""
+              ? value
+              : row.original?.CURRENT_CTC;
+          return (
+            <span className="text-[12.5px] font-normal text-slate-700 dark:text-slate-300 whitespace-nowrap tabular-nums">
+              {formatCtc(val)}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[170px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              DESIGNATION
-            </span>
-            <ColumnFilterInput
-              columnKey="DESIGNATION"
-              placeholder="All designation"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "DESIGNATION",
         accessor: "DESIGNATION",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base truncate block max-w-[210px]">
-            {row.original.DESIGNATION || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All designation",
+        Cell: ({ value, row }: any) => {
+          const val = value?.trim() || row.original?.DESIGNATION?.trim();
+          return (
+            <span
+              className={`text-[12.5px] font-normal truncate block max-w-[200px] ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+              title={val}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[170px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              SKILLS
-            </span>
-            <ColumnFilterInput
-              columnKey="SKILLS"
-              placeholder="All skills"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "SKILLS",
         accessor: "SKILLS",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base truncate block max-w-[220px]">
-            {row.original.SKILLS || "—"}
-          </span>
-        ),
+        filterPlaceholder: "All skills",
+        Cell: ({ value, row }: any) => {
+          const val = value?.trim() || row.original?.SKILLS?.trim();
+          return (
+            <span
+              className={`text-[12.5px] font-normal truncate block max-w-[210px] ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+              title={val}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[130px]">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              LOCATION
-            </span>
-            <ColumnFilterInput
-              columnKey="LOC_CODE1"
-              placeholder="All location"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        ),
+        Header: "LOCATION",
         accessor: "loc_code",
-        Cell: ({ row }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 text-[15px] sm:text-base whitespace-nowrap">
-            {row.original.loc_code?.trim() ||
-              row.original.LOC_CODE1?.trim() ||
-              row.original.LOC_CODE?.trim() ||
-              row.original.LOCATION?.trim() ||
-              row.original.BRANCH?.trim() ||
-              "—"}
-          </span>
-        ),
+        filterPlaceholder: "All location",
+        Cell: ({ value, row }: any) => {
+          const val = value?.trim() || row.original?.loc_code?.trim();
+          return (
+            <span
+              className={`text-[12.5px] font-normal whitespace-nowrap ${
+                val
+                  ? "text-slate-700 dark:text-slate-300"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {val || "—"}
+            </span>
+          );
+        },
       },
       {
-        // Under RESUME column: NO input filter box as requested by user
-        Header: (
-          <div className="flex flex-col gap-1.5 w-full min-w-[120px] pb-1">
-            <span className="text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              RESUME
-            </span>
-            <div className="h-8" />
-          </div>
-        ),
+        Header: "RESUME",
         accessor: "resume_name",
+        disableFilter: true,
+        filterable: false,
         Cell: ({ row }: any) => {
           const resumeUrl = getResumeUrl(row.original);
           if (resumeUrl) {
@@ -616,23 +481,23 @@ export default function SearchResumePage() {
                     name: row.original.NAME || "Candidate",
                   })
                 }
-                className="inline-flex items-center gap-1.5 font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline cursor-pointer text-[15px] sm:text-base whitespace-nowrap transition-colors"
+                className="inline-flex items-center gap-1.5 font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline cursor-pointer text-[12px] whitespace-nowrap transition-colors"
               >
-                <FileText className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span>View PDF</span>
               </button>
             );
           }
           return (
-            <div className="inline-flex items-center gap-1.5 font-normal text-slate-400 dark:text-slate-500 text-[15px] sm:text-base whitespace-nowrap">
-              <FileX className="w-4.5 h-4.5 shrink-0" />
+            <div className="inline-flex items-center gap-1.5 font-normal text-slate-400 dark:text-slate-500 text-[12px] whitespace-nowrap">
+              <FileX className="w-4 h-4 shrink-0" />
               <span>No resume</span>
             </div>
           );
         },
       },
     ],
-    [resetTrigger, handleFilterChange, getResumeUrl]
+    [getResumeUrl]
   );
 
   return (
@@ -678,45 +543,49 @@ export default function SearchResumePage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 2. TABLE CARD WITH "Resume database" & PAGE SIZE SELECTOR */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
-        {/* Card Header Bar */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220]">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+      <div className="w-full bg-white dark:bg-[#0B1220] rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        {/* Card Header Bar (Styled matching HTML mockup) */}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220]">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white">
               Resume database
             </h2>
-            <span className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
+            <span className="text-[11.5px] font-normal text-slate-500 dark:text-slate-400 tabular-nums">
               {filteredData.length} of {allData.length} rows
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium">
+          <div className="flex items-center gap-2 text-[12px] text-slate-500 dark:text-slate-400 font-medium">
             <span>Rows</span>
             <div className="relative">
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="appearance-none h-8.5 pl-3 pr-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-semibold shadow-2xs cursor-pointer focus:outline-none focus:ring-1.5 focus:ring-indigo-500"
+                className="appearance-none h-7.5 pl-2.5 pr-6 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[12px] font-medium shadow-2xs cursor-pointer focus:outline-none focus:ring-1.5 focus:ring-indigo-500"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2 top-2.5" />
+              <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-2 top-2.5" />
             </div>
           </div>
         </div>
 
-        {/* The ReactTable component */}
+        {/* The ReactTable component with dropdown column filters */}
         <ServiceTablePagination
-          key={pageSize}
+          key={`${pageSize}-${resetTrigger}`}
           columns={columns}
-          data={filteredData}
+          data={allData}
           initialPageSize={pageSize}
+          showColumnFilters={true}
+          columnFilters={filters}
+          onColumnFilterChange={handleFilterChange}
+          columnFiltersResetTrigger={resetTrigger}
           showExcelExport={false}
           showTopSearch={false}
-          headerClassName="[&>div]:!items-start [&>div]:pt-1"
+          headerClassName="text-[10.5px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400"
         />
       </div>
 
@@ -748,77 +617,67 @@ export default function SearchResumePage() {
                   rel="noopener noreferrer"
                   className="h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 shadow-2xs"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open in Tab</span>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Open in tab</span>
                 </a>
 
                 <button
                   type="button"
                   onClick={handleDownloadPdf}
-                  className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="h-9 px-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
                 >
-                  <Download className="w-3.5 h-3.5 text-white" />
+                  <Download className="w-3.5 h-3.5" />
                   <span>Download</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActivePdf(null)}
-                  className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all cursor-pointer"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all ml-1 cursor-pointer"
                 >
-                  <X className="w-4.5 h-4.5" />
+                  ✕
                 </button>
               </div>
             </div>
 
             {/* Modal Body: PDF Viewer */}
-            <div className="flex-1 w-full h-full bg-slate-100 dark:bg-slate-950 overflow-hidden relative flex items-center justify-center">
-              {pdfLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Loading Resume PDF...
-                  </span>
+            <div className="flex-1 w-full bg-slate-100 dark:bg-slate-950 relative overflow-hidden flex items-center justify-center">
+              {pdfLoading && (
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    Loading PDF document...
+                  </p>
                 </div>
-              ) : pdfBlobUrl ? (
+              )}
+
+              {pdfError && !pdfLoading && (
+                <div className="flex flex-col items-center justify-center p-8 text-center max-w-md">
+                  <FileX className="w-12 h-12 text-slate-400 mb-3" />
+                  <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                    Failed to preview document
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
+                    The PDF could not be loaded in preview. You can still download or open it in a new tab.
+                  </p>
+                  <a
+                    href={activePdf.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-10 px-4 rounded-xl bg-indigo-600 text-white font-medium text-sm flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Open PDF in new tab
+                  </a>
+                </div>
+              )}
+
+              {!pdfLoading && !pdfError && pdfBlobUrl && (
                 <iframe
-                  src={`${pdfBlobUrl}#toolbar=1&navpanes=0`}
-                  title="Resume Preview"
+                  src={pdfBlobUrl}
+                  title="PDF Preview"
                   className="w-full h-full border-none"
                 />
-              ) : (
-                <div className="flex flex-col items-center justify-center p-6 text-center max-w-md gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-xs">
-                    <FileText className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                      Direct Preview Restricted
-                    </h4>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                      The server security policy prevents embedding this document inside an iframe. You can view or download it directly below:
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <a
-                      href={activePdf.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-xs"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>Open in New Tab</span>
-                    </a>
-                    <button
-                      type="button"
-                      onClick={handleDownloadPdf}
-                      className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Download PDF</span>
-                    </button>
-                  </div>
-                </div>
               )}
             </div>
           </div>

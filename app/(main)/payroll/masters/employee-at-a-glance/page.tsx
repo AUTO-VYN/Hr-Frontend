@@ -23,16 +23,16 @@ import AButton from "@/components/atoms/Button";
 
 const AttendanceCard = ({ attendance }: { attendance: any }) => {
   return (
-    <div className="w-full rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220] mb-3 transition-all">
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+    <div className="w-full rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-2xs dark:border-slate-800 dark:bg-[#0B1220] mb-2.5 sm:mb-3 transition-all">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">
             {attendance.EmpName}
           </h3>
-          <p className="text-sm text-slate-400">{attendance.DateDisplay}</p>
+          <p className="text-xs sm:text-sm text-slate-400 truncate">{attendance.DateDisplay}</p>
         </div>
         <span
-          className="px-3 py-1 text-sm font-semibold rounded-full shadow-2xs"
+          className="px-2.5 py-0.5 text-xs sm:text-sm font-semibold rounded-full shadow-2xs shrink-0"
           style={{
             backgroundColor: attendance.colorCode || "#EEF2FF",
             color: "#1E293B",
@@ -41,18 +41,18 @@ const AttendanceCard = ({ attendance }: { attendance: any }) => {
           {attendance.AtnStatus}
         </span>
       </div>
-      <div className="flex items-center justify-between pt-2.5 text-sm text-slate-600 dark:text-slate-300">
-        <div>
-          <p>
+      <div className="flex items-center justify-between pt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 gap-2">
+        <div className="min-w-0">
+          <p className="truncate">
             In Time: <span className="font-semibold text-slate-800 dark:text-slate-200">{attendance.In1 || "—"}</span>
           </p>
-          <p>
+          <p className="truncate">
             Out Time: <span className="font-semibold text-slate-800 dark:text-slate-200">{attendance.Out1 || "—"}</span>
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <span className="text-slate-400">Paid value: </span>
-          <span className="font-bold text-base text-indigo-600 dark:text-indigo-400">
+          <span className="font-bold text-sm sm:text-base text-indigo-600 dark:text-indigo-400">
             {attendance.paidDays}
           </span>
         </div>
@@ -101,7 +101,7 @@ export default function SalaryApproverGridPage() {
     Email: "",
     EmpName: "",
     Location: "",
-    Department: "",
+    // Department: "",
 
     startDate: null,
     AttendanceDate: null,
@@ -252,7 +252,7 @@ export default function SalaryApproverGridPage() {
         Email: data?.CORPORATEMAILID || data?.EMAIL || "",
         Designation: data?.EMPLOYEEDESIGNATION || data?.designation || "",
         MobileNo: data?.MOBILE_NO || data?.MOBILENO || "",
-        Department: data?.Department || data?.SECTION || "",
+        // Department: data?.DIVISION || "",
       }));
     } catch (error) {
       setisClicked(false);
@@ -452,15 +452,15 @@ export default function SalaryApproverGridPage() {
     months.find((m) => m.value === String(misdata.month).padStart(2, "0"))?.label?.split(" - ")?.[1] || "JUL";
 
   return (
-    <div className="w-full space-y-4 pb-8">
+    <div className="w-full space-y-3.5 sm:space-y-4 pb-8 min-w-0">
       {/* ========================================================================= */}
       {/* 1. TOP FILTER BAR */}
       {/* ========================================================================= */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220]">
-        <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220]">
+        <div className="flex flex-wrap items-end gap-2.5 sm:gap-4">
           {/* Find Employee */}
-          <div className="min-w-[240px] flex-1 sm:max-w-xs">
-            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5 tracking-tight">
+          <div className="w-full sm:flex-1 sm:max-w-xs min-w-0">
+            <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1 sm:mb-1.5 tracking-tight">
               Find Employee
             </label>
             <div className="relative">
@@ -473,7 +473,7 @@ export default function SalaryApproverGridPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveUserData1();
                 }}
-                className="w-full h-11 px-4 text-base border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs"
+                className="w-full h-10 sm:h-11 px-3 sm:px-4 text-sm sm:text-base border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs"
               />
               <datalist id="employee-options">
                 {options?.map((emp: any, idx: number) => {
@@ -489,87 +489,92 @@ export default function SalaryApproverGridPage() {
             </div>
           </div>
 
-          {/* Month */}
-          <div className="w-32 sm:w-36">
-            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5 tracking-tight">
-              Month
-            </label>
-            <select
-              value={misdata.month}
-              onChange={(e) => handleMispunchData("month", e.target.value)}
-              className="w-full h-11 px-3 text-base font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs cursor-pointer"
-            >
-              {months.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+          {/* Month & Year side-by-side on mobile */}
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            {/* Month */}
+            <div className="flex-1 sm:w-36">
+              <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1 sm:mb-1.5 tracking-tight">
+                Month
+              </label>
+              <select
+                value={misdata.month}
+                onChange={(e) => handleMispunchData("month", e.target.value)}
+                className="w-full h-10 sm:h-11 px-2.5 sm:px-3 text-sm sm:text-base font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs cursor-pointer"
+              >
+                {months.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Year */}
+            <div className="flex-1 sm:w-36">
+              <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1 sm:mb-1.5 tracking-tight">
+                Year
+              </label>
+              <select
+                value={misdata.year?.toString()}
+                onChange={(e) => handleMispunchData("year", e.target.value)}
+                className="w-full h-10 sm:h-11 px-2.5 sm:px-3 text-sm sm:text-base font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs cursor-pointer"
+              >
+                {yearoptions.map((y) => (
+                  <option key={y.value} value={y.value}>
+                    {y.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Year */}
-          <div className="w-32 sm:w-36">
-            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5 tracking-tight">
-              Year
-            </label>
-            <select
-              value={misdata.year?.toString()}
-              onChange={(e) => handleMispunchData("year", e.target.value)}
-              className="w-full h-11 px-3 text-base font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs cursor-pointer"
+          {/* Fetch Action Button & Back Button */}
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+            <button
+              type="button"
+              onClick={saveUserData1}
+              disabled={isLoading}
+              title="Fetch Employee Salary Grid"
+              className="flex-1 sm:flex-initial h-10 sm:h-11 px-4 sm:px-6 rounded-xl bg-[#4338CA] hover:bg-indigo-700 text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer active:scale-95"
             >
-              {yearoptions.map((y) => (
-                <option key={y.value} value={y.value}>
-                  {y.label}
-                </option>
-              ))}
-            </select>
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+              ) : (
+                <>
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Fetch</span>
+                </>
+              )}
+            </button>
+            <AButton
+              variant="outline"
+              size="md"
+              className="h-10 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-sm sm:text-base shrink-0"
+              icon={<ArrowLeft className="h-4 w-4" />}
+              onClick={() => history.back()}
+            >
+              Back
+            </AButton>
           </div>
-
-          {/* Fetch Action Button */}
-          <button
-            type="button"
-            onClick={saveUserData1}
-            disabled={isLoading}
-            title="Fetch Employee Salary Grid"
-            className="h-11 px-6 rounded-xl bg-[#4338CA] hover:bg-indigo-700 text-white font-bold text-base inline-flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer active:scale-95"
-          >
-            {isLoading ? (
-              <RefreshCw className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                <Search className="h-5 w-5" />
-                <span>Fetch</span>
-              </>
-            )}
-          </button>
-          <AButton
-            variant="outline"
-            size="md"
-            className="ml-auto h-9 sm:h-10 rounded-xl px-3 sm:px-4 flex items-center gap-2 border-slate-200 bg-white shadow-2xs hover:bg-slate-50 text-slate-700 font-medium text-lg"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => history.back()}
-          >
-            Back
-          </AButton>
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* 2. EMPLOYEE HEADER PROFILE CARD */}
       {/* ========================================================================= */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:px-6 sm:py-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] justify-between">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 lg:gap-8 w-full min-w-0">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:px-6 sm:py-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 lg:gap-8 w-full min-w-0">
             {/* Avatar + Name + Subtitle */}
-            <div className="flex items-center gap-3.5 min-w-0 shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#EEF2FF] text-[#4338CA] dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xl sm:text-2xl flex items-center justify-center shrink-0 select-none shadow-2xs border border-indigo-100 dark:border-indigo-900/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[#EEF2FF] text-[#4338CA] dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-lg sm:text-2xl flex items-center justify-center shrink-0 select-none shadow-2xs border border-indigo-100 dark:border-indigo-900/60">
                 {initials}
               </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
                   {misdata.EmpName || "Select an Employee"}
                 </h2>
-                <p className="text-sm sm:text-base text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">
+                <p className="text-xs sm:text-base text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">
                   {misdata.EMPCODE || "—"} · {misdata.Designation || "General Manager"}
                 </p>
               </div>
@@ -578,40 +583,31 @@ export default function SalaryApproverGridPage() {
             {/* Vertical Divider */}
             <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
-            {/* Details Row: Location, Department, Email, Mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 w-full sm:flex-1 min-w-0">
+            {/* Details Row: Location, Email, Mobile */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 w-full sm:flex-1 min-w-0">
               <div className="min-w-0">
-                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] sm:text-[12px] tracking-wider block">
                   LOCATION
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
+                <span className="font-semibold text-xs sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
                   {misdata.Location || "Branch - 1"}
                 </span>
               </div>
 
               <div className="min-w-0">
-                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
-                  DEPARTMENT
-                </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
-                  {misdata.Department || "Sales"}
-                </span>
-              </div>
-
-              <div className="min-w-0">
-                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] sm:text-[12px] tracking-wider block">
                   EMAIL
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate" title={misdata.Email}>
+                <span className="font-semibold text-xs sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate" title={misdata.Email}>
                   {misdata.Email || "—"}
                 </span>
               </div>
 
-              <div className="min-w-0">
-                <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
+              <div className="min-w-0 col-span-2 sm:col-span-1">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] sm:text-[12px] tracking-wider block">
                   MOBILE NO.
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
+                <span className="font-semibold text-xs sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
                   {misdata.MobileNo || "—"}
                 </span>
               </div>
@@ -619,10 +615,10 @@ export default function SalaryApproverGridPage() {
           </div>
 
           {/* Action Link: Open Master */}
-          <div className="shrink-0 flex items-center justify-end">
+          <div className="shrink-0 flex items-center justify-end w-full sm:w-auto">
             <Link
               href="/payroll/masters/Employee_Master"
-              className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-400 font-semibold text-sm sm:text-base inline-flex items-center gap-1.5 shadow-2xs transition-all shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-400 font-semibold text-xs sm:text-base inline-flex items-center gap-1.5 shadow-2xs transition-all shrink-0"
             >
               <span>Open master</span>
               <ExternalLink className="h-3.5 w-3.5" />
@@ -634,15 +630,15 @@ export default function SalaryApproverGridPage() {
       {/* ========================================================================= */}
       {/* 3. THREE STATUS CARDS */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Card 1: Roster creation */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#4338CA] dark:text-indigo-400">
-                <Calendar className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#4338CA] dark:text-indigo-400">
+                <Calendar className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
                 Roster creation
               </h3>
             </div>
@@ -651,12 +647,12 @@ export default function SalaryApproverGridPage() {
               <button
                 type="button"
                 onClick={RoasterCreationSave}
-                className="px-3.5 py-1 rounded-lg text-sm font-bold bg-[#4338CA] hover:bg-indigo-700 text-white shadow-2xs transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-lg text-xs sm:text-sm font-bold bg-[#4338CA] hover:bg-indigo-700 text-white shadow-2xs transition-colors cursor-pointer"
               >
                 Create
               </button>
             ) : (
-              <span className="px-3 py-0.5 rounded-full text-sm font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 Pending
               </span>
             )}
@@ -664,38 +660,38 @@ export default function SalaryApproverGridPage() {
 
           {roasterCreated !== null ? (
             <div className="space-y-1.5 pt-1">
-              <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
+              <div className="flex items-center gap-4 sm:gap-8 flex-wrap">
                 {/* ROSTER CREATED */}
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg sm:text-base tracking-wide text-slate-900 dark:text-slate-100 uppercase">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="font-bold text-xs sm:text-sm tracking-wide text-slate-900 dark:text-slate-100 uppercase">
                     ROSTER CREATED
                   </span>
                   {roasterCreated === true ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500 text-md shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" />
                   )}
                 </div>
 
                 {/* ROSTER CORRECT */}
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg sm:text-base tracking-wide text-slate-900 dark:text-slate-100 uppercase">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="font-bold text-xs sm:text-sm tracking-wide text-slate-900 dark:text-slate-100 uppercase">
                     ROSTER CORRECT
                   </span>
                   {roasterCorrected === true ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" />
                   )}
                 </div>
               </div>
 
-              <p className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+              <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {roasterMessage || (roasterCreated && roasterCorrected ? "All Ok" : "Dates Missing")}
               </p>
             </div>
           ) : (
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               {roasterMessage ||
                 "Roster created and verified correct for the full month. Shift: General (09:30 – 18:30)."}
             </p>
@@ -703,43 +699,43 @@ export default function SalaryApproverGridPage() {
         </div>
 
         {/* Card 2: Leave generation */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-2.5">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-2.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
-                <RefreshCw className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+                <RefreshCw className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
                 Leave generation
               </h3>
             </div>
 
-            <span className="px-3 py-0.5 rounded-full text-sm font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+            <span className="px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
               Done
             </span>
           </div>
-          <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
             Monthly accrual posted on 01 {monthLabel} — casual 1.0, paid 1.25, sick 0.5.
           </p>
         </div>
 
         {/* Card 3: Weekly off */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-2.5">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col justify-between gap-2.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                <Clock className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                <Clock className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
                 Weekly off
               </h3>
             </div>
 
-            <span className="px-3 py-0.5 rounded-full text-sm font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
+            <span className="px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
               {WeeklyOff || "Sunday"}
             </span>
           </div>
-          <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
             {summary.WO || 4} week-offs in this period. Rotational off not applicable for this grade.
           </p>
         </div>
@@ -748,13 +744,13 @@ export default function SalaryApproverGridPage() {
       {/* ========================================================================= */}
       {/* 4. ATTENDANCE & LEAVE INFORMATION */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-5">
         {/* Left: ATTENDANCE */}
         <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 shrink-0">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
-              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#4338CA] dark:text-indigo-400 shrink-0" />
+              <h3 className="font-bold text-xs sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100 truncate">
                 ATTENDANCE · {monthLabel} {misdata.year}
               </h3>
             </div>
@@ -763,16 +759,16 @@ export default function SalaryApproverGridPage() {
               <button
                 type="button"
                 onClick={() => fetchData(startDate, EndDate)}
-                className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-sm transition-colors inline-flex items-center gap-2 cursor-pointer"
+                className="px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-sm transition-colors inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Back</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={MispunchdtlData}
-                className="px-5 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-300 shadow-sm transition-colors cursor-pointer"
+                className="px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#4338CA] dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-300 shadow-sm transition-colors cursor-pointer shrink-0"
               >
                 View calendar
               </button>
@@ -781,9 +777,9 @@ export default function SalaryApproverGridPage() {
 
           {/* Attendance Content */}
           {IsMispunchData ? (
-            <div className="flex-1 p-4 max-h-[360px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+            <div className="flex-1 p-3 sm:p-4 max-h-[360px] overflow-y-auto space-y-2.5 sm:space-y-3 pr-1 custom-scrollbar">
               {ViewMispunchData.length === 0 ? (
-                <p className="text-base text-slate-400 py-8 text-center font-medium">
+                <p className="text-sm sm:text-base text-slate-400 py-8 text-center font-medium">
                   No mispunch records found
                 </p>
               ) : (
@@ -796,32 +792,32 @@ export default function SalaryApproverGridPage() {
             <div className="flex-1 min-h-0 grid grid-rows-5 divide-y divide-slate-200 dark:divide-slate-800 ">
               {/* Row 1 */}
               <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#10b981" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Present
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.Presents ?? 0}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#ef4444", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#ef4444" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Absent
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.Absents ?? 0}
                   </span>
                 </div>
@@ -829,32 +825,32 @@ export default function SalaryApproverGridPage() {
 
               {/* Row 2 */}
               <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#f59e0b" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Half day
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.HalfDays ?? 0}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#0ea5e9", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#0ea5e9" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Week off
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.WO ?? 0}
                   </span>
                 </div>
@@ -862,32 +858,32 @@ export default function SalaryApproverGridPage() {
 
               {/* Row 3 */}
               <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#8b5cf6", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#8b5cf6" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Holiday
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.Holidays ?? 0}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#3b82f6", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#3b82f6" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Relaxation
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.Relaxations ?? 0}
                   </span>
                 </div>
@@ -895,32 +891,32 @@ export default function SalaryApproverGridPage() {
 
               {/* Row 4 */}
               <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#10b981", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#10b981" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Paid days
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.PaidDays ?? 0}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#ec4899", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#ec4899" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Unapproved MP
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.UnAprMP ?? 0}
                   </span>
                 </div>
@@ -928,32 +924,32 @@ export default function SalaryApproverGridPage() {
 
               {/* Row 5 */}
               <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 items-stretch">
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#f59e0b", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#f59e0b" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Late marks
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.LateMarks ?? 0}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between px-5 sm:px-6 py-4 h-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-2.5 sm:px-6 py-2.5 sm:py-4 h-full min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: "#6366f1", minWidth: "10px", minHeight: "10px" }}
+                      className="inline-block w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: "#6366f1" }}
                     />
-                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xl sm:text-xl">
+                    <span className="text-slate-900 dark:text-slate-100 font-medium text-xs sm:text-base truncate">
                       Overtime hrs
                     </span>
                   </div>
-                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 tabular-nums">
+                  <span className="font-bold text-xs sm:text-base text-slate-900 dark:text-slate-100 tabular-nums shrink-0 ml-1">
                     {summary.Overtime ?? 0}
                   </span>
                 </div>
@@ -964,22 +960,19 @@ export default function SalaryApproverGridPage() {
 
         {/* Right: LEAVE INFORMATION */}
         <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-5 w-5 text-[#4338CA] dark:text-indigo-400" />
-              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-[#4338CA] dark:text-indigo-400" />
+              <h3 className="font-bold text-xs sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
                 LEAVE INFORMATION
               </h3>
             </div>
           </div>
 
-          <div className="p-4 sm:p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-3 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {processedLeaveData.map((data, index) => (
-                <div
-                  key={index}
-                  className="rounded-xl bg-white dark:border-slate-800 dark:bg-[#0B1220] p-4 sm:p-5"
-                >
+                <div key={index}>
                   <LeaveProgressRing
                     leaveType={data.leaveType}
                     opBal={data.opBal}
@@ -999,26 +992,26 @@ export default function SalaryApproverGridPage() {
       {/* ========================================================================= */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <span className="text-[#4338CA] dark:text-indigo-400 font-bold text-xl leading-none">
-              <IndianRupee />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 px-3.5 sm:px-6 py-3 sm:py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-[#4338CA] dark:text-indigo-400 font-bold text-lg sm:text-xl leading-none">
+              <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5" />
             </span>
-            <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
+            <h3 className="font-bold text-xs sm:text-base uppercase tracking-wider text-slate-900 dark:text-slate-100">
               SALARY INFORMATION
             </h3>
           </div>
-          <span className="text-sm text-slate-600 dark:text-slate-400">
+          <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Read-only · from Employee Master
           </span>
         </div>
 
-        <div className="px-6 py-5 space-y-6">
+        <div className="px-3 sm:px-6 py-3 sm:py-5 space-y-4 sm:space-y-6">
           {/* Section 1 */}
-          <div className="text-sm sm:text-base">
+          <div className="text-xs sm:text-base">
             {/* Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">PF effective from</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {SalaryInfo[0]?.PF_Date
@@ -1029,16 +1022,16 @@ export default function SalaryApproverGridPage() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">PF no.</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono truncate ml-2">
                   {SalaryInfo[0]?.pfnumber || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">UAN no.</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono truncate ml-2">
                   {SalaryInfo[0]?.UAN_No || "—"}
                 </span>
               </div>
@@ -1046,7 +1039,7 @@ export default function SalaryApproverGridPage() {
 
             {/* Row 2 */}
             <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC effective from</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {SalaryInfo[0]?.ESI_Date
@@ -1057,16 +1050,16 @@ export default function SalaryApproverGridPage() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">ESIC no.</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono truncate ml-2">
                   {SalaryInfo[0]?.esinumber || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">LWF</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate ml-2">
                   {SalaryInfo[0]?.LWFNO || "Applicable"}
                 </span>
               </div>
@@ -1074,23 +1067,23 @@ export default function SalaryApproverGridPage() {
 
             {/* Row 3 */}
             <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-slate-200 dark:divide-slate-800">
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Bank name</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate ml-2">
                   {SalaryInfo[0]?.BANKNAME || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Account number</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono truncate ml-2">
                   {SalaryInfo[0]?.BANKACCOUNTNO || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between px-0 sm:px-5 py-4">
+              <div className="flex items-center justify-between px-1 sm:px-5 py-2.5 sm:py-4">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">IFSC code</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono truncate ml-2">
                   {SalaryInfo[0]?.ifsc_code || "—"}
                 </span>
               </div>
@@ -1100,11 +1093,11 @@ export default function SalaryApproverGridPage() {
           {/* Section 2: Salary Breakup */}
           <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
-              <h4 className="font-bold text-sm sm:text-base uppercase tracking-wider text-slate-700 dark:text-slate-200">
+            <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+              <h4 className="font-bold text-xs sm:text-base uppercase tracking-wider text-slate-700 dark:text-slate-200">
                 SALARY BREAKUP
               </h4>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+              <span className="font-semibold text-xs sm:text-base text-slate-900 dark:text-slate-100">
                 Gross ₹
                 {SalaryInfo[0]?.Gross_Salary
                   ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN")
@@ -1115,62 +1108,98 @@ export default function SalaryApproverGridPage() {
             {/* Rows */}
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {/* Row 1 */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Emp. basic</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-200 dark:divide-slate-800">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Emp. basic</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Basic ? Number(SalaryInfo[0].Basic).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">HRA</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">HRA</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.HRA ? Number(SalaryInfo[0].HRA).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Conveyance</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0 hidden sm:block">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Conveyance</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Conveyance ? Number(SalaryInfo[0].Conveyance).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Medical</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0 hidden sm:block">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Medical</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
+                    ₹{SalaryInfo[0]?.Medical ? Number(SalaryInfo[0].Medical).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Row for Conveyance & Medical */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 sm:hidden">
+                <div className="p-3 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs truncate">Conveyance</div>
+                  <div className="mt-0.5 font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                    ₹{SalaryInfo[0]?.Conveyance ? Number(SalaryInfo[0].Conveyance).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="p-3 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs truncate">Medical</div>
+                  <div className="mt-0.5 font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Medical ? Number(SalaryInfo[0].Medical).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
               </div>
 
               {/* Row 2 */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 sm:divide-x divide-slate-200 dark:divide-slate-800">
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Other</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-200 dark:divide-slate-800">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Other</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Other ? Number(SalaryInfo[0].Other).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Washing</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Washing</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Washing ? Number(SalaryInfo[0].Washing).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Gross salary</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0 hidden sm:block">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Gross salary</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
                     ₹{SalaryInfo[0]?.Gross_Salary ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN") : "0"}
                   </div>
                 </div>
 
-                <div className="px-6 py-5">
-                  <div className="text-slate-600 dark:text-slate-400 font-medium text-sm">Annual CTC</div>
-                  <div className="mt-1 font-semibold text-lg text-slate-900 dark:text-slate-100">
+                <div className="p-3 sm:px-6 sm:py-5 min-w-0 hidden sm:block">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-sm truncate">Annual CTC</div>
+                  <div className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-lg text-slate-900 dark:text-slate-100 truncate">
+                    {SalaryInfo[0]?.Gross_Salary
+                      ? `₹${((Number(SalaryInfo[0].Gross_Salary) * 12) / 100000).toFixed(2)} L`
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Row for Gross Salary & Annual CTC */}
+              <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-800 sm:hidden">
+                <div className="p-3 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs truncate">Gross salary</div>
+                  <div className="mt-0.5 font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                    ₹{SalaryInfo[0]?.Gross_Salary ? Number(SalaryInfo[0].Gross_Salary).toLocaleString("en-IN") : "0"}
+                  </div>
+                </div>
+
+                <div className="p-3 min-w-0">
+                  <div className="text-slate-600 dark:text-slate-400 font-medium text-xs truncate">Annual CTC</div>
+                  <div className="mt-0.5 font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
                     {SalaryInfo[0]?.Gross_Salary
                       ? `₹${((Number(SalaryInfo[0].Gross_Salary) * 12) / 100000).toFixed(2)} L`
                       : "—"}

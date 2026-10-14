@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import Eselect from "@/components/atoms/Eselect";
 import Einput from "@/components/atoms/Einput";
-import { Upload } from "lucide-react";
+import { Eye, Upload } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Props = {
   formData: any;
@@ -33,6 +39,8 @@ export default function CandidateMiniHeader({
   flageData,
   options,
 }: Props) {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const imgSrc =
     imageSrc1 ||
     (formData?.images?.[0]?.path
@@ -297,11 +305,56 @@ export default function CandidateMiniHeader({
                     disabled={flageData}
                   />
                 </label>
+
+                {/* Preview Button */}
+                {imgSrc && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsPreviewOpen(true);
+                    }}
+                    title="Preview photo"
+                    className="absolute top-2 right-2 z-10 px-2.5 py-1 rounded-full bg-black/70 hover:bg-black text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-md transition-all hover:scale-105"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-[96vw] w-[96vw] h-[92vh] max-h-[94vh] flex flex-col p-4 sm:p-5 bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+          <DialogHeader className="pb-2.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <DialogTitle className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+              Candidate Photo Preview
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2.5 flex-1 w-full flex items-center justify-center bg-slate-100/70 dark:bg-slate-950/80 rounded-xl overflow-hidden p-2 border border-slate-200/80 dark:border-slate-800/80">
+            {imgSrc ? (
+              <Image
+                src={imgSrc}
+                alt="Candidate photo preview"
+                width={2400}
+                height={2400}
+                className="w-full h-full max-h-[82vh] object-contain rounded-lg shadow-sm"
+                unoptimized
+              />
+            ) : (
+              <div className="py-16 text-center text-sm text-slate-400">
+                No image available to preview
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -31,13 +31,14 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={toggle}
+      title={`Switch to ${dark ? "Light" : "Dark"} mode`}
       className={
-        "flex items-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-card px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10.5px] sm:text-[11.5px] font-medium text-fg hover:bg-hoverbg shrink-0 " +
+        "flex h-7.5 sm:h-auto items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-card px-1.5 min-[360px]:px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-[11.5px] font-medium text-fg hover:bg-hoverbg shrink-0 cursor-pointer " +
         (className || "")
       }
     >
       {dark ? <Sun className="h-3.5 w-3.5 shrink-0" /> : <Moon className="h-3.5 w-3.5 shrink-0" />}
-      <span>{dark ? "Light" : "Dark"}</span>
+      <span className="hidden min-[400px]:inline">{dark ? "Light" : "Dark"}</span>
     </button>
   );
 }

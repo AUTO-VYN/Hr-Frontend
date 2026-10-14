@@ -897,7 +897,7 @@ export default function ServiceTablePagination({
                                     : "";
                                   handleColumnFilterChange(filterKey, nextVal);
                                 }}
-                                className="!h-10 !rounded-xl !text-[13.5px] !px-3 font-normal !border-slate-200 dark:!border-slate-700/80 bg-white dark:bg-slate-900 shadow-2xs"
+                                className={`!h-8.5 sm:!h-9 !rounded-lg !text-[12px] !px-2.5 font-normal !border-slate-200 dark:!border-slate-700/80 bg-white dark:bg-slate-900 shadow-2xs ${column.filterClassName || ""}`}
                               />
                             </div>
                           ) : null}
@@ -969,21 +969,21 @@ export default function ServiceTablePagination({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
-        <div className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0B1220] gap-3">
+        <div className="text-xs sm:text-base text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
           {footerTextMode === "pageItems"
             ? `Page ${currentPageLabel} of ${totalPagesLabel} (${displayedCount} items)`
             : `Showing ${displayedCount} of ${totalRecordsCount} rows`}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
           {showPageSizeInFooter && (
-            <div className="flex items-center gap-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium shrink-0 whitespace-nowrap">
+            <div className="flex items-center gap-2 text-xs sm:text-base text-slate-600 dark:text-slate-300 font-medium shrink-0 whitespace-nowrap">
               <span>Show</span>
               <select
                 value={pageSizeSelectValue}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="h-10 px-3 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm sm:text-base font-semibold focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs cursor-pointer"
+                className="h-9 sm:h-10 px-2 sm:px-3 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs sm:text-base font-semibold focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs cursor-pointer"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -995,7 +995,7 @@ export default function ServiceTablePagination({
             </div>
           )}
 
-          <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-3 w-full sm:w-auto shrink-0 whitespace-nowrap">
             <button
               type="button"
               onClick={handlePrev}
@@ -1004,13 +1004,13 @@ export default function ServiceTablePagination({
                   ? (serverPagination?.currentPage || 1) <= 1
                   : !clientCanPrev
               }
-              className="shrink-0 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-base font-semibold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
               Previous
             </button>
 
             {footerTextMode !== "pageItems" && (
-              <span className="min-w-0 text-center text-xs sm:text-base text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
+              <span className="text-xs sm:text-base text-slate-600 dark:text-slate-300 font-medium px-1 sm:px-1.5 whitespace-nowrap">
                 Page{" "}
                 <strong className="font-bold text-slate-900 dark:text-slate-100">
                   {currentPageLabel}
@@ -1031,7 +1031,7 @@ export default function ServiceTablePagination({
                     (serverPagination?.totalPages || 1)
                   : !clientCanNext
               }
-              className="shrink-0 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-base font-semibold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
             >
               Next
             </button>

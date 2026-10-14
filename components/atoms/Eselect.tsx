@@ -69,9 +69,11 @@ const Eselect = ({
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
   const focusedItemRef = useRef<HTMLLIElement | null>(null);
+  const isSelectingRef = useRef(false);
 
   // ✅ portal dropdown ref
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -132,7 +134,7 @@ const Eselect = ({
       setSelectedOptions([]);
     }
 
-    if (autoFocus && inputRef.current) inputRef.current.focus();
+    if (autoFocus && triggerRef.current) triggerRef.current.focus();
   }, [initialValue, option, autoFocus]);
 
   // ✅ click outside close (portal-safe)
@@ -145,6 +147,48 @@ const Eselect = ({
     };
     document.addEventListener("mousedown", onDocDown);
     return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
+  // Helper: Find and focus the next or previous tabbable element in the page
+  const focusNextElement = useCallback((reverse: boolean = false) => {
+    const triggerEl = triggerRef.current;
+    if (!triggerEl || typeof document === "undefined") return;
+
+    const selector = [
+      'input:not([disabled]):not([type="hidden"])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'button:not([disabled])',
+      'a[href]',
+      '[tabindex]:not([tabindex="-1"]):not([disabled])',
+    ].join(", ");
+
+    const all = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+    const visibleElements = all.filter((el) => {
+      if (dropdownRef.current && dropdownRef.current.contains(el)) return false;
+      if (containerRef.current && containerRef.current.contains(el) && el !== triggerEl) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      return (
+        el.offsetWidth > 0 ||
+        el.offsetHeight > 0 ||
+        el.getClientRects().length > 0
+      );
+    });
+
+    const currentIndex = visibleElements.indexOf(triggerEl);
+    if (currentIndex === -1) return;
+
+    const targetEl = reverse
+      ? visibleElements[currentIndex - 1]
+      : visibleElements[currentIndex + 1];
+
+    if (targetEl) {
+      targetEl.focus();
+    } else {
+      isSelectingRef.current = true;
+      triggerEl.focus();
+    }
   }, []);
 
   // keyboard navigation
@@ -166,13 +210,28 @@ const Eselect = ({
         event.preventDefault();
         handleSelect(filteredOptions[focusedIndex]);
       } else if (event.key === "Escape") {
+        isSelectingRef.current = true;
         setOpen(false);
+        triggerRef.current?.focus();
+      } else if (event.key === "Tab") {
+        event.preventDefault();
+        if (
+          !isMulti &&
+          focusedIndex >= 0 &&
+          focusedIndex < filteredOptions.length
+        ) {
+          const opt = filteredOptions[focusedIndex];
+          setSelectedOptions([opt]);
+          handleInputChange(name, opt.value);
+        }
+        setOpen(false);
+        focusNextElement(event.shiftKey);
       }
     };
 
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, disabled, filteredOptions, focusedIndex]);
+  }, [open, disabled, filteredOptions, focusedIndex, isMulti, name, handleInputChange, focusNextElement]);
 
   const handleSelect = (selectedOption: Option) => {
     if (disabled) return;
@@ -188,13 +247,19 @@ const Eselect = ({
     } else {
       setSelectedOptions([selectedOption]);
       handleInputChange(name, selectedOption.value);
+      isSelectingRef.current = true;
       setOpen(false);
+      triggerRef.current?.focus();
     }
     setInputValue("");
   };
 
   useEffect(() => {
     if (open && inputRef.current) inputRef.current.focus();
+    if (!open) {
+      setFocusedIndex(-1);
+      setInputValue("");
+    }
   }, [open]);
 
   useEffect(() => {
@@ -254,7 +319,30 @@ const Eselect = ({
   const handleMouseDown = (event: React.MouseEvent) => {
     if (disabled) return;
     event.preventDefault();
-    setOpen((p) => !p);
+    if (open) {
+      isSelectingRef.current = true;
+      setOpen(false);
+      triggerRef.current?.focus();
+    } else {
+      setOpen(true);
+    }
+  };
+
+  const handleFocus = () => {
+    if (disabled) return;
+    if (isSelectingRef.current) {
+      isSelectingRef.current = false;
+      return;
+    }
+    setOpen(true);
+  };
+
+  const handleTriggerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+    }
   };
 
   const toTitleCase = (str?: string) => {
@@ -297,7 +385,13 @@ const Eselect = ({
 
       {/* main box */}
       <div
+        ref={triggerRef}
         onMouseDown={handleMouseDown}
+        onFocus={handleFocus}
+        onBlur={() => {
+          isSelectingRef.current = false;
+        }}
+        onKeyDown={handleTriggerKeyDown}
         tabIndex={disabled ? -1 : 0}
         className={cn(
           "relative h-9 w-full rounded-xl border bg-white px-3 shadow-sm",
@@ -351,7 +445,12 @@ const Eselect = ({
                   "text-slate-900 dark:text-white placeholder:text-slate-400",
                   "focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-950/40"
                 )}
-                onKeyDown={onKeyDown}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                  }
+                  onKeyDown?.(e);
+                }}
               />
             </div>
 

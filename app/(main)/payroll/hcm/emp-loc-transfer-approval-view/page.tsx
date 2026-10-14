@@ -12,7 +12,9 @@ import {
   Minus,
   Eye,
   X,
+  ArrowRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
@@ -22,6 +24,15 @@ import ServiceTablePagination from "@/components/Templates/reacttable";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
 type ApprovalLevel = "approved" | "pending" | "waiting" | "rejected";
+
+const cardClass =
+  "min-w-0 rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] transition-colors dark:border-[#1F2937] dark:bg-[#111827] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)]";
+
+const inputClass =
+  "!h-[38px] w-full min-w-0 !rounded-[9px] !border border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] px-2.5 py-2 !text-[12.5px] !text-[#1E293B] dark:!text-[#E7ECF3] outline-none transition placeholder:text-[#64748B]/70 dark:placeholder:text-[#94A3B8]/70 focus-visible:!border-[#4F46E5] dark:focus-visible:!border-[#8B84FF] focus-visible:!ring-0 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800/50 !shadow-none";
+
+const selectTriggerClass =
+  "!h-[38px] w-full min-w-0 !rounded-[9px] !border border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] px-2.5 !text-[12.5px] !text-[#1E293B] dark:!text-[#E7ECF3] focus-within:!border-[#4F46E5] dark:focus-within:!border-[#8B84FF] focus-within:!ring-0 !shadow-none";
 
 interface TransferRequest {
   UTD: number | string;
@@ -702,36 +713,36 @@ export default function EmpLocTranshfr() {
 
     return [
       {
-        title: "PENDING",
+        title: "AWAITING SIGN-OFF",
         count: pending,
         value: "Pending",
         icon: Clock3,
-        color: "text-yellow-500",
-        bg: "bg-yellow-50 dark:bg-yellow-500/10",
+        tint: "#F59E0B",
+        tintBg: "rgba(245,158,11,0.15)",
       },
       {
         title: "APPROVED",
         count: approved,
         value: "Approved",
         icon: CircleCheck,
-        color: "text-emerald-500",
-        bg: "bg-emerald-50 dark:bg-emerald-500/10",
+        tint: "#10B981",
+        tintBg: "rgba(16,185,129,0.15)",
       },
       {
         title: "REJECTED",
         count: rejected,
         value: "Rejected",
         icon: CircleX,
-        color: "text-rose-500",
-        bg: "bg-rose-50 dark:bg-rose-500/10",
+        tint: "#E11D48",
+        tintBg: "rgba(225,29,72,0.15)",
       },
       {
         title: "ALL REQUESTS",
         count: transferRequests.length,
         value: "All",
         icon: Layers3,
-        color: "text-indigo-500",
-        bg: "bg-indigo-50 dark:bg-indigo-500/10",
+        tint: "#4F46E5",
+        tintBg: "rgba(79,70,229,0.15)",
       },
     ];
   }, [transferRequests]);
@@ -761,7 +772,7 @@ export default function EmpLocTranshfr() {
               aria-label="Select all pending requests"
               checked={allRowsSelected}
               onChange={(event) => toggleAllRows(event.target.checked)}
-              className="h-4 w-4 cursor-pointer accent-indigo-600"
+              className="h-4 w-4 cursor-pointer accent-[#4F46E5]"
             />
           ) : (
             <span className="sr-only">Selection</span>
@@ -778,26 +789,75 @@ export default function EmpLocTranshfr() {
               onChange={(event) =>
                 toggleSelection(row.original.UTD, event.target.checked)
               }
-              className="h-4 w-4 cursor-pointer accent-indigo-600"
+              className="h-4 w-4 cursor-pointer accent-[#4F46E5]"
             />
           ) : (
             <span className="block w-4" />
           ),
       },
 
-      { Header: "ID", accessor: "UTD" },
+      {
+        Header: "ID",
+        accessor: "UTD",
+        Cell: ({ value }: any) => (
+          <span className="text-[12.5px] tabular-nums text-[#64748B] dark:text-[#94A3B8]">
+            {value ?? "—"}
+          </span>
+        ),
+      },
 
       {
         Header: "EMPLOYEE CODE",
         accessor: "EmpCode",
+        Cell: ({ value }: any) => (
+          <span className="text-[12.5px] tabular-nums text-[#1E293B] dark:text-[#E7ECF3]">
+            {value ?? "—"}
+          </span>
+        ),
       },
 
       {
         Header: "EMPLOYEE NAME",
         accessor: "Emp_Name",
+        Cell: ({ value }: any) => {
+          const initials = String(value || "?")
+            .trim()
+            .split(/\s+/)
+            .map((w) => w[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+
+          return (
+            <div className="flex min-w-0 items-center gap-[9px] py-1.5">
+              <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-[10.5px] font-semibold text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                {initials}
+              </span>
+              <span className="truncate text-[12.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
+                {value || "—"}
+              </span>
+            </div>
+          );
+        },
+      },
+
+      {
+        Header: "CURRENT BRANCH",
+        accessor: "CurrtBranch_name",
         Cell: ({ value }: any) => (
-          <div className="flex min-h-[56px] items-center py-3">
-            <span className="font-medium text-slate-800 dark:text-slate-100">
+          <span className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+            {value || "—"}
+          </span>
+        ),
+      },
+
+      {
+        Header: "TRANSFER TO",
+        accessor: "TransferTo_name",
+        Cell: ({ value }: any) => (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#4F46E5] dark:text-[#8B84FF]" />
+            <span className="truncate text-[12.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
               {value || "—"}
             </span>
           </div>
@@ -805,24 +865,23 @@ export default function EmpLocTranshfr() {
       },
 
       {
-        Header: "CURRENT BRANCH",
-        accessor: "CurrtBranch_name",
-      },
-
-      {
-        Header: "TRANSFER TO",
-        accessor: "TransferTo_name",
-      },
-
-      {
         Header: "REQUEST DATE",
         accessor: "NewCreatedAt",
-        Cell: ({ value }: any) => formatDate(value),
+        Cell: ({ value }: any) => (
+          <span className="text-[12.5px] tabular-nums text-[#64748B] dark:text-[#94A3B8]">
+            {formatDate(value) || "—"}
+          </span>
+        ),
       },
 
       {
         Header: "REQUEST BY",
         accessor: "RequestedBy",
+        Cell: ({ value }: any) => (
+          <span className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+            {value || "—"}
+          </span>
+        ),
       },
 
       {
@@ -860,23 +919,41 @@ export default function EmpLocTranshfr() {
             <div className="flex min-w-[190px] flex-col gap-2">
               <div className="flex flex-wrap items-center gap-1.5">
                 {levels.map((level) => {
-                  const Icon =
-                    level.status === "approved"
-                      ? Check
-                      : level.status === "pending"
-                        ? Clock3
-                        : level.status === "rejected"
-                          ? CircleX
-                          : Minus;
+                  const approved = level.status === "approved";
+                  const rejected = level.status === "rejected";
+                  const pending = level.status === "pending";
 
-                  const color =
-                    level.status === "approved"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400"
-                      : level.status === "rejected"
-                        ? "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-500/10 dark:text-rose-400"
-                        : level.status === "pending"
-                          ? "border-orange-200 bg-orange-50 text-orange-500 dark:border-orange-800 dark:bg-orange-500/10 dark:text-orange-400"
-                          : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
+                  const Icon = approved
+                    ? Check
+                    : rejected
+                      ? CircleX
+                      : pending
+                        ? Clock3
+                        : Minus;
+
+                  const badgeStyle = approved
+                    ? {
+                        color: "#10B981",
+                        backgroundColor: "rgba(16,185,129,0.08)",
+                        border: "1px solid rgba(16,185,129,0.33)",
+                      }
+                    : rejected
+                      ? {
+                          color: "#E11D48",
+                          backgroundColor: "rgba(225,29,72,0.08)",
+                          border: "1px solid rgba(225,29,72,0.33)",
+                        }
+                      : pending
+                        ? {
+                            color: "#F59E0B",
+                            backgroundColor: "rgba(245,158,11,0.08)",
+                            border: "1px solid rgba(245,158,11,0.33)",
+                          }
+                        : {
+                            color: "#94A3B8",
+                            backgroundColor: "rgba(148,163,184,0.08)",
+                            border: "1px solid rgba(148,163,184,0.33)",
+                          };
 
                   return (
                     <span
@@ -884,9 +961,10 @@ export default function EmpLocTranshfr() {
                       title={`${level.name ?? level.label}${
                         level.remark ? ` — ${level.remark}` : ""
                       }`}
-                      className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold ${color}`}
+                      style={badgeStyle}
+                      className="inline-flex items-center gap-1 rounded-[8px] px-2 py-0.5 text-[10.5px] font-semibold whitespace-nowrap"
                     >
-                      <Icon size={13} />
+                      <Icon size={11} className="shrink-0" />
                       {level.label}
                     </span>
                   );
@@ -894,10 +972,10 @@ export default function EmpLocTranshfr() {
               </div>
 
               {expandedRows.includes(rowId) && (
-                <div className="space-y-1 rounded-lg bg-slate-50 p-2 text-xs dark:bg-slate-800">
+                <div className="space-y-1 rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] p-2 text-[11px] text-[#64748B] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#94A3B8]">
                   {levels.map((level) => (
                     <div key={level.label}>
-                      <span className="font-semibold">
+                      <span className="font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                         {level.label} {level.name || "Approver"}:
                       </span>{" "}
                       <span className="break-words">
@@ -924,9 +1002,9 @@ export default function EmpLocTranshfr() {
               type="button"
               title="View approval status"
               onClick={() => setStatusDialogRequest(request)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-[7px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#4F46E5] hover:text-[#4338CA] hover:bg-[#EEF2FF] dark:text-[#8B84FF] dark:hover:text-[#A5B4FC] dark:hover:bg-[#1E1B4B] transition shadow-sm cursor-pointer"
             >
-              <Eye size={18} />
+              <Eye size={14} className="text-[#4F46E5] dark:text-[#8B84FF]" />
             </button>
           );
         },
@@ -940,22 +1018,22 @@ export default function EmpLocTranshfr() {
   // -------------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-64 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 sm:pb-48 lg:pb-28">
-      <div className="mx-auto w-full max-w-[1800px] space-y-4 p-3 sm:space-y-5 sm:p-5 lg:p-6">
+    <main className="min-h-screen bg-[#F8FAFC] pb-64 font-['Inter',system-ui,sans-serif] [font-feature-settings:'tnum'_1] text-[13px] text-[#1E293B] antialiased transition-colors dark:bg-[#0A0F1C] dark:text-[#E7ECF3] sm:pb-48 lg:pb-28">
+      <div className="mx-auto w-full max-w-[1800px] p-3 sm:p-5 lg:p-6">
         {/* Header */}
-        <header className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+        <header className="mb-4 sm:mb-[18px]">
+          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
             Location transfer approvals
           </h1>
 
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400 sm:text-base">
+          <p className="mt-[5px] text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
             Each request carries its own three-level chain. Expand a row to read
             the remarks left at every level.
           </p>
         </header>
 
         {/* Summary cards */}
-        <section className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-[14px] min-[480px]:grid-cols-2 xl:grid-cols-4 mb-[14px]">
           {stats.map((stat) => {
             const Icon = stat.icon;
             const isActive = status === stat.value;
@@ -969,84 +1047,86 @@ export default function EmpLocTranshfr() {
                   setSelectedRows([]);
                   setExpandedRows([]);
                 }}
-                className={`min-h-[110px] rounded-2xl border-2 ${
+                className={cn(
+                  "text-left rounded-[12px] bg-white dark:bg-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] p-[14px_16px] cursor-pointer transition-colors border",
                   isActive
-                    ? stat.border
-                    : "border-slate-200 dark:border-slate-700"
-                } bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-slate-900 sm:min-h-[125px] sm:p-5`}
+                    ? "border-[#4F46E5] dark:border-[#8B84FF]"
+                    : "border-[#E2E8F0] dark:border-[#1F2937] hover:border-[#4F46E5] dark:hover:border-[#8B84FF]"
+                )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span
-                    className={`shrink-0 rounded-lg p-2 ${stat.bg} ${stat.color}`}
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px]"
+                    style={{ backgroundColor: stat.tintBg, color: stat.tint }}
                   >
-                    <Icon size={19} />
+                    <Icon size={14} />
                   </span>
 
-                  <span className="text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400 sm:text-sm">
+                  <span className="text-[11px] font-semibold tracking-[0.03em] uppercase text-[#64748B] dark:text-[#94A3B8]">
                     {stat.title}
                   </span>
                 </div>
 
-                <p className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
+                <div className="mt-[9px] text-[23px] font-[650] tracking-[-0.02em] tabular-nums text-[#1E293B] dark:text-[#E7ECF3]">
                   {stat.count}
-                </p>
+                </div>
               </button>
             );
           })}
         </section>
 
         {/* Filters */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-900 sm:p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(150px,0.8fr)_minmax(150px,0.8fr)_minmax(200px,2.1fr)_minmax(200px,2.1fr)_auto] xl:items-end">
+        <section className={`${cardClass} p-[14px_18px_16px_18px] mb-[14px]`}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[175px_175px_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
             <div className="min-w-0">
               <Einput
-                title="DATE FROM"
+                title="Date from"
                 type="date"
                 name="dateFrom"
                 value={dateFrom}
                 handleInputChange={(_: string, value: string) =>
                   setDateFrom(value)
                 }
-                className="!h-11"
+                className={inputClass}
               />
             </div>
 
             <div className="min-w-0">
               <Einput
-                title="DATE TO"
+                title="Date to"
                 type="date"
                 name="dateTo"
                 value={dateTo}
                 handleInputChange={(_: string, value: string) =>
                   setDateTo(value)
                 }
-                className="!h-11"
+                className={inputClass}
               />
             </div>
 
             <div className="min-w-0">
               <Eselect
-                title="BRANCH"
+                title="Branch"
                 name="branch"
                 option={branchOptions}
                 initialValue={branch}
                 handleInputChange={(_: string, value: string) =>
                   setBranch(value)
                 }
-                className="!h-11"
+                className={selectTriggerClass}
               />
             </div>
 
             <div className="min-w-0">
               <Eselect
-                title="STATUS"
+                title="Status"
                 name="status"
                 option={STATUS_OPTIONS}
                 initialValue={status}
                 handleInputChange={(_: string, value: string) =>
                   setStatus(value)
                 }
-                className="!h-11"
+                className={selectTriggerClass}
               />
             </div>
 
@@ -1055,7 +1135,7 @@ export default function EmpLocTranshfr() {
                 type="button"
                 onClick={showdata}
                 disabled={isLoading}
-                className="h-11 w-full rounded-xl bg-indigo-600 px-7 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
+                className="inline-flex !h-[38px] w-full items-center justify-center whitespace-nowrap !rounded-[9px] !bg-[#4F46E5] hover:!bg-[#4338CA] px-5 py-2 !text-[12.5px] !font-semibold text-white !shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:!shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:!bg-[#94A3B8] dark:disabled:!bg-[#475569] sm:w-auto cursor-pointer"
               >
                 Show
               </AButton>
@@ -1064,9 +1144,9 @@ export default function EmpLocTranshfr() {
         </section>
 
         {/* Requests table */}
-        <section className="mt-5 w-full min-w-0 overflow-hidden rounded-2xl border border-[#dce4f0] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <section className={`${cardClass} overflow-hidden mt-3.5`}>
           {/* Table wrapper */}
-          <div className="w-full min-w-0 px-3 py-3 sm:px-5 sm:py-5">
+          <div className="w-full min-w-0 p-3 sm:p-4">
             <div className="w-full min-w-0 overflow-x-auto">
               <div className="min-w-0 w-full">
                 <ServiceTablePagination
@@ -1075,15 +1155,15 @@ export default function EmpLocTranshfr() {
                   data={filteredRequests}
                   initialPageSize={10}
                   showPageSizeInFooter
-                  containerClassName="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800"
+                  containerClassName="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border border-[#E2E8F0] dark:border-[#1F2937]"
                 />
               </div>
             </div>
           </div>
 
           {/* Responsive summary footer */}
-          <div className="flex w-full min-w-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-3 py-4 dark:border-slate-700 dark:bg-slate-800/70 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-            <span className="min-w-0 break-words text-sm font-medium text-slate-600 dark:text-slate-300">
+          <div className="flex w-full min-w-0 flex-col gap-3 border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 dark:border-[#1F2937] dark:bg-[#0E1524] sm:px-[18px] sm:flex-row sm:items-center sm:justify-between text-[12px] text-[#64748B] dark:text-[#94A3B8]">
+            <span className="tabular-nums font-medium">
               {hasLoaded
                 ? `${filteredRequests.length} of ${transferRequests.length} requests`
                 : isLoading
@@ -1091,19 +1171,19 @@ export default function EmpLocTranshfr() {
                   : "No requests loaded"}
             </span>
 
-            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 sm:gap-x-5 sm:text-sm">
-              <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+            <div className="flex items-center gap-[9px] text-[12px]">
+              <span className="inline-flex items-center gap-[5px] whitespace-nowrap">
+                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#10B981]" />
                 Approved
               </span>
 
-              <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-yellow-500" />
+              <span className="inline-flex items-center gap-[5px] whitespace-nowrap">
+                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#F59E0B]" />
                 Pending
               </span>
 
-              <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500" />
+              <span className="inline-flex items-center gap-[5px] whitespace-nowrap">
+                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#E11D48]" />
                 Rejected
               </span>
             </div>
@@ -1164,7 +1244,7 @@ export default function EmpLocTranshfr() {
       {/* Approval Status Dialog */}
       {statusDialogRequest && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-6"
           onClick={() => setStatusDialogRequest(null)}
         >
           <div
@@ -1172,18 +1252,18 @@ export default function EmpLocTranshfr() {
             aria-modal="true"
             aria-labelledby="approval-dialog-title"
             onClick={(event) => event.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] shadow-2xl dark:border-[#1F2937] dark:bg-[#0A0F1C]"
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-700 dark:bg-slate-900 sm:px-6">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#E2E8F0] bg-white px-4 py-3.5 dark:border-[#1F2937] dark:bg-[#111827] sm:px-6">
               <div className="min-w-0">
                 <h2
                   id="approval-dialog-title"
-                  className="text-lg font-bold text-slate-900 dark:text-white sm:text-xl"
+                  className="text-[16px] font-[650] text-[#1E293B] dark:text-[#E7ECF3]"
                 >
                   Approval Status
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-0.5 text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
                   Request ID: {statusDialogRequest.UTD}
                 </p>
               </div>
@@ -1192,20 +1272,20 @@ export default function EmpLocTranshfr() {
                 type="button"
                 onClick={() => setStatusDialogRequest(null)}
                 aria-label="Close approval status"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:text-[#94A3B8] dark:hover:bg-[#182235] cursor-pointer"
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
 
-            <div className="space-y-5 p-4 sm:p-6">
-              <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2">
+            <div className="space-y-4 p-4 sm:p-6">
+              <div className="grid grid-cols-1 gap-3 rounded-[11px] border border-[#E2E8F0] bg-white p-4 dark:border-[#1F2937] dark:bg-[#111827] sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
                     Reason
                   </p>
 
-                  <p className="mt-1 break-words text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p className="mt-1 break-words text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
                     {statusDialogRequest.REASON ??
                       statusDialogRequest.Reason ??
                       statusDialogRequest.reason ??
@@ -1214,11 +1294,11 @@ export default function EmpLocTranshfr() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
                     Effective Date
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p className="mt-1 text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
                     {formatDate(
                       statusDialogRequest.EFFECTIVE_DATE ??
                         statusDialogRequest.EffectiveDate ??
@@ -1228,11 +1308,11 @@ export default function EmpLocTranshfr() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
                     Employee
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p className="mt-1 text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
                     {statusDialogRequest.Emp_Name || "—"}
                     {statusDialogRequest.EmpCode
                       ? ` (${statusDialogRequest.EmpCode})`
@@ -1241,11 +1321,11 @@ export default function EmpLocTranshfr() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
                     Branch Transfer
                   </p>
 
-                  <p className="mt-1 break-words text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p className="mt-1 break-words text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
                     {statusDialogRequest.CurrtBranch_name || "—"}
                     {" → "}
                     {statusDialogRequest.TransferTo_name || "—"}
@@ -1256,7 +1336,7 @@ export default function EmpLocTranshfr() {
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 {[
                   {
-                    label: "APPROVER 1",
+                    label: "Approver 1",
                     name:
                       statusDialogRequest.apr1_name ||
                       statusDialogRequest.APPR_1_NAME ||
@@ -1265,7 +1345,7 @@ export default function EmpLocTranshfr() {
                     remark: statusDialogRequest.APPR_1_REM,
                   },
                   {
-                    label: "APPROVER 2",
+                    label: "Approver 2",
                     name:
                       statusDialogRequest.apr2_name ||
                       statusDialogRequest.APPR_2_NAME ||
@@ -1274,7 +1354,7 @@ export default function EmpLocTranshfr() {
                     remark: statusDialogRequest.APPR_2_REM,
                   },
                   {
-                    label: "APPROVER 3",
+                    label: "Approver 3",
                     name:
                       statusDialogRequest.apr3_name ||
                       statusDialogRequest.APPR_3_NAME ||
@@ -1288,51 +1368,60 @@ export default function EmpLocTranshfr() {
                   const pending = level.status === "pending";
 
                   const stateLabel = approved
-                    ? "APPROVED"
+                    ? "Approved"
                     : rejected
-                      ? "REJECTED"
+                      ? "Rejected"
                       : pending
-                        ? "PENDING"
-                        : "NOT REACHED";
+                        ? "Pending"
+                        : "Not reached";
 
                   const Icon = approved
-                    ? CircleCheck
+                    ? Check
                     : rejected
                       ? CircleX
                       : pending
                         ? Clock3
                         : Minus;
 
-                  const iconStyle = approved
-                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+                  const tint = approved
+                    ? "#10B981"
                     : rejected
-                      ? "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
+                      ? "#E11D48"
                       : pending
-                        ? "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400"
-                        : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-400";
+                        ? "#F59E0B"
+                        : "#94A3B8";
+
+                  const tintBg = approved
+                    ? "rgba(16,185,129,0.15)"
+                    : rejected
+                      ? "rgba(225,29,72,0.15)"
+                      : pending
+                        ? "rgba(245,158,11,0.15)"
+                        : "rgba(148,163,184,0.15)";
 
                   return (
                     <div
                       key={level.label}
-                      className="min-h-[120px] rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5"
+                      className="rounded-[10px] border border-[#E2E8F0] bg-white p-[11px_13px] dark:border-[#1F2937] dark:bg-[#111827]"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconStyle}`}
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px]"
+                          style={{ backgroundColor: tintBg, color: tint }}
                         >
-                          <Icon size={18} />
+                          <Icon size={13} />
                         </span>
 
-                        <span className="text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] font-semibold tracking-[0.03em] uppercase text-[#64748B] dark:text-[#94A3B8]">
                           {level.label} · {stateLabel}
                         </span>
                       </div>
 
-                      <p className="mt-3 break-words text-base font-semibold text-slate-900 dark:text-white">
+                      <p className="mt-2 break-words text-[12.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
                         {level.name}
                       </p>
 
-                      <p className="mt-1 break-words text-sm leading-5 text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 break-words text-[12px] leading-relaxed text-[#64748B] dark:text-[#94A3B8]">
                         {level.remark ||
                           (pending
                             ? "No remark recorded"
@@ -1348,11 +1437,11 @@ export default function EmpLocTranshfr() {
               </div>
             </div>
 
-            <div className="flex justify-end border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-6">
+            <div className="flex justify-end border-t border-[#E2E8F0] bg-white px-4 py-3 dark:border-[#1F2937] dark:bg-[#111827] sm:px-6">
               <button
                 type="button"
                 onClick={() => setStatusDialogRequest(null)}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                className="rounded-[9px] bg-[#4F46E5] hover:bg-[#4338CA] px-4 py-2 text-[12.5px] font-semibold text-white shadow transition cursor-pointer"
               >
                 Close
               </button>

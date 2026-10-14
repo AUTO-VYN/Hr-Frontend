@@ -477,10 +477,10 @@ function ShortlistedCandidateContent() {
 
                         <div className="flex-1 min-w-0">
                           <div
-                            className={`text-sm truncate ${
+                            className={`text-[15px] font-medium truncate ${
                               active
-                                ? "text-[#1E40AF] font-medium"
-                                : "text-[#475467] dark:text-[#A0A7B4] font-normal"
+                                ? "text-[#1E40AF]"
+                                : "text-[#475467] dark:text-[#A0A7B4]"
                             }`}
                           >
                             {sec.label}

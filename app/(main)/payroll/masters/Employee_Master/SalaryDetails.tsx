@@ -2812,14 +2812,6 @@ const SalaryDetails = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsDialogOpen2(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 ring-1 ring-white/10"
-                  aria-label="Close"
-                >
-                  <span className="text-lg leading-none">×</span>
-                </button>
               </div>
 
               <DialogDescription className="p-0">

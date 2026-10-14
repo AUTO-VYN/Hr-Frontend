@@ -24,50 +24,7 @@ import Card from "@/components/Templates/card";
 import Einput from "@/components/atoms/Einput"
 import { Button } from "antd";
 
-// Separate Filter Input to prevent input focus loss during typing
-const ColumnFilterInput = React.memo(
-  ({
-    columnKey,
-    placeholder,
-    resetTrigger,
-    onFilterChange,
-  }: {
-    columnKey: string;
-    placeholder: string;
-    resetTrigger: number;
-    onFilterChange: (key: string, val: string) => void;
-  }) => {
-    const [val, setVal] = useState("");
 
-    useEffect(() => {
-      setVal("");
-    }, [resetTrigger]);
-
-    const handleInputChange = (_name: string, value: any) => {
-      const next = value ?? "";
-      setVal(next);
-      onFilterChange(columnKey, next);
-    };
-
-    return (
-      <div
-        className="w-full mt-1.5 [&_label]:hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Einput
-          title=""
-          type="text"
-          name={columnKey}
-          value={val}
-          placeholder={placeholder}
-          handleInputChange={handleInputChange}
-          className="h-8 px-2.5 text-xs sm:text-[13px] font-normal"
-        />
-      </div>
-    );
-  }
-);
-ColumnFilterInput.displayName = "ColumnFilterInput";
 
 export default function RecruitmentDetailedReportPage() {
   const user = useCurrentUser() as any;
@@ -108,7 +65,7 @@ export default function RecruitmentDetailedReportPage() {
 
   // Helper: Format Date string to DD-MM-YYYY
   const formatDate = (dateString: any) => {
-    if (!dateString || dateString === "null" || dateString === "—") return "—";
+    if (!dateString || dateString === "null" || dateString === "—") return "";
     try {
       const d = new Date(dateString);
       if (!isNaN(d.getTime())) {
@@ -303,8 +260,16 @@ export default function RecruitmentDetailedReportPage() {
           ? response.data
           : [];
 
+      const normalized = rawData.map((row: any) => ({
+        ...row,
+        status_label: getStatusInfo(row).label,
+        app_date_formatted: formatDate(row.APPLICATION_DATE1),
+        shortlist_date_formatted: formatDate(row.shortlist_date),
+        rejection_date_formatted: formatDate(row.REJECTION_DATE),
+      }));
+
       // Sort by TRAN_ID descending
-      const   sorted = [...rawData].sort(
+      const sorted = [...normalized].sort(
         (a, b) => Number(b.TRAN_ID || 0) - Number(a.TRAN_ID || 0)
       );
       setTableData(sorted);
@@ -445,14 +410,11 @@ export default function RecruitmentDetailedReportPage() {
       shortlisted,
       rejected,
     };
-  }, [tableData, getStatusInfo]);
-
-  // Filter Data
-  const filteredData = useMemo(() => {
-    // 1. Filter by Active Card
+  }, [tableData, getStatusInfo]);  // Filter Data by Active Card
+  const cardFilteredData = useMemo(() => {
     let base = tableData;
     if (activeCardFilter === "IN_INTERVIEW") {
-      base = base.filter((item) => {
+      return base.filter((item) => {
         const info = getStatusInfo(item);
         const s = String(item?.INT_STATUS ?? "");
         return (
@@ -463,13 +425,13 @@ export default function RecruitmentDetailedReportPage() {
         );
       });
     } else if (activeCardFilter === "RESUME_BANK") {
-      base = base.filter((item) => {
+      return base.filter((item) => {
         const info = getStatusInfo(item);
         const s = String(item?.INT_STATUS ?? "");
         return info.label === "Entry in resume bank" || s === "1";
       });
     } else if (activeCardFilter === "SELECTED") {
-      base = base.filter((item) => {
+      return base.filter((item) => {
         const info = getStatusInfo(item);
         const s = String(item?.INT_STATUS ?? "");
         return (
@@ -480,13 +442,13 @@ export default function RecruitmentDetailedReportPage() {
         );
       });
     } else if (activeCardFilter === "SHORTLISTED") {
-      base = base.filter((item) => {
+      return base.filter((item) => {
         const info = getStatusInfo(item);
         const s = String(item?.INT_STATUS ?? "");
         return info.label === "Shortlisted" || s === "2";
       });
     } else if (activeCardFilter === "REJECTED") {
-      base = base.filter((item) => {
+      return base.filter((item) => {
         const info = getStatusInfo(item);
         const s = String(item?.INT_STATUS ?? "");
         return (
@@ -500,42 +462,25 @@ export default function RecruitmentDetailedReportPage() {
         );
       });
     }
+    return base;
+  }, [tableData, activeCardFilter, getStatusInfo]);
 
-    // 2. Column Filters
-    const filterKeys = Object.keys(columnFilters);
-    if (filterKeys.length === 0) return base;
+  // Filter Data by Active Card + Column Filters (for counter display & Excel export)
+  const filteredData = useMemo(() => {
+    const activeEntries = Object.entries(columnFilters).filter(
+      ([_, v]) => v && String(v).trim() !== ""
+    );
+    if (activeEntries.length === 0) return cardFilteredData;
 
-    return base.filter((item) => {
-      return filterKeys.every((key) => {
-        const query = columnFilters[key];
-        if (!query) return true;
-
-        if (key === "INT_STATUS") {
-          const info = getStatusInfo(item);
-          return (
-            info.label.toLowerCase().includes(query) ||
-            String(item.INT_STATUS || "").toLowerCase().includes(query)
-          );
-        }
-
-        if (
-          key === "APPLICATION_DATE1" ||
-          key === "shortlist_date" ||
-          key === "REJECTION_DATE"
-        ) {
-          const formatted = formatDate(item[key]);
-          return (
-            formatted.toLowerCase().includes(query) ||
-            String(item[key] || "").toLowerCase().includes(query)
-          );
-        }
-
-        const val = item[key];
-        if (val === null || val === undefined) return false;
-        return String(val).toLowerCase().includes(query);
+    return cardFilteredData.filter((item) => {
+      return activeEntries.every(([key, filterVal]) => {
+        const query = String(filterVal).toLowerCase().trim();
+        const rawVal = item[key];
+        if (rawVal === undefined || rawVal === null) return false;
+        return String(rawVal).toLowerCase().includes(query);
       });
     });
-  }, [tableData, activeCardFilter, columnFilters, getStatusInfo]);
+  }, [cardFilteredData, columnFilters]);
 
   // Export to Excel
   const handleExportExcel = useCallback(() => {
@@ -543,16 +488,8 @@ export default function RecruitmentDetailedReportPage() {
 
     const exportColumns = [
       { Header: "SR", accessor: "TRAN_ID" },
-      {
-        Header: "Status",
-        accessor: "INT_STATUS",
-        Cell: ({ row }: any) => getStatusInfo(row?.original)?.label || "",
-      },
-      {
-        Header: "Application Date",
-        accessor: "APPLICATION_DATE1",
-        Cell: ({ value }: any) => formatDate(value),
-      },
+      { Header: "Status", accessor: "status_label" },
+      { Header: "Application Date", accessor: "app_date_formatted" },
       { Header: "Name", accessor: "NAME" },
       { Header: "Email", accessor: "EMAIL" },
       { Header: "Mobile No", accessor: "MOB_NO" },
@@ -584,38 +521,21 @@ export default function RecruitmentDetailedReportPage() {
       { Header: "Remark 4", accessor: "INTR4REMARK" },
       { Header: "INTR 4 Rating", accessor: "INTR4RATING" },
       { Header: "Shortlist By", accessor: "shortlist_by" },
-      {
-        Header: "Shortlist Date",
-        accessor: "shortlist_date",
-        Cell: ({ value }: any) => formatDate(value),
-      },
+      { Header: "Shortlist Date", accessor: "shortlist_date_formatted" },
       { Header: "Rejected By", accessor: "REJECTED_BY" },
-      {
-        Header: "Rejection Date",
-        accessor: "REJECTION_DATE",
-        Cell: ({ value }: any) => formatDate(value),
-      },
+      { Header: "Rejection Date", accessor: "rejection_date_formatted" },
     ];
 
     handleExcelDownload(exportColumns, filteredData);
-  }, [filteredData, user?.Comp_Code, getStatusInfo, handleExcelDownload]);
+  }, [filteredData, user?.Comp_Code, handleExcelDownload]);
 
-  // Table Columns Definition
+  // Table Columns Definition with Dropdown Filters
   const columns = useMemo(() => {
     return [
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[90px]">
-            <span>SR</span>
-            <ColumnFilterInput
-              columnKey="TRAN_ID"
-              placeholder="All SR"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "SR",
         accessor: "TRAN_ID",
+        filterPlaceholder: "All SR",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value ?? "—"}
@@ -623,18 +543,21 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[220px]">
-            <span>STATUS</span>
-            <ColumnFilterInput
-              columnKey="INT_STATUS"
-              placeholder="All status"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
-        accessor: "INT_STATUS",
+        Header: "STATUS",
+        accessor: "status_label",
+        filterPlaceholder: "All status",
+        filterOptions: [
+          { value: "", label: "All status" },
+          { value: "Entry in resume bank", label: "Entry in resume bank" },
+          { value: "Shortlisted", label: "Shortlisted" },
+          { value: "Interview in processing", label: "Interview in processing" },
+          { value: "All Interview Done", label: "All Interview Done" },
+          { value: "Finally selected by HR", label: "Finally selected by HR" },
+          { value: "Finally rejected by HR", label: "Finally rejected by HR" },
+          { value: "Employee master Created", label: "Employee master Created" },
+          { value: "Removed From employee Master", label: "Removed From employee Master" },
+        ],
+        filterClassName: "min-w-[190px]",
         Cell: ({ row }: any) => {
           const info = getStatusInfo(row.original);
           return (
@@ -648,37 +571,19 @@ export default function RecruitmentDetailedReportPage() {
         },
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>APPLICATION DATE</span>
-            <ColumnFilterInput
-              columnKey="APPLICATION_DATE1"
-              placeholder="All date"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
-        accessor: "APPLICATION_DATE1",
+        Header: "APPLICATION DATE",
+        accessor: "app_date_formatted",
+        filterPlaceholder: "All date",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-            {formatDate(value)}
+            {value || "—"}
           </span>
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>NAME</span>
-            <ColumnFilterInput
-              columnKey="NAME"
-              placeholder="All name"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "NAME",
         accessor: "NAME",
+        filterPlaceholder: "All name",
         Cell: ({ value }: any) => (
           <span className="font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
             {value || "—"}
@@ -686,18 +591,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[190px]">
-            <span>EMAIL</span>
-            <ColumnFilterInput
-              columnKey="EMAIL"
-              placeholder="All email"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "EMAIL",
         accessor: "EMAIL",
+        filterPlaceholder: "All email",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 font-normal">
             {value && String(value).trim() ? String(value).trim() : "—"}
@@ -705,18 +601,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[140px]">
-            <span>MOBILE NO</span>
-            <ColumnFilterInput
-              columnKey="MOB_NO"
-              placeholder="All mobile"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "MOBILE NO",
         accessor: "MOB_NO",
+        filterPlaceholder: "All mobile",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value && String(value).trim() ? String(value).trim() : "—"}
@@ -724,18 +611,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[180px]">
-            <span>SOURCE OF ENQUIRY</span>
-            <ColumnFilterInput
-              columnKey="SOURCE_OF_REG_Label"
-              placeholder="All source of enquiry"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "SOURCE OF ENQUIRY",
         accessor: "SOURCE_OF_REG_Label",
+        filterPlaceholder: "All source of enquiry",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -743,18 +621,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>ADDRESS</span>
-            <ColumnFilterInput
-              columnKey="ADDRESS"
-              placeholder="All address"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "ADDRESS",
         accessor: "ADDRESS",
+        filterPlaceholder: "All address",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300">
             {value && String(value).trim() ? String(value).trim() : "—"}
@@ -762,18 +631,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[130px]">
-            <span>CLUSTER</span>
-            <ColumnFilterInput
-              columnKey="CLUSTERLabel"
-              placeholder="All cluster"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "CLUSTER",
         accessor: "CLUSTERLabel",
+        filterPlaceholder: "All cluster",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -781,18 +641,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[130px]">
-            <span>CHANNEL</span>
-            <ColumnFilterInput
-              columnKey="CHANNELLabel"
-              placeholder="All channel"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "CHANNEL",
         accessor: "CHANNELLabel",
+        filterPlaceholder: "All channel",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -800,18 +651,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[170px]">
-            <span>DESIGNATION</span>
-            <ColumnFilterInput
-              columnKey="DESIGNATION"
-              placeholder="All designation"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "DESIGNATION",
         accessor: "DESIGNATION",
+        filterPlaceholder: "All designation",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-800 dark:text-slate-200">
             {value || "—"}
@@ -821,18 +663,9 @@ export default function RecruitmentDetailedReportPage() {
       ...(user?.Comp_Code === "MLAPL-25"
         ? [
           {
-            Header: () => (
-              <div className="flex flex-col gap-1 w-full py-1 min-w-[170px]">
-                <span>SUITABLE DESIGNATION</span>
-                <ColumnFilterInput
-                  columnKey="SUITABLE_DESIGNATION"
-                  placeholder="All suitable"
-                  resetTrigger={resetTrigger}
-                  onFilterChange={handleColumnFilter}
-                />
-              </div>
-            ),
+            Header: "SUITABLE DESIGNATION",
             accessor: "SUITABLE_DESIGNATION",
+            filterPlaceholder: "All suitable",
             Cell: ({ value }: any) => (
               <span className="text-slate-700 dark:text-slate-300">
                 {value || "—"}
@@ -842,18 +675,9 @@ export default function RecruitmentDetailedReportPage() {
         ]
         : []),
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[140px]">
-            <span>LOCATION</span>
-            <ColumnFilterInput
-              columnKey="LOC_CODE1"
-              placeholder="All location"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "LOCATION",
         accessor: "LOC_CODE1",
+        filterPlaceholder: "All location",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -861,18 +685,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[170px]">
-            <span>HIGHEST QUALIFICATION</span>
-            <ColumnFilterInput
-              columnKey="HIGH_QUAL"
-              placeholder="All qualification"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "HIGHEST QUALIFICATION",
         accessor: "HIGH_QUAL",
+        filterPlaceholder: "All qualification",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value && String(value).trim() ? String(value).trim() : "—"}
@@ -880,18 +695,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[120px]">
-            <span>PASSING %</span>
-            <ColumnFilterInput
-              columnKey="PASSING_PER"
-              placeholder="All percent"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "PASSING %",
         accessor: "PASSING_PER",
+        filterPlaceholder: "All percent",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value !== null && value !== undefined && value !== ""
@@ -901,18 +707,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[110px]">
-            <span>EXP (YRS)</span>
-            <ColumnFilterInput
-              columnKey="EXP_IN_YEAR"
-              placeholder="All exp"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "EXP (YRS)",
         accessor: "EXP_IN_YEAR",
+        filterPlaceholder: "All exp",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value !== null && value !== undefined && value !== ""
@@ -922,18 +719,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>SKILLS</span>
-            <ColumnFilterInput
-              columnKey="SKILLS"
-              placeholder="All skills"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "SKILLS",
         accessor: "SKILLS",
+        filterPlaceholder: "All skills",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 text-xs">
             {value && String(value).trim() ? String(value).trim() : "—"}
@@ -941,18 +729,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[130px]">
-            <span>CURRENT CTC</span>
-            <ColumnFilterInput
-              columnKey="CURRENT_CTC"
-              placeholder="All current ctc"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "CURRENT CTC",
         accessor: "CURRENT_CTC",
+        filterPlaceholder: "All current ctc",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value !== null && value !== undefined && value !== ""
@@ -962,18 +741,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[130px]">
-            <span>EXPECTED CTC</span>
-            <ColumnFilterInput
-              columnKey="EXPECTED_CTC"
-              placeholder="All expected ctc"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "EXPECTED CTC",
         accessor: "EXPECTED_CTC",
+        filterPlaceholder: "All expected ctc",
         Cell: ({ value }: any) => (
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {value !== null && value !== undefined && value !== ""
@@ -983,18 +753,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>INTERVIEWER 1ST</span>
-            <ColumnFilterInput
-              columnKey="employeename1"
-              placeholder="All interviewer 1"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "INTERVIEWER 1ST",
         accessor: "employeename1",
+        filterPlaceholder: "All interviewer 1",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1002,18 +763,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>REMARK 1</span>
-            <ColumnFilterInput
-              columnKey="INTR1REMARK"
-              placeholder="All remark 1"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "REMARK 1",
         accessor: "INTR1REMARK",
+        filterPlaceholder: "All remark 1",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 text-xs">
             {value || "—"}
@@ -1021,18 +773,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[110px]">
-            <span>RATING 1</span>
-            <ColumnFilterInput
-              columnKey="INTR1RATING"
-              placeholder="All rating 1"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "RATING 1",
         accessor: "INTR1RATING",
+        filterPlaceholder: "All rating 1",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 font-medium">
             {value !== null && value !== undefined ? value : "—"}
@@ -1040,18 +783,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>INTERVIEWER 2ND</span>
-            <ColumnFilterInput
-              columnKey="employeename2"
-              placeholder="All interviewer 2"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "INTERVIEWER 2ND",
         accessor: "employeename2",
+        filterPlaceholder: "All interviewer 2",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1059,18 +793,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>REMARK 2</span>
-            <ColumnFilterInput
-              columnKey="INTR2REMARK"
-              placeholder="All remark 2"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "REMARK 2",
         accessor: "INTR2REMARK",
+        filterPlaceholder: "All remark 2",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 text-xs">
             {value || "—"}
@@ -1078,18 +803,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[110px]">
-            <span>RATING 2</span>
-            <ColumnFilterInput
-              columnKey="INTR2RATING"
-              placeholder="All rating 2"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "RATING 2",
         accessor: "INTR2RATING",
+        filterPlaceholder: "All rating 2",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 font-medium">
             {value !== null && value !== undefined ? value : "—"}
@@ -1097,18 +813,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>INTERVIEWER 3RD</span>
-            <ColumnFilterInput
-              columnKey="employeename3"
-              placeholder="All interviewer 3"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "INTERVIEWER 3RD",
         accessor: "employeename3",
+        filterPlaceholder: "All interviewer 3",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1116,18 +823,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>REMARK 3</span>
-            <ColumnFilterInput
-              columnKey="INTR3REMARK"
-              placeholder="All remark 3"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "REMARK 3",
         accessor: "INTR3REMARK",
+        filterPlaceholder: "All remark 3",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 text-xs">
             {value || "—"}
@@ -1135,18 +833,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[110px]">
-            <span>RATING 3</span>
-            <ColumnFilterInput
-              columnKey="INTR3RATING"
-              placeholder="All rating 3"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "RATING 3",
         accessor: "INTR3RATING",
+        filterPlaceholder: "All rating 3",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 font-medium">
             {value !== null && value !== undefined ? value : "—"}
@@ -1154,18 +843,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[160px]">
-            <span>INTERVIEWER 4TH</span>
-            <ColumnFilterInput
-              columnKey="employeename4"
-              placeholder="All interviewer 4"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "INTERVIEWER 4TH",
         accessor: "employeename4",
+        filterPlaceholder: "All interviewer 4",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1173,18 +853,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>REMARK 4</span>
-            <ColumnFilterInput
-              columnKey="INTR4REMARK"
-              placeholder="All remark 4"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "REMARK 4",
         accessor: "INTR4REMARK",
+        filterPlaceholder: "All remark 4",
         Cell: ({ value }: any) => (
           <span className="text-slate-600 dark:text-slate-300 text-xs">
             {value || "—"}
@@ -1192,18 +863,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[110px]">
-            <span>RATING 4</span>
-            <ColumnFilterInput
-              columnKey="INTR4RATING"
-              placeholder="All rating 4"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "RATING 4",
         accessor: "INTR4RATING",
+        filterPlaceholder: "All rating 4",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 font-medium">
             {value !== null && value !== undefined ? value : "—"}
@@ -1211,18 +873,9 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>SHORTLIST BY</span>
-            <ColumnFilterInput
-              columnKey="shortlist_by"
-              placeholder="All shortlist by"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "SHORTLIST BY",
         accessor: "shortlist_by",
+        filterPlaceholder: "All shortlist by",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1230,37 +883,19 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[140px]">
-            <span>SHORTLIST DATE</span>
-            <ColumnFilterInput
-              columnKey="shortlist_date"
-              placeholder="All date"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
-        accessor: "shortlist_date",
+        Header: "SHORTLIST DATE",
+        accessor: "shortlist_date_formatted",
+        filterPlaceholder: "All date",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 whitespace-nowrap">
-            {formatDate(value)}
+            {value || "—"}
           </span>
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[150px]">
-            <span>REJECTED BY</span>
-            <ColumnFilterInput
-              columnKey="REJECTED_BY"
-              placeholder="All rejected by"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
+        Header: "REJECTED BY",
         accessor: "REJECTED_BY",
+        filterPlaceholder: "All rejected by",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300">
             {value || "—"}
@@ -1268,26 +903,28 @@ export default function RecruitmentDetailedReportPage() {
         ),
       },
       {
-        Header: () => (
-          <div className="flex flex-col gap-1 w-full py-1 min-w-[140px]">
-            <span>REJECTION DATE</span>
-            <ColumnFilterInput
-              columnKey="REJECTION_DATE"
-              placeholder="All date"
-              resetTrigger={resetTrigger}
-              onFilterChange={handleColumnFilter}
-            />
-          </div>
-        ),
-        accessor: "REJECTION_DATE",
+        Header: "REJECTION DATE",
+        accessor: "rejection_date_formatted",
+        filterPlaceholder: "All date",
         Cell: ({ value }: any) => (
           <span className="text-slate-700 dark:text-slate-300 whitespace-nowrap">
-            {formatDate(value)}
+            {value || "—"}
           </span>
         ),
       },
     ];
-  }, [resetTrigger, handleColumnFilter, getStatusInfo, user?.Comp_Code]);
+  }, [getStatusInfo, user?.Comp_Code]);
+
+  const cardCommonProps = {
+    className:
+      "!h-auto !min-h-0 !rounded-[12px] !p-[14px_16px] !shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)]",
+    inactiveClassName:
+      "!bg-white dark:!bg-[#111827] !border-[#E2E8F0] dark:!border-[#1F2937] hover:!border-slate-300 dark:hover:!border-slate-700",
+    titleClassName:
+      "!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase",
+    countClassName:
+      "!text-[23px] !font-[650] !tracking-[-0.02em] !mt-[9px] !text-[#1E293B] dark:!text-[#E7ECF3] tabular-nums",
+  };
 
   return (
     <div className="w-full space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
@@ -1296,22 +933,22 @@ export default function RecruitmentDetailedReportPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
             Recruitment detailed report
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-[5px]">
             Every application in the period, with the stage it reached — the
             report HR sends up the chain.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={handleResetFilters}
-            className="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
+            className="flex items-center gap-[7px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] font-[550] px-[13px] py-2 rounded-[10px] cursor-pointer whitespace-nowrap hover:bg-[#F1F5F9] dark:hover:bg-[#182235] transition-colors"
           >
-            <FilterX className="w-4 h-4 text-slate-500" />
+            <FilterX className="w-4 h-4 text-[#64748B]" />
             <span>Reset filters</span>
           </button>
 
@@ -1319,7 +956,7 @@ export default function RecruitmentDetailedReportPage() {
             type="button"
             onClick={handleExportExcel}
             disabled={isExcelLoading || filteredData.length === 0}
-            className="h-10 px-4 rounded-xl bg-[#4338CA] hover:bg-[#3730a3] text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-[7px] border border-transparent bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[12.5px] font-semibold px-3.5 py-2 rounded-[10px] cursor-pointer whitespace-nowrap shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileSpreadsheet className="w-4 h-4 text-white" />
             <span>{isExcelLoading ? "Exporting..." : "Export to Excel"}</span>
@@ -1330,22 +967,25 @@ export default function RecruitmentDetailedReportPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 2. 6 METRIC CARDS */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-[14px]">
         {/* 1. Applications */}
         <Card
           title="APPLICATIONS"
           count={cardCounts.applications}
-          icon={<FileText className="w-4.5 h-4.5" />}
+          icon={<FileText className="w-3.5 h-3.5 text-[#4F46E5] dark:text-[#8B84FF]" />}
           variant="indigo"
           isActive={activeCardFilter === "ALL"}
           onClick={() => setActiveCardFilter("ALL")}
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#4F46E5]/10 dark:!bg-[#4F46E5]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#4F46E5] ring-2 ring-[#4F46E5]/25 !shadow-sm"
         />
 
         {/* 2. In Interview */}
         <Card
           title="IN INTERVIEW"
           count={cardCounts.in_interview}
-          icon={<CalendarClock className="w-4.5 h-4.5" />}
+          icon={<CalendarClock className="w-3.5 h-3.5 text-[#F59E0B]" />}
           variant="amber"
           isActive={activeCardFilter === "IN_INTERVIEW"}
           onClick={() =>
@@ -1353,13 +993,16 @@ export default function RecruitmentDetailedReportPage() {
               prev === "IN_INTERVIEW" ? "ALL" : "IN_INTERVIEW"
             )
           }
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#F59E0B]/10 dark:!bg-[#F59E0B]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#F59E0B] ring-2 ring-[#F59E0B]/25 !shadow-sm"
         />
 
         {/* 3. Entry In Resume Bank (Next to In Interview) */}
         <Card
           title="RESUME BANK"
           count={cardCounts.resume_bank}
-          icon={<FolderArchive className="w-4.5 h-4.5" />}
+          icon={<FolderArchive className="w-3.5 h-3.5 text-[#0EA5E9]" />}
           variant="sky"
           isActive={activeCardFilter === "RESUME_BANK"}
           onClick={() =>
@@ -1367,13 +1010,16 @@ export default function RecruitmentDetailedReportPage() {
               prev === "RESUME_BANK" ? "ALL" : "RESUME_BANK"
             )
           }
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#0EA5E9]/10 dark:!bg-[#0EA5E9]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#0EA5E9] ring-2 ring-[#0EA5E9]/25 !shadow-sm"
         />
 
         {/* 4. Selected */}
         <Card
           title="SELECTED"
           count={cardCounts.selected}
-          icon={<CheckCircle2 className="w-4.5 h-4.5" />}
+          icon={<CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />}
           variant="emerald"
           isActive={activeCardFilter === "SELECTED"}
           onClick={() =>
@@ -1381,13 +1027,16 @@ export default function RecruitmentDetailedReportPage() {
               prev === "SELECTED" ? "ALL" : "SELECTED"
             )
           }
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#10B981]/10 dark:!bg-[#10B981]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#10B981] ring-2 ring-[#10B981]/25 !shadow-sm"
         />
 
         {/* 5. Shortlisted */}
         <Card
           title="SHORTLISTED"
           count={cardCounts.shortlisted}
-          icon={<UserCheck className="w-4.5 h-4.5" />}
+          icon={<UserCheck className="w-3.5 h-3.5 text-[#7C3AED]" />}
           variant="purple"
           isActive={activeCardFilter === "SHORTLISTED"}
           onClick={() =>
@@ -1395,13 +1044,16 @@ export default function RecruitmentDetailedReportPage() {
               prev === "SHORTLISTED" ? "ALL" : "SHORTLISTED"
             )
           }
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#7C3AED]/10 dark:!bg-[#7C3AED]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#7C3AED] ring-2 ring-[#7C3AED]/25 !shadow-sm"
         />
 
         {/* 6. Rejected */}
         <Card
           title="REJECTED"
           count={cardCounts.rejected}
-          icon={<UserX className="w-4.5 h-4.5" />}
+          icon={<UserX className="w-3.5 h-3.5 text-[#E11D48]" />}
           variant="rose"
           isActive={activeCardFilter === "REJECTED"}
           onClick={() =>
@@ -1409,46 +1061,53 @@ export default function RecruitmentDetailedReportPage() {
               prev === "REJECTED" ? "ALL" : "REJECTED"
             )
           }
+          {...cardCommonProps}
+          iconClassName="!w-6 !h-6 !rounded-[7px] !border-none !bg-[#E11D48]/10 dark:!bg-[#E11D48]/25 flex items-center justify-center shrink-0"
+          activeClassName="!bg-white dark:!bg-[#111827] !border-[#E11D48] ring-2 ring-[#E11D48]/25 !shadow-sm"
         />
       </div>
 
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 3. FILTERS CARD */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] p-5 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+      <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-[14px_18px_16px_18px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] mb-[14px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[170px_170px_minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 items-end">
           {/* DATE FROM */}
-          <div className="lg:col-span-3 sm:col-span-1">
+          <div className="w-full min-w-0 [&_label]:!text-[11px] [&_label]:!font-semibold [&_label]:!text-[#64748B] dark:[&_label]:!text-[#94A3B8] [&_label]:!tracking-[0.03em] [&_label]:!uppercase [&_label]:!mb-[5px]">
             <Einput
-              title="DATE FROM"
+              title="Date from"
               type="date"
               name="DATE_FROM"
+              ShortName={true}
               value={dateRange.DATE_FROM}
               handleInputChange={(_name, val) => dateRange.setDateFrom(val || "")}
+              className="!h-[38px] !w-full !rounded-[9px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !text-[12.5px] !px-2.5 !shadow-none focus-visible:!border-[#4F46E5] focus-visible:!ring-0 cursor-pointer"
             />
           </div>
 
           {/* DATE TO */}
-          <div className="lg:col-span-3 sm:col-span-1">
+          <div className="w-full min-w-0 [&_label]:!text-[11px] [&_label]:!font-semibold [&_label]:!text-[#64748B] dark:[&_label]:!text-[#94A3B8] [&_label]:!tracking-[0.03em] [&_label]:!uppercase [&_label]:!mb-[5px]">
             <Einput
-              title="DATE TO"
+              title="Date to"
               type="date"
               name="DATE_TO"
+              ShortName={true}
               value={dateRange.DATE_TO}
               handleInputChange={(_name, val) => dateRange.setDateTo(val || "")}
+              className="!h-[38px] !w-full !rounded-[9px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !text-[12.5px] !px-2.5 !shadow-none focus-visible:!border-[#4F46E5] focus-visible:!ring-0 cursor-pointer"
             />
           </div>
 
           {/* CHANNEL */}
-          <div className="lg:col-span-3 sm:col-span-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              CHANNEL
+          <div className="w-full min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8] mb-[5px]">
+              Channel
             </label>
             <div className="relative">
               <select
                 value={channel}
                 onChange={(e) => setChannel(e.target.value)}
-                className="w-full h-10 px-3 pr-8 appearance-none border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
+                className="w-full h-[38px] appearance-none border border-[#E2E8F0] dark:border-[#1F2937] rounded-[9px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] pl-2.5 pr-7 outline-none cursor-pointer focus:border-[#4F46E5] focus:ring-0"
               >
                 {channelOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -1456,20 +1115,20 @@ export default function RecruitmentDetailedReportPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 pointer-events-none absolute right-3 top-3" />
+              <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-2.5 top-3" />
             </div>
           </div>
 
           {/* CLUSTER */}
-          <div className="lg:col-span-2 sm:col-span-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              CLUSTER
+          <div className="w-full min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8] mb-[5px]">
+              Cluster
             </label>
             <div className="relative">
               <select
                 value={cluster}
                 onChange={(e) => setCluster(e.target.value)}
-                className="w-full h-10 px-3 pr-8 appearance-none border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
+                className="w-full h-[38px] appearance-none border border-[#E2E8F0] dark:border-[#1F2937] rounded-[9px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] pl-2.5 pr-7 outline-none cursor-pointer focus:border-[#4F46E5] focus:ring-0"
               >
                 {clusterOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -1477,17 +1136,17 @@ export default function RecruitmentDetailedReportPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 pointer-events-none absolute right-3 top-3" />
+              <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-2.5 top-3" />
             </div>
           </div>
 
           {/* SHOW BUTTON */}
-          <div className="lg:col-span-1 sm:col-span-2 flex justify-end">
+          <div className="flex justify-end w-full sm:w-auto">
             <Button
               type="primary"
               onClick={fetchData}
               disabled={isLoading}
-              className="w-full h-10 px-6 rounded-xl bg-[#4338CA] hover:bg-[#3730a3] active:scale-[0.98] text-white font-semibold text-sm shadow-xs transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
+              className="w-full sm:w-auto !h-[38px] !px-5 !rounded-[9px] !bg-[#4F46E5] hover:!bg-[#4338CA] active:scale-[0.98] !text-white !font-semibold !text-[12.5px] !border-none shadow-none transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
               Show
             </Button>
@@ -1530,15 +1189,19 @@ export default function RecruitmentDetailedReportPage() {
           </div>
         </div>
 
-        {/* The ReactTable component */}
+        {/* The ReactTable component with dropdown column filters */}
         <ServiceTablePagination
           key={`${pageSize}_${activeCardFilter}`}
           columns={columns}
-          data={filteredData}
+          data={cardFilteredData}
           initialPageSize={pageSize}
+          showColumnFilters={true}
+          columnFilters={columnFilters}
+          onColumnFilterChange={handleColumnFilter}
+          columnFiltersResetTrigger={resetTrigger}
           showExcelExport={false}
           showTopSearch={false}
-          headerClassName="[&>div]:!items-start [&>div]:pt-1"
+          containerClassName="border-0 shadow-none rounded-none bg-transparent"
         />
       </div>
 

@@ -1066,7 +1066,7 @@ export default function CandidateRegistrationPage() {
   const currentStepTitle = stepLabels.find((s) => s.id === currentStep)?.title || "";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070b14] text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1780px] mx-auto transition-colors">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070b14] text-slate-900 dark:text-slate-100 p-3 sm:p-5 lg:p-7 space-y-5 lg:space-y-6 max-w-[1780px] mx-auto transition-colors">
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -1081,7 +1081,7 @@ export default function CandidateRegistrationPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
-          <Button
+          {/* <Button
             variant="outline"
             size="lg"
             type="button"
@@ -1090,7 +1090,7 @@ export default function CandidateRegistrationPage() {
           >
             <Printer className="h-5 w-5 mr-2 text-slate-600 dark:text-slate-400" />
             Print
-          </Button>
+          </Button> */}
 
           <Button
             variant="primary"
@@ -1100,7 +1100,7 @@ export default function CandidateRegistrationPage() {
             className="h-12 px-6 font-bold cursor-pointer shadow-md shadow-indigo-600/20"
           >
             <Bookmark className="h-5 w-5 mr-2" />
-            Save draft
+            Save
           </Button>
         </div>
       </div>
@@ -1108,22 +1108,22 @@ export default function CandidateRegistrationPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 2. MAIN 2-COLUMN LAYOUT */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
 
         {/* ── LEFT SIDEBAR (STEPPER & DOCUMENTS CHECKLIST) ─────────────────────── */}
-        <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-6">
+        <div className="lg:col-span-3 space-y-5 lg:space-y-6 lg:sticky lg:top-6">
           {/* Stepper Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 lg:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4 lg:space-y-5">
             {/* Completion Badge */}
-            <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="h-14 w-14 rounded-full border-2 border-indigo-600 flex items-center justify-center font-bold text-base text-indigo-600 dark:text-indigo-400 shrink-0 bg-indigo-50 dark:bg-indigo-950/40">
+            <div className="flex items-center gap-3.5 pb-3 lg:pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="h-11 w-11 lg:h-14 lg:w-14 rounded-full border-2 border-indigo-600 flex items-center justify-center font-bold text-sm lg:text-base text-indigo-600 dark:text-indigo-400 shrink-0 bg-indigo-50 dark:bg-indigo-950/40">
                 {completionStats.percent}%
               </div>
-              <div>
-                <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <div className="min-w-0">
+                <h4 className="text-base lg:text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">
                   Form completion
                 </h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+                <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-normal mt-0.5 truncate">
                   {completionStats.remaining > 0
                     ? `${completionStats.remaining} required fields left`
                     : "All required fields completed!"}
@@ -1132,7 +1132,7 @@ export default function CandidateRegistrationPage() {
             </div>
 
             {/* Steps List */}
-            <nav className="space-y-2.5">
+            <nav className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-2 lg:gap-2.5">
               {stepLabels.map((step) => {
                 const isActive = currentStep === step.id;
                 const isCompleted = currentStep > step.id;
@@ -1146,32 +1146,32 @@ export default function CandidateRegistrationPage() {
                         setCurrentStep(step.id);
                       }
                     }}
-                    className={`w-full flex items-start gap-3.5 p-3.5 rounded-xl transition text-left cursor-pointer ${isActive
+                    className={`flex items-center sm:items-start lg:items-start gap-2.5 sm:gap-3 lg:gap-3.5 p-2.5 sm:p-3 lg:p-3.5 rounded-xl transition text-left cursor-pointer ${isActive
                       ? "bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 shadow-xs"
                       : "hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent"
                       }`}
                   >
                     <div
-                      className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition ${isActive
+                      className={`h-7 w-7 sm:h-8 sm:w-8 lg:h-9 lg:w-9 rounded-full flex items-center justify-center text-xs lg:text-sm font-semibold shrink-0 transition ${isActive
                         ? "bg-indigo-600 text-white shadow-xs"
                         : isCompleted
                           ? "bg-emerald-500 text-white"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
                         }`}
                     >
-                      {isCompleted ? <Check className="h-4.5 w-4.5 stroke-[2.5]" /> : step.id}
+                      {isCompleted ? <Check className="h-3.5 w-3.5 lg:h-4.5 lg:w-4.5 stroke-[2.5]" /> : step.id}
                     </div>
 
                     <div className="min-w-0">
                       <div
-                        className={`text-base ${isActive
+                        className={`text-xs sm:text-sm lg:text-base truncate ${isActive
                           ? "text-indigo-950 dark:text-indigo-200 font-semibold"
                           : "text-slate-800 dark:text-slate-200 font-medium"
                           }`}
                       >
                         {step.title}
                       </div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
+                      <div className="hidden sm:block text-[11px] lg:text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
                         {step.sub}
                       </div>
                     </div>
@@ -1182,7 +1182,7 @@ export default function CandidateRegistrationPage() {
           </div>
 
           {/* Documents Checklist Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div className="hidden lg:block rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Documents
             </h4>
@@ -1246,15 +1246,15 @@ export default function CandidateRegistrationPage() {
           {/* STEP 1: BASIC INFORMATION                                              */}
           {/* ===================================================================== */}
           {currentStep === 1 && (
-            <div className="space-y-4.5 animate-in fade-in-50 duration-200">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in-50 duration-200">
               {/* Card 1: Identity */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4.5 sm:space-y-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                       <User className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Identity
                     </h3>
                   </div>
@@ -1263,7 +1263,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-5 gap-y-5 sm:gap-y-6">
                   {/* Candidate Name */}
                   <div>
                     <Einput
@@ -1303,8 +1303,8 @@ export default function CandidateRegistrationPage() {
 
                   {/* Gender */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Gender <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                      Gender <span className="text-red-500">*</span>
                     </label>
                     <SelectSearch
                       selectedValue={formData.GENDER}
@@ -1347,7 +1347,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Religion */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Religion
                     </label>
                     <SelectSearch
@@ -1375,13 +1375,13 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 2: Contact */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4.5 sm:space-y-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                       <Phone className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Contact
                     </h3>
                   </div>
@@ -1390,7 +1390,7 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-5 gap-y-5 sm:gap-y-6">
                   {/* Mobile Number */}
                   <div>
                     <Einput
@@ -1443,7 +1443,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Emergency Contact Relation */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Emergency Contact
                     </label>
                     <SelectSearch
@@ -1475,13 +1475,13 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 3: Location */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4.5 sm:space-y-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                       <MapPin className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Location
                     </h3>
                   </div>
@@ -1490,9 +1490,9 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-5 gap-y-5 sm:gap-y-6">
                   {/* Address - Span 2 */}
-                  <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 2xl:col-span-2">
                     <Einput
                       title="Address"
                       type="text"
@@ -1518,8 +1518,8 @@ export default function CandidateRegistrationPage() {
 
                   {/* State */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      State <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                      State <span className="text-red-500">*</span>
                     </label>
                     <SelectSearch
                       selectedValue={formData.STATE}
@@ -1533,7 +1533,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Cluster */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Cluster
                     </label>
                     <SelectSearch
@@ -1548,7 +1548,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Channel */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Channel
                     </label>
                     <SelectSearch
@@ -1563,7 +1563,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Category */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Category
                     </label>
                     <SelectSearch
@@ -1579,13 +1579,13 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 4: Applying for */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4.5 sm:space-y-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center">
                       <Briefcase className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Applying for
                     </h3>
                   </div>
@@ -1594,11 +1594,11 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-5 gap-y-5 sm:gap-y-6">
                   {/* Designation Applying for */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Designation <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                      Designation <span className="text-red-500">*</span>
                     </label>
                     <SelectSearch
                       selectedValue={formData.DESIGNATION}
@@ -1612,8 +1612,8 @@ export default function CandidateRegistrationPage() {
 
                   {/* Branch Location */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Branch <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                      Branch <span className="text-red-500">*</span>
                     </label>
                     <SelectSearch
                       selectedValue={formData.LOC_CODE}
@@ -1626,7 +1626,7 @@ export default function CandidateRegistrationPage() {
                   </div>
 
                   {/* Key Skills - Span 2 */}
-                  <div className="sm:col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 2xl:col-span-2">
                     <Einput
                       title="Key Skills"
                       type="text"
@@ -1639,7 +1639,7 @@ export default function CandidateRegistrationPage() {
 
                   {/* Source */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                       Source
                     </label>
                     <SelectSearch
@@ -1667,13 +1667,13 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 5: Qualification & CTC */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4.5 sm:space-y-5">
+                <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                       <GraduationCap className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Qualification & CTC
                     </h3>
                   </div>
@@ -1682,11 +1682,11 @@ export default function CandidateRegistrationPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-4 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-x-5 gap-y-5 sm:gap-y-6">
                   {/* Highest Qualification */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Highest Qualification <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                      Highest Qualification <span className="text-red-500">*</span>
                     </label>
                     <SelectSearch
                       selectedValue={formData.HIGH_QUAL}
@@ -1754,14 +1754,14 @@ export default function CandidateRegistrationPage() {
               </div>
 
               {/* Card 6: Side-by-Side Driving Skills & Documents Upload */}
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3.5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 {/* Driving Skills Subcard */}
-                <div className="xl:col-span-4 rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3.5">
+                <div className="lg:col-span-4 xl:col-span-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
                   <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                       <Car className="h-4 w-4" />
                     </div>
-                    <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
                       Driving skills
                     </h3>
                   </div>
@@ -1800,7 +1800,7 @@ export default function CandidateRegistrationPage() {
                 </div>
 
                 {/* Documents Upload Subcard */}
-                <div className="xl:col-span-8">
+                <div className="lg:col-span-8 xl:col-span-8">
                   <CertificatesUpload
                     headerTitle="Documents upload"
                     headerIcon={<Paperclip className="h-4 w-4" />}
@@ -1808,7 +1808,7 @@ export default function CandidateRegistrationPage() {
                     value={docUploadValues}
                     onChange={handleDocUploadChange}
                     compact={true}
-                    gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5"
+                    gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3"
                   />
                 </div>
               </div>
@@ -1905,7 +1905,7 @@ export default function CandidateRegistrationPage() {
                       >
                         {/* Row 1: Company, Designation, Responsibilities, Trash */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                          <div className="md:col-span-4 lg:col-span-3">
+                          <div className="md:col-span-6 xl:col-span-3">
                             <Einput
                               title="Company"
                               type="text"
@@ -1916,7 +1916,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-4 lg:col-span-3">
+                          <div className="md:col-span-6 xl:col-span-3">
                             <Einput
                               title="Designation"
                               type="text"
@@ -1927,7 +1927,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-4 lg:col-span-5">
+                          <div className="md:col-span-10 xl:col-span-5">
                             <Einput
                               title="Responsibilities"
                               type="text"
@@ -1938,7 +1938,7 @@ export default function CandidateRegistrationPage() {
                             />
                           </div>
 
-                          <div className="md:col-span-12 lg:col-span-1 flex justify-end">
+                          <div className="md:col-span-2 xl:col-span-1 flex justify-end">
                             <Button
                               type="button"
                               variant="ghost"
@@ -1953,7 +1953,7 @@ export default function CandidateRegistrationPage() {
                         </div>
 
                         {/* Row 2: From, To, Settlement Done, Salary */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                           <div>
                             <Einput
                               title="From"
@@ -2131,7 +2131,7 @@ export default function CandidateRegistrationPage() {
                 </div>
 
                 {/* Section Details Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
                   {/* Column 1: Identity */}
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -2285,7 +2285,7 @@ export default function CandidateRegistrationPage() {
 
                 {/* Bottom Section: Experience & Family */}
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
                     <div className="space-y-3.5 col-span-1">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                         <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">
@@ -2355,7 +2355,7 @@ export default function CandidateRegistrationPage() {
                 size="lg"
                 onClick={handlePrevStep}
                 disabled={currentStep === 1}
-                className="h-12 px-7 font-bold cursor-pointer"
+                className="h-11 sm:h-12 px-5 sm:px-7 font-bold cursor-pointer flex-1 sm:flex-none justify-center"
               >
                 <ChevronLeft className="h-5 w-5 mr-1.5" />
                 Previous
@@ -2366,7 +2366,7 @@ export default function CandidateRegistrationPage() {
                 variant={currentStep === 4 ? "secondary" : "primary"}
                 size="lg"
                 onClick={handleNextStep}
-                className={`h-12 px-8 font-bold tracking-wide cursor-pointer transition-all ${currentStep === 4
+                className={`h-11 sm:h-12 px-6 sm:px-8 font-bold tracking-wide cursor-pointer transition-all flex-1 sm:flex-none justify-center ${currentStep === 4
                   ? "bg-[#059669] hover:bg-[#047857] text-white shadow-emerald-600/20"
                   : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20"
                   }`}

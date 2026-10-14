@@ -1,21 +1,24 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import axios from "axios";
 import Swal from "sweetalert2";
 import {
   UserRoundSearch,
   ArrowRight,
-  Building2,
   ShieldCheck,
   Check,
   AlertTriangle,
   Send,
   FileSpreadsheet,
   X,
+  UserCheck,
+  GitBranch,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
@@ -42,20 +45,21 @@ type TransferRequest = {
   [key: string]: any;
 };
 
-const approvalRoute = [
-  { level: "L1", name: "Gopal Sodani", designation: "HOD · Sales" },
-  { level: "L2", name: "Anand Kulkarni", designation: "HR Admin" },
-  { level: "L3", name: "Rakesh Mehta", designation: "Business Head" },
-];
+type ApproverRouteItem = {
+  level: string;
+  name: string;
+  designation?: string;
+  empcode?: string;
+};
 
 const cardClass =
-  "min-w-0 rounded-2xl border border-[#dce4f0] bg-white shadow-[0_3px_12px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-700 dark:bg-[#111827] dark:shadow-none";
+  "min-w-0 rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] transition-colors dark:border-[#1F2937] dark:bg-[#111827] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)]";
 
 const inputClass =
-  "h-[42px] w-full min-w-0 rounded-xl border border-[#dce4f0] bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-900/40 dark:disabled:bg-slate-800";
+  "!h-[38px] w-full min-w-0 !rounded-[9px] !border border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] px-2.5 py-2 !text-[12.5px] !text-[#1E293B] dark:!text-[#E7ECF3] outline-none transition placeholder:text-[#64748B]/70 dark:placeholder:text-[#94A3B8]/70 focus-visible:!border-[#4F46E5] dark:focus-visible:!border-[#8B84FF] focus-visible:!ring-0 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800/50 !shadow-none";
 
-const mutedText = "text-slate-500 dark:text-slate-400";
-const headingText = "text-slate-900 dark:text-slate-100";
+const selectTriggerClass =
+  "!h-[38px] w-full min-w-0 !rounded-[9px] !border border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] px-2.5 !text-[12.5px] !text-[#1E293B] dark:!text-[#E7ECF3] focus-within:!border-[#4F46E5] dark:focus-within:!border-[#8B84FF] focus-within:!ring-0 !shadow-none";
 
 export default function EmployeeLocationTransferPage() {
   const user = useCurrentUser();
@@ -67,6 +71,8 @@ export default function EmployeeLocationTransferPage() {
     TransferRequest[]
   >([]);
   const [employee, setEmployee] = useState<any>(null);
+  const [approvalRoute, setApprovalRoute] = useState<ApproverRouteItem[]>([]);
+  const [isApproverLoading, setIsApproverLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     EmpCode: "",
@@ -79,6 +85,125 @@ export default function EmployeeLocationTransferPage() {
     CreatedBy: user?.name ?? "",
     loginEMPCODE: user?.EMPCODE ?? "",
   });
+
+  const fetchApprovers = useCallback(
+    async (targetEmpCode?: string) => {
+      const empCodeToUse = targetEmpCode || formData.EmpCode || user?.EMPCODE;
+      if (!empCodeToUse) return;
+
+      setIsApproverLoading(true);
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/employee/getApproverList`,
+          {
+            empcode: empCodeToUse,
+            CreatedBy: empCodeToUse,
+            module_code: "EMP_LOC_TRANSFER",
+          },
+          {
+            headers: {
+              compcode: user?.Comp_Code,
+              name: user?.name,
+            },
+          }
+        );
+
+        const rawList = Array.isArray(response.data?.Result)
+          ? response.data.Result
+          : Array.isArray(response.data?.data)
+          ? response.data.data
+          : Array.isArray(response.data)
+          ? response.data
+          : [];
+
+        if (!rawList.length) {
+          setApprovalRoute([]);
+          return;
+        }
+
+        // Check if response contains level / appr_level
+        const hasLevels = rawList.some(
+          (item: any) => item.level || item.appr_level || item.Level
+        );
+
+        if (hasLevels) {
+          const levels = ["L1", "L2", "L3"];
+          const formatted: ApproverRouteItem[] = [];
+
+          levels.forEach((lvl) => {
+            const candidates = rawList.filter((item: any) => {
+              const itemLvl = String(
+                item.level || item.appr_level || item.Level || ""
+              ).toUpperCase();
+              return itemLvl === lvl || itemLvl === lvl.replace("L", "");
+            });
+
+            if (!candidates.length) return;
+
+            // Priority to Approval A
+            const approverA = candidates.find((c: any) => {
+              const type = String(
+                c.approver_type || c.appr_type || c.type || ""
+              ).toUpperCase();
+              return type === "A";
+            });
+
+            const selected = approverA || candidates[0];
+
+            formatted.push({
+              level: lvl,
+              name:
+                selected.EMPNAME ||
+                selected.Emp_Name ||
+                selected.name ||
+                selected.EMPCODE,
+              designation:
+                selected.DESIGNATION ||
+                selected.EMPLOYEEDESIGNATION ||
+                selected.Desg_Name ||
+                selected.designation ||
+                "Approver",
+              empcode: selected.EMPCODE,
+            });
+          });
+
+          setApprovalRoute(formatted);
+        } else {
+          // Fallback if backend returned flat list: map items to L1, L2, L3
+          const formatted: ApproverRouteItem[] = rawList
+            .slice(0, 3)
+            .map((item: any, idx: number) => ({
+              level: `L${idx + 1}`,
+              name:
+                item.EMPNAME ||
+                item.Emp_Name ||
+                item.name ||
+                item.EMPCODE,
+              designation:
+                item.DESIGNATION ||
+                item.EMPLOYEEDESIGNATION ||
+                item.Desg_Name ||
+                item.designation ||
+                "Approver",
+              empcode: item.EMPCODE,
+            }));
+
+          setApprovalRoute(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching approver list:", err);
+      } finally {
+        setIsApproverLoading(false);
+      }
+    },
+    [formData.EmpCode, user?.EMPCODE, user?.Comp_Code, user?.name]
+  );
+
+  useEffect(() => {
+    if (user?.EMPCODE) {
+      fetchApprovers(user.EMPCODE);
+    }
+  }, [user?.EMPCODE, fetchApprovers]);
 
   const showAlert = (
     message: string,
@@ -159,31 +284,78 @@ export default function EmployeeLocationTransferPage() {
 
   const employeeSelected = Boolean(employee && formData.EmpCode);
 
+  const isFormReady = Boolean(
+    employeeSelected &&
+      formData.TransferTo &&
+      !sameBranch &&
+      formData.EffectiveDate &&
+      formData.Reason.trim()
+  );
+
+  const initials = useMemo(() => {
+    const name = formData.EmpName || "";
+    if (!name.trim()) return "?";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [formData.EmpName]);
+
+  const currentRows = useMemo(() => {
+    if (!employee) return [];
+    return [
+      { label: "Branch", value: currentBranchName || "—" },
+      ...(employee.REGION || employee.Region
+        ? [{ label: "Region", value: employee.REGION || employee.Region }]
+        : []),
+      {
+        label: "Department",
+        value: employee.DIVISION || employee.Dept_Name || "—",
+      },
+      {
+        label: "Designation",
+        value: employee.EMPLOYEEDESIGNATION || employee.Desg_Name || "—",
+      },
+      ...(employee.REPORTING_TO || employee.HOD || employee.Reporting
+        ? [
+            {
+              label: "Reporting 1",
+              value:
+                employee.REPORTING_TO || employee.HOD || employee.Reporting,
+            },
+          ]
+        : []),
+    ];
+  }, [employee, currentBranchName]);
+
   const checks = [
     {
       valid: employeeSelected,
       message: employeeSelected
         ? `${formData.EmpName || formData.EmpCode} selected`
-        : "Select an employee",
+        : "No employee selected",
     },
     {
       valid: Boolean(formData.TransferTo) && !sameBranch,
       message: !formData.TransferTo
-        ? "Select a destination branch"
+        ? "Destination branch not chosen"
         : sameBranch
           ? "Destination is the same as current branch"
-          : "Destination branch is different",
+          : `Moving to ${destinationBranchName || "destination"}`,
     },
     {
       valid: Boolean(formData.EffectiveDate),
       message: formData.EffectiveDate
         ? `Effective from ${formatDate(formData.EffectiveDate)}`
-        : "Effective date is required",
+        : "Effective date missing",
     },
     {
       valid: Boolean(formData.Reason.trim()),
       message: formData.Reason.trim()
-        ? "Transfer reason provided"
+        ? "Reason recorded"
         : "Reason is mandatory for audit",
     },
   ];
@@ -245,6 +417,7 @@ export default function EmployeeLocationTransferPage() {
         loginEMPCODE: user?.EMPCODE ?? "",
       }));
 
+      fetchApprovers(empCode);
       showAlert("Employee details fetched successfully.", "success");
     } catch (error: any) {
       console.error("GetEmployeeLocation error:", error);
@@ -367,6 +540,9 @@ export default function EmployeeLocationTransferPage() {
     setEmployee(null);
     setTransferOptions([]);
     setBranchOptions([]);
+    if (user?.EMPCODE) {
+      fetchApprovers(user.EMPCODE);
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -428,18 +604,30 @@ export default function EmployeeLocationTransferPage() {
     URL.revokeObjectURL(url);
   };
 
-  const statusClass = (status?: string) => {
+  const getStatusStyle = (status?: string) => {
     const value = (status ?? "").toLowerCase();
 
     if (value.includes("approv")) {
-      return "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400";
+      return {
+        fg: "#10B981",
+        bg: "rgba(16,185,129,0.08)",
+        border: "rgba(16,185,129,0.33)",
+      };
     }
 
     if (value.includes("reject")) {
-      return "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400";
+      return {
+        fg: "#E11D48",
+        bg: "rgba(225,29,72,0.08)",
+        border: "rgba(225,29,72,0.33)",
+      };
     }
 
-    return "border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400";
+    return {
+      fg: "#F59E0B",
+      bg: "rgba(245,158,11,0.08)",
+      border: "rgba(245,158,11,0.33)",
+    };
   };
 
   const transferColumns = useMemo(
@@ -487,11 +675,21 @@ export default function EmployeeLocationTransferPage() {
             );
           }
 
+          const st = getStatusStyle(value);
+
           return (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${statusClass(value)}`}
+              className="inline-flex items-center gap-1.5 rounded-[8px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
+              style={{
+                color: st.fg,
+                backgroundColor: st.bg,
+                border: `1px solid ${st.border}`,
+              }}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span
+                className="h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: st.fg }}
+              />
               {value}
             </span>
           );
@@ -502,65 +700,83 @@ export default function EmployeeLocationTransferPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#f6f8fc] pb-40 text-lg text-slate-900 transition-colors dark:bg-[#0B1220] dark:text-slate-100 sm:pb-28">
+    <main className="min-h-screen bg-[#F8FAFC] pb-32 font-['Inter',system-ui,sans-serif] [font-feature-settings:'tnum'_1] text-[13px] text-[#1E293B] antialiased transition-colors dark:bg-[#0A0F1C] dark:text-[#E7ECF3] sm:pb-24">
       <div className="mx-auto max-w-[1800px] p-3 sm:p-5">
         {/* Page heading */}
-        <header className="mb-5">
-          <h1 className="text-xl font-bold capitalize tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
-            Employee location transfer
-          </h1>
+        <header className="mb-4 sm:mb-[18px] flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
+              Employee location transfer
+            </h1>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
-            Raise a transfer, see the before-and-after side by side, and send it
-            up the three-level approval chain.
-          </p>
+            <p className="mt-[5px] text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+              Raise a transfer, see the before-and-after side by side, and send it
+              up the three-level approval chain.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/payroll/hcm/emp-loc-transfer-approval-view"
+              className="inline-flex items-center gap-[7px] rounded-[10px] border border-[#E2E8F0] bg-white px-[13px] py-2 text-[12.5px] font-[550] text-[#1E293B] shadow-sm hover:bg-[#F1F5F9] transition dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span>Approval grid</span>
+            </Link>
+          </div>
         </header>
 
         {/* Main content */}
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,2.15fr)_minmax(320px,0.85fr)]">
+        <div className="grid grid-cols-1 items-start gap-[14px] xl:grid-cols-[minmax(0,1fr)_400px]">
           {/* Employee transfer form */}
-          <section className={`${cardClass} p-4 sm:p-6`}>
+          <section className={`${cardClass} p-4 sm:p-[16px_18px_18px_18px]`}>
             {/* Employee heading */}
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-                  <UserRoundSearch className="h-[18px] w-[18px]" />
+            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex items-center gap-[9px]">
+                <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                  <UserRoundSearch className="h-4 w-4" />
                 </span>
 
-                <h2 className={`text-base font-semibold ${headingText}`}>
+                <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                   Employee
                 </h2>
               </div>
 
-              <span className={`text-right text-sm ${mutedText}`}>
-                {employee?.EMPLOYEEDESIGNATION ?? "Employee"}
-                {employee?.DIVISION ? ` · ${employee.DIVISION}` : ""}
+              <span className="text-right text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
+                {employeeSelected
+                  ? `${employee?.EMPLOYEEDESIGNATION ?? "Employee"}${
+                      employee?.DIVISION ? ` · ${employee.DIVISION}` : ""
+                    }`
+                  : "Search by code or name"}
               </span>
             </div>
 
             {/* Employee code + Get details */}
             <div className="w-full min-w-0">
-              <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:items-end sm:gap-3">
-                <div className="w-full min-w-0 flex-1 sm:max-w-[525px]">
+              <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:items-end sm:gap-2.5 sm:max-w-[480px]">
+                <div className="w-full min-w-0 flex-1">
                   <Einput
-                    title="Employee Code"
+                    title="Employee code"
                     name="EmpCode"
-                    redlabel="*"
+                    redlabel=" *"
                     type="text"
                     value={formData.EmpCode}
                     placeholder="Enter employee code"
                     handleInputChange={handleInputChange}
-                    className={inputClass}
+                    className={cn(
+                      inputClass,
+                      (!formData.EmpCode.trim() || !employee) &&
+                        "!border-[rgba(225,29,72,0.45)]"
+                    )}
                   />
                 </div>
 
                 <div className="w-full shrink-0 sm:w-auto">
                   <AButton
                     type="button"
-                    variant="primary"
                     onClick={() => ShowData()}
                     disabled={isLoading || !formData.EmpCode.trim()}
-                    className="inline-flex min-h-[42px] w-full items-center justify-center whitespace-nowrap rounded-xl border border-[#dce4f0] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 sm:w-auto"
+                    className="inline-flex !h-[38px] w-full items-center justify-center whitespace-nowrap !rounded-[10px] !bg-[#4F46E5] hover:!bg-[#4338CA] px-4 py-2 !text-[12.5px] !font-semibold text-white !shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:!shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:!bg-[#94A3B8] dark:disabled:!bg-[#475569] sm:w-auto cursor-pointer"
                   >
                     Get employee details
                   </AButton>
@@ -568,96 +784,114 @@ export default function EmployeeLocationTransferPage() {
               </div>
             </div>
 
-            {/* Before / after */}
-            <div className="mt-5 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)]">
+            {/* Before / after side-by-side */}
+            <div className="mt-[18px] grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[minmax(0,1fr)_42px_minmax(0,1fr)]">
               {/* Current posting */}
-              <div className="flex min-h-[270px] min-w-0 flex-col justify-center rounded-xl border border-[#dce4f0] p-4 transition-colors dark:border-slate-700 dark:bg-slate-900/40">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Current posting
-                </h3>
+              <div className="flex min-h-[260px] min-w-0 flex-col justify-between rounded-[11px] border border-[#E2E8F0] p-[14px_15px] bg-white dark:border-[#1F2937] dark:bg-[#0E1524]/60 transition-colors">
+                <div>
+                  <div className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
+                    Current posting
+                  </div>
 
-                {employee ? (
-                  <>
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-sm font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                        {(formData.EmpName || "E").charAt(0).toUpperCase()}
+                  {employee ? (
+                    <>
+                      <div className="mt-[11px] flex items-center gap-[11px] min-w-0">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F8FAFC] dark:bg-[#0E1524] text-[11.5px] font-[650] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#1F2937]">
+                          {initials}
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
+                            {formData.EmpName || "—"}
+                          </div>
+
+                          <div className="truncate text-[11.5px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                            {formData.EmpCode}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 border-t border-[#E2E8F0] dark:border-[#1F2937] pt-[11px] space-y-1.5">
+                        {currentRows.map((r) => (
+                          <div key={r.label} className="flex gap-2.5 text-[12px] min-w-0">
+                            <span className="flex-[0_0_96px] text-[#64748B] dark:text-[#94A3B8]">
+                              {r.label}
+                            </span>
+                            <span className="flex-1 min-w-0 font-medium text-[#1E293B] dark:text-[#E7ECF3] truncate">
+                              {r.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+                      <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#1F2937]">
+                        <GitBranch className="h-5 w-5" />
                       </span>
 
-                      <div className="min-w-0 flex-1">
-                        <p className={`truncate text-base font-semibold ${headingText}`}>
-                          {formData.EmpName || "—"}
-                        </p>
+                      <div className="text-[13.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3] mt-3">
+                        Pick an employee to start a transfer
+                      </div>
 
-                        <p className={`break-words text-sm ${mutedText}`}>
-                          {formData.EmpCode}
-                        </p>
+                      <div className="mt-1 text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+                        Their current branch, department and reporting line load on the left.
                       </div>
                     </div>
-
-                    <div className="my-3 border-t border-[#dce4f0] dark:border-slate-700" />
-
-                    <dl className="grid grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm sm:grid-cols-[120px_minmax(0,1fr)]">
-                      <dt className={mutedText}>Branch</dt>
-                      <dd className="break-words font-medium text-slate-800 dark:text-slate-200">
-                        {currentBranchName || "—"}
-                      </dd>
-
-                      <dt className={mutedText}>Designation</dt>
-                      <dd className="break-words font-medium text-slate-800 dark:text-slate-200">
-                        {employee.EMPLOYEEDESIGNATION || "—"}
-                      </dd>
-                    </dl>
-                  </>
-                ) : (
-                  <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-                    <Building2 className="mb-3 h-8 w-8 text-slate-300 dark:text-slate-600" />
-
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                      Select an employee
-                    </p>
-
-                    <p className={`mt-1 text-xs ${mutedText}`}>
-                      Enter an employee code to load current posting.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Arrow */}
-              <div className="hidden items-center justify-center text-indigo-600 dark:text-indigo-400 lg:flex">
+              <div className="hidden items-center justify-center text-[#4F46E5] dark:text-[#8B84FF] lg:flex">
                 <ArrowRight className="h-5 w-5" />
               </div>
 
               {/* Destination */}
-              <div className="min-w-0 rounded-xl border border-[#dce4f0] p-4 transition-colors dark:border-slate-700 dark:bg-slate-900/40">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+              <div
+                className={cn(
+                  "min-w-0 rounded-[11px] border p-[14px_15px] transition-colors",
+                  formData.TransferTo && !sameBranch
+                    ? "border-[#4F46E5] bg-[#EEF2FF] dark:border-[#8B84FF] dark:bg-[#1E1B4B]/30"
+                    : "border-[#E2E8F0] bg-transparent dark:border-[#1F2937]"
+                )}
+              >
+                <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#4F46E5] dark:text-[#8B84FF]">
                   Transfer to
-                </h3>
+                </div>
 
                 <div className="space-y-3">
                   <div className="w-full min-w-0">
                     <Eselect
                       title="Branch"
                       name="TransferTo"
-                      redlabel="*"
+                      redlabel=" *"
                       option={transferOptions}
                       initialValue={formData.TransferTo}
                       placeholder="Select destination branch"
                       handleInputChange={handleChange}
                       required
-                      className="h-[42px] w-full min-w-0"
+                      className={cn(
+                        selectTriggerClass,
+                        (!formData.TransferTo || sameBranch) &&
+                          "!border-[rgba(225,29,72,0.45)]"
+                      )}
                     />
                   </div>
 
                   <div className="w-full min-w-0">
                     <Einput
-                      title="Effective Date"
+                      title="Effective date"
                       name="EffectiveDate"
-                      redlabel="*"
+                      redlabel=" *"
                       type="date"
                       value={formData.EffectiveDate}
                       handleInputChange={handleInputChange}
-                      className={inputClass}
+                      className={cn(
+                        inputClass,
+                        !formData.EffectiveDate &&
+                          "!border-[rgba(225,29,72,0.45)]"
+                      )}
                     />
                   </div>
                 </div>
@@ -665,10 +899,10 @@ export default function EmployeeLocationTransferPage() {
             </div>
 
             {/* Transfer type and reason */}
-            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-[13px] md:grid-cols-2">
               <div className="w-full min-w-0">
                 <Eselect
-                  title="Transfer Type"
+                  title="Transfer type"
                   name="TransferType"
                   option={[
                     {
@@ -676,13 +910,17 @@ export default function EmployeeLocationTransferPage() {
                       label: "Permanent transfer",
                     },
                     {
-                      value: "Temporary transfer",
-                      label: "Temporary transfer",
+                      value: "Temporary deputation",
+                      label: "Temporary deputation",
+                    },
+                    {
+                      value: "Inter-department move",
+                      label: "Inter-department move",
                     },
                   ]}
                   initialValue={formData.TransferType}
                   handleInputChange={handleChange}
-                  className="h-[42px] w-full min-w-0"
+                  className={selectTriggerClass}
                 />
               </div>
 
@@ -690,78 +928,95 @@ export default function EmployeeLocationTransferPage() {
                 <Einput
                   title="Reason"
                   name="Reason"
+                  redlabel=" *"
                   type="text"
                   value={formData.Reason}
                   placeholder="Why is this transfer needed?"
                   handleInputChange={handleInputChange}
-                  className={inputClass}
+                  className={cn(
+                    inputClass,
+                    !formData.Reason.trim() &&
+                      "!border-[rgba(225,29,72,0.45)]"
+                  )}
                 />
               </div>
             </div>
           </section>
 
           {/* Right sidebar */}
-          <aside className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1">
+          <aside className="grid min-w-0 grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-1">
             {/* Approval route */}
-            <section className={`${cardClass} p-4 sm:p-5`}>
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
-                  <ShieldCheck className="h-[18px] w-[18px]" />
+            <section className={`${cardClass} p-4 sm:p-[16px_18px_18px_18px]`}>
+              <div className="mb-[13px] flex items-center gap-[9px]">
+                <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                  <ShieldCheck className="h-4 w-4" />
                 </span>
 
-                <h2 className={`text-base font-semibold ${headingText}`}>
+                <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                   Approval route
                 </h2>
               </div>
 
-              <div className="space-y-2.5">
-                {approvalRoute.map((approver) => (
-                  <div
-                    key={approver.level}
-                    className="flex min-w-0 items-center gap-3 rounded-xl border border-[#dce4f0] px-3 py-3 transition-colors dark:border-slate-700 dark:bg-slate-900/40"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                      {approver.level}
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-semibold ${headingText}`}>
-                        {approver.name}
-                      </p>
-
-                      <p className={`truncate text-xs ${mutedText}`}>
-                        {approver.designation}
-                      </p>
-                    </div>
+              <div className="space-y-2">
+                {isApproverLoading ? (
+                  <div className="flex flex-col gap-2 py-1">
+                    <div className="h-12 w-full animate-pulse rounded-[10px] bg-slate-100 dark:bg-slate-800" />
+                    <div className="h-12 w-full animate-pulse rounded-[10px] bg-slate-100 dark:bg-slate-800" />
+                    <div className="h-12 w-full animate-pulse rounded-[10px] bg-slate-100 dark:bg-slate-800" />
                   </div>
-                ))}
+                ) : approvalRoute.length > 0 ? (
+                  approvalRoute.map((approver) => (
+                    <div
+                      key={approver.level}
+                      className="flex min-w-0 items-center gap-[11px] rounded-[10px] border border-[#E2E8F0] p-[10px_12px] transition-colors dark:border-[#1F2937] bg-white dark:bg-[#0E1524]"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] bg-[#F8FAFC] text-[11px] font-[650] text-[#64748B] dark:bg-[#0E1524] dark:text-[#94A3B8] tabular-nums border border-[#E2E8F0] dark:border-[#1F2937]">
+                        {approver.level}
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
+                          {approver.name}
+                        </span>
+
+                        <span className="block truncate text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                          {approver.designation}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[10px] border border-dashed border-[#E2E8F0] p-4 text-center text-[12px] text-[#64748B] dark:border-[#1F2937] dark:text-[#94A3B8]">
+                    No approvers configured in Approval Matrix.
+                  </div>
+                )}
               </div>
             </section>
 
             {/* Validation checks */}
-            <section className={`${cardClass} p-4 sm:p-5`}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <section className={`${cardClass} p-[14px_16px_15px_16px] flex flex-col gap-2`}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                 Checks
               </h2>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {checks.map((check, index) => (
-                  <div key={index} className="flex items-start gap-3 text-sm">
+                  <div key={index} className="flex items-center gap-[9px] text-[12px]">
                     <span
-                      className={`mt-[-1px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
+                      className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] ${
                         check.valid
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
-                          : "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
+                          ? "bg-[#10B981]/15 text-[#10B981]"
+                          : "bg-[#F59E0B]/15 text-[#B45309] dark:text-[#F59E0B]"
                       }`}
                     >
                       {check.valid ? (
-                        <Check className="h-3.5 w-3.5" />
+                        <Check className="h-5 w-5 stroke-[2.5]" />
                       ) : (
-                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
                       )}
                     </span>
 
-                    <span className="min-w-0 break-words leading-5 text-slate-700 dark:text-slate-300">
+                    <span className="min-w-0 flex-1 truncate text-[#1E293B] dark:text-[#E7ECF3]">
                       {check.message}
                     </span>
                   </div>
@@ -772,27 +1027,27 @@ export default function EmployeeLocationTransferPage() {
         </div>
 
         {/* Transfer request history */}
-        <section className={`${cardClass} mt-5 overflow-hidden`}>
-          <div className="flex flex-col gap-3 border-b border-[#dce4f0] px-4 py-4 transition-colors dark:border-slate-700 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className={`text-base font-semibold ${headingText}`}>
+        <section className={`${cardClass} mt-3.5 overflow-hidden`}>
+          <div className="flex flex-col gap-2.5 border-b border-[#E2E8F0] p-[13px_18px] transition-colors dark:border-[#1F2937] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                 My transfer requests
               </h2>
 
-              <span className={`text-sm ${mutedText}`}>
+              <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] tabular-nums">
                 {transferRequests.length} raised
               </span>
             </div>
 
             <div className="w-full sm:w-auto">
-              <AButton
+              <button
                 type="button"
                 onClick={exportRequests}
-                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-[#dce4f0] bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:w-auto"
+                className="inline-flex h-[30px] w-full items-center justify-center gap-1.5 rounded-[8px] border border-[#E2E8F0] bg-transparent px-[11px] text-[12px] font-[550] text-[#1E293B] hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:text-[#E7ECF3] dark:hover:bg-[#182235] transition sm:w-auto cursor-pointer"
               >
-                <FileSpreadsheet className="h-4 w-4" />
-                Export
-              </AButton>
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                <span>Export</span>
+              </button>
             </div>
           </div>
 
@@ -811,36 +1066,40 @@ export default function EmployeeLocationTransferPage() {
       </div>
 
       {/* Responsive fixed footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col gap-3 border-t border-slate-200/90 bg-white/95 px-3 py-3 shadow-lg backdrop-blur-md transition-[left] duration-150 ease-in-out dark:border-slate-800 dark:bg-[#0B1220]/95 dark:shadow-black/20 sm:left-[var(--sidebar-width,68px)] sm:px-4 lg:px-6">
-        <div className="mx-auto flex w-full max-w-[1800px] min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="min-w-0 break-words text-sm text-slate-500 dark:text-slate-400 sm:flex-1">
-            {formData.EmpName || "No employee selected"}
-            {formData.EmpCode ? ` · ${formData.EmpCode}` : ""}
-            {currentBranchName ? ` · ${currentBranchName}` : ""}
-            {destinationBranchName ? ` → ${destinationBranchName}` : ""}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col gap-2.5 border-t border-[#E2E8F0] bg-white/95 px-4 sm:px-6 py-3 shadow-[0_-4px_16px_rgba(15,23,42,0.04)] backdrop-blur-md transition-[left] duration-150 ease-in-out dark:border-[#1F2937] dark:bg-[#111827]/95 sm:left-[var(--sidebar-width,68px)]">
+        <div className="mx-auto flex w-full max-w-[1800px] min-w-0 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="min-w-0 truncate text-[12.5px] text-[#64748B] dark:text-[#94A3B8] sm:flex-1">
+            {formData.EmpName
+              ? `${formData.EmpName} · ${currentBranchName || ""} → ${
+                  destinationBranchName || "not set"
+                }`
+              : "No employee selected"}
           </p>
 
-          <div className="flex w-full min-w-0 shrink-0 flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-            <AButton
+          <div className="flex w-full min-w-0 shrink-0 flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2.5">
+            <button
               type="button"
               onClick={clearForm}
-              className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:w-auto sm:min-w-[130px] sm:px-4"
+              className="inline-flex h-[38px] w-full min-w-0 items-center justify-center gap-1.5 rounded-[10px] border border-[#E2E8F0] bg-white px-3.5 text-[12.5px] font-[550] text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:text-[#E7ECF3] dark:hover:bg-[#182235] transition shadow-sm sm:w-auto cursor-pointer"
             >
-              <X className="h-4 w-4 shrink-0" />
+              <X className="h-3.5 w-3.5 shrink-0" />
               <span>Clear form</span>
-            </AButton>
+            </button>
 
-            <AButton
+            <button
               type="button"
               onClick={DataSave}
-              disabled={isLoading || !employee}
-              className="inline-flex h-auto min-h-10 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-slate-500 px-3 py-2.5 text-center text-sm font-semibold leading-tight text-white transition hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-auto sm:min-w-[190px] sm:whitespace-nowrap sm:px-5"
+              disabled={isLoading || !isFormReady}
+              className={cn(
+                "inline-flex h-[38px] w-full min-w-0 items-center justify-center gap-[7px] rounded-[10px] px-[17px] text-[12.5px] font-semibold text-white transition active:scale-[0.98] sm:w-auto",
+                isFormReady
+                  ? "bg-[#4F46E5] hover:brightness-[1.08] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] cursor-pointer"
+                  : "bg-[#64748B] dark:bg-[#94A3B8] opacity-70 cursor-not-allowed shadow-none"
+              )}
             >
-              <Send className="h-4 w-4 shrink-0" />
-              <span className="whitespace-normal sm:whitespace-nowrap">
-                Submit for approval
-              </span>
-            </AButton>
+              <Send className="h-3.5 w-3.5 shrink-0" />
+              <span>Submit for approval</span>
+            </button>
           </div>
         </div>
       </div>
