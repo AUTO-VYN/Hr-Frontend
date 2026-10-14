@@ -26,7 +26,10 @@ import ChartComponent from "@/components/atoms/chart";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 
-function showSideAlert(message: string, type: "success" | "error" | "warning" | "info" = "info") {
+function showSideAlert(
+  message: string,
+  type: "success" | "error" | "warning" | "info" = "info",
+) {
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -81,7 +84,8 @@ interface ImportedRow {
 }
 
 const formatDateStr = (val: any) => {
-  if (!val || val === "1900-01-01" || val === "1900-01-01T00:00:00.000Z") return "—";
+  if (!val || val === "1900-01-01" || val === "1900-01-01T00:00:00.000Z")
+    return "—";
   if (val instanceof Date) {
     const dd = String(val.getDate()).padStart(2, "0");
     const mm = String(val.getMonth() + 1).padStart(2, "0");
@@ -118,7 +122,10 @@ export default function AssetImportPage() {
 
   const [nonImportedData, setNonImportedData] = useState<NonImportedRow[]>([]);
   const [importedData, setImportedData] = useState<ImportedRow[]>([]);
-  const [errorFileBlob, setErrorFileBlob] = useState<{ blob: Blob; fileName: string } | null>(null);
+  const [errorFileBlob, setErrorFileBlob] = useState<{
+    blob: Blob;
+    fileName: string;
+  } | null>(null);
 
   // ── Download Sample Excel Sheet ───────────────────────────────────────────
   const handleDownloadSample = async () => {
@@ -220,7 +227,10 @@ export default function AssetImportPage() {
   const processUploadFile = async (file: File) => {
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (extension !== "xlsx" && extension !== "xls" && extension !== "csv") {
-      showSideAlert("Please upload a valid Excel file (.xlsx or .xls)", "error");
+      showSideAlert(
+        "Please upload a valid Excel file (.xlsx or .xls)",
+        "error",
+      );
       return;
     }
 
@@ -270,11 +280,18 @@ export default function AssetImportPage() {
             compcode: user?.Comp_Code,
             name: user?.name,
           },
-        }
+        },
       );
 
-      const { Type, Message, File: base64ErrorFile, FileName, Inserted, NonInserted, Total } =
-        response.data || {};
+      const {
+        Type,
+        Message,
+        File: base64ErrorFile,
+        FileName,
+        Inserted,
+        NonInserted,
+        Total,
+      } = response.data || {};
 
       const totalCount = Number(Total ?? clientRows.length);
       const insertedCount = Number(Inserted ?? 0);
@@ -298,7 +315,10 @@ export default function AssetImportPage() {
           const blob = new Blob([uint8Array], {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           });
-          setErrorFileBlob({ blob, fileName: FileName || "Non_Imported_Assets.xlsx" });
+          setErrorFileBlob({
+            blob,
+            fileName: FileName || "Non_Imported_Assets.xlsx",
+          });
 
           const errorWb = new ExcelJS.Workbook();
           await errorWb.xlsx.load(uint8Array.buffer);
@@ -315,15 +335,26 @@ export default function AssetImportPage() {
 
           rawRows.forEach(({ rowNumber, vals }) => {
             const rawReason = vals[vals.length - 1];
-            const reasonStr = rawReason !== undefined && rawReason !== null ? String(rawReason).trim() : "";
-            const isSuccessCode = reasonStr === "1" || reasonStr === "0" || reasonStr === "true" || reasonStr.toLowerCase() === "success" || reasonStr.toLowerCase() === "imported" || reasonStr.toLowerCase() === "inserted" || reasonStr === "";
+            const reasonStr =
+              rawReason !== undefined && rawReason !== null
+                ? String(rawReason).trim()
+                : "";
+            const isSuccessCode =
+              reasonStr === "1" ||
+              reasonStr === "0" ||
+              reasonStr === "true" ||
+              reasonStr.toLowerCase() === "success" ||
+              reasonStr.toLowerCase() === "imported" ||
+              reasonStr.toLowerCase() === "inserted" ||
+              reasonStr === "";
 
             // If backend returned all rows in error sheet, filter out successfully imported rows
             if (isFullSheet && isSuccessCode) {
               return;
             }
 
-            const cleanReason = !isSuccessCode && reasonStr ? reasonStr : "Validation failed";
+            const cleanReason =
+              !isSuccessCode && reasonStr ? reasonStr : "Validation failed";
 
             errorRowsParsed.push({
               row: rowNumber,
@@ -353,9 +384,12 @@ export default function AssetImportPage() {
       if (nonInsertedCount > 0 && errorRowsParsed.length === 0) {
         clientRows.slice(insertedCount).forEach((r, idx) => {
           let reason = "Validation failed";
-          if (!r.assetCode || r.assetCode === "—") reason = "asset code is blank";
-          else if (!r.assetName || r.assetName === "—") reason = "asset name is required";
-          else if (!r.category || r.category === "—") reason = "asset category not found in master";
+          if (!r.assetCode || r.assetCode === "—")
+            reason = "asset code is blank";
+          else if (!r.assetName || r.assetName === "—")
+            reason = "asset name is required";
+          else if (!r.category || r.category === "—")
+            reason = "asset category not found in master";
           else reason = "asset code already exists";
 
           errorRowsParsed.push({
@@ -390,7 +424,8 @@ export default function AssetImportPage() {
             category: r.category,
             itCategory: r.itCategory,
             serialNo: r.serialNo,
-            assetCode: r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
+            assetCode:
+              r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
             assetName: r.assetName || "Asset",
             assetType: r.assetType,
             issueDate: r.issueDate,
@@ -405,14 +440,16 @@ export default function AssetImportPage() {
           const errorAssetCodes = new Set(
             errorRowsParsed
               .filter((e) => e.assetCode && e.assetCode !== "—")
-              .map((e) => e.assetCode)
+              .map((e) => e.assetCode),
           );
 
           importedParsed = clientRows
             .filter(
               (r) =>
                 !errorRowNumbers.has(r.rowNum) &&
-                (!r.assetCode || r.assetCode === "—" || !errorAssetCodes.has(r.assetCode))
+                (!r.assetCode ||
+                  r.assetCode === "—" ||
+                  !errorAssetCodes.has(r.assetCode)),
             )
             .slice(0, insertedCount)
             .map((r, i) => ({
@@ -421,7 +458,8 @@ export default function AssetImportPage() {
               category: r.category,
               itCategory: r.itCategory,
               serialNo: r.serialNo,
-              assetCode: r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
+              assetCode:
+                r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
               assetName: r.assetName || "Asset",
               assetType: r.assetType,
               issueDate: r.issueDate,
@@ -439,7 +477,8 @@ export default function AssetImportPage() {
               category: r.category,
               itCategory: r.itCategory,
               serialNo: r.serialNo,
-              assetCode: r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
+              assetCode:
+                r.assetCode || `AV-ASSET-${String(i + 1).padStart(4, "0")}`,
               assetName: r.assetName || "Asset",
               assetType: r.assetType,
               issueDate: r.issueDate,
@@ -453,16 +492,24 @@ export default function AssetImportPage() {
       }
 
       setImportedData(importedParsed);
-      showSideAlert(Message || `${insertedCount} assets imported successfully`, Type || "success");
+      showSideAlert(
+        Message || `${insertedCount} assets imported successfully`,
+        Type || "success",
+      );
     } catch (error: any) {
       console.error("Error during asset import:", error);
-      showSideAlert(error?.response?.data?.Message || "Error! Invalid Excel Format", "error");
+      showSideAlert(
+        error?.response?.data?.Message || "Error! Invalid Excel Format",
+        "error",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       processUploadFile(file);
@@ -499,19 +546,31 @@ export default function AssetImportPage() {
         Header: "ROW",
         accessor: "row",
         width: 70,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET CODE",
         accessor: "assetCode",
         width: 160,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET NAME",
         accessor: "assetName",
         width: 220,
-        Cell: ({ value }: any) => <span className="font-bold text-slate-900 dark:text-white text-[14.5px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-slate-900 dark:text-white text-[14.5px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "REASON",
@@ -528,64 +587,104 @@ export default function AssetImportPage() {
         Header: "Emp.Code",
         accessor: "empCode",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "Asset Category",
         accessor: "category",
         width: 140,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "IT Category",
         accessor: "itCategory",
         width: 130,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "SERIAL NO",
         accessor: "serialNo",
         width: 150,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET TYPE",
         accessor: "assetType",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ISSUE DATE",
         accessor: "issueDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "RETURN DATE",
         accessor: "returnDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "LOST DATE",
         accessor: "lostDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "REMARK",
         accessor: "remark",
         width: 170,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "UPLOAD IMAGE",
         accessor: "uploadImage",
         width: 140,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
     ],
-    []
+    [],
   );
 
   const importedColumns = useMemo(
@@ -594,38 +693,56 @@ export default function AssetImportPage() {
         Header: "ROW",
         accessor: "row",
         width: 70,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET CODE",
         accessor: "assetCode",
         width: 160,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET NAME",
         accessor: "assetName",
         width: 220,
-        Cell: ({ value }: any) => <span className="font-bold text-slate-900 dark:text-white text-[14.5px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-bold text-slate-900 dark:text-white text-[14.5px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "CATEGORY",
         accessor: "category",
         width: 150,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "HOLDER",
         accessor: "empCode",
         width: 180,
         Cell: ({ value }: any) => {
-          const emp = value && value !== "—" ? `Employee · ${value}` : "In store";
+          const emp =
+            value && value !== "—" ? `Employee · ${value}` : "In store";
           return (
             <span
-              className={`font-semibold text-[14px] ${emp === "In store"
+              className={`font-semibold text-[14px] ${
+                emp === "In store"
                   ? "text-slate-500 dark:text-slate-400"
                   : "text-slate-700 dark:text-slate-300"
-                }`}
+              }`}
             >
               {emp}
             </span>
@@ -636,89 +753,121 @@ export default function AssetImportPage() {
         Header: "IT Category",
         accessor: "itCategory",
         width: 130,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "SERIAL NO",
         accessor: "serialNo",
         width: 150,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ASSET TYPE",
         accessor: "assetType",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "ISSUE DATE",
         accessor: "issueDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "RETURN DATE",
         accessor: "returnDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "LOST DATE",
         accessor: "lostDate",
         width: 120,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "REMARK",
         accessor: "remark",
         width: 170,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
       {
         Header: "UPLOAD IMAGE",
         accessor: "uploadImage",
         width: 140,
-        Cell: ({ value }: any) => <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">{value}</span>,
+        Cell: ({ value }: any) => (
+          <span className="font-semibold text-slate-600 dark:text-slate-400 text-[14px]">
+            {value}
+          </span>
+        ),
       },
     ],
-    []
+    [],
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pb-24 font-sans antialiased">
-  
-<main className="w-full max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 pt-3 sm:pt-5 pb-6 space-y-4 sm:space-y-5 min-w-0">
-
+    <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] pb-24 font-sans antialiased">
+      <main className="mx-auto w-full max-w-[1700px] min-w-0 px-3 pt-3 pb-6 space-y-4 sm:px-5 sm:pt-5 sm:space-y-5 lg:px-6">
         {/* ── HEADER TITLE & ACTIONS ────────────────────────────────────────── */}
-    
-<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
-  <div className="min-w-0">
-    <h1 className="text-xl sm:text-[22px] font-bold tracking-tight text-[#1E293B] dark:text-[#E7ECF3]">
-      Asset import
-    </h1>
-    <p className="text-xs sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 leading-relaxed max-w-3xl">
-      Bring the asset register in from Excel. Rows that fail validation are listed with the exact reason so you can fix and re-import.
-    </p>
-  </div>
 
-  <div className="flex w-full sm:w-auto items-center gap-2 shrink-0">
-    <AButton
-      variant="outline"
-      size="lg"
-      icon={<Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
-      onClick={handleDownloadSample}
-      className="w-full sm:w-auto justify-center border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs font-semibold"
-    >
-      Download sample
-    </AButton>
-  </div>
-</div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-[22px] font-bold tracking-tight text-[#1E293B] dark:text-[#E7ECF3]">
+              Asset import
+            </h1>
+            <p className="text-xs sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 leading-relaxed max-w-3xl">
+              Bring the asset register in from Excel. Rows that fail validation
+              are listed with the exact reason so you can fix and re-import.
+            </p>
+          </div>
 
+          <div className="flex w-full sm:w-auto items-center gap-2 shrink-0">
+            <AButton
+              variant="outline"
+              size="lg"
+              icon={
+                <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              }
+              onClick={handleDownloadSample}
+              className="w-full sm:w-auto justify-center border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs font-semibold"
+            >
+              Download sample
+            </AButton>
+          </div>
+        </div>
 
         {/* ── 2-COLUMN MAIN LAYOUT ──────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_370px] gap-4 sm:gap-5 items-start min-w-0">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_370px]">
           {/* ── LEFT COLUMN: UPLOAD ZONE & RESULTS ──────────────────────────── */}
-           <div className="space-y-4 sm:space-y-5 min-w-0">
+          <div className="min-w-0 space-y-4 sm:space-y-5">
             {/* Upload Box Card */}
             <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.12)] p-4 sm:p-5">
               <input
@@ -745,23 +894,28 @@ export default function AssetImportPage() {
                   const file = e.dataTransfer.files?.[0];
                   if (file) processUploadFile(file);
                 }}
-                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${selectedFile && stats
+                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${
+                  selectedFile && stats
                     ? "border-emerald-400/80 bg-emerald-50/20 dark:bg-emerald-950/10 dark:border-emerald-700/60"
                     : isDragging
                       ? "border-[#4F46E5] bg-[#EEF2FF]/40 dark:bg-[#1E1B4B]/20"
                       : "border-indigo-300/80 hover:border-[#4F46E5] bg-[#FAFAFE] hover:bg-[#F5F5FE] dark:bg-[#0B1220] dark:hover:bg-[#0E1524] dark:border-indigo-900/60"
-                  }`}
+                }`}
               >
                 {selectedFile && stats ? (
                   <>
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3.5 shadow-2xs">
-                      <CheckCircle2 className="w-6 h-6" />
-                    </div>
-                    <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
-                      {selectedFile.name} imported
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                      Click to import another file
+                    <div className="w-full min-w-0 px-2 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                      </div>
+
+                      <p className="mx-auto max-w-full break-words [overflow-wrap:anywhere] text-base font-semibold leading-6 text-slate-900">
+                        {selectedFile?.name} imported
+                      </p>
+
+                      <p className="mt-2 text-sm text-slate-500">
+                        Click to import another file
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -838,9 +992,9 @@ export default function AssetImportPage() {
 
             {/* ── NON-IMPORTED ROWS CARD ────────────────────────────────────── */}
             {nonImportedData.length > 0 && (
-              <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-2xs overflow-hidden">
-                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111827]">
-                  <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span className="w-7 h-7 rounded-lg bg-[#FFE4E6] dark:bg-rose-950/60 text-[#F43F5E] flex items-center justify-center shrink-0">
                       <AlertCircle className="w-4 h-4" />
                     </span>
@@ -854,13 +1008,13 @@ export default function AssetImportPage() {
                     size="md"
                     icon={<Download className="w-3.5 h-3.5" />}
                     onClick={handleDownloadErrorSheet}
-                    className="border-slate-200 dark:border-slate-700 text-md sm:text-md font-semibold shadow-2xs whitespace-nowrap shrink-0"
+                    className="flex w-full items-center justify-center gap-2 whitespace-normal rounded-xl px-4 py-3 text-sm sm:w-auto"
                   >
                     Download error sheet
                   </AButton>
                 </div>
 
-                <div className="p-2">
+                <div className="w-full min-w-0 max-w-full overflow-hidden">
                   <DataTable
                     columns={nonImportedColumns}
                     data={nonImportedData}
@@ -890,7 +1044,9 @@ export default function AssetImportPage() {
                     size="sm"
                     icon={<ArrowRight className="w-3.5 h-3.5" />}
                     iconPosition="right"
-                    onClick={() => router.push("/payroll/onboarding/employee-asset")}
+                    onClick={() =>
+                      router.push("/payroll/onboarding/employee-asset")
+                    }
                     className="border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-2xs text-indigo-600 dark:text-indigo-400 whitespace-nowrap shrink-0"
                   >
                     Open asset issue
@@ -911,7 +1067,7 @@ export default function AssetImportPage() {
           </div>
 
           {/* ── RIGHT COLUMN: EXPECTED COLUMNS & CALLOUT ──────────────────── */}
-           <div className="space-y-4 min-w-0">
+          <div className="min-w-0 space-y-4 sm:space-y-5">
             {/* Expected Columns Card */}
             <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.12)] p-5">
               <div className="flex items-center gap-2.5 mb-5 pb-3.5 border-b border-slate-100 dark:border-slate-800">
@@ -931,7 +1087,9 @@ export default function AssetImportPage() {
                     </span>
                     Asset code
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">unique</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    unique
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -941,7 +1099,9 @@ export default function AssetImportPage() {
                     </span>
                     Asset name
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">required</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    required
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -951,7 +1111,9 @@ export default function AssetImportPage() {
                     </span>
                     Asset category
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">must exist</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    must exist
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -961,7 +1123,9 @@ export default function AssetImportPage() {
                     </span>
                     Asset type
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">returnable / not</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    returnable / not
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -971,7 +1135,9 @@ export default function AssetImportPage() {
                     </span>
                     Serial no
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">optional</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    optional
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -981,7 +1147,9 @@ export default function AssetImportPage() {
                     </span>
                     Employee code
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">blank = in store</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    blank = in store
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -991,7 +1159,9 @@ export default function AssetImportPage() {
                     </span>
                     Issue date
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">dd/mm/yyyy</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    dd/mm/yyyy
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -1001,7 +1171,9 @@ export default function AssetImportPage() {
                     </span>
                     Purchase value
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">numeric</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    numeric
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
@@ -1011,7 +1183,9 @@ export default function AssetImportPage() {
                     </span>
                     Remark
                   </span>
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">optional</span>
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
+                    optional
+                  </span>
                 </div>
               </div>
             </div>
@@ -1022,7 +1196,9 @@ export default function AssetImportPage() {
                 <AlertCircle className="w-4 h-4 text-[#D97706]" />
               </span>
               <p className="text-lg font-medium text-[#78350F] dark:text-amber-200 leading-relaxed">
-                Asset code must be unique. If a code already exists, the row is skipped rather than overwritten — use the asset issue screen to edit an existing record.
+                Asset code must be unique. If a code already exists, the row is
+                skipped rather than overwritten — use the asset issue screen to
+                edit an existing record.
               </p>
             </div>
           </div>

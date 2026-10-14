@@ -36,10 +36,10 @@ const LeaveProgressRing: React.FC<LeaveProgressRingProps> = ({
     const theme = getColor(leaveType);
 
     return (
-        <div className="flex items-center justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] p-4 sm:p-5 shadow-sm hover:shadow transition-all">
-            <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] p-3 sm:p-5 shadow-sm hover:shadow transition-all">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 {/* Circular Ring with Center Value */}
-                <div className="relative flex items-center justify-center w-16 h-16 shrink-0">
+                <div className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 shrink-0">
                     <CircularProgressbar
                         value={percentage || (numCl > 0 ? 100 : 0)}
                         strokeWidth={9}
@@ -49,25 +49,25 @@ const LeaveProgressRing: React.FC<LeaveProgressRingProps> = ({
                             strokeLinecap: "round",
                         })}
                     />
-                    <span className="absolute font-bold text-lg text-slate-900 dark:text-slate-100">
+                    <span className="absolute font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">
                         {numCl}
                     </span>
                 </div>
 
                 {/* Title & Metrics */}
-                <div>
-                    <h4 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-slate-100 leading-tight mb-1">
+                <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-sm sm:text-lg text-slate-900 dark:text-slate-100 leading-tight mb-1 truncate">
                         {leaveType}
                     </h4>
-                    <div className="text-base sm:text-lg text-slate-600 dark:text-slate-300 space-y-0.5 font-medium">
-                        <div>Opening: <span className="text-slate-900 dark:text-slate-100 font-bold">{numOp}</span></div>
-                        <div>Generated: <span className="text-slate-900 dark:text-slate-100 font-bold">{numGen}</span></div>
-                        <div>Availed: <span className="text-slate-900 dark:text-slate-100 font-bold">{numAvail}</span></div>
+                    <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-0.5 font-medium">
+                        <div className="truncate">Opening: <span className="text-slate-900 dark:text-slate-100 font-bold">{numOp}</span></div>
+                        <div className="truncate">Generated: <span className="text-slate-900 dark:text-slate-100 font-bold">{numGen}</span></div>
+                        <div className="truncate">Availed: <span className="text-slate-900 dark:text-slate-100 font-bold">{numAvail}</span></div>
                     </div>
                 </div>
             </div>
 
-            <div className="text-right text-base font-semibold hidden sm:block pr-2">
+            <div className="text-right text-base font-semibold hidden sm:block pr-2 shrink-0">
                 <div className="text-slate-400 font-semibold text-sm">Bal</div>
                 <div className="font-extrabold text-xl sm:text-2xl" style={{ color: theme.text }}>
                     {numCl}

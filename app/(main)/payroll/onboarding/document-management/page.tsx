@@ -29,7 +29,6 @@ import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
-import certificate from "@/components/atoms/CertificateUpload";
 import {
   Dialog,
   DialogContent,

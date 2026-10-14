@@ -7,6 +7,7 @@ import { Search, Menu, ArrowLeft, X } from "lucide-react";
 import { PAYROLL_MODULES } from "@/constant/modules";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import TopProgressBar from "@/components/layout/TopProgressBar";
 
 export default function Topbar() {
   const pathname = usePathname();
@@ -62,26 +63,26 @@ export default function Topbar() {
   }, [q]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-1.5 sm:gap-3 border-b border-line bg-card px-2 sm:px-4">
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center gap-1 sm:gap-3 border-b border-line bg-card px-1.5 sm:px-4 relative">
       {/* Mobile Menu Hamburger Button */}
       <button
         type="button"
         onClick={toggleMobileSidebar}
-        className="flex sm:hidden h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-card text-muted hover:bg-hoverbg hover:text-fg shadow-2xs"
+        className="flex sm:hidden h-7.5 w-7.5 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-card text-muted hover:bg-hoverbg hover:text-fg shadow-2xs cursor-pointer"
         aria-label="Toggle navigation menu"
       >
-        <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+        <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
 
       {/* Back Button */}
       <button
         type="button"
         onClick={() => window.history.back()}
-        className="flex h-8 items-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-card px-2 sm:px-2.5 text-[11.5px] sm:text-[12px] font-medium text-fg hover:bg-hoverbg shadow-2xs transition shrink-0 cursor-pointer"
+        className="flex h-7.5 sm:h-8 items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-card px-1.5 min-[360px]:px-2 sm:px-2.5 text-[10.5px] sm:text-[12px] font-medium text-fg hover:bg-hoverbg shadow-2xs transition shrink-0 cursor-pointer"
         title="Back"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        <span>Back</span>
+        <span className="hidden min-[360px]:inline">Back</span>
       </button>
 
       {/* Breadcrumbs (Desktop lg+) */}
@@ -104,11 +105,11 @@ export default function Topbar() {
           setOpen(true);
           setTimeout(() => mobileInputRef.current?.focus(), 50);
         }}
-        className="flex sm:hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-card text-muted hover:bg-hoverbg hover:text-fg shadow-2xs cursor-pointer ml-auto"
+        className="flex sm:hidden h-7.5 w-7.5 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-card text-muted hover:bg-hoverbg hover:text-fg shadow-2xs cursor-pointer ml-auto"
         aria-label="Open search"
         title="Search"
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
 
       {/* Desktop Search Bar */}
@@ -225,15 +226,24 @@ export default function Topbar() {
 
       {/* Right User Actions */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        <button className="rounded-lg border border-line bg-card px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10.5px] sm:text-[11px] font-semibold uppercase text-fg shrink-0">
+        <button
+          title={user?.DB}
+          className="h-7.5 sm:h-auto max-w-[66px] min-[360px]:max-w-none truncate rounded-lg border border-line bg-card px-1.5 min-[360px]:px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase text-fg shrink-0"
+        >
           {user?.DB}
         </button>
         <ThemeToggle />
 
-        <button className="rounded-lg border border-line bg-card px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10.5px] sm:text-[11px] font-semibold uppercase text-fg shrink-0 whitespace-nowrap">
+        <button
+          title={user?.EMPCODE}
+          className="h-7.5 sm:h-auto max-w-[60px] min-[360px]:max-w-none truncate rounded-lg border border-line bg-card px-1.5 min-[360px]:px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase text-fg shrink-0 whitespace-nowrap"
+        >
           {user?.EMPCODE}
         </button>
       </div>
+
+      {/* Loading Progress Bar directly under header */}
+      <TopProgressBar />
     </header>
   );
 }

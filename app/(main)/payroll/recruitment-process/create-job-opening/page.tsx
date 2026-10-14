@@ -914,7 +914,7 @@ export default function CreateJobOpeningPage() {
       {/* 1. TOP HEADER */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Job openings & candidate leads
         </h1>
         <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium mt-1">
