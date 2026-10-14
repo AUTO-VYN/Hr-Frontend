@@ -31,6 +31,15 @@ import Ainput from "@/components/atoms/Einput";
 import ReactTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import FileViewer from "@/components/atoms/FileviewerBank";
+import Printout from "@/components/atoms/Printout";
+import HindiPrintout from "@/components/atoms/HindiPrintout";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Religion mapping
 const religionMapping: Record<string, string> = {
@@ -97,7 +106,9 @@ export default function ResumeBankPage() {
   const [ctcOptions, setCtcOptions] = useState<string[]>([]);
   const [locationOptions, setLocationOptions] = useState<string[]>([]);
 
-  // Print ref
+  // Print state
+  const [isEnglishPrintOpen, setIsEnglishPrintOpen] = useState<boolean>(false);
+  const [isHindiPrintOpen, setIsHindiPrintOpen] = useState<boolean>(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   // SweetAlert helper
@@ -160,7 +171,7 @@ export default function ResumeBankPage() {
         `${process.env.NEXT_PUBLIC_URL}/interview/interviewcanidates`,
         {
           loc_code: user?.branch || user?.Primary_Branch || user?.branch_code || "",
-          flag:1
+          flag: 1
         },
         {
           headers: {
@@ -387,10 +398,87 @@ export default function ResumeBankPage() {
     return parts.join(" ") || "0 days";
   };
 
-  // Print helper
-  const handlePrint = () => {
-    if (!selectedCandidate) return;
-    window.print();
+  // Document Print Handler via iframe
+  const handlePrintDocument = (elementId: string) => {
+    const printElement = document.getElementById(elementId);
+    if (!printElement) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    const styleTags = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+      .map((tag) => tag.outerHTML)
+      .join("\n");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${selectedCandidate?.NAME ? `${selectedCandidate.NAME} - Printout` : "Candidate Printout"}</title>
+          ${styleTags}
+          <style>
+            @page {
+              size: A4;
+              margin: 8mm;
+            }
+            html, body {
+              background: white !important;
+              color: black !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              height: auto !important;
+              overflow: visible !important;
+            }
+            div, section, main, table {
+              overflow: visible !important;
+              max-height: none !important;
+              height: auto !important;
+            }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              box-sizing: border-box;
+            }
+            .custom-scrollbar {
+              overflow: visible !important;
+              max-height: none !important;
+              height: auto !important;
+            }
+            .break-after-page, .print\\:break-after-page {
+              page-break-after: always !important;
+              break-after: page !important;
+            }
+            ::-webkit-scrollbar {
+              display: none !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${printElement.innerHTML}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1500);
+    }, 500);
   };
 
   // Render Status Badge
@@ -398,24 +486,28 @@ export default function ResumeBankPage() {
     switch (status) {
       case "Unscreened":
         return (
-          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-300 dark:bg-yellow-950/50 dark:text-yellow-400 dark:border-yellow-800">
+          <span
+            className="inline-flex items-center px-2 py-[3px] rounded-full text-[10.5px] font-bold whitespace-nowrap"
+            style={{ color: "#F59E0B", backgroundColor: "rgba(245,158,11,0.14)" }}
+          >
             Unscreened
           </span>
         );
       case "Selected":
         return (
-          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800">
+          <span
+            className="inline-flex items-center px-2 py-[3px] rounded-full text-[10.5px] font-bold whitespace-nowrap"
+            style={{ color: "#10B981", backgroundColor: "rgba(16,185,129,0.14)" }}
+          >
             Selected
-          </span>
-        );
-        return (
-          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-            Shortlisted
           </span>
         );
       case "Rejected":
         return (
-          <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-[14px] font-semibold bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800">
+          <span
+            className="inline-flex items-center px-2 py-[3px] rounded-full text-[10.5px] font-bold whitespace-nowrap"
+            style={{ color: "#E11D48", backgroundColor: "rgba(225,29,72,0.14)" }}
+          >
             Rejected
           </span>
         );
@@ -443,22 +535,22 @@ export default function ResumeBankPage() {
 
           return (
             <div
-              className="flex items-center gap-3.5 py-1.5 select-none cursor-pointer"
+              className="flex items-center gap-[10px] py-1 select-none cursor-pointer"
               onClick={() => setSelectedCandidate(cand)}
             >
               <div
-                className={`h-11 w-11 rounded-full flex items-center justify-center text-base font-semibold shrink-0 shadow-2xs ${colorClass}`}
+                className={`w-[28px] h-[28px] rounded-full flex items-center justify-center text-[10.5px] font-semibold shrink-0 shadow-2xs ${colorClass}`}
               >
                 {initials}
               </div>
               <div className="min-w-0">
                 <div
-                  className={`text-xl font-semibold truncate ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-white"
+                  className={`text-[12.5px] font-semibold truncate ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-white"
                     }`}
                 >
                   {cand.NAME || "Unnamed"}
                 </div>
-                <div className="text-base text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   {cand.EMAIL || "No email"}
                 </div>
               </div>
@@ -471,7 +563,7 @@ export default function ResumeBankPage() {
         accessor: "MOB_NO",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-[12.5px] tabular-nums text-slate-800 dark:text-slate-200 py-1 cursor-pointer truncate"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -483,7 +575,7 @@ export default function ResumeBankPage() {
         accessor: "APPLICATION_DATE1",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-xl font-medium text-slate-700 dark:text-slate-300 py-1.5 cursor-pointer"
+            className="text-[12.5px] text-slate-500 dark:text-slate-400 tabular-nums py-1 cursor-pointer truncate"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {formatDate(value || row.original.APPLICATION_DATE)}
@@ -495,7 +587,7 @@ export default function ResumeBankPage() {
         accessor: "EXP_IN_YEAR",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 py-1.5 cursor-pointer"
+            className="text-[12.5px] tabular-nums text-slate-800 dark:text-slate-200 py-1 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value !== null && value !== undefined ? `${value} yr` : "—"}
@@ -507,7 +599,7 @@ export default function ResumeBankPage() {
         accessor: "DESIGNATION",
         Cell: ({ row, value }: any) => (
           <div
-            className="text-base sm:text-xl font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1.5 cursor-pointer"
+            className="text-[12.5px] text-slate-800 dark:text-slate-200 truncate max-w-[200px] py-1 cursor-pointer"
             onClick={() => setSelectedCandidate(row.original)}
           >
             {value || "—"}
@@ -521,7 +613,7 @@ export default function ResumeBankPage() {
           const status = getCandidateStatus(row.original);
           return (
             <div
-              className="py-1.5 flex sm:justify-end cursor-pointer"
+              className="py-1 flex sm:justify-end cursor-pointer"
               onClick={() => setSelectedCandidate(row.original)}
             >
               {renderStatusBadge(status)}
@@ -539,30 +631,54 @@ export default function ResumeBankPage() {
         Header: "Language",
         accessor: "Emp_Language",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
+          <span className="font-semibold text-slate-800 dark:text-slate-200 text-[12.5px]">
             {value || "—"}
           </span>
         ),
       },
       {
-        Header: "Understand",
+        Header: "Und.",
         accessor: "Emp_Language_Understand",
-        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => {
+          const isYes = value === "Y" || value === 1 || value === "Yes" || value === true;
+          const isNo = value === "N" || value === 0 || value === "No" || value === false;
+          if (isYes) return <div className="text-center text-[11.5px] font-semibold text-[#10B981]">Yes</div>;
+          if (isNo) return <div className="text-center text-[11.5px] font-semibold text-[#E11D48]">No</div>;
+          return <div className="text-center text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">{value || "—"}</div>;
+        },
       },
       {
         Header: "Speak",
         accessor: "Emp_Language_Speak",
-        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => {
+          const isYes = value === "Y" || value === 1 || value === "Yes" || value === true;
+          const isNo = value === "N" || value === 0 || value === "No" || value === false;
+          if (isYes) return <div className="text-center text-[11.5px] font-semibold text-[#10B981]">Yes</div>;
+          if (isNo) return <div className="text-center text-[11.5px] font-semibold text-[#E11D48]">No</div>;
+          return <div className="text-center text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">{value || "—"}</div>;
+        },
       },
       {
         Header: "Read",
         accessor: "Emp_Language_Read",
-        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => {
+          const isYes = value === "Y" || value === 1 || value === "Yes" || value === true;
+          const isNo = value === "N" || value === 0 || value === "No" || value === false;
+          if (isYes) return <div className="text-center text-[11.5px] font-semibold text-[#10B981]">Yes</div>;
+          if (isNo) return <div className="text-center text-[11.5px] font-semibold text-[#E11D48]">No</div>;
+          return <div className="text-center text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">{value || "—"}</div>;
+        },
       },
       {
         Header: "Write",
         accessor: "Emp_Language_Write",
-        Cell: ({ value }: any) => <div className="text-center text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => {
+          const isYes = value === "Y" || value === 1 || value === "Yes" || value === true;
+          const isNo = value === "N" || value === 0 || value === "No" || value === false;
+          if (isYes) return <div className="text-center text-[11.5px] font-semibold text-[#10B981]">Yes</div>;
+          if (isNo) return <div className="text-center text-[11.5px] font-semibold text-[#E11D48]">No</div>;
+          return <div className="text-center text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">{value || "—"}</div>;
+        },
       },
     ],
     []
@@ -574,7 +690,7 @@ export default function ResumeBankPage() {
         Header: "Company",
         accessor: "Emp_Company",
         Cell: ({ value }: any) => (
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
+          <span className="font-semibold text-slate-800 dark:text-slate-200 text-[12.5px]">
             {value || "—"}
           </span>
         ),
@@ -582,7 +698,11 @@ export default function ResumeBankPage() {
       {
         Header: "Designation",
         accessor: "Emp_Designation",
-        Cell: ({ value }: any) => <div className="text-base sm:text-xl">{value || "—"}</div>,
+        Cell: ({ value }: any) => (
+          <div className="text-[12.5px] text-slate-600 dark:text-slate-300">
+            {value || "—"}
+          </div>
+        ),
       },
       {
         Header: "Duration",
@@ -590,7 +710,7 @@ export default function ResumeBankPage() {
         Cell: ({ row }: any) => {
           const exp = row.original;
           return (
-            <span className="text-base font-bold text-indigo-600 dark:text-indigo-400">
+            <span className="text-[12.5px] font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
               {calculateDateDiff(exp.Emp_From_Date, exp.Emp_To_Date)}
             </span>
           );
@@ -600,7 +720,7 @@ export default function ResumeBankPage() {
         Header: "Salary",
         accessor: "Emp_Drawn_Salary",
         Cell: ({ value }: any) => (
-          <div className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-xl">
+          <div className="font-semibold text-slate-800 dark:text-slate-200 text-[12.5px] tabular-nums">
             {value ? `₹${Number(value).toFixed(2)}` : "—"}
           </div>
         ),
@@ -609,7 +729,7 @@ export default function ResumeBankPage() {
         Header: "Leaving Reason",
         accessor: "Emp_Leaving_Reason",
         Cell: ({ value }: any) => (
-          <div className="text-xl text-slate-600 dark:text-slate-400">
+          <div className="text-[12.5px] text-slate-600 dark:text-slate-400">
             {value || "—"}
           </div>
         ),
@@ -638,63 +758,48 @@ export default function ResumeBankPage() {
 
         {/* Status Filter Pills */}
         <div className="w-full lg:w-auto overflow-x-auto scrollbar-none py-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs min-w-max">
-            <button
+          <div className="inline-flex items-center gap-[3px] p-[3px] bg-slate-100/90 dark:bg-slate-900 rounded-[10px] border border-slate-200 dark:border-slate-800 min-w-max">
+            <AButton
               type="button"
               onClick={() => setStatusFilter("Unscreened")}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "Unscreened"
-                ? "bg-[#f59e0b] text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              className={`!h-auto !py-[7px] !px-[13px] !rounded-[8px] !text-[12px] !font-semibold gap-[7px] shrink-0 whitespace-nowrap cursor-pointer transition-colors !shadow-none !border-none ${statusFilter === "Unscreened"
+                ? "!bg-[#4F46E5] !text-white"
+                : "!bg-transparent hover:!bg-slate-200/60 dark:hover:!bg-slate-800/60 !text-slate-500 dark:!text-slate-400 hover:!text-slate-700 dark:hover:!text-slate-200"
                 }`}
             >
               <span className="whitespace-nowrap shrink-0">Unscreened</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "Unscreened"
-                  ? "bg-white/25 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  }`}
-              >
+              <span className="opacity-75 tabular-nums text-[12px]">
                 {statusCounts.unscreened}
               </span>
-            </button>
+            </AButton>
 
-            <button
+            <AButton
               type="button"
               onClick={() => setStatusFilter("Selected")}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "Selected"
-                ? "bg-blue-600 text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              className={`!h-auto !py-[7px] !px-[13px] !rounded-[8px] !text-[12px] !font-semibold gap-[7px] shrink-0 whitespace-nowrap cursor-pointer transition-colors !shadow-none !border-none ${statusFilter === "Selected"
+                ? "!bg-[#4F46E5] !text-white"
+                : "!bg-transparent hover:!bg-slate-200/60 dark:hover:!bg-slate-800/60 !text-slate-500 dark:!text-slate-400 hover:!text-slate-700 dark:hover:!text-slate-200"
                 }`}
             >
               <span className="whitespace-nowrap shrink-0">Reviewed</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "Selected"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  }`}
-              >
+              <span className="opacity-75 tabular-nums text-[12px]">
                 {statusCounts.reviewed}
               </span>
-            </button>
+            </AButton>
 
-            <button
+            <AButton
               type="button"
               onClick={() => setStatusFilter("All")}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-base font-bold transition cursor-pointer select-none shrink-0 whitespace-nowrap ${statusFilter === "All"
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              className={`!h-auto !py-[7px] !px-[13px] !rounded-[8px] !text-[12px] !font-semibold gap-[7px] shrink-0 whitespace-nowrap cursor-pointer transition-colors !shadow-none !border-none ${statusFilter === "All"
+                ? "!bg-[#4F46E5] !text-white"
+                : "!bg-transparent hover:!bg-slate-200/60 dark:hover:!bg-slate-800/60 !text-slate-500 dark:!text-slate-400 hover:!text-slate-700 dark:hover:!text-slate-200"
                 }`}
             >
               <span className="whitespace-nowrap shrink-0">All</span>
-              <span
-                className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-black shrink-0 whitespace-nowrap min-w-[20px] ${statusFilter === "All"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  }`}
-              >
+              <span className="opacity-75 tabular-nums text-[12px]">
                 {statusCounts.all}
               </span>
-            </button>
+            </AButton>
           </div>
         </div>
       </div>
@@ -766,16 +871,16 @@ export default function ResumeBankPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pb-0.5">
             <AButton
               variant="primary"
-              size="md"
+              size="lg"
               fullWidth
               onClick={() => { }}
-              className="text-base sm:text-xl font-bold shadow-xs cursor-pointer"
+              className="text-base sm:text-md font-bold shadow-xs cursor-pointer w-30 h-30"
             >
               Show
             </AButton>
             <AButton
               variant="outline"
-              size="md"
+              size="lg"
               onClick={handleResetFilters}
               className="text-base sm:text-xl font-semibold cursor-pointer"
             >
@@ -803,6 +908,7 @@ export default function ResumeBankPage() {
                 showTopSearch={true}
                 showPageSizeInFooter={true}
                 searchPlaceholder="Search candidate by name, email, designation..."
+                headerClassName="!text-[10.5px] !font-bold !tracking-[0.05em] !text-slate-500 dark:!text-slate-400 uppercase"
               />
             </div>
           </div>
@@ -834,187 +940,165 @@ export default function ResumeBankPage() {
           {selectedCandidate ? (
             <>
               {/* Dossier Card */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 md:p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-5 sm:space-y-6 overflow-hidden">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-[#0B1220] overflow-hidden">
                 {/* Header info */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 min-w-0">
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className="h-16 w-16 rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs">
-                      {getInitials(selectedCandidate.NAME)}
+                <div className="p-4 sm:px-[18px] sm:py-[17px] border-b border-slate-200 dark:border-slate-800 flex items-start gap-3 min-w-0">
+                  <div
+                    className={`w-11 h-11 rounded-full shrink-0 flex items-center justify-center text-[14px] font-semibold shadow-2xs ${AVATAR_COLORS[(selectedCandidate.TRAN_ID || 0) % AVATAR_COLORS.length]
+                      }`}
+                  >
+                    {getInitials(selectedCandidate.NAME)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[15px] font-semibold text-slate-900 dark:text-white tracking-[-0.01em] truncate">
+                      {selectedCandidate.NAME || "Candidate Dossier"}
                     </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white leading-tight break-words">
-                        {selectedCandidate.NAME || "Candidate Dossier"}
-                      </h3>
-                      <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-medium mt-1 break-words">
-                        {selectedCandidate.DESIGNATION || "No Designation"} ·{" "}
-                        {selectedCandidate.LOC_CODE1 || "Location"}
-                      </p>
+                    <div className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      {selectedCandidate.DESIGNATION || "No Designation"} ·{" "}
+                      {selectedCandidate.LOC_CODE1 || "Location"}
                     </div>
                   </div>
 
-                  <div>
+                  <div className="shrink-0">
                     {renderStatusBadge(getCandidateStatus(selectedCandidate))}
                   </div>
                 </div>
 
                 {/* 3 Overview Stats Box */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 p-3 sm:p-4 border border-slate-200/80 dark:border-slate-800">
-                  <div className="px-2 py-2 sm:py-0 text-left min-w-0">
-                    <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <div className="grid grid-cols-3 border-b border-slate-200 dark:border-slate-800 divide-x divide-slate-200 dark:divide-slate-800 bg-slate-50/40 dark:bg-slate-900/30">
+                  <div className="px-3.5 py-3 text-left min-w-0">
+                    <div className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-slate-500 dark:text-slate-400 truncate">
                       Experience
                     </div>
-                    <div className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-[14px] font-semibold text-slate-900 dark:text-white mt-1 tabular-nums truncate">
                       {selectedCandidate.EXP_IN_YEAR !== null && selectedCandidate.EXP_IN_YEAR !== undefined
                         ? `${selectedCandidate.EXP_IN_YEAR} yrs`
                         : "0 yrs"}
                     </div>
                   </div>
 
-                  <div className="px-2 sm:px-3 py-2 sm:py-0 text-left min-w-0">
-                    <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="px-3.5 py-3 text-left min-w-0">
+                    <div className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-slate-500 dark:text-slate-400 truncate">
                       Qualification
                     </div>
-                    <div className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mt-1 truncate">
+                    <div className="text-[14px] font-semibold text-slate-900 dark:text-white mt-1 tabular-nums truncate">
                       {selectedCandidate.HIGH_QUAL || "10th"}{" "}
                       {selectedCandidate.PASSING_PER ? `· ${selectedCandidate.PASSING_PER}%` : ""}
                     </div>
                   </div>
 
-                  <div className="px-2 sm:px-3 py-2 sm:py-0 text-left min-w-0">
-                    <div className="text-xs sm:text-[13px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="px-3.5 py-3 text-left min-w-0">
+                    <div className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-slate-500 dark:text-slate-400 truncate">
                       Current CTC
                     </div>
-                    <div className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-[14px] font-semibold text-slate-900 dark:text-white mt-1 tabular-nums truncate">
                       {selectedCandidate.CURRENT_CTC ? Number(selectedCandidate.CURRENT_CTC).toFixed(2) : "0.00"}
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs bar */}
-                <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto scrollbar-none min-w-0">
+                <div className="flex gap-1 px-3.5 pt-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-none min-w-0">
                   {(["Profile", "Documents", "Languages", "Experience"] as const).map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
-                      className={`pb-3 text-base sm:text-xl font-semibold transition cursor-pointer relative whitespace-nowrap shrink-0 ${activeTab === tab
-                        ? "text-indigo-600 dark:text-indigo-400"
-                        : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
+                      className={`px-3 py-2 text-[12.5px] font-semibold transition cursor-pointer relative whitespace-nowrap shrink-0 border-b-2 ${activeTab === tab
+                          ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                          : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                         }`}
                     >
                       {tab}
-                      {activeTab === tab && (
-                        <span className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600 dark:bg-indigo-400 rounded-full" />
-                      )}
                     </button>
                   ))}
                 </div>
 
                 {/* Tab Content */}
-                <div>
+                <div className="p-4 sm:p-[18px] max-h-[360px] overflow-y-auto custom-scrollbar">
                   {/* TAB 1: PROFILE */}
                   {activeTab === "Profile" && (
-                    <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800/60 text-base sm:text-xl">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Application date</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {formatDate(selectedCandidate.APPLICATION_DATE1 || selectedCandidate.APPLICATION_DATE)}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Mobile / WhatsApp</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.MOB_NO || selectedCandidate.WHATSAPP_NO || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Email</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium break-words sm:text-right max-w-full sm:max-w-[260px]">
-                          {selectedCandidate.EMAIL || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Date of birth</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {formatDate(selectedCandidate.DOB1 || selectedCandidate.DOB)}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">City</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.CITY1 || selectedCandidate.CITY || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">State</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.STATE1 || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Location</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.LOC_CODE1 || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Key skills</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.SKILLS || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Father's name</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.FATHERS_NAME || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Mother's name</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.MOTHERS_NAME || "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Expected CTC</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {selectedCandidate.EXPECTED_CTC
+                    <div className="flex flex-col gap-2">
+                      {[
+                        {
+                          label: "Application date",
+                          value: formatDate(
+                            selectedCandidate.APPLICATION_DATE1 || selectedCandidate.APPLICATION_DATE
+                          ),
+                        },
+                        {
+                          label: "Mobile / WhatsApp",
+                          value:
+                            selectedCandidate.MOB_NO ||
+                            selectedCandidate.WHATSAPP_NO ||
+                            "Not provided",
+                        },
+                        {
+                          label: "Email",
+                          value: selectedCandidate.EMAIL || "Not provided",
+                        },
+                        {
+                          label: "Date of birth",
+                          value: formatDate(selectedCandidate.DOB1 || selectedCandidate.DOB),
+                        },
+                        {
+                          label: "City",
+                          value:
+                            selectedCandidate.CITY1 || selectedCandidate.CITY || "Not provided",
+                        },
+                        {
+                          label: "State",
+                          value: selectedCandidate.STATE1 || "Not provided",
+                        },
+                        {
+                          label: "Location",
+                          value: selectedCandidate.LOC_CODE1 || "Not provided",
+                        },
+                        {
+                          label: "Key skills",
+                          value: selectedCandidate.SKILLS || "Not provided",
+                        },
+                        {
+                          label: "Father's name",
+                          value: selectedCandidate.FATHERS_NAME || "Not provided",
+                        },
+                        {
+                          label: "Mother's name",
+                          value: selectedCandidate.MOTHERS_NAME || "Not provided",
+                        },
+                        {
+                          label: "Expected CTC",
+                          value: selectedCandidate.EXPECTED_CTC
                             ? Number(selectedCandidate.EXPECTED_CTC).toFixed(2)
-                            : "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Religion</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                          {religionMapping[selectedCandidate.RELIGION?.trim()] ||
+                            : "Not provided",
+                        },
+                        {
+                          label: "Religion",
+                          value:
+                            religionMapping[selectedCandidate.RELIGION?.trim()] ||
                             selectedCandidate.RELIGION1 ||
-                            "Not provided"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 py-2 min-w-0">
-                        <span className="text-slate-500 dark:text-slate-400 font-normal">Address</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium sm:text-right break-words max-w-full sm:max-w-[260px]">
-                          {selectedCandidate.ADDRESS || "Not provided"}
-                        </span>
-                      </div>
+                            "Not provided",
+                        },
+                        {
+                          label: "Address",
+                          value: selectedCandidate.ADDRESS || "Not provided",
+                        },
+                      ].map((p, idx) => (
+                        <div key={idx} className="flex gap-2.5 items-baseline text-[12.5px]">
+                          <span className="w-[120px] shrink-0 text-slate-500 dark:text-slate-400 font-normal">
+                            {p.label}
+                          </span>
+                          <span className="flex-1 min-w-0 font-medium text-slate-800 dark:text-slate-200 break-words">
+                            {p.value}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
                   {/* TAB 2: DOCUMENTS */}
                   {activeTab === "Documents" && (
-                    <div className="space-y-3.5 min-w-0">
+                    <div className="flex flex-col gap-2.5 min-w-0">
                       {[
                         { title: "Profile image", srno: 1, type: "image" },
                         { title: "Updated CV (PDF)", srno: 2, type: "pdf" },
@@ -1027,25 +1111,26 @@ export default function ResumeBankPage() {
                         return (
                           <div
                             key={doc.srno}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 min-w-0"
+                            className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:px-3.5 sm:py-3 bg-white dark:bg-slate-900/40"
                           >
-                            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                              <div className="h-10 w-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                                {doc.type === "image" ? (
-                                  <ImageIcon className="h-5 w-5" />
-                                ) : (
-                                  <FileText className="h-5 w-5" />
-                                )}
-                              </div>
-                              <span className="text-base sm:text-xl font-bold text-slate-800 dark:text-slate-200 break-words">
-                                {doc.title}
-                              </span>
-                            </div>
-
+                            <span className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                              {doc.type === "image" ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <FileText className="h-4 w-4" />
+                              )}
+                            </span>
+                            <span className="flex-1 min-w-0 text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {doc.title}
+                            </span>
                             {fileLink ? (
-                              <FileViewer fileLink={fileLink} celldata="View" Title={doc.title} />
+                              <div className="text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                                <FileViewer fileLink={fileLink} celldata="View" Title={doc.title} />
+                              </div>
                             ) : (
-                              <span className="text-base sm:text-lg text-slate-400 font-medium">Not uploaded</span>
+                              <span className="text-xs sm:text-sm font-medium text-slate-400">
+                                Missing
+                              </span>
                             )}
                           </div>
                         );
@@ -1055,7 +1140,7 @@ export default function ResumeBankPage() {
 
                   {/* TAB 3: LANGUAGES */}
                   {activeTab === "Languages" && (
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                       <div className="w-full overflow-x-auto">
                         <ReactTable
                           columns={languageColumns}
@@ -1063,6 +1148,7 @@ export default function ResumeBankPage() {
                           showExcelExport={false}
                           showTopSearch={false}
                           showPageSizeInFooter={false}
+                          headerClassName="!text-[10.5px] !font-bold !tracking-[0.05em] !text-slate-500 dark:!text-slate-400 uppercase !px-3 !py-2"
                           height="auto"
                         />
                       </div>
@@ -1071,7 +1157,7 @@ export default function ResumeBankPage() {
 
                   {/* TAB 4: EXPERIENCE */}
                   {activeTab === "Experience" && (
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                       <div className="w-full overflow-x-auto">
                         <ReactTable
                           columns={experienceColumns}
@@ -1079,6 +1165,7 @@ export default function ResumeBankPage() {
                           showExcelExport={false}
                           showTopSearch={false}
                           showPageSizeInFooter={false}
+                          headerClassName="!text-[10.5px] !font-bold !tracking-[0.05em] !text-slate-500 dark:!text-slate-400 uppercase !px-3 !py-2"
                           height="auto"
                         />
                       </div>
@@ -1090,15 +1177,16 @@ export default function ResumeBankPage() {
               {/* ──────────────────────────────────────────────────────── */}
               {/* Screening Decision Card */}
               {/* ──────────────────────────────────────────────────────── */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 md:p-6 shadow-xs dark:border-slate-800 dark:bg-[#0B1220] space-y-5 overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                      <Gavel className="h-5 w-5" />
-                    </div>
-                    <h4 className="text-xl font-black text-slate-900 dark:text-white">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-[15px_18px_17px_18px] shadow-xs dark:border-slate-800 dark:bg-[#0B1220]">
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 mb-[11px]">
+                  <div className="flex items-center gap-[9px]">
+                    <span className="w-[26px] h-[26px] rounded-lg flex items-center justify-center bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 shrink-0">
+                      <Gavel className="w-3.5 h-3.5" />
+                    </span>
+                    <h2 className="m-0 text-[14px] font-semibold text-slate-900 dark:text-white leading-none">
                       Screening decision
-                    </h4>
+                    </h2>
                   </div>
                   <div>
                     {renderStatusBadge(getCandidateStatus(selectedCandidate))}
@@ -1108,76 +1196,91 @@ export default function ResumeBankPage() {
                 {/* Show remark tags, textarea, and Shortlist/Reject buttons for Unscreened and Selected candidates */}
                 {(getCandidateStatus(selectedCandidate) === "Unscreened" ||
                   getCandidateStatus(selectedCandidate) === "Selected") && (
-                  <>
-                    {/* Quick decision tags */}
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                      {QUICK_DECISION_TAGS.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => setRemarkReason(tag)}
-                          className={`px-3 sm:px-4 py-2 rounded-xl text-base sm:text-xl font-semibold transition cursor-pointer border ${remarkReason === tag
-                            ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-700 dark:text-indigo-300"
-                            : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
-                            }`}
+                    <>
+                      {/* Quick decision tags */}
+                      <div className="flex flex-wrap gap-1.5 mb-2.5">
+                        {QUICK_DECISION_TAGS.map((tag) => {
+                          const isSelected = remarkReason === tag;
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => setRemarkReason(tag)}
+                              className={`px-2.5 py-1 rounded-full text-[11.5px] border cursor-pointer whitespace-nowrap transition-colors ${isSelected
+                                  ? "bg-indigo-50/70 border-indigo-400/80 text-indigo-600 font-semibold dark:bg-indigo-950/40 dark:border-indigo-600 dark:text-indigo-300"
+                                  : "bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                                }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Textarea */}
+                      <textarea
+                        rows={3}
+                        value={remarkReason}
+                        onChange={(e) => setRemarkReason(e.target.value)}
+                        placeholder="Reason / remark for the decision…"
+                        className="w-full min-h-[74px] p-[10px_11px] rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-[12.5px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 placeholder:text-[12.5px] focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 resize-y font-normal"
+                      />
+
+                      {/* Shortlist & Reject Buttons */}
+                      <div className="flex gap-2 mt-3">
+                        <AButton
+                          variant="primary"
+                          size="sm"
+                          onClick={handleApprove}
+                          icon={<UserCheck className="h-4 w-4" />}
+                          className="!bg-[#10B981] hover:!bg-[#059669] !text-white !font-semibold !text-[12.5px] !py-2.5 !px-3 !h-auto !rounded-[9px] !shadow-none flex-1 justify-center cursor-pointer transition-all"
                         >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
+                          Shortlist
+                        </AButton>
 
-                    {/* Textarea */}
-                    <textarea
-                      rows={3}
-                      value={remarkReason}
-                      onChange={(e) => setRemarkReason(e.target.value)}
-                      placeholder="Reason / remark for the decision..."
-                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-base sm:text-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
-                    />
-
-                    {/* Shortlist & Reject Buttons */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <AButton
-                        variant="primary"
-                        size="lg"
-                        onClick={handleApprove}
-                        icon={<UserCheck className="h-5 w-5" />}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xl cursor-pointer py-3"
-                      >
-                        Shortlist
-                      </AButton>
-
-                      <AButton
-                        variant="outline"
-                        size="lg"
-                        onClick={handleReject}
-                        icon={<UserX className="h-5 w-5 text-rose-600" />}
-                        className="border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30 font-bold text-xl cursor-pointer py-3"
-                      >
-                        Reject
-                      </AButton>
-                    </div>
-                  </>
-                )}
+                        <AButton
+                          variant="outline"
+                          size="sm"
+                          onClick={handleReject}
+                          icon={<UserX className="h-4 w-4 !text-[#E11D48]" />}
+                          className="!border-[rgba(225,29,72,0.4)] !bg-transparent hover:!bg-[#E11D48]/10 !text-[#E11D48] dark:hover:!bg-rose-950/20 !font-semibold !text-[12.5px] !py-2.5 !px-3 !h-auto !rounded-[9px] flex-1 justify-center cursor-pointer transition-all"
+                        >
+                          Reject
+                        </AButton>
+                      </div>
+                    </>
+                  )}
 
                 {/* Print Buttons Grid with AButton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="flex gap-2 mt-2">
                   <AButton
                     variant="outline"
-                    size="md"
-                    onClick={handlePrint}
-                    icon={<Printer className="h-4 w-4" />}
-                    className="text-base sm:text-xl font-bold cursor-pointer"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedCandidate) {
+                        showToast("Please select a candidate first", "warning");
+                        return;
+                      }
+                      setIsEnglishPrintOpen(true);
+                    }}
+                    icon={<Printer className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />}
+                    className="!border-slate-200 dark:!border-slate-700 !bg-transparent hover:!bg-slate-50 dark:hover:!bg-slate-800 !text-slate-700 dark:!text-slate-200 !font-medium !text-[12px] !py-2 !px-2.5 !h-auto !rounded-[9px] flex-1 justify-center cursor-pointer transition-all"
                   >
                     English print
                   </AButton>
 
                   <AButton
                     variant="outline"
-                    size="md"
-                    onClick={handlePrint}
-                    icon={<Printer className="h-4 w-4" />}
-                    className="text-base sm:text-xl font-bold cursor-pointer"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedCandidate) {
+                        showToast("Please select a candidate first", "warning");
+                        return;
+                      }
+                      setIsHindiPrintOpen(true);
+                    }}
+                    icon={<Printer className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />}
+                    className="!border-slate-200 dark:!border-slate-700 !bg-transparent hover:!bg-slate-50 dark:hover:!bg-slate-800 !text-slate-700 dark:!text-slate-200 !font-medium !text-[12px] !py-2 !px-2.5 !h-auto !rounded-[9px] flex-1 justify-center cursor-pointer transition-all"
                   >
                     Hindi print
                   </AButton>
@@ -1193,39 +1296,69 @@ export default function ResumeBankPage() {
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────────────────────────────── */}
-      {/* 4. PRINTABLE TEMPLATE */}
-      {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="hidden print:block text-black p-6 space-y-6" ref={printRef}>
-        <div className="border-b-2 border-black pb-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider">Candidate Dossier</h1>
-            <p className="text-sm text-gray-600">Autovyn HR & Recruitment System</p>
-          </div>
-          <div className="text-right text-xs">
-            <div>Ref SR: {selectedCandidate?.TRAN_ID}</div>
-            <div>Date: {formatDate(selectedCandidate?.APPLICATION_DATE1 || selectedCandidate?.APPLICATION_DATE)}</div>
-          </div>
-        </div>
+      {/* English Printout Modal */}
+      <Dialog open={isEnglishPrintOpen} onOpenChange={setIsEnglishPrintOpen}>
+        <DialogContent className="w-full max-w-5xl h-[92vh] max-h-[92vh] p-4 bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col overflow-hidden">
+          <DialogHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 pr-8 shrink-0">
+            <div>
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                English Printout — {selectedCandidate?.NAME || "Candidate"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                SR: {selectedCandidate?.TRAN_ID || "—"} · Role: {selectedCandidate?.DESIGNATION || "—"}
+              </DialogDescription>
+            </div>
+            <AButton
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => handlePrintDocument("english-print-content-area")}
+              icon={<Printer className="h-4 w-4" />}
+            >
+              Print
+            </AButton>
+          </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><strong>Name:</strong> {selectedCandidate?.NAME}</div>
-          <div><strong>Designation:</strong> {selectedCandidate?.DESIGNATION}</div>
-          <div><strong>Mobile:</strong> {selectedCandidate?.MOB_NO}</div>
-          <div><strong>Email:</strong> {selectedCandidate?.EMAIL}</div>
-          <div><strong>DOB:</strong> {formatDate(selectedCandidate?.DOB1 || selectedCandidate?.DOB)}</div>
-          <div><strong>Gender:</strong> {selectedCandidate?.GENDER}</div>
-          <div><strong>City / State:</strong> {selectedCandidate?.CITY1}, {selectedCandidate?.STATE1}</div>
-          <div><strong>Location:</strong> {selectedCandidate?.LOC_CODE1}</div>
-          <div><strong>Experience:</strong> {selectedCandidate?.EXP_IN_YEAR} Years</div>
-          <div><strong>Qualification:</strong> {selectedCandidate?.HIGH_QUAL} ({selectedCandidate?.PASSING_PER}%)</div>
-          <div><strong>Current CTC:</strong> ₹{selectedCandidate?.CURRENT_CTC}</div>
-          <div><strong>Expected CTC:</strong> ₹{selectedCandidate?.EXPECTED_CTC || "—"}</div>
-          <div><strong>Father's Name:</strong> {selectedCandidate?.FATHERS_NAME}</div>
-          <div><strong>Mother's Name:</strong> {selectedCandidate?.MOTHERS_NAME}</div>
-          <div className="col-span-2"><strong>Address:</strong> {selectedCandidate?.ADDRESS}</div>
-        </div>
-      </div>
+          <div
+            id="english-print-content-area"
+            className="flex-1 min-h-0 w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 p-1 sm:p-2 rounded-xl flex flex-col"
+          >
+            <Printout formData1={selectedCandidate} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hindi Printout Modal */}
+      <Dialog open={isHindiPrintOpen} onOpenChange={setIsHindiPrintOpen}>
+        <DialogContent className="w-full max-w-5xl h-[92vh] max-h-[92vh] p-4 bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col overflow-hidden">
+          <DialogHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 pr-8 shrink-0">
+            <div>
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                हिंदी प्रिंटआउट — {selectedCandidate?.NAME || "उम्मीदवार"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                फॉर्म संख्या: {selectedCandidate?.TRAN_ID || "—"} · पद: {selectedCandidate?.DESIGNATION || "—"}
+              </DialogDescription>
+            </div>
+            <AButton
+              type="button"
+              size="sm"
+              onClick={() => handlePrintDocument("hindi-print-content-area")}
+              icon={<Printer className="h-4 w-4" />}
+              className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+            >
+              Print
+            </AButton>
+          </DialogHeader>
+
+          <div
+            id="hindi-print-content-area"
+            className="flex-1 min-h-0 w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 p-1 sm:p-2 rounded-xl flex flex-col"
+          >
+            <HindiPrintout formData1={selectedCandidate} />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Loader */}
       <HashloaderComponent isLoading={isLoading} />

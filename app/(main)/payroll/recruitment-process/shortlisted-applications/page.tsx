@@ -301,7 +301,7 @@ export default function ShortlistedApplicationsPage() {
       {
         id: "awaiting",
         title: "Awaiting scheduling",
-        dotColor: "bg-blue-500",
+        dotColor: "bg-[#0EA5E9]",
         count: awaiting.length,
         items: awaiting,
         buttonText: "Schedule",
@@ -310,7 +310,7 @@ export default function ShortlistedApplicationsPage() {
       {
         id: "processing",
         title: "Interview in processing",
-        dotColor: "bg-amber-500",
+        dotColor: "bg-[#F59E0B]",
         count: processing.length,
         items: processing,
         buttonText: "Open rounds",
@@ -319,7 +319,7 @@ export default function ShortlistedApplicationsPage() {
       {
         id: "selected",
         title: "Selected by HR",
-        dotColor: "bg-emerald-500",
+        dotColor: "bg-[#10B981]",
         count: selected.length,
         items: selected,
         buttonText: "Create master",
@@ -328,7 +328,7 @@ export default function ShortlistedApplicationsPage() {
       {
         id: "rejected",
         title: "Rejected",
-        dotColor: "bg-rose-500",
+        dotColor: "bg-[#E11D48]",
         count: rejected.length,
         items: rejected,
         buttonText: "Reopen",
@@ -391,13 +391,13 @@ export default function ShortlistedApplicationsPage() {
   const renderStatusPill = (status: any) => {
     const s = String(status);
     let colorClass =
-      "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800";
-    let dotClass = "bg-sky-500";
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
+    let dotClass = "bg-blue-500";
 
     if (s === "3" || s === "100") {
       colorClass =
-        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800";
-      dotClass = "bg-amber-500";
+        "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800";
+      dotClass = "bg-yellow-500";
     } else if (s === "101" || s === "103") {
       colorClass =
         "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
@@ -414,9 +414,9 @@ export default function ShortlistedApplicationsPage() {
 
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-medium border ${colorClass}`}
+        className={`inline-flex items-center gap-1.5 px-[9px] py-1 rounded-[8px] text-[11.5px] font-semibold border ${colorClass} whitespace-nowrap`}
       >
-        <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`} />
         <span>{getStatusLabel(status)}</span>
       </span>
     );
@@ -429,7 +429,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "SR",
         accessor: "TRAN_ID",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-300">
+          <span className="text-[12.5px] text-slate-500 dark:text-slate-400 tabular-nums">
             {value}
           </span>
         ),
@@ -474,15 +474,15 @@ export default function ShortlistedApplicationsPage() {
         Cell: ({ row }: any) => {
           const name = row.original.NAME || "—";
           return (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-[9px] min-w-0">
               <span
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 shadow-2xs ${getAvatarStyle(
+                className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10.5px] font-semibold shrink-0 shadow-2xs ${getAvatarStyle(
                   name
                 )}`}
               >
                 {getInitials(name)}
               </span>
-              <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">
+              <span className="text-[12.5px] font-[550] text-slate-800 dark:text-slate-100 truncate">
                 {name}
               </span>
             </div>
@@ -493,7 +493,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "EMAIL",
         accessor: "EMAIL",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] text-slate-600 dark:text-slate-400">
+          <span className="text-[12.5px] text-slate-600 dark:text-slate-400 truncate max-w-[200px] inline-block">
             {value && value !== "null" ? value : "—"}
           </span>
         ),
@@ -502,7 +502,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "MOBILE NO",
         accessor: "MOB_NO",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] text-slate-600 dark:text-slate-400">
+          <span className="text-[12.5px] text-slate-600 dark:text-slate-400 tabular-nums">
             {value && value !== "null" ? value : "—"}
           </span>
         ),
@@ -511,7 +511,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "ADDRESS",
         accessor: "ADDRESS",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] text-slate-600 dark:text-slate-400 truncate max-w-[180px] inline-block">
+          <span className="text-[12.5px] text-slate-600 dark:text-slate-400 truncate max-w-[180px] inline-block">
             {value && value !== "null" ? value : "—"}
           </span>
         ),
@@ -520,7 +520,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "DESIGNATION",
         accessor: "DESIGNATION",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] text-slate-700 dark:text-slate-300 font-medium">
+          <span className="text-[12.5px] text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px] inline-block">
             {value && value !== "null" ? value : "—"}
           </span>
         ),
@@ -529,7 +529,7 @@ export default function ShortlistedApplicationsPage() {
         Header: "APPLIED",
         accessor: "APPLICATION_DATE1",
         Cell: ({ value }: any) => (
-          <span className="text-[15px] text-slate-600 dark:text-slate-400">
+          <span className="text-[12.5px] text-slate-500 dark:text-slate-400 tabular-nums">
             {value ? formatDate(value) : "—"}
           </span>
         ),
@@ -543,21 +543,21 @@ export default function ShortlistedApplicationsPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* TOP HEADER CONTROLS */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-4.5">
         {/* Title & Subtitle */}
         <div>
-          <h1 className="text-2xl sm:text-3xl  font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-slate-900 dark:text-slate-100">
             Shortlisted candidates
           </h1>
-          <p className="text-sm sm:text-[15px] text-slate-500 dark:text-slate-400 font-normal mt-1">
+          <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-1">
             Move a candidate along the board, or switch to the table for the full record.
           </p>
         </div>
 
         {/* Right Controls: Filter + View Switcher + Export */}
-        <div className="flex flex-wrap items-end sm:items-center gap-3.5">
+        <div className="flex flex-wrap items-end gap-2">
           {/* Filter Dropdown */}
-          <div className="w-64 sm:w-72">
+          <div className="w-64">
             <Eselect
               title="FILTER DATA"
               name="filterdrop"
@@ -569,29 +569,29 @@ export default function ShortlistedApplicationsPage() {
           </div>
 
           {/* View Mode Toggle: Board vs Table */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 gap-1">
+          <div className="flex items-center bg-[#F8FAFC] dark:bg-[#0E1524] p-[3px] rounded-[10px] border border-slate-200 dark:border-slate-800 gap-[3px]">
             <button
               type="button"
               onClick={() => setViewMode("board")}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-lg font-semibold transition cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-[7px] rounded-[8px] text-[12px] font-semibold transition cursor-pointer whitespace-nowrap ${
                 viewMode === "board"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-[#4F46E5] text-white shadow-xs"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-transparent"
               }`}
             >
-              <Kanban className="w-4 h-4" />
+              <Kanban className="w-3.5 h-3.5" />
               <span>Board</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode("table")}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-lg font-semibold transition cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-[7px] rounded-[8px] text-[12px] font-semibold transition cursor-pointer whitespace-nowrap ${
                 viewMode === "table"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-[#4F46E5] text-white shadow-xs"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-transparent"
               }`}
             >
-              <TableIcon className="w-4 h-4" />
+              <TableIcon className="w-3.5 h-3.5" />
               <span>Table</span>
             </button>
           </div>
@@ -601,9 +601,9 @@ export default function ShortlistedApplicationsPage() {
             variant="outline"
             size="md"
             onClick={handleExport}
-            className="!rounded-xl !h-10 !px-4 !text-lg !font-semibold !border-slate-200 dark:!border-slate-700 hover:!bg-slate-50 dark:hover:!bg-slate-800"
+            className="!rounded-[10px] !h-auto !py-2 !px-3.5 !text-[12.5px] !font-[550] !border-slate-200 dark:!border-slate-700 hover:!bg-slate-50 dark:hover:!bg-slate-800 !text-slate-800 dark:!text-slate-200 !shadow-xs"
           >
-            <Download className="w-4 h-4 mr-1.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
             <span>Export</span>
           </AButton>
         </div>
@@ -613,79 +613,77 @@ export default function ShortlistedApplicationsPage() {
       {/* VIEW: BOARD (KANBAN COLUMNS) */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {viewMode === "board" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] items-start">
           {boardColumns.map((col) => (
             <div
               key={col.id}
-              className="bg-slate-50/70 dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3 sm:p-3.5 space-y-3"
+              className="bg-[#F8FAFC] dark:bg-[#0E1524] rounded-xl border border-slate-200 dark:border-slate-800 p-[12px_12px_14px_12px]"
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between px-1 py-0.5">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
-                  <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                    {col.title}
-                  </h2>
-                </div>
-                <span className="text-xs font-bold text-slate-400 px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-[9px] mb-[11px] px-[3px]">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`} />
+                <h2 className="text-[12.5px] font-semibold text-slate-900 dark:text-slate-100 flex-1 min-w-0 truncate">
+                  {col.title}
+                </h2>
+                <span className="text-[11.5px] font-semibold text-slate-500 dark:text-slate-400 tabular-nums">
                   {col.count}
                 </span>
               </div>
 
               {/* Column Cards */}
-              <div className="space-y-3 min-h-[150px]">
+              <div className="flex flex-col gap-[9px] min-h-[140px]">
                 {col.items.length === 0 ? (
-                  <div className="p-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/20">
-                    <p className="text-xs text-slate-400 font-medium">No candidates</p>
+                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-[11px] p-[22px_12px] text-center text-[12px] text-slate-400 font-medium">
+                    Nothing here
                   </div>
                 ) : (
                   col.items.map((candidate: any) => {
                     const days = calculateDaysInStage(
                       candidate.APPLICATION_DATE1 || candidate.CREATED_DATE
                     );
-                    const isLongWait = days > 30;
+                    const isLongWait = days > 14;
                     const roundNum = getCandidateCurrentRound(candidate);
 
                     return (
                       <div
                         key={candidate.TRAN_ID}
                         onDoubleClick={() => handleCandidateNavigation(candidate)}
-                        className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-2xs hover:shadow-md transition space-y-3"
+                        className="bg-white dark:bg-[#111827] rounded-[11px] border border-slate-200 dark:border-slate-800 p-[12px_13px_13px_13px] shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors"
                       >
                         {/* Top: Avatar + Name + SR & Date */}
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-[9px] min-w-0">
                           <span
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${getAvatarStyle(
+                            className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-semibold ${getAvatarStyle(
                               candidate.NAME
                             )}`}
                           >
                             {getInitials(candidate.NAME)}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                            <span className="block text-[12.5px] font-semibold text-slate-900 dark:text-slate-100 truncate">
                               {candidate.NAME || "—"}
-                            </h3>
-                            <p className="text-[11px] text-slate-400 font-medium truncate">
+                            </span>
+                            <span className="block text-[11px] text-slate-500 dark:text-slate-400 tabular-nums truncate">
                               SR {candidate.TRAN_ID} ·{" "}
                               {candidate.APPLICATION_DATE1
                                 ? formatDate(candidate.APPLICATION_DATE1)
                                 : "—"}
-                            </p>
+                            </span>
                           </div>
                         </div>
 
                         {/* Designation */}
-                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate">
+                        <div className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-2.5 truncate font-normal">
                           {candidate.DESIGNATION || "—"}
-                        </p>
+                        </div>
 
                         {/* Badges: Days in stage + Round Badge */}
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        <div className="flex items-center gap-[7px] mt-2 flex-wrap">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                            className={`inline-flex items-center gap-[5px] text-[11px] font-semibold px-2 py-[3px] rounded-full whitespace-nowrap ${
                               isLongWait
-                                ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
-                                : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900/60 dark:text-slate-300 dark:border-slate-700"
+                                ? "text-[#E11D48] bg-[rgba(225,29,72,0.12)] dark:bg-rose-950/40 dark:text-rose-400"
+                                : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80"
                             }`}
                           >
                             <Clock className="w-3 h-3" />
@@ -693,18 +691,18 @@ export default function ShortlistedApplicationsPage() {
                           </span>
 
                           {col.id === "processing" && (
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-[3px] rounded-full whitespace-nowrap">
                               Round {roundNum} of 4
                             </span>
                           )}
                         </div>
 
                         {/* Action Buttons Row */}
-                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="flex items-center gap-1.5 mt-[11px] pt-[11px] border-t border-slate-200 dark:border-slate-800">
                           <button
                             type="button"
                             onClick={() => handleCandidateNavigation(candidate)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold border border-indigo-200 dark:border-indigo-900/60 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-[#111827] hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition cursor-pointer"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700/80 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[11.5px] font-semibold py-1.5 px-2 rounded-lg cursor-pointer whitespace-nowrap transition-colors"
                           >
                             <col.buttonIcon className="w-3.5 h-3.5" />
                             <span>{col.buttonText}</span>
@@ -725,7 +723,7 @@ export default function ShortlistedApplicationsPage() {
                                 `/payroll/recruitment-process/Shortlisted_Candidate?flag=true&v1=${v1}&tran_id=${candidate?.TRAN_ID}`
                               );
                             }}
-                            className="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
                             title="Candidate Information"
                           >
                             <Search className="w-3.5 h-3.5" />
@@ -745,7 +743,7 @@ export default function ShortlistedApplicationsPage() {
       {/* VIEW: TABLE */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {viewMode === "table" && (
-        <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden [&_td]:!text-[15px] [&_td_div]:!text-[15px]">
+        <div className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden [&_thead]:!bg-[#F8FAFC] dark:[&_thead]:!bg-[#0E1524] [&_th]:!px-3 [&_th]:!py-[11px] [&_th]:!text-[10.5px] [&_th]:!font-[700] [&_th]:!tracking-[0.05em] [&_th]:!uppercase [&_th]:!text-slate-400 dark:[&_th]:!text-slate-500 [&_td]:!px-3 [&_td]:!py-2.5 [&_td]:!text-[12.5px] [&_td_div]:!text-[12.5px]">
           <ReactTable
             columns={columns}
             data={filtertable}
@@ -757,14 +755,14 @@ export default function ShortlistedApplicationsPage() {
           />
 
           {/* Table Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/20">
-            <div className="flex items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-[18px] py-3 border-t border-slate-200 dark:border-slate-800 text-[12px] text-slate-500 dark:text-slate-400 bg-[#F8FAFC] dark:bg-[#0E1524]">
+            <div className="flex items-center gap-[7px]">
               <Info className="w-3.5 h-3.5 text-slate-400" />
               <span>
                 Double-click a row for full interview scheduling details · Zoom shows candidate information.
               </span>
             </div>
-            <span className="font-semibold text-slate-600 dark:text-slate-300">
+            <span className="tabular-nums font-medium text-slate-500 dark:text-slate-400">
               {filtertable.length} entries
             </span>
           </div>

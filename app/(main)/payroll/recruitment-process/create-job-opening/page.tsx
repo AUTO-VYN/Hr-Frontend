@@ -152,6 +152,7 @@ export default function CreateJobOpeningPage() {
     EMAIL: "",
     DESIGNATION: "",
     SUITABLE_DESIGNATION: "",
+    Create_by: user?.name || user?.EMPCODE || user?.empcode || "",
     LOC_CODE: "",
     HR_EMPCODE: user?.EMPCODE || user?.empcode || "",
   });
@@ -454,6 +455,7 @@ export default function CreateJobOpeningPage() {
   const resetForm = () => {
     setFormData({
       TRAN_ID: "",
+      Create_by: user?.name || user?.EMPCODE || "",
       NAME: "",
       MOB_NO: "",
       EMAIL: "",
@@ -767,7 +769,7 @@ export default function CreateJobOpeningPage() {
           return (
             <div className="flex items-center gap-3 py-1">
               <div
-                className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 shadow-xs ${colorClass}`}
+                className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${colorClass}`}
               >
                 {initials}
               </div>
@@ -907,7 +909,7 @@ export default function CreateJobOpeningPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070b14] text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1780px] mx-auto transition-colors">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070b14] text-slate-900 dark:text-slate-100 p-3 sm:p-6 lg:p-8 space-y-6 max-w-[1780px] mx-auto transition-colors">
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -990,11 +992,10 @@ export default function CreateJobOpeningPage() {
                           setTableSearch(item.DESIGNATION || "");
                         }
                       }}
-                      className={`w-[calc(20%-12px)] min-w-[220px] shrink-0 snap-start rounded-2xl border bg-white dark:bg-slate-900 p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-md ${
-                        isSelected
-                          ? "border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
-                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                      }`}
+                      className={`w-[calc(20%-12px)] min-w-[220px] shrink-0 snap-start rounded-2xl border bg-white dark:bg-slate-900 p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-md ${isSelected
+                        ? "border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/20 dark:bg-indigo-950/20"
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                        }`}
                     >
                       <div>
                         {/* Top row: Designation & Status Badge */}
@@ -1006,13 +1007,12 @@ export default function CreateJobOpeningPage() {
                             {item.DESIGNATION || "Job Opening"}
                           </h3>
                           <span
-                            className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${
-                              isFilled
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800"
-                                : item.status === "Urgent"
+                            className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${isFilled
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800"
+                              : item.status === "Urgent"
                                 ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800"
                                 : "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-400 dark:border-indigo-800"
-                            }`}
+                              }`}
                           >
                             {isFilled ? "Filled" : item.status || "Open"}
                           </span>
@@ -1065,7 +1065,7 @@ export default function CreateJobOpeningPage() {
             <UserPlus className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">
+            <h2 className="text-base sm:text-lg font-medium  text-slate-900 dark:text-slate-100">
               {isEditing ? `Edit Candidate Lead #${formData.TRAN_ID}` : "Add candidate lead"}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
@@ -1185,31 +1185,30 @@ export default function CreateJobOpeningPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 3. CANDIDATE LEADS TABLE SECTION */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
         {/* Table Header with Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-baseline gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Candidate leads
             </h2>
-            <span className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
+            <span className="text-xs sm:text-base font-medium text-slate-500 dark:text-slate-400">
               {filteredTableData.length} records
             </span>
           </div>
 
           {/* Status Filter Tabs (Capsule / Pill Segmented Control) */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-[#f1f5f9]/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 overflow-x-auto shadow-2xs">
+          <div className="w-full sm:w-auto max-w-full flex items-center gap-1 p-1 rounded-xl sm:rounded-2xl bg-[#f1f5f9]/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shadow-2xs">
             <button
               type="button"
               onClick={() => {
                 setActiveTab("all");
                 setCurrentPage(1);
               }}
-              className={`px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === "all"
-                  ? "bg-[#4F46E5] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
-              }`}
+              className={`shrink-0 px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer text-center ${activeTab === "all"
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                }`}
             >
               All <span className="ml-1 opacity-90">{tabCounts.total}</span>
             </button>
@@ -1219,11 +1218,10 @@ export default function CreateJobOpeningPage() {
                 setActiveTab("awaiting");
                 setCurrentPage(1);
               }}
-              className={`px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === "awaiting"
-                  ? "bg-[#4F46E5] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
-              }`}
+              className={`shrink-0 px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer text-center ${activeTab === "awaiting"
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                }`}
             >
               Awaiting form <span className="ml-1 opacity-90">{tabCounts.awaiting}</span>
             </button>
@@ -1233,11 +1231,10 @@ export default function CreateJobOpeningPage() {
                 setActiveTab("filled");
                 setCurrentPage(1);
               }}
-              className={`px-5 py-2 rounded-xl text-sm sm:text-base font-bold transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === "filled"
-                  ? "bg-[#4F46E5] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
-              }`}
+              className={`shrink-0 px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer text-center ${activeTab === "filled"
+                ? "bg-[#4F46E5] text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                }`}
             >
               Form filled <span className="ml-1 opacity-90">{tabCounts.filled}</span>
             </button>

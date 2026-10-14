@@ -101,7 +101,7 @@ export default function SalaryApproverGridPage() {
     Email: "",
     EmpName: "",
     Location: "",
-    Department: "",
+    // Department: "",
 
     startDate: null,
     AttendanceDate: null,
@@ -252,7 +252,7 @@ export default function SalaryApproverGridPage() {
         Email: data?.CORPORATEMAILID || data?.EMAIL || "",
         Designation: data?.EMPLOYEEDESIGNATION || data?.designation || "",
         MobileNo: data?.MOBILE_NO || data?.MOBILENO || "",
-        Department: data?.Department || data?.SECTION || "",
+        // Department: data?.DIVISION || "",
       }));
     } catch (error) {
       setisClicked(false);
@@ -589,14 +589,14 @@ export default function SalaryApproverGridPage() {
                 </span>
               </div>
 
-              <div className="min-w-0">
+              {/* <div className="min-w-0">
                 <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
                   DEPARTMENT
                 </span>
                 <span className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 block mt-0.5 truncate">
-                  {misdata.Department || "Sales"}
+                  {misdata.DIVISION || "_"}
                 </span>
-              </div>
+              </div> */}
 
               <div className="min-w-0">
                 <span className="text-slate-400 uppercase font-semibold text-[11px] sm:text-[12px] tracking-wider block">
