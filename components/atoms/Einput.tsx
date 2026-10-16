@@ -19,6 +19,7 @@ interface AinputProps extends InputHTMLAttributes<HTMLInputElement> {
 
   // ✅ attach button/icon inside input (right side)
   rightElement?: React.ReactNode;
+  labelClassName?: string;
 }
 
 const Ainput: FC<AinputProps> = ({
@@ -40,6 +41,7 @@ const Ainput: FC<AinputProps> = ({
   autoComplete,
   rightElement,
   placeholder,
+  labelClassName,
   ...rest
 }) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +77,10 @@ const Ainput: FC<AinputProps> = ({
   return (
     <div className="w-full space-y-1.5">
       <label
-        className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300"
+        className={cn(
+          "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 whitespace-nowrap",
+          labelClassName,
+        )}
         htmlFor={name}
       >
         {ShortName ? title : toTitleCase(title)}

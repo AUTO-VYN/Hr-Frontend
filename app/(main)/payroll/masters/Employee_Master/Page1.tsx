@@ -729,6 +729,14 @@ if (name === "OTP_With_Aadhaar") {
       if (res && (res.photo || res.full_address)) {
         setAadhaarMode("primary");
         setAadhaarInfo(res);
+        try {
+          if (formData.EmpMst?.UID_NO) {
+            sessionStorage.setItem(
+              `aadhaarInfo_${formData.EmpMst.UID_NO}`,
+              JSON.stringify(res),
+            );
+          }
+        } catch (e) {}
         setFormData((prev) => ({
           ...prev,
           EmpMst: {
@@ -915,6 +923,12 @@ if (name === "OTP_With_Aadhaar") {
   };
 
   const OTPVerififyed = async () => {
+    if (!reference_id) return;
+    const isAadhaarAlreadyVerified =
+      formData.EmpMst?.AADHAR_CARD_VER === true ||
+      formData.EmpMst?.AADHAR_CARD_VER === "true";
+    if (isAadhaarAlreadyVerified) return;
+
     try {
       setIsLoading(true);
       const result = await axios.post(
@@ -934,6 +948,14 @@ if (name === "OTP_With_Aadhaar") {
       const AADHAR_CARD_VER = res?.AADHAR_CARD_VER;
 
       setAadhaarInfo(res);
+      try {
+        if (formData.EmpMst?.UID_NO) {
+          sessionStorage.setItem(
+            `aadhaarInfo_${formData.EmpMst.UID_NO}`,
+            JSON.stringify(res),
+          );
+        }
+      } catch (e) {}
 
       if (photo || full_address) {
         setFormData((prev) => ({
@@ -1053,11 +1075,19 @@ if (name === "OTP_With_Aadhaar") {
   };
 
   useEffect(() => {
-    if (formData.EmpMst?.OTP_With_Aadhaar?.length === 6) {
+    const isAadhaarAlreadyVerified =
+      formData.EmpMst?.AADHAR_CARD_VER === true ||
+      formData.EmpMst?.AADHAR_CARD_VER === "true";
+
+    if (
+      !isAadhaarAlreadyVerified &&
+      reference_id &&
+      formData.EmpMst?.OTP_With_Aadhaar?.length === 6
+    ) {
       OTPVerififyed();
       LikedWithPan();
     }
-  }, [formData.EmpMst?.OTP_With_Aadhaar]);
+  }, [formData.EmpMst?.OTP_With_Aadhaar, reference_id, formData.EmpMst?.AADHAR_CARD_VER]);
 
 const MobileNumberpreviousDeatils = async (mobile: string) => {
   try {
@@ -1107,14 +1137,42 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
   };
 
   const existingAdharData = async () => {
-    const result = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/panAndAdharApi/validate`,
-      { value: formData.EmpMst?.UID_NO, option: "8" },
-      { headers: { compcode: user?.Comp_Code, name: user?.name } },
-    );
+    try {
+      if (!formData.EmpMst?.UID_NO) return;
+      try {
+        const cached = sessionStorage.getItem(
+          `aadhaarInfo_${formData.EmpMst.UID_NO}`,
+        );
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) {
+            setAadhaarInfo(parsed);
+            setAadhaarMode("primary");
+            return;
+          }
+        }
+      } catch (e) {}
 
-    const res = result?.data?.data;
-    setAadhaarInfo(res);
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/panAndAdharApi/validate`,
+        { value: formData.EmpMst?.UID_NO, option: "8" },
+        { headers: { compcode: user?.Comp_Code, name: user?.name } },
+      );
+
+      const res = result?.data?.data;
+      if (res) {
+        setAadhaarInfo(res);
+        setAadhaarMode("primary");
+        try {
+          sessionStorage.setItem(
+            `aadhaarInfo_${formData.EmpMst.UID_NO}`,
+            JSON.stringify(res),
+          );
+        } catch (e) {}
+      }
+    } catch (error) {
+      console.log(error, "error");
+    }
   };
 
   const existingPanData = async () => {
@@ -1162,14 +1220,41 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
   };
 
   useEffect(() => {
+    const isAadhaarVerified =
+      formData.EmpMst?.AADHAR_CARD_VER === true ||
+      formData.EmpMst?.AADHAR_CARD_VER === "true" ||
+      formData.EmpMst?.AADHAAR_CARD_VER === true ||
+      formData.EmpMst?.AADHAAR_CARD_VER === "true";
+
     if (
       formData.EmpMst?.UID_NO?.length == 12 &&
-      formData.EmpMst?.AADHAAR_CARD_VER == "true" &&
-      aadhaarInfo == true
+      isAadhaarVerified
     ) {
-      existingAdharData();
+      if (!aadhaarInfo) {
+        try {
+          const cached = sessionStorage.getItem(
+            `aadhaarInfo_${formData.EmpMst.UID_NO}`,
+          );
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed) {
+              setAadhaarInfo(parsed);
+              return;
+            }
+          }
+        } catch (e) {}
+
+        if (showAadhaarTooltip) {
+          existingAdharData();
+        }
+      }
     }
-  }, [aadhaarInfo]);
+  }, [
+    showAadhaarTooltip,
+    formData.EmpMst?.UID_NO,
+    formData.EmpMst?.AADHAR_CARD_VER,
+    formData.EmpMst?.AADHAAR_CARD_VER,
+  ]);
 
   useEffect(() => {
     if (
@@ -1949,41 +2034,88 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
                       redlabel={isMandatory("UID_NO") ? "*" : ""}
                     />
 
-                    {formData.EmpMst?.AADHAR_CARD_VER && (
+                    {(formData.EmpMst?.AADHAR_CARD_VER ||
+                      formData.EmpMst?.AADHAAR_CARD_VER) && (
                       <AiOutlineQuestionCircle
                         size={18}
                         className="absolute right-2 top-7 text-gray-500 cursor-pointer"
-                        onClick={() =>
-                          setShowAadhaarTooltip(!showAadhaarTooltip)
-                        }
+                        onClick={() => {
+                          const nextState = !showAadhaarTooltip;
+                          setShowAadhaarTooltip(nextState);
+                          if (
+                            nextState &&
+                            !aadhaarInfo &&
+                            formData.EmpMst?.UID_NO?.length === 12
+                          ) {
+                            existingAdharData();
+                          }
+                        }}
                       />
                     )}
 
                     {aadhaarMode === "primary" &&
                       showAadhaarTooltip &&
-                      aadhaarInfo && (
+                      (aadhaarInfo ||
+                        formData.EmpMst?.photo ||
+                        formData.EmpMst?.full_addressAadhaar) && (
                         <div className="absolute top-full mt-2 left-0 w-80 p-3 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-lg text-xs rounded-xl z-50">
                           <p>
-                            <strong>Name:</strong> {aadhaarInfo.name}
+                            <strong>Name:</strong>{" "}
+                            {aadhaarInfo?.name ||
+                              aadhaarInfo?.full_name ||
+                              [
+                                formData.EmpMst?.EMPFIRSTNAME,
+                                formData.EmpMst?.EMPLASTNAME,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
                           </p>
                           <p>
-                            <strong>DOB:</strong> {aadhaarInfo.date_of_birth}
+                            <strong>DOB:</strong>{" "}
+                            {aadhaarInfo?.date_of_birth ||
+                              aadhaarInfo?.dob ||
+                              formData.EmpMst?.DOB}
                           </p>
                           <p>
-                            <strong>Gender:</strong> {aadhaarInfo.gender}
+                            <strong>Gender:</strong>{" "}
+                            {aadhaarInfo?.gender || formData.EmpMst?.GENDER}
                           </p>
                           <p>
-                            <strong>Care Of:</strong> {aadhaarInfo.care_of}
+                            <strong>Care Of:</strong>{" "}
+                            {aadhaarInfo?.care_of ||
+                              aadhaarInfo?.careof ||
+                              (formData.EmpMst?.FATHERNAME
+                                ? `S/O: ${formData.EmpMst?.FATHERNAME}`
+                                : "")}
                           </p>
                           <p>
-                            <strong>Address:</strong> {aadhaarInfo.full_address}
+                            <strong>Address:</strong>{" "}
+                            {aadhaarInfo?.full_address ||
+                              aadhaarInfo?.address ||
+                              formData.EmpMst?.full_addressAadhaar ||
+                              formData.EmpMst?.PERMANENTADDRESS1}
                           </p>
-                          {aadhaarInfo.photo && (
-                            <img
-                              src={`data:image/jpeg;base64,${aadhaarInfo.photo}`}
-                              alt="Aadhaar"
-                              className="w-24 h-auto mt-2 border rounded"
-                            />
+                          {(aadhaarInfo?.photo || formData.EmpMst?.photo) && (
+                            <>
+                              <p className="mt-1">
+                                <strong>Photo:</strong>
+                              </p>
+                              <img
+                                src={
+                                  (
+                                    aadhaarInfo?.photo || formData.EmpMst?.photo
+                                  )?.startsWith("data:")
+                                    ? aadhaarInfo?.photo ||
+                                      formData.EmpMst?.photo
+                                    : `data:image/jpeg;base64,${
+                                        aadhaarInfo?.photo ||
+                                        formData.EmpMst?.photo
+                                      }`
+                                }
+                                alt="Aadhaar"
+                                className="w-24 h-auto mt-2 border rounded"
+                              />
+                            </>
                           )}
                         </div>
                       )}

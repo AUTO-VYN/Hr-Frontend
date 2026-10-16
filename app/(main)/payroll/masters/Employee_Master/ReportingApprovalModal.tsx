@@ -45,6 +45,63 @@ const formatModuleName = (m: string) => {
   return m.charAt(0).toUpperCase() + m.slice(1);
 };
 
+let cachedEmployees: { value: string; label: string }[] | null = null;
+let cachedModules: string[] | null = null;
+let masterPrefetchPromise: Promise<{ employees: any[]; modules: string[] }> | null = null;
+
+const fetchMasterData = (user: any) => {
+  if (cachedEmployees && cachedModules) {
+    return Promise.resolve({ employees: cachedEmployees, modules: cachedModules });
+  }
+
+  if (masterPrefetchPromise) {
+    return masterPrefetchPromise;
+  }
+
+  const headers = { compcode: user?.Comp_Code, name: user?.name };
+  masterPrefetchPromise = Promise.all([
+    axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/users/findAllEmployee`,
+      { branch: user?.branch },
+      { headers }
+    ),
+    axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/employee/getApprovalKeywords`,
+      {},
+      { headers }
+    ),
+  ])
+    .then(([empRes, kwRes]) => {
+      const empList = (empRes.data?.data || []).map((emp: any) => {
+        const code = String(emp.EMPCODE || emp.empcode || emp.value || "").trim();
+        const name = String(emp.EMPNAME || emp.name || emp.EMPFIRSTNAME || "").trim();
+        const label = String(emp.label || (code && name ? `${code} | ${name}` : code || name)).trim();
+        return {
+          value: code || label,
+          label: label,
+        };
+      });
+      cachedEmployees = empList;
+
+      const rawModules: string[] = Array.isArray(kwRes.data?.modules)
+        ? kwRes.data.modules
+        : Array.isArray(kwRes.data)
+        ? kwRes.data
+        : [];
+      const defaultModules = ["Attendance", "Mispunch", "Leave", "Comp-off"];
+      const moduleList = rawModules.length > 0 ? rawModules : defaultModules;
+      cachedModules = moduleList;
+
+      return { employees: empList, modules: moduleList };
+    })
+    .catch((err) => {
+      masterPrefetchPromise = null;
+      throw err;
+    });
+
+  return masterPrefetchPromise;
+};
+
 export default function ReportingApprovalModal({
   open,
   onClose,
@@ -55,13 +112,25 @@ export default function ReportingApprovalModal({
   empcode?: string;
 }) {
   const user = useCurrentUser();
-  const [employees, setEmployees] = useState<{ value: string; label: string }[]>([]);
-  const [modules, setModules] = useState<string[]>([]);
+  const [employees, setEmployees] = useState<{ value: string; label: string }[]>(() => cachedEmployees || []);
+  const [modules, setModules] = useState<string[]>(() => cachedModules || ["Attendance", "Mispunch", "Leave", "Comp-off"]);
   const [rows, setRows] = useState<Record<string, any>>({});
   const [baseData, setBaseData] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   const headers = { compcode: user?.Comp_Code, name: user?.name };
+
+  // Background pre-fetch as soon as user is loaded on the page
+  useEffect(() => {
+    if (user?.Comp_Code) {
+      fetchMasterData(user)
+        .then(({ employees, modules }) => {
+          setEmployees(employees);
+          setModules(modules);
+        })
+        .catch((e) => console.error("Prefetch error:", e));
+    }
+  }, [user?.Comp_Code, user?.branch]);
 
   useEffect(() => {
     if (open && empcode) loadAll();
@@ -71,17 +140,8 @@ export default function ReportingApprovalModal({
     try {
       setLoading(true);
 
-      const [empRes, kwRes, matrixRes] = await Promise.all([
-        axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/users/findAllEmployee`,
-          { branch: user?.branch },
-          { headers }
-        ),
-        axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/employee/getApprovalKeywords`,
-          {},
-          { headers }
-        ),
+      const [masterData, matrixRes] = await Promise.all([
+        fetchMasterData(user),
         axios.post(
           `${process.env.NEXT_PUBLIC_URL}/users/approvalmatrixfindone`,
           { empcode },
@@ -89,29 +149,14 @@ export default function ReportingApprovalModal({
         ),
       ]);
 
-      const empList = (empRes.data?.data || []).map((emp: any) => ({
-        value: String(emp.value ?? emp.EMPCODE ?? emp.empcode ?? ""),
-        label: String(
-          emp.label ??
-            `${emp.EMPCODE || emp.value} - ${emp.EMPNAME || emp.EMPFIRSTNAME || ""} ${emp.EMPLASTNAME || ""}`.trim()
-        ),
-      }));
-      setEmployees(empList);
-
-      const rawModules: string[] = Array.isArray(kwRes.data?.modules)
-        ? kwRes.data.modules
-        : Array.isArray(kwRes.data)
-        ? kwRes.data
-        : [];
-      const defaultModules = ["Attendance", "Mispunch", "Leave", "Comp-off"];
-      const moduleList = rawModules.length > 0 ? rawModules : defaultModules;
-      setModules(moduleList);
+      setEmployees(masterData.employees);
+      setModules(masterData.modules);
 
       const existing = matrixRes.data?.approval_data || matrixRes.data?.data || [];
       setBaseData(matrixRes.data?.data || {});
 
       const newRows: Record<string, any> = {};
-      moduleList.forEach((m) => {
+      masterData.modules.forEach((m) => {
         const found = Array.isArray(existing)
           ? existing.find(
               (x: any) => x.module_code?.toLowerCase() === m.toLowerCase()

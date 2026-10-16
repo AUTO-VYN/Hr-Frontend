@@ -259,13 +259,13 @@ export default function Sidebar() {
       <aside
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
-        className={`fixed inset-y-0 left-0 z-50 flex h-full max-h-[100dvh] w-[270px] sm:w-auto flex-col overflow-hidden border-r border-line bg-card transition-transform duration-200 ease-in-out sm:transition-[width] sm:duration-150 ${mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full sm:translate-x-0 shadow-md sm:shadow-none"
-          }`}
-        style={
-          !isMobile
-            ? { width: expanded ? EXPANDED_WIDTH : RAIL_WIDTH }
-            : { width: 270 }
-        }
+        className={`fixed inset-y-0 left-0 z-50 flex h-full max-h-[100dvh] flex-col overflow-hidden border-r border-line bg-card transition-transform duration-200 ease-in-out sm:transition-[width] sm:duration-150 w-[270px] ${
+          expanded ? "sm:w-[258px]" : "sm:w-[68px]"
+        } ${
+          mobileOpen
+            ? "translate-x-0 shadow-2xl"
+            : "-translate-x-full sm:translate-x-0 shadow-md sm:shadow-none"
+        }`}
       >
         {/* brand */}
         <div

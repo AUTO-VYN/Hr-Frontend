@@ -11,6 +11,9 @@ import {
   ScanLine,
   History,
   Shirt,
+  Wand2,
+  Check,
+  X,
 } from "lucide-react";
 import Eselect from "@/components/atoms/Eselect";
 import { useFormData } from "./Context/FormDataContext";
@@ -131,10 +134,17 @@ const SalaryDetails = ({
   ];
 
   const convertValuesToString = (array) => {
+    if (!array || !Array.isArray(array)) return [];
     return array.map((obj) => {
+      if (typeof obj === "string" || typeof obj === "number") {
+        return {
+          label: String(obj),
+          value: String(obj),
+        };
+      }
       return {
-        label: obj.label,
-        value: String(obj.value),
+        label: obj.label ?? obj.name ?? String(obj.value ?? ""),
+        value: String(obj.value ?? obj.id ?? obj.label ?? ""),
       };
     });
   };
@@ -152,10 +162,20 @@ const SalaryDetails = ({
   }, [masterData?.Sal_Region]);
 
   useEffect(() => {
-    if (masterData?.EmpPunchType?.length) {
-      setPunchType(convertValuesToString(masterData.EmpPunchType));
+    const punchTypeData =
+      masterData?.EmpPunchType ||
+      masterData?.PunchType ||
+      masterData?.Punch_Type ||
+      masterData?.EMP_PUNCH_TYPE;
+    if (punchTypeData?.length) {
+      setPunchType(convertValuesToString(punchTypeData));
     }
-  }, [masterData?.EmpPunchType]);
+  }, [
+    masterData?.EmpPunchType,
+    masterData?.PunchType,
+    masterData?.Punch_Type,
+    masterData?.EMP_PUNCH_TYPE,
+  ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDialogOpen1, setIsDialogOpen1] = useState(false);
@@ -461,14 +481,15 @@ const SalaryDetails = ({
   const [messageShowFlage, setmessageShowFlage] = useState(false);
   const [GratuityCompKeyData, setGratuityCompKeyData] = useState(false);
 
-  const FetchBreakupRatio = async () => {
-    if (!formData?.EmpMst?.EMPCODE) return;
+  const FetchBreakupRatio = async (empCodeParam?: string) => {
+    const targetCode = empCodeParam || formData?.EmpMst?.EMPCODE;
+    if (!targetCode) return;
 
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/employee/ViewBreakUpRatio`,
         {
-          EmpCode: formData?.EmpMst.EMPCODE,
+          EmpCode: targetCode,
         },
         {
           headers: {
@@ -478,15 +499,15 @@ const SalaryDetails = ({
         },
       );
 
-      const ratioData = response.data.Result[0];
+      const ratioData = response?.data?.Result?.[0] || {};
       setRatios({
-        Basic: ratioData.Basic || 0,
-        Uniform: ratioData.Uniform || 0,
-        HRA: ratioData.HRA || 0,
-        Conveyance: ratioData.Conveyance || 0,
-        Medical: ratioData.Medical || 0,
-        DA: ratioData.DA || 0,
-        Washing: ratioData.Washing || 0,
+        Basic: Number(ratioData.Basic || 0),
+        Uniform: Number(ratioData.Uniform || 0),
+        HRA: Number(ratioData.HRA || 0),
+        Conveyance: Number(ratioData.Conveyance || 0),
+        Medical: Number(ratioData.Medical || 0),
+        DA: Number(ratioData.DA || 0),
+        Washing: Number(ratioData.Washing || 0),
       });
     } catch (error) {
       console.error("Error fetching breakup ratio:", error);
@@ -494,8 +515,10 @@ const SalaryDetails = ({
   };
 
   useEffect(() => {
-    FetchBreakupRatio();
-  }, []);
+    if (formData?.EmpMst?.EMPCODE) {
+      FetchBreakupRatio(formData?.EmpMst?.EMPCODE);
+    }
+  }, [formData?.EmpMst?.EMPCODE]);
 
   const FetchMessageData = async () => {
     try {
@@ -862,29 +885,104 @@ const SalaryDetails = ({
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user?.Comp_Code) {
+      fetchData();
+    }
+  }, [user?.Comp_Code]);
 
   const fetchData = async () => {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
-      {},
-      {
-        headers: {
-          compcode: user?.Comp_Code,
-          name: user?.name,
+    if (!user?.Comp_Code) return;
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/employee/masters`,
+        {},
+        {
+          headers: {
+            compcode: user?.Comp_Code,
+            name: user?.name,
+          },
         },
-      },
-    );
-    setEmpShift(response.data.data.EMP_SHIFT);
-    setBankoption(response.data.data.BANK);
-    setPFPERCoption(response.data.data.PFPERC);
-    setGRADEoption(response.data.data.GradeMstData);
+      );
+      if (response?.data?.data) {
+        setEmpShift(response.data.data.EMP_SHIFT);
+        setBankoption(response.data.data.BANK);
+        setPFPERCoption(response.data.data.PFPERC);
+        setGRADEoption(response.data.data.GradeMstData);
+        const punchTypeData =
+          response.data.data.EmpPunchType ||
+          response.data.data.PunchType ||
+          response.data.data.Punch_Type ||
+          response.data.data.EMP_PUNCH_TYPE;
+        if (punchTypeData) {
+          setPunchType(convertValuesToString(punchTypeData));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching masters:", error);
+    }
   };
 
   const handleChangeSalaryDetails = async () => {
     setIsDialogOpen2(true);
   };
+
+  const handleSplitSalary = (grossVal?: number) => {
+    const gross = grossVal !== undefined ? grossVal : Number(formData1?.Gross_Salary || 0);
+    if (!gross) {
+      showSideAlert("Please enter Monthly Gross amount", "info");
+      return;
+    }
+    const basic = (gross * (ratios.Basic || 0)) / 100;
+    const uniform = (gross * (ratios.Uniform || 0)) / 100;
+    const hra = (gross * (ratios.HRA || 0)) / 100;
+    const conveyance = (gross * (ratios.Conveyance || 0)) / 100;
+    const medical = (gross * (ratios.Medical || 0)) / 100;
+    const other = (gross * (ratios.DA || 0)) / 100;
+    const washing = (gross * (ratios.Washing || 0)) / 100;
+
+    const annualGross = gross * 12;
+    const ctc =
+      annualGross +
+      Number(formData1?.BONUS_AMOUNT || 0) +
+      Number(formData1?.LWF || 0) +
+      Number(formData1?.PFSALARY_LIMIT || 0) +
+      Number(formData1?.Gratuity || 0);
+
+    setFormData1((prev: any) => ({
+      ...prev,
+      Gross_Salary: gross,
+      Basic: basic,
+      Uniform: uniform,
+      HRA: hra,
+      Conveyance: conveyance,
+      Medical: medical,
+      Other: other,
+      Washing: washing,
+      ANNUAL_CTC: annualGross,
+      CTC: ctc,
+    }));
+  };
+
+  const handleSaveSalaryBreakup = async () => {
+    if (formData1?.Salary_Type == null) {
+      setFormData1((prev: any) => ({
+        ...prev,
+        Salary_Type: isSalarySaved ? "1" : "0",
+      }));
+      formData1.Salary_Type = isSalarySaved ? "1" : "0";
+    }
+    await saveData();
+  };
+
+  const salaryBreakupItems = [
+    { label: "Basic", name: "Basic", ratioKey: "Basic" },
+    { label: "HRA", name: "HRA", ratioKey: "HRA" },
+    { label: "DA", name: "Other", ratioKey: "DA" },
+    { label: "Conveyance", name: "Conveyance", ratioKey: "Conveyance" },
+    { label: "Medical", name: "Medical", ratioKey: "Medical" },
+    { label: "Washing", name: "Washing", ratioKey: "Washing" },
+    { label: "Uniform", name: "Uniform", ratioKey: "Uniform" },
+  ];
 
   const OutServiceView = async (Emp_Code) => {
     setIsDialogOpen3(true);
@@ -1295,12 +1393,18 @@ const SalaryDetails = ({
     try {
       try {
         result = await callPrimaryApi();
-        const accountStatusCode = result?.data?.data?.result?.account_status;
-        setAccountStatusCode(accountStatusCode);
-        if (accountStatusCode == "INVALID") {
+        const resResult = result?.data?.data?.result || result?.data?.result;
+        const accountStatus = resResult?.account_status;
+        const accountStatusCode = resResult?.account_status_code;
+
+        setAccountStatusCode(accountStatus);
+
+        if (accountStatus === "INVALID" || accountStatusCode === "INVALID_ACCOUNT_FAIL") {
+          const errMsg = accountStatusCode || "INVALID_ACCOUNT_FAIL";
+          showSideAlert(`INVALID: ${errMsg}`, "error");
           toast({
             title: "INVALID",
-            description: `${result?.data?.data?.result?.account_status_code}`,
+            description: errMsg,
             variant: "destructive",
           });
           return;
@@ -1340,8 +1444,10 @@ const SalaryDetails = ({
             }
             setAccountStatusCode("VALID");
           } else {
+            const failMsg = data?.data?.message || data?.message || "Verification Failed";
+            showSideAlert(failMsg, "error");
             toast({
-              title: data?.data?.message || "Verification Failed",
+              title: failMsg,
               variant: "destructive",
             });
           }
@@ -1417,6 +1523,7 @@ const SalaryDetails = ({
       if (result.exists && result.data) {
         setAccountData(result.data);
         setIFSCData(result.data);
+        setAccountStatusCode("VALID");
       }
     } catch (error) {
       console.error("Error checking existing verification:", error);
@@ -1849,8 +1956,8 @@ const SalaryDetails = ({
   return (
     <div className="w-full fluid-p-xs max-w-full overflow-x-hidden pb-24">
       <div className="grid grid-cols-12 gap-4 fluid-gap-md pb-6">
-        {/* ===================== LEFT COLUMN - SALARY DETAIL FORM ===================== */}
-        <div className="col-span-12 xl:col-span-6">
+        {/* ===================== LEFT COLUMN - SALARY DETAIL FORM & BANK DETAILS ===================== */}
+        <div className={`col-span-12 ${user?.role1?.includes("1.1.15") ? "xl:col-span-8" : "xl:col-span-12"} flex flex-col gap-4`}>
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
@@ -2071,236 +2178,8 @@ const SalaryDetails = ({
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ===================== RIGHT COLUMN - SALARY BREAKUP ===================== */}
-        {user?.role1.includes("1.1.15") && (
-          <div className="col-span-12 xl:col-span-6">
-            <div className={cardClass}>
-              <div className={cardHeaderClass}>
-                <div className={cardTitleWrapClass}>
-                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5] shrink-0" strokeWidth={2.5} />
-                  <span className={cardTitleClass}>Salary Breakup</span>
-                </div>
-
-                <div className="flex items-center flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={pillBtnClass}
-                    onClick={() => OutServiceView(formData.EmpMst.EMPCODE)}
-                    disabled={disapleForSalary}
-                  >
-                    <History className="h-3.5 w-3.5 shrink-0" />
-                    See history
-                  </Button>
-
-                  {user?.role1.includes("1.1.13") && (
-                    <Button
-                      type="button"
-                      className={pillBtnPrimaryClass}
-                      onClick={handleChangeSalaryDetails}
-                    >
-                      <Save className="h-3.5 w-3.5 shrink-0" />
-                      {isSalarySaved
-                        ? "Change salary details"
-                        : "Save salary details"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className={cardBodyClass}>
-                <div className={fieldGridClass}>
-                  <Einput
-                    type="date"
-                    title="Effective from (date)"
-                    name="Effective_date"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Effective_date}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Monthly Gross:"
-                    name="Gross_Salary"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Gross_Salary?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="EMP Basic:"
-                    name="Basic"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Basic?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="HRA:"
-                    name="HRA"
-                    id="HRA"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.HRA?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Conveyance:"
-                    name="Conveyance"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Conveyance?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Medical:"
-                    name="Medical"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Medical?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="DA:"
-                    name="Other"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Other?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Washing:"
-                    name="Washing"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Washing?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Uniform Amt:"
-                    name="Uniform"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Uniform?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Annual Gross:"
-                    name="ANNUAL_CTC"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.ANNUAL_CTC?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="EMP Salary:"
-                    name="Gross_Salary"
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.Gross_Salary?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="LWF:"
-                    name="LWF"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.LWF?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="PF Salary Limit:"
-                    name="PFSALARY_LIMIT"
-                    ShortName={true}
-                    handleInputChange={handleInputChange}
-                    disabled={falg1 || isDailyWagesActive}
-                    value={formData1?.PFSALARY_LIMIT?.toString()}
-                  />
-
-                  <Einput
-                    type="text"
-                    title="Bonus:"
-                    name="BONUS_AMOUNT"
-                    handleInputChange={handleInputChange}
-                    disabled={
-                      falg1 || isDailyWagesActive || GratuityCompKeyData
-                    }
-                    value={formData1?.BONUS_AMOUNT?.toString()}
-                  />
-
-                  {GratuityCompKeyData && (
-                    <Einput
-                      type="text"
-                      title="Gratuity:"
-                      name="Gratuity"
-                      handleInputChange={handleInputChange}
-                      disabled={true}
-                      value={formData1?.Gratuity?.toString()}
-                    />
-                  )}
-
-                  <div className="md:col-span-2">
-                    <Einput
-                      type="text"
-                      title="CTC:"
-                      name="CTC"
-                      ShortName={true}
-                      handleInputChange={handleInputChange}
-                      disabled={falg1 || isDailyWagesActive}
-                      value={formData1?.CTC?.toString()}
-                    />
-                  </div>
-                </div>
-
-                {DalyWagescompKeyData && (
-                  <div className="mt-5 rounded-xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] p-4">
-                    <div className="text-exit font-bold text-sm mb-2">
-                      Daily Wages (Alternative Salary Mode)
-                    </div>
-                    <Einput
-                      type="number"
-                      title="Daily Wages"
-                      name="Daily_Wages"
-                      value={formData1.Daily_Wages}
-                      handleInputChange={handleInputChange}
-                      disabled={falg1 || isSalaryBreakupActive}
-                    />
-                  </div>
-                )}
-
-                {/* Approval Status */}
-                <div className="mt-5 flex text-left justify-center">
-                  <p
-                    className={`text-[15px] font-semibold ${salarystatus == 2 ? "text-save" : "text-exit"
-                      }`}
-                  >
-                    {salaryMessage}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================== BANK DETAILS - FULL WIDTH ===================== */}
-        <div className="col-span-12 mb-8">
+          {/* ===================== BANK DETAILS ===================== */}
           <div className={cardClass}>
             <div className={cardHeaderClass}>
               <div className={cardTitleWrapClass}>
@@ -2359,227 +2238,296 @@ const SalaryDetails = ({
             </div>
 
             <div className={cardBodyClass}>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-3">
+              <div className="space-y-3">
                 {/* Row 1 */}
-                <Eselect
-                  title="Bank Name:"
-                  name="BANKNAME"
-                  option={Bankoption}
-                  initialValue={formData?.EmpMst?.BANKNAME?.toString()}
-                  handleInputChange={handleInputChange}
-                  redlabel={isMandatory("BANKNAME") ? "*" : ""}
-                  disabled={isBankLocked}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+                  <Eselect
+                    title="Bank Name:"
+                    name="BANKNAME"
+                    option={Bankoption}
+                    initialValue={formData?.EmpMst?.BANKNAME?.toString()}
+                    handleInputChange={handleInputChange}
+                    redlabel={isMandatory("BANKNAME") ? "*" : ""}
+                    disabled={isBankLocked}
+                  />
 
-                <Einput
-                  title="Account No."
-                  type="password"
-                  name="BANKACCOUNTNO"
-                  value={formData?.EmpMst.BANKACCOUNTNO?.toString()}
-                  handleInputChange={handleInputChange}
-                  onCopy={(e) => e.preventDefault()}
-                  onPaste={(e) => e.preventDefault()}
-                  onCut={(e) => e.preventDefault()}
-                  disabled={ViewAccountData || isBankLocked}
-                  redlabel={isMandatory("BANKACCOUNTNO") ? "*" : ""}
-                />
+                  <Einput
+                    title="Branch Name:"
+                    type="text"
+                    name="BRANCH"
+                    value={formData?.EmpMst?.BRANCH}
+                    handleInputChange={handleInputChange}
+                    disabled={ViewIFSCData || isBankLocked}
+                    redlabel={isMandatory("BRANCH") ? "*" : ""}
+                  />
 
-                <div className="flex items-end gap-2">
-                  {/* Confirm Account No. */}
-                  <div className="flex-[2]">
+                  <Einput
+                    title="Account Holder Name:"
+                    name="Emp_Ac_Name"
+                    value={formData?.EmpMst?.Emp_Ac_Name}
+                    handleInputChange={handleInputChange}
+                    disabled={ViewAccountData || isBankLocked}
+                    redlabel={isMandatory("Emp_Ac_Name") ? "*" : ""}
+                  />
+                </div>
+
+                {/* Row 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+                  <div className="relative">
                     <Einput
-                      title="Confirm Account No."
+                      title="Account No."
                       type="text"
-                      name="Cnf_BANKACCOUNTNO"
-                      value={formData?.EmpMst.Cnf_BANKACCOUNTNO}
-                      disabled={
-                        (confirmAccountDisabled || ViewAccountData) &&
-                        isBankLocked
-                      }
+                      name="BANKACCOUNTNO"
+                      value={formData?.EmpMst.BANKACCOUNTNO?.toString()}
                       handleInputChange={handleInputChange}
                       onCopy={(e) => e.preventDefault()}
                       onPaste={(e) => e.preventDefault()}
                       onCut={(e) => e.preventDefault()}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Tab" &&
-                          formData?.EmpMst.BANKACCOUNTNO &&
-                          formData?.EmpMst.Cnf_BANKACCOUNTNO &&
-                          formData?.EmpMst.BANKACCOUNTNO !==
-                          formData?.EmpMst.Cnf_BANKACCOUNTNO
-                        ) {
-                          e.preventDefault();
-
-                          showSideAlert(
-                            "Account No is Not Matched with Confirm Account No.",
-                            "info",
-                          );
-                        }
-                      }}
-                      redlabel={isMandatory("Cnf_BANKACCOUNTNO") ? "*" : ""}
+                      disabled={ViewAccountData || isBankLocked}
+                      redlabel={isMandatory("BANKACCOUNTNO") ? "*" : ""}
+                      autoComplete="off"
+                      style={{ WebkitTextSecurity: "disc" } as any}
+                      className="pr-8"
                     />
-                  </div>
 
-                  {/* Verify Button */}
-                  <div className="flex-[1]">
-                    <button
-                      type="button"
-                      onClick={() => VerifyAccountNo(13)}
-                      disabled={
-                        IsVerifyAccountApi || ViewAccountData || isBankLocked
-                      }
-                      className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold
-                    flex items-center justify-center gap-1.5 transition
-                    ${accountButtonVariant === "update"
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
-                        }
-                 disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {IsVerifyAccountApi ? (
-                        <span className="animate-spin">⏳</span>
-                      ) : (
-                        <ScanLine className="h-3.5 w-3.5" />
-                      )}
+                    {AccountData && (
+                      <>
+                        <AiOutlineQuestionCircle
+                          size={18}
+                          className="absolute right-3 top-[68%] -translate-y-1/2 text-gray-500 cursor-pointer z-10 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          onClick={() => {
+                            setshowAccountTooltip((prev) => !prev);
+                            setshowIFSCTooltip(false);
+                          }}
+                        />
 
-                      {accountButtonLabel}
-                    </button>
-                  </div>
-                </div>
-
-                {/* ✅ IFSC + Verify - Side by side (width kam) */}
-                <div className="flex items-end gap-2 relative">
-                  <div className="flex-[2]">
-                    {" "}
-                    {/* ✅ IFSC input ko 2/3 width */}
-                    <Einput
-                      type="text"
-                      ShortName
-                      title="IFSC Code:"
-                      name="ifsc_code"
-                      value={formData?.EmpMst?.ifsc_code}
-                      handleInputChange={handleInputChange}
-                      disabled={ViewIFSCData || isBankLocked}
-                      redlabel={isMandatory("ifsc_code") ? "*" : ""}
-                    />
-                  </div>
-
-                  <div className="flex-[1]">
-                    {" "}
-                    {/* ✅ Verify button ko 1/3 width */}
-                    <button
-                      type="button"
-                      onClick={() => VerifyAccountNo(12)}
-                      disabled={
-                        (IsVerifyIFSCApi || ViewIFSCData) && isBankLocked
-                      }
-                      className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition 
-                ${IFSCButtonVariant === "update"
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
-                        }
-                disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {IsVerifyIFSCApi ? (
-                        <span className="animate-spin">⏳</span>
-                      ) : (
-                        <ScanLine className="h-3.5 w-3.5" />
-                      )}
-                      {IFSCButtonLabel}
-                    </button>
-                  </div>
-
-                  {IFSCData && (
-                    <>
-                      <AiOutlineQuestionCircle
-                        size={18}
-                        className="absolute right-28 top-[45%] -translate-y-1/2 text-gray-500 cursor-pointer z-10"
-                        onClick={() => setshowIFSCTooltip((prev) => !prev)}
-                      />
-
-                      {showIFSCTooltip && (
-                        <div className="absolute top-full mt-2 right-0 w-[420px] bg-white border rounded shadow p-2 z-50 text-xs dark:bg-input">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p>
-                                <strong>Address:</strong> {IFSCData.address}
-                              </p>
-                              <p>
-                                <strong>Bank:</strong> {IFSCData.bank}
-                              </p>
-                              <p>
-                                <strong>Branch:</strong> {IFSCData.branch}
-                              </p>
-                              <p>
-                                <strong>City:</strong> {IFSCData.city}
-                              </p>
-                              <p>
-                                <strong>State:</strong> {IFSCData.state}
-                              </p>
-                              <p>
-                                <strong>IFSC:</strong> {IFSCData.ifsc}
-                              </p>
-                              <p>
-                                <strong>MICR:</strong> {IFSCData.micr}
-                              </p>
-                            </div>
-                            <div className="flex items-center pl-2">
-                              {accountStatusCode === "VALID" ? (
-                                <LottieAnimation width="60px" height="50px" />
-                              ) : (
-                                <AiOutlineCloseCircle
-                                  size={18}
-                                  className="text-exit"
-                                />
-                              )}
+                        {showAccountTooltip && (
+                          <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-80 bg-white border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-3 z-50 text-xs dark:bg-input">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-1">
+                                <p>
+                                  <strong>Account No:</strong>{" "}
+                                  {AccountData.account_number}
+                                </p>
+                                <p>
+                                  <strong>Name:</strong>{" "}
+                                  {AccountData.name_at_bank}
+                                </p>
+                              </div>
+                              <div className="flex items-center pl-2 shrink-0">
+                                {accountStatusCode === "VALID" ? (
+                                  <LottieAnimation width="80px" height="70px" />
+                                ) : (
+                                  <AiOutlineCloseCircle
+                                    size={16}
+                                    className="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-1.5"
+                                    onClick={() => setshowAccountTooltip(false)}
+                                  />
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-end gap-2">
+                    {/* Confirm Account No. */}
+                    <div className="flex-[2]">
+                      <Einput
+                        ShortName
+                        title="Confirm Account No."
+                        type="text"
+                        name="Cnf_BANKACCOUNTNO"
+                        value={formData?.EmpMst.Cnf_BANKACCOUNTNO}
+                        disabled={
+                          (confirmAccountDisabled || ViewAccountData) &&
+                          isBankLocked
+                        }
+                        handleInputChange={handleInputChange}
+                        onCopy={(e) => e.preventDefault()}
+                        onPaste={(e) => e.preventDefault()}
+                        onCut={(e) => e.preventDefault()}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Tab" &&
+                            formData?.EmpMst.BANKACCOUNTNO &&
+                            formData?.EmpMst.Cnf_BANKACCOUNTNO &&
+                            formData?.EmpMst.BANKACCOUNTNO !==
+                              formData?.EmpMst.Cnf_BANKACCOUNTNO
+                          ) {
+                            e.preventDefault();
+
+                            showSideAlert(
+                              "Account No is Not Matched with Confirm Account No.",
+                              "info",
+                            );
+                          }
+                        }}
+                        redlabel={isMandatory("Cnf_BANKACCOUNTNO") ? "*" : ""}
+                      />
+                    </div>
+
+                    {/* Verify Button */}
+                    <div className="flex-[1]">
+                      <button
+                        type="button"
+                        onClick={() => VerifyAccountNo(13)}
+                        disabled={
+                          IsVerifyAccountApi || ViewAccountData || isBankLocked
+                        }
+                        className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold
+                      flex items-center justify-center gap-1.5 transition
+                      ${
+                        accountButtonVariant === "update"
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+                      }
+                   disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {IsVerifyAccountApi ? (
+                          <span className="animate-spin">⏳</span>
+                        ) : (
+                          <ScanLine className="h-3.5 w-3.5" />
+                        )}
+
+                        {accountButtonLabel}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ✅ IFSC + Verify - Side by side (width kam) */}
+                  <div className="flex items-end gap-2 relative">
+                    <div className="flex-1 min-w-0 relative">
+                      <Einput
+                        type="text"
+                        ShortName
+                        title="IFSC Code:"
+                        name="ifsc_code"
+                        value={formData?.EmpMst?.ifsc_code}
+                        handleInputChange={handleInputChange}
+                        disabled={ViewIFSCData || isBankLocked}
+                        redlabel={isMandatory("ifsc_code") ? "*" : ""}
+                        className="text-base text-md pl-2.5 pr-7 uppercase font-medium"
+                      />
+
+                      {IFSCData && (
+                        <AiOutlineQuestionCircle
+                          size={16}
+                          className="absolute right-2 top-[68%] -translate-y-1/2 text-gray-500 cursor-pointer z-10 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          onClick={() => {
+                            setshowIFSCTooltip((prev) => !prev);
+                            setshowAccountTooltip(false);
+                          }}
+                        />
                       )}
-                    </>
-                  )}
+                    </div>
+
+                    <div className="w-[68px] shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => VerifyAccountNo(12)}
+                        disabled={
+                          (IsVerifyIFSCApi || ViewIFSCData) && isBankLocked
+                        }
+                        className={`h-[24px] w-full px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition 
+                  ${
+                    IFSCButtonVariant === "update"
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-[#4F46E5] text-white hover:bg-[#433df0]"
+                  }
+                  disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {IsVerifyIFSCApi ? (
+                          <span className="animate-spin">⏳</span>
+                        ) : (
+                          <ScanLine className="h-3.5 w-3.5" />
+                        )}
+                        {IFSCButtonLabel}
+                      </button>
+                    </div>
+
+                    {IFSCData && showIFSCTooltip && (
+                      <div className="absolute top-full mt-2 right-0 w-[360px] max-w-[90vw] bg-white border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-3.5 z-50 text-xs dark:bg-input">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 text-slate-700 dark:text-slate-300">
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                Address:
+                              </strong>{" "}
+                              {IFSCData.address}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                Bank:
+                              </strong>{" "}
+                              {IFSCData.bank}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                Branch:
+                              </strong>{" "}
+                              {IFSCData.branch}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                City:
+                              </strong>{" "}
+                              {IFSCData.city}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                State:
+                              </strong>{" "}
+                              {IFSCData.state}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                IFSC:
+                              </strong>{" "}
+                              {IFSCData.ifsc}
+                            </p>
+                            <p>
+                              <strong className="text-slate-900 dark:text-slate-100">
+                                MICR:
+                              </strong>{" "}
+                              {IFSCData.micr}
+                            </p>
+                          </div>
+                          <AiOutlineCloseCircle
+                            size={18}
+                            className="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 mt-0.5"
+                            onClick={() => setshowIFSCTooltip(false)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Row 2 - Branch Name etc. */}
-                <Einput
-                  type="text"
-                  title="Branch Name:"
-                  name="BRANCH"
-                  value={formData?.EmpMst?.BRANCH}
-                  handleInputChange={handleInputChange}
-                  redlabel={isMandatory("BRANCH") ? "*" : ""}
-                  disabled={isBankLocked}
-                />
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+                  <Eselect
+                    title="Account Type:"
+                    option={ACCOUNT_TYPE}
+                    name="ACCOUNT_TYPE"
+                    handleInputChange={handleInputChange}
+                    initialValue={formData?.EmpMst?.ACCOUNT_TYPE?.toString()}
+                    redlabel={isMandatory("ACCOUNT_TYPE") ? "*" : ""}
+                    disabled={isBankLocked}
+                  />
 
-                <Einput
-                  type="text"
-                  title="Account Holder Name:"
-                  name="Emp_Ac_Name"
-                  value={formData?.EmpMst?.Emp_Ac_Name}
-                  handleInputChange={handleInputChange}
-                  redlabel={isMandatory("Emp_Ac_Name") ? "*" : ""}
-                  disabled={isBankLocked}
-                />
-
-                <Eselect
-                  title="Account Type:"
-                  name="ACCOUNT_TYPE"
-                  option={ACCOUNT_TYPE}
-                  initialValue={formData?.EmpMst?.ACCOUNT_TYPE?.toString()}
-                  handleInputChange={handleInputChange}
-                  redlabel={isMandatory("ACCOUNT_TYPE") ? "*" : ""}
-                  disabled={isBankLocked}
-                />
-
-                <Eselect
-                  title="Payment Mode:"
-                  name="PAYMENTMODE"
-                  handleInputChange={handleInputChange}
-                  initialValue={formData?.EmpMst?.PAYMENTMODE?.toString()}
-                  option={PmtMode}
-                  redlabel={isMandatory("PAYMENTMODE") ? "*" : ""}
-                  disabled={isBankLocked}
-                />
+                  <Eselect
+                    title="Payment Mode:"
+                    name="PAYMENTMODE"
+                    handleInputChange={handleInputChange}
+                    initialValue={formData?.EmpMst?.PAYMENTMODE?.toString()}
+                    option={PmtMode}
+                    redlabel={isMandatory("PAYMENTMODE") ? "*" : ""}
+                    disabled={isBankLocked}
+                  />
+                </div>
               </div>
 
               {/* Sal_Hold Checkbox */}
@@ -2604,6 +2552,395 @@ const SalaryDetails = ({
             </div>
           </div>
         </div>
+
+        {/* ===================== RIGHT COLUMN - SALARY BREAKUP ===================== */}
+        {user?.role1.includes("1.1.15") && (
+          <div className="col-span-12 xl:col-span-4">
+            {(() => {
+              const monthlyGross = Number(formData1?.Gross_Salary || 0);
+              const allocated =
+                Number(formData1?.Basic || 0) +
+                Number(formData1?.HRA || 0) +
+                Number(formData1?.Other || 0) +
+                Number(formData1?.Conveyance || 0) +
+                Number(formData1?.Medical || 0) +
+                Number(formData1?.Washing || 0) +
+                Number(formData1?.Uniform || 0);
+              const isBalanced =
+                monthlyGross > 0 && Math.abs(monthlyGross - allocated) < 1;
+
+              const pfLimit = Number(formData1?.PFSALARY_LIMIT || 0);
+              const isPfYes =
+                formData?.EmpMst?.PFNO === "1" || formData?.EmpMst?.PFNO === 1;
+              const pfPerc = Number(formData?.EmpMst?.pfper || 12);
+              const employerPf = isPfYes
+                ? Math.round(
+                  (pfLimit > 0
+                    ? pfLimit
+                    : Number(formData1?.Basic || 0)) *
+                  (pfPerc / 100),
+                )
+                : 0;
+
+              const isEsicYes =
+                formData?.EmpMst?.ESINO === "1" || formData?.EmpMst?.ESINO === 1;
+              const employerEsic =
+                isEsicYes && monthlyGross <= 21000
+                  ? Math.round(monthlyGross * 0.0325)
+                  : 0;
+
+              const annualGross = monthlyGross * 12;
+              const totalCtc = formData1?.CTC
+                ? Number(formData1.CTC)
+                : annualGross +
+                Number(formData1?.BONUS_AMOUNT || 0) +
+                Number(formData1?.LWF || 0) +
+                (pfLimit > 0 ? pfLimit : employerPf * 12) +
+                Number(formData1?.Gratuity || 0);
+
+              return (
+                <div className="w-full rounded-2xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-white dark:bg-black shadow-sm p-4 sm:p-5 flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F46E5] text-white shadow-sm font-bold text-lg select-none">
+                      ₹
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[17px] font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                        Salary breakup
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+                        Monthly amounts · annual figures calculatve
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Effective from & Monthly Gross */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        EFFECTIVE FROM
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="Effective_date"
+                          value={formData1?.Effective_date ? formData1.Effective_date.split("T")[0] : ""}
+                          onChange={(e) =>
+                            handleInputChange("Effective_date", e.target.value)
+                          }
+                          disabled={disapleForSalary || isDailyWagesActive}
+                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        MONTHLY GROSS
+                      </label>
+                      <div className="relative flex items-center h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold text-base mr-2 select-none">
+                          ₹
+                        </span>
+                        <input
+                          type="number"
+                          name="Gross_Salary"
+                          value={formData1?.Gross_Salary ?? ""}
+                          onChange={(e) =>
+                            handleInputChange("Gross_Salary", e.target.value)
+                          }
+                          placeholder="0"
+                          disabled={disapleForSalary || isDailyWagesActive}
+                          className="w-full bg-transparent font-bold text-slate-800 dark:text-slate-100 text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSplitSalary()}
+                          disabled={disapleForSalary || isDailyWagesActive || !formData1?.Gross_Salary}
+                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-400 text-sm font-bold shrink-0 transition-colors disabled:opacity-50"
+                        >
+                          <Wand2 className="h-4 w-4" />
+                          <span>Split</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Allocation progress & badge */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-semibold text-slate-600 dark:text-slate-400">
+                        ₹{allocated.toLocaleString("en-IN")} of ₹
+                        {monthlyGross.toLocaleString("en-IN")} allocated
+                      </span>
+                      {isBalanced ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} /> Balanced
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                          Unbalanced (
+                          {allocated > monthlyGross ? "+" : "-"}₹
+                          {Math.abs(monthlyGross - allocated).toLocaleString(
+                            "en-IN",
+                          )}
+                          )
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          isBalanced
+                            ? "bg-emerald-500"
+                            : allocated > monthlyGross
+                              ? "bg-rose-500"
+                              : "bg-amber-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            monthlyGross > 0
+                              ? (allocated / monthlyGross) * 100
+                              : 0,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Breakdown Components Table */}
+                  <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/70 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+                    {salaryBreakupItems.map((item) => {
+                      const val = Number(formData1?.[item.name] || 0);
+                      const pct =
+                        monthlyGross > 0 && val > 0
+                          ? Math.round((val / monthlyGross) * 100)
+                          : (ratios[item.ratioKey] || 0);
+                      return (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                        >
+                          <span className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                            {item.label}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 w-12 text-right">
+                              {pct}%
+                            </span>
+                            <div className="flex items-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 w-36 focus-within:ring-2 focus-within:ring-[#4F46E5]/20 focus-within:border-[#4F46E5]">
+                              <span className="text-slate-400 text-sm font-bold mr-1 select-none">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                name={item.name}
+                                value={formData1?.[item.name] ?? ""}
+                                onChange={(e) =>
+                                  handleInputChange(item.name, e.target.value)
+                                }
+                                disabled={disapleForSalary || isDailyWagesActive}
+                                className="w-full bg-transparent text-right font-bold text-slate-800 dark:text-slate-100 text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 4 Bottom Inputs Grid */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        EMP SALARY
+                      </label>
+                      <input
+                        type="number"
+                        name="Gross_Salary"
+                        value={formData1?.Gross_Salary ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("Gross_Salary", e.target.value)
+                        }
+                        disabled={disapleForSalary || isDailyWagesActive}
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        PF SALARY LIMIT
+                      </label>
+                      <input
+                        type="number"
+                        name="PFSALARY_LIMIT"
+                        value={formData1?.PFSALARY_LIMIT ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("PFSALARY_LIMIT", e.target.value)
+                        }
+                        disabled={disapleForSalary || isDailyWagesActive}
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        LWF
+                      </label>
+                      <input
+                        type="number"
+                        name="LWF"
+                        value={formData1?.LWF ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("LWF", e.target.value)
+                        }
+                        disabled={disapleForSalary || isDailyWagesActive}
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        BONUS
+                      </label>
+                      <input
+                        type="number"
+                        name="BONUS_AMOUNT"
+                        value={formData1?.BONUS_AMOUNT ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("BONUS_AMOUNT", e.target.value)
+                        }
+                        disabled={disapleForSalary || isDailyWagesActive || GratuityCompKeyData}
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Summary Box */}
+                  <div className="rounded-2xl bg-[#F8FAFC] dark:bg-[#0B0F19] border border-slate-200/80 dark:border-slate-800 p-4 space-y-2.5">
+                    <div className="flex items-center justify-between text-base">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Monthly gross
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ₹{monthlyGross.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-base">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Employer PF
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {employerPf > 0
+                          ? `₹${employerPf.toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-base">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Employer ESIC
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {employerEsic > 0
+                          ? `₹${employerEsic.toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-base">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        Bonus
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ₹{Number(formData1?.BONUS_AMOUNT || 0).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-slate-200/80 dark:border-slate-800 pt-2.5 space-y-2">
+                      <div className="flex items-center justify-between text-base">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                          Annual gross
+                        </span>
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          ₹{annualGross.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-base text-slate-700 dark:text-slate-300">
+                          Annual CTC
+                        </span>
+                        <span className="font-extrabold text-2xl text-[#4F46E5] dark:text-indigo-400">
+                          ₹{totalCtc.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Daily Wages alternative mode if enabled */}
+                  {DalyWagescompKeyData && (
+                    <div className="rounded-xl border border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F8FAFC] dark:bg-[#0B0F19] p-3.5">
+                      <div className="text-exit font-bold text-sm mb-2">
+                        Daily Wages (Alternative Salary Mode)
+                      </div>
+                      <Einput
+                        title="Daily Wages"
+                        name="Daily_Wages"
+                        value={formData1.Daily_Wages}
+                        handleInputChange={handleInputChange}
+                        disabled={disapleForSalary || isSalaryBreakupActive}
+                      />
+                    </div>
+                  )}
+
+                  {/* Approval Status */}
+                  {salaryMessage && (
+                    <div className="flex text-left justify-center">
+                      <p
+                        className={`text-[14px] font-semibold ${
+                          salarystatus == 2 ? "text-save" : "text-exit"
+                        }`}
+                      >
+                        {salaryMessage}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bottom Action Buttons */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 shadow-xs shrink-0"
+                      onClick={() => OutServiceView(formData?.EmpMst?.EMPCODE)}
+                      disabled={disapleForSalary || !formData?.EmpMst?.EMPCODE}
+                    >
+                      <History className="h-4 w-4" />
+                      <span>History</span>
+                    </Button>
+
+                    {user?.role1?.includes("1.1.13") && (
+                      <Button
+                        type="button"
+                        onClick={handleSaveSalaryBreakup}
+                        disabled={disapleForSalary}
+                        className="h-11 px-5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold flex-1 flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+                      >
+                        <Check className="h-4 w-4" strokeWidth={2.5} />
+                        <span>Save salary details</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
 
         {/* ===================== UNIFORM SUPPLY DETAILS - FULL WIDTH ===================== */}
         <div className="col-span-12 mb-8">
@@ -3088,6 +3425,14 @@ const SalaryDetails = ({
                   </p>
                 )}
               </div>
+              <button
+                type="button"
+                onClick={() => setIsDialogOpen3(false)}
+                className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700 transition-colors text-sm font-medium"
+              >
+                <X className="h-4 w-4" />
+                
+              </button>
             </div>
 
             <div className="p-7 space-y-5">
@@ -3180,11 +3525,18 @@ const SalaryDetails = ({
                 </div>
               )}
 
-              {SalaryData.length > 0 && (
-                <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 text-center font-bold text-sm text-slate-600 dark:text-slate-300">
-                  Total Records: {SalaryData.length}
-                </div>
-              )}
+              <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
+                  {SalaryData.length > 0 ? `Total Records: ${SalaryData.length}` : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsDialogOpen3(false)}
+                  className="h-9 px-5 rounded-xl border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 dark:border-slate-700 dark:bg-[#0B1220] dark:text-slate-200 dark:hover:bg-[#0F1A2D] text-sm transition-colors shadow-xs"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
