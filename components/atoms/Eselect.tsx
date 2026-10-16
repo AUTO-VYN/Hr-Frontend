@@ -81,13 +81,62 @@ const Eselect = ({
   useEffect(() => setMounted(true), []);
 
   const filteredOptions = useMemo(() => {
-    const q = inputValue.toLowerCase();
-    return (option || []).filter((opt) => opt?.label?.toLowerCase().includes(q));
+    const q = inputValue.trim().toLowerCase();
+    if (!q) return option || [];
+
+    const matched: { opt: Option; rank: number; index: number }[] = [];
+
+    (option || []).forEach((opt, index) => {
+      const label = (opt?.label || "").toLowerCase();
+      const val = String(opt?.value ?? "").toLowerCase();
+
+      const valExact = val === q;
+      const labelExact = label === q;
+      const valStarts = val.startsWith(q);
+      const labelStarts = label.startsWith(q);
+
+      // Support space, dash, pipe, comma, underscore
+      const words = label.split(/[\s\-|,_]+/);
+      const wordStarts = words.some((w) => w.startsWith(q));
+
+      const valIncludes = val.includes(q);
+      const labelIncludes = label.includes(q);
+
+      if (!valIncludes && !labelIncludes) return;
+
+      let rank = 10;
+      if (valExact) {
+        rank = 0; // Highest priority: exact empcode
+      } else if (labelExact) {
+        rank = 1; // Exact label
+      } else if (valStarts) {
+        rank = 2; // Empcode starts with search query
+      } else if (labelStarts) {
+        rank = 3; // Label starts with search query
+      } else if (wordStarts) {
+        rank = 4; // Any word in label/name starts with query
+      } else if (valIncludes) {
+        rank = 5;
+      } else if (labelIncludes) {
+        rank = 6;
+      }
+
+      matched.push({ opt, rank, index });
+    });
+
+    matched.sort((a, b) => {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      return a.index - b.index;
+    });
+
+    return matched.map((m) => m.opt);
   }, [option, inputValue]);
 
-  // measure max width needed
+  // measure max width needed only when dropdown is open
   const calculateMaxWidth = useMemo(() => {
-    if (typeof document === "undefined" || !option?.length) return 0;
+    if (!open || typeof document === "undefined" || !option?.length) return 0;
+
+    const sampleOptions = option.length > 50 ? option.slice(0, 50) : option;
 
     const temp = document.createElement("span");
     document.body.appendChild(temp);
@@ -97,7 +146,7 @@ const Eselect = ({
     temp.style.padding = "0 12px";
 
     let max = 0;
-    option.forEach((o) => {
+    sampleOptions.forEach((o) => {
       temp.textContent = o.label;
       const w = temp.offsetWidth + 56;
       if (w > max) max = w;
@@ -105,13 +154,13 @@ const Eselect = ({
 
     document.body.removeChild(temp);
     return max;
-  }, [option]);
+  }, [open, option]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!open || !containerRef.current) return;
     const containerWidth = containerRef.current.offsetWidth;
     setMaxOptionWidth(Math.max(containerWidth, calculateMaxWidth));
-  }, [calculateMaxWidth]);
+  }, [open, calculateMaxWidth]);
 
   // init selected
   useEffect(() => {
@@ -263,6 +312,14 @@ const Eselect = ({
   }, [open]);
 
   useEffect(() => {
+    if (inputValue.trim()) {
+      setFocusedIndex(0);
+    } else {
+      setFocusedIndex(-1);
+    }
+  }, [inputValue]);
+
+  useEffect(() => {
     if (focusedItemRef.current) {
       focusedItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
@@ -275,11 +332,11 @@ const Eselect = ({
     const rect = containerRef.current.getBoundingClientRect();
 
     // dropdown height (measured if possible)
-    const measuredH = dropdownRef.current?.offsetHeight || 260;
+    const measuredH = dropdownRef.current?.offsetHeight || 170;
 
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    const need = Math.min(measuredH, 320);
+    const need = Math.min(measuredH, 180);
 
     const shouldDropup = spaceBelow < need && spaceAbove > need;
     setDropup(shouldDropup);
@@ -458,7 +515,7 @@ const Eselect = ({
             <ul
               ref={listRef}
               className={cn(
-                "max-h-60 overflow-y-auto py-1",
+                "max-h-[118px] overflow-y-auto py-1",
                 "[scrollbar-width:thin] [scrollbar-color:rgb(203_213_225)_transparent]",
                 "[&::-webkit-scrollbar]:w-[6px]",
                 "[&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full",
@@ -468,7 +525,7 @@ const Eselect = ({
             >
               {filteredOptions.map((opt, index) => (
                 <li
-                  key={String(opt.value)}
+                  key={`${String(opt.value)}_${index}`}
                   ref={focusedIndex === index ? focusedItemRef : null}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelect(opt)}

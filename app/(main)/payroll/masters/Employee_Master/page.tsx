@@ -3481,51 +3481,79 @@ function EmployeeMasterContent() {
     <div className="min-h-full w-full flex flex-col bg-[#F6F7FB] dark:bg-black pb-20">
       {/* ===== ONE MAIN HEADER (Back + Breadcrumb + Actions) ===== */}
       <header className="w-full shrink-0 border-b border-[#E6E8EF] dark:border-[#2A2F3A] bg-[#F6F7FB] dark:bg-black">
-        <div className="w-full min-h-[56px] py-2 px-2 sm:px-4 flex flex-wrap items-center justify-between gap-2.5">
-          {/* Left: Brand (optional) + Back + Breadcrumb */}
-          <div className="flex items-center gap-2 min-w-0">
-            {/* Optional small brand like screenshot (HS) */}
-            <div className="hidden sm:flex h-10 w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-semibold">
-              HS
+        <div className="w-full min-h-[56px] py-2 px-2 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-2.5">
+          {/* Top row on mobile / Left group on desktop */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Optional small brand like screenshot (HS) */}
+              <div className="hidden sm:flex h-10 w-10 rounded-xl bg-[#4F46E5] text-white items-center justify-center font-semibold">
+                HS
+              </div>
+
+              <Button
+                variant="outline"
+                size="md"
+                shape="pill"
+                onClick={handleBack}
+                className="h-9 sm:h-10 px-3 sm:px-5 rounded-xl text-xs sm:text-sm font-medium gap-1.5 sm:gap-2"
+              >
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                Back
+              </Button>
             </div>
 
-            <Button
-              variant="outline"
-              size="md"
-              shape="pill"
-              onClick={handleBack}
-              className="h-10  rounded-xl "
-            >
-              <ArrowLeft className="h-6 w-6 mr-2" />
-              Back
-            </Button>
+            {/* Mobile primary save/update action (Right-aligned in top row on mobile, hidden on desktop) */}
+            <div className="flex sm:hidden items-center gap-2 shrink-0">
+              {user?.role1.includes("1.1.2") && !SaveDisable && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  shape="pill"
+                  onClick={handleSave}
+                  className="h-9 px-3.5 rounded-xl gap-1.5 text-xs font-semibold shadow-xs"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Save employee
+                </Button>
+              )}
 
-            {/* Breadcrumb */}
+              {user?.role1.includes("1.1.3") && SaveDisable && (
+                <Button
+                  variant="primary"
+                  onClick={handleUpdate}
+                  size="md"
+                  disabled={UpdateDisable}
+                  className="h-9 px-3.5 rounded-xl text-xs font-semibold shadow-xs"
+                >
+                  Update employee
+                </Button>
+              )}
+            </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* Bottom row on mobile / Right group on desktop */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible w-full sm:w-auto justify-start sm:justify-end pb-0.5 sm:pb-0 no-scrollbar">
             {user?.role1.includes("1.1.2") && SaveDisable && (
               <Button
                 variant="outline"
                 onClick={handleAddEmp}
                 size="md"
                 shape="pill"
-                className="h-10 rounded-xl gap-2"
+                className="h-8.5 sm:h-10 px-2.5 sm:px-4 rounded-xl gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0 font-medium"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 New record
               </Button>
             )}
 
             <Button
               variant="outline"
-              onClick={fetchEmployeeLogs}   // ✅ open modal on click
+              onClick={fetchEmployeeLogs} // ✅ open modal on click
               size="md"
-              className="h-10  rounded-xl gap-2"
-              title="Help"
+              className="h-8.5 sm:h-10 px-2.5 sm:px-4 rounded-xl gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0 font-medium"
+              title="History"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               History
             </Button>
 
@@ -3533,10 +3561,10 @@ function EmployeeMasterContent() {
               variant="outline"
               onClick={() => { }}
               size="md"
-              className="h-10  rounded-xl gap-2"
+              className="h-8.5 sm:h-10 px-2.5 sm:px-4 rounded-xl gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0 font-medium"
               title="Help"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Help
             </Button>
 
@@ -3545,37 +3573,39 @@ function EmployeeMasterContent() {
               onClick={handleReset}
               size="md"
               shape="pill"
-              className="h-10 rounded-xl gap-2"
+              className="h-8.5 sm:h-10 px-2.5 sm:px-4 rounded-xl gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0 font-medium"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Discard
             </Button>
 
-            {user?.role1.includes("1.1.2") && !SaveDisable && (
-              <Button
-                variant="primary"
-                size="md"
-                shape="pill"
-                className=""
-                onClick={handleSave}
-                className="h-10 rounded-xl gap-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Save employee
-              </Button>
-            )}
+            {/* Desktop primary save/update action (Hidden on mobile, shown on desktop) */}
+            <div className="hidden sm:flex items-center gap-2">
+              {user?.role1.includes("1.1.2") && !SaveDisable && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  shape="pill"
+                  onClick={handleSave}
+                  className="h-10 rounded-xl gap-2 px-5 text-sm font-semibold"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Save employee
+                </Button>
+              )}
 
-            {user?.role1.includes("1.1.3") && SaveDisable && (
-              <Button
-                variant="primary"
-                onClick={handleUpdate}
-                size="md"
-                disabled={UpdateDisable}
-                className="h-10 rounded-xl"
-              >
-                Update employee
-              </Button>
-            )}
+              {user?.role1.includes("1.1.3") && SaveDisable && (
+                <Button
+                  variant="primary"
+                  onClick={handleUpdate}
+                  size="md"
+                  disabled={UpdateDisable}
+                  className="h-10 rounded-xl px-5 text-sm font-semibold"
+                >
+                  Update employee
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>

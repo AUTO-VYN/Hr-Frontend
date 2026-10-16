@@ -176,9 +176,15 @@ const SalaryDetails = ({
   const convertValuesToString = (array: any) => {
     if (!array || !Array.isArray(array)) return [];
     return array.map((obj) => {
+      if (typeof obj === "string" || typeof obj === "number") {
+        return {
+          label: String(obj),
+          value: String(obj),
+        };
+      }
       return {
-        label: obj.label,
-        value: String(obj.value),
+        label: obj.label ?? obj.name ?? String(obj.value ?? ""),
+        value: String(obj.value ?? obj.id ?? obj.label ?? ""),
       };
     });
   };
@@ -194,10 +200,20 @@ const SalaryDetails = ({
   }, [masterData?.Sal_Region]);
 
   useEffect(() => {
-    if (masterData?.EmpPunchType?.length) {
-      setPunchType(convertValuesToString(masterData.EmpPunchType));
+    const punchTypeData =
+      masterData?.EmpPunchType ||
+      masterData?.PunchType ||
+      masterData?.Punch_Type ||
+      masterData?.EMP_PUNCH_TYPE;
+    if (punchTypeData?.length) {
+      setPunchType(convertValuesToString(punchTypeData));
     }
-  }, [masterData?.EmpPunchType]);
+  }, [
+    masterData?.EmpPunchType,
+    masterData?.PunchType,
+    masterData?.Punch_Type,
+    masterData?.EMP_PUNCH_TYPE,
+  ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDialogOpen1, setIsDialogOpen1] = useState(false);
@@ -1626,6 +1642,14 @@ const SalaryDetails = ({
         if (masters.PFPERC) setPFPERCoption(masters.PFPERC);
         if (masters.GradeMstData) setGRADEoption(masters.GradeMstData);
         if (masters.Sal_Region) setSalRegionoption(convertValuesToString(masters.Sal_Region));
+        const punchTypeData =
+          masters.EmpPunchType ||
+          masters.PunchType ||
+          masters.Punch_Type ||
+          masters.EMP_PUNCH_TYPE;
+        if (punchTypeData) {
+          setPunchType(convertValuesToString(punchTypeData));
+        }
         if (masters.EMPLOYEEDESIGNATION) setEMPLOYEEDESIGNATIONoption(convertValuesToString(masters.EMPLOYEEDESIGNATION));
         if (masters.CHANNEL1) setCHANEELOPTION(convertValuesToString(masters.CHANNEL1));
         if (masters.CLUSTER1) setCLUSTEROPTION(convertValuesToString(masters.CLUSTER1));
@@ -2060,12 +2084,18 @@ const SalaryDetails = ({
     try {
       try {
         result = await callPrimaryApi();
-        const accountStatusCode = result?.data?.data?.result?.account_status;
-        setAccountStatusCode(accountStatusCode);
-        if (accountStatusCode == "INVALID") {
+        const resResult = result?.data?.data?.result || result?.data?.result;
+        const accountStatus = resResult?.account_status;
+        const accountStatusCode = resResult?.account_status_code;
+
+        setAccountStatusCode(accountStatus);
+
+        if (accountStatus === "INVALID" || accountStatusCode === "INVALID_ACCOUNT_FAIL") {
+          const errMsg = accountStatusCode || "INVALID_ACCOUNT_FAIL";
+          showSideAlert(`INVALID: ${errMsg}`, "error");
           toast({
             title: "INVALID",
-            description: `${result?.data?.data?.result?.account_status_code}`,
+            description: errMsg,
             variant: "destructive",
           });
           return;
@@ -2105,8 +2135,10 @@ const SalaryDetails = ({
             }
             setAccountStatusCode("VALID");
           } else {
+            const failMsg = data?.data?.message || data?.message || "Verification Failed";
+            showSideAlert(failMsg, "error");
             toast({
-              title: data?.data?.message || "Verification Failed",
+              title: failMsg,
               variant: "destructive",
             });
           }
@@ -2182,6 +2214,7 @@ const SalaryDetails = ({
       if (result.exists && result.data) {
         setAccountData(result.data);
         setIFSCData(result.data);
+        setAccountStatusCode("VALID");
       }
     } catch (error) {
       console.error("Error checking existing verification:", error);
@@ -2968,18 +3001,64 @@ const SalaryDetails = ({
                   disabled={isBankLocked}
                 />
 
-                <Einput
-                  title="Account No."
-                  type="password"
-                  name="BANKACCOUNTNO"
-                  value={formData?.EmpMst.BANKACCOUNTNO?.toString()}
-                  handleInputChange={handleInputChange}
-                  onCopy={(e) => e.preventDefault()}
-                  onPaste={(e) => e.preventDefault()}
-                  onCut={(e) => e.preventDefault()}
-                  disabled={ViewAccountData || isBankLocked}
-                  redlabel={isMandatory("BANKACCOUNTNO") ? "*" : ""}
-                />
+                <div className="relative">
+                  <Einput
+                    title="Account No."
+                    type="text"
+                    name="BANKACCOUNTNO"
+                    value={formData?.EmpMst.BANKACCOUNTNO?.toString()}
+                    handleInputChange={handleInputChange}
+                    onCopy={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    disabled={ViewAccountData || isBankLocked}
+                    redlabel={isMandatory("BANKACCOUNTNO") ? "*" : ""}
+                    autoComplete="off"
+                    style={{ WebkitTextSecurity: "disc" } as any}
+                    className="pr-8"
+                  />
+
+                  {AccountData && (
+                    <>
+                      <AiOutlineQuestionCircle
+                        size={18}
+                        className="absolute right-3 top-[68%] -translate-y-1/2 text-gray-500 cursor-pointer z-10 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        onClick={() => {
+                          setshowAccountTooltip((prev) => !prev);
+                          setshowIFSCTooltip(false);
+                        }}
+                      />
+
+                      {showAccountTooltip && (
+                        <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-80 bg-white border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-3 z-50 text-xs dark:bg-input">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-1">
+                              <p>
+                                <strong>Account No:</strong>{" "}
+                                {AccountData.account_number}
+                              </p>
+                              <p>
+                                <strong>Name:</strong>{" "}
+                                {AccountData.name_at_bank}
+                              </p>
+                            </div>
+                            <div className="flex items-center pl-2 shrink-0">
+                              {accountStatusCode === "VALID" ? (
+                                <LottieAnimation width="80px" height="70px" />
+                              ) : (
+                                <AiOutlineCloseCircle
+                                  size={16}
+                                  className="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-1.5"
+                                  onClick={() => setshowAccountTooltip(false)}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <div className="flex items-end gap-2">
                   {/* Confirm Account No. */}

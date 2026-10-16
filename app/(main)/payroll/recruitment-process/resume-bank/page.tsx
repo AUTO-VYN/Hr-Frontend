@@ -748,10 +748,10 @@ export default function ResumeBankPage() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
             Resume bank
           </h1>
-          <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-normal mt-1">
             Screen one dossier at a time.{" "}
-            <strong className="text-yellow-600 dark:text-yellow-400 font-bold">
-              {statusCounts.unscreened} resumes still unscreened.
+            <strong className="text-slate-500 dark:text-white font-normal">
+             <span className="font-semibold text-black">{statusCounts.unscreened}</span>  resumes still unscreened.
             </strong>
           </p>
         </div>
