@@ -288,7 +288,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
                           bg-white border-slate-200 text-slate-900 placeholder:text-slate-500
                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400
                           disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50
-                          dark:bg-[#0F1A2D] dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
+                          dark:bg-[#0F1A2D] dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 dark:[color-scheme:dark]
                           dark:focus-visible:ring-indigo-400/20 dark:disabled:bg-[#0B1220]`}
                           disabled={
                             constraints[column]?.disabled && disabled ? true : false

@@ -76,7 +76,7 @@ const AInput = React.forwardRef<HTMLInputElement, AInputProps>(
             id={inputId}
             className={clsx(
               "h-11 w-full text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-colors duration-150 px-3",
-              "dark:text-slate-100 dark:placeholder:text-slate-400/70",
+              "dark:text-slate-100 dark:placeholder:text-slate-400/70 dark:[color-scheme:dark]",
               icon && "pl-9",
               variantStyles[variant],
               error && "!border-red-500",

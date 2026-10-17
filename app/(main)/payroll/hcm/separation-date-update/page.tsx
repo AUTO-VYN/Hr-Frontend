@@ -97,6 +97,26 @@ export default function EmpLocTranshfr() {
     return `${dateStr}, ${timeStr}`;
   };
 
+  const getLocationLabel = (val: any) => {
+    if (!val && val !== 0) return "";
+    const matched = location?.find(
+      (item: any) =>
+        String(item?.value ?? item?.CODE ?? item?.loc_code) === String(val) ||
+        String(item?.label ?? item?.NAME ?? item?.loc_name) === String(val)
+    );
+    return matched?.label ?? matched?.NAME ?? matched?.loc_name ?? val;
+  };
+
+  const getDepartmentLabel = (val: any) => {
+    if (!val && val !== 0) return "";
+    const matched = department?.find(
+      (item: any) =>
+        String(item?.value ?? item?.CODE ?? item?.div_code ?? item?.DIVISION) === String(val) ||
+        String(item?.label ?? item?.NAME ?? item?.div_name) === String(val)
+    );
+    return matched?.label ?? matched?.NAME ?? matched?.div_name ?? val;
+  };
+
   function showSideAlert(message: string, type: "success" | "warning" | "error" | "info") {
     const Toast = Swal.mixin({
       toast: true,
@@ -662,7 +682,6 @@ export default function EmpLocTranshfr() {
                 placeholder="Loads after fetch"
                 handleInputChange={handleInputChange}
                 readOnly
-                disabled
                 className={inputClass}
               />
             </div>
@@ -674,11 +693,10 @@ export default function EmpLocTranshfr() {
                 ShortName={true}
                 name="Location"
                 type="text"
-                value={Formdata?.Location}
+                value={getLocationLabel(Formdata?.Location)}
                 placeholder="—"
                 handleInputChange={handleInputChange}
                 readOnly
-                disabled
                 className={inputClass}
               />
             </div>
@@ -693,11 +711,10 @@ export default function EmpLocTranshfr() {
                 ShortName={true}
                 name="department"
                 type="text"
-                value={Formdata?.department}
+                value={getDepartmentLabel(Formdata?.department)}
                 placeholder="—"
                 handleInputChange={handleInputChange}
                 readOnly
-                disabled
                 className={inputClass}
               />
             </div>
@@ -713,7 +730,6 @@ export default function EmpLocTranshfr() {
                 placeholder="—"
                 handleInputChange={handleInputChange}
                 readOnly
-                disabled
                 className={inputClass}
               />
             </div>

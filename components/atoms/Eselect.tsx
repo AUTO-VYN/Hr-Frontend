@@ -36,6 +36,7 @@ type Props = {
   placeholder?: string;
 
   rightElement?: React.ReactNode;
+  labelClassName?: string;
 };
 
 const Eselect = ({
@@ -56,6 +57,7 @@ const Eselect = ({
   style,
   placeholder = "Select",
   rightElement,
+  labelClassName,
 }: Props) => {
   const [inputValue, setInputValue] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
@@ -423,11 +425,16 @@ const Eselect = ({
   return (
     <div
       ref={containerRef}
-      className={cn("w-full font-medium relative space-y-1", disabled && "opacity-60")}
+      className={cn("w-full font-medium relative space-y-1.5", disabled && "opacity-60")}
       style={{ marginBottom: mbPx, ...style }}
     >
       {title ? (
-        <label className="flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300">
+        <label
+          className={cn(
+            "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 whitespace-nowrap",
+            labelClassName
+          )}
+        >
           {ShortName ? title : toTitleCase(title)}
           {redlabel ? <span className="text-red-500">{redlabel}</span> : null}
         </label>
@@ -530,10 +537,10 @@ const Eselect = ({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelect(opt)}
                   className={cn(
-                    "px-3 py-2 text-[13px] cursor-pointer",
+                    "px-3 py-2 text-[13px] cursor-pointer transition-colors",
                     "text-slate-700 dark:text-slate-200",
-                    "hover:bg-slate-50 dark:hover:bg-white/5",
-                    focusedIndex === index && "bg-slate-50 dark:bg-white/5"
+                    "hover:bg-slate-50 dark:hover:bg-blue-600 dark:hover:text-white",
+                    focusedIndex === index && "bg-slate-50 dark:bg-blue-600 dark:text-white"
                   )}
                 >
                   {opt.label}

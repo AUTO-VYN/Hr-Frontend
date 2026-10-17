@@ -207,7 +207,7 @@ export default function YNDynamicTable({
                             "border border-slate-200 bg-white",
                             "text-[15px] text-slate-800",
                             "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400",
-                            "dark:border-slate-700 dark:bg-[#0F1A2D] dark:text-slate-100",
+                            "dark:border-slate-700 dark:bg-[#0F1A2D] dark:text-slate-100 dark:[color-scheme:dark]",
                             "dark:focus:ring-indigo-400/25 dark:focus:border-indigo-400",
                             rule?.disabled ? "opacity-50 cursor-not-allowed bg-slate-50 dark:bg-[#0B1220]" : "",
                           ].filter(Boolean).join(" ")}
