@@ -102,7 +102,7 @@ const Ainput: FC<AinputProps> = ({
             "focus-visible:ring-4 focus-visible:ring-indigo-100 focus-visible:border-indigo-400",
             "disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed",
             // dark (✅ fixed)
-            "dark:bg-[#0F1A2D] dark:text-slate-100 dark:border-slate-700 dark:placeholder:text-slate-500",
+            "dark:bg-[#0F1A2D] dark:text-slate-100 dark:border-slate-700 dark:placeholder:text-slate-500 dark:[color-scheme:dark]",
             "dark:focus-visible:ring-indigo-500/20 dark:focus-visible:border-indigo-400",
             "dark:disabled:bg-[#0B1220] dark:disabled:text-slate-500",
             // date input: keep room + class for moving native icon to end

@@ -13,13 +13,15 @@ import {
   Pencil,
   Trash2,
   Moon,
+  Sun,
   Eraser,
   CheckCircle2,
 } from "lucide-react";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import DataTable from "@/components/Templates/reacttable";
-import SelectSearch from "@/components/atoms/Select";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import { AddMaster1, FindMaster } from "@/action/masters";
 
 export default function HrMasterPage() {
@@ -1251,91 +1253,99 @@ const handlesaveMisPunch = async () => {
 
             {/* Row 1: Mispunch Reason */}
             <div>
-              <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                Mispunch Reason <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <input
+              <Einput
+                title="Mispunch Reason"
+                name="Misc_Name"
                 type="text"
                 placeholder="e.g. Casual Leave (CL)"
                 value={formDataMisPunch.Misc_Name}
-                onChange={(e) => handleInputMisPunch("Misc_Name", e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                handleInputChange={handleInputMisPunch}
+                redlabel="*"
+                ShortName
+                className="!h-12 !text-base font-medium !rounded-xl"
+                labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
               />
             </div>
 
             {/* Row 2: Status, Present, Leave, Absent, In Time, Out Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Status
-                </label>
-                <input
+                <Einput
+                  title="Status"
+                  name="Misc_Abbr"
                   type="text"
                   placeholder="CL"
                   value={formDataMisPunch.Misc_Abbr}
-                  onChange={(e) => handleInputMisPunch("Misc_Abbr", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputMisPunch}
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <SelectSearch
+                <Eselect
                   title="Present Value"
                   name="Misc_Dtl1"
-                  options={PresentValueOptions}
-                  selectedValue={formDataMisPunch.Misc_Dtl1}
+                  option={PresentValueOptions}
+                  initialValue={formDataMisPunch.Misc_Dtl1}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <SelectSearch
+                <Eselect
                   title="Leave Value"
                   name="Misc_Dtl3"
-                  options={LeaveValueOptions}
-                  selectedValue={formDataMisPunch.Misc_Dtl3}
+                  option={LeaveValueOptions}
+                  initialValue={formDataMisPunch.Misc_Dtl3}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <SelectSearch
+                <Eselect
                   title="Absent Value"
                   name="Misc_Dtl2"
-                  options={AbsentValueOptions}
-                  selectedValue={formDataMisPunch.Misc_Dtl2}
+                  option={AbsentValueOptions}
+                  initialValue={formDataMisPunch.Misc_Dtl2}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <SelectSearch
+                <Eselect
                   title="In Time"
                   name="Misc_Num1"
-                  options={InTimeOptions}
-                  selectedValue={String(formDataMisPunch.Misc_Num1)}
+                  option={InTimeOptions}
+                  initialValue={String(formDataMisPunch.Misc_Num1)}
                   handleInputChange={handleInputMisPunch}
-                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <SelectSearch
+                <Eselect
                   title="Out Time"
                   name="MISC_NUM2"
-                  options={InTimeOptions}
-                  selectedValue={String(formDataMisPunch.MISC_NUM2)}
+                  option={InTimeOptions}
+                  initialValue={String(formDataMisPunch.MISC_NUM2)}
                   handleInputChange={handleInputMisPunch}
                   disabled={true}
-                  labelClass="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2"
-                  className="h-12 text-base font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-black"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
             </div>
@@ -1343,53 +1353,57 @@ const handlesaveMisPunch = async () => {
             {/* Row 3: Minimum Bal, Expiry Date, Days Front, Days Back */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Minimum Bal. Req.
-                </label>
-                <input
+                <Einput
+                  title="Minimum Bal. Req."
+                  name="Misc_Mob"
                   type="text"
                   placeholder="0"
                   value={formDataMisPunch.Misc_Mob}
-                  onChange={(e) => handleInputMisPunch("Misc_Mob", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputMisPunch}
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  A/C Expiry Date
-                </label>
-                <input
+                <Einput
+                  title="A/C Expiry Date"
+                  name="Exp_Date"
                   type="date"
                   value={formDataMisPunch.Exp_Date || ""}
-                  onChange={(e) => handleInputMisPunch("Exp_Date", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputMisPunch}
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Days Front
-                </label>
-                <input
+                <Einput
+                  title="Days Front"
+                  name="CC_Group"
                   type="number"
                   placeholder="0"
                   value={formDataMisPunch.CC_Group}
-                  onChange={(e) => handleInputMisPunch("CC_Group", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputMisPunch}
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div>
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Days Back
-                </label>
-                <input
+                <Einput
+                  title="Days Back"
+                  name="CC_Ledg"
                   type="number"
                   placeholder="0"
                   value={formDataMisPunch.CC_Ledg}
-                  onChange={(e) => handleInputMisPunch("CC_Ledg", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputMisPunch}
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
             </div>
@@ -1469,39 +1483,45 @@ const handlesaveMisPunch = async () => {
             {/* Inputs: Shift Name, Shift In Time, Shift Out Time, Night Shift Toggle */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
               <div className="sm:col-span-2 lg:col-span-5">
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Shift Name <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
+                <Einput
+                  title="Shift Name"
+                  name="Misc_Name"
                   type="text"
                   placeholder="E.G. K22"
                   value={formDataShift.Misc_Name}
-                  onChange={(e) => handleInputShift("Misc_Name", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputShift}
+                  redlabel="*"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div className="sm:col-span-1 lg:col-span-2">
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Shift In Time <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
+                <Einput
+                  title="Shift In Time"
+                  name="Misc_Add1"
                   type="time"
                   value={formDataShift.Misc_Add1}
-                  onChange={(e) => handleInputShift("Misc_Add1", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputShift}
+                  redlabel="*"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div className="sm:col-span-1 lg:col-span-2">
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Shift Out Time <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
+                <Einput
+                  title="Shift Out Time"
+                  name="Misc_Add2"
                   type="time"
                   value={formDataShift.Misc_Add2}
-                  onChange={(e) => handleInputShift("Misc_Add2", e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={handleInputShift}
+                  redlabel="*"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
@@ -1518,8 +1538,17 @@ const handlesaveMisPunch = async () => {
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
                   </label>
                   <span className="text-base font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                    <Moon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                    Night shift
+                    {Number(formDataShift.Misc_Num1) === 1 ? (
+                      <>
+                        <Moon className="h-4 w-4 text-indigo-400" />
+                        Night shift
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="h-4 w-4 text-amber-500" />
+                        Day shift
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
@@ -1618,27 +1647,35 @@ const handlesaveMisPunch = async () => {
             {/* Row 1: Holiday Description, Holiday Date, Half Day Switch */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
               <div className="sm:col-span-2 lg:col-span-6">
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Holiday Description <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
+                <Einput
+                  title="Holiday Description"
+                  name="Holiday_Name"
                   type="text"
                   placeholder="e.g. Independence Day"
                   value={formDataHoliday.Holiday_Name || ""}
-                  onChange={(e) => setFormDataHoliday((prev: any) => ({ ...prev, Holiday_Name: e.target.value }))}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:text-base text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={(name, val) =>
+                    setFormDataHoliday((prev: any) => ({ ...prev, [name]: val }))
+                  }
+                  redlabel="*"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
               <div className="sm:col-span-1 lg:col-span-3">
-                <label className="block text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Holiday Date <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
+                <Einput
+                  title="Holiday Date"
+                  name="Rec_Date"
                   type="date"
                   value={formDataHoliday.Rec_Date || ""}
-                  onChange={(e) => setFormDataHoliday((prev: any) => ({ ...prev, Rec_Date: e.target.value }))}
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-black text-slate-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  handleInputChange={(name, val) =>
+                    setFormDataHoliday((prev: any) => ({ ...prev, [name]: val }))
+                  }
+                  redlabel="*"
+                  ShortName
+                  className="!h-12 !text-base font-medium !rounded-xl"
+                  labelClassName="text-[13.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 />
               </div>
 
@@ -1659,7 +1696,7 @@ const handlesaveMisPunch = async () => {
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4F46E5]"></div>
                   </label>
                   <span className="text-base font-semibold text-slate-700 dark:text-slate-200">
-                    Half day
+                    {Number(formDataHoliday.Half_Holiday) === 1 ? "Half day" : "Full day"}
                   </span>
                 </div>
               </div>

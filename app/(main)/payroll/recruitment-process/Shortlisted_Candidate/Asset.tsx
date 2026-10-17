@@ -138,7 +138,7 @@ const Page: React.FC = () => {
                 <input
                   type="date"
                   name="Issue_Date"
-                  className="border-0 px-1.5 py-1.5 dark:bg-input  rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                  className="border-0 px-1.5 py-1.5 dark:bg-input dark:[color-scheme:dark] rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
                   value={currentRow.Issue_Date}
                   onChange={(e) =>
                     handleInputChange("Issue_Date", e.target.value)
@@ -148,7 +148,7 @@ const Page: React.FC = () => {
               <td>
                 <input
                   type="date"
-                  className="border-0 px-1.5 py-1.5 dark:bg-input  rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                  className="border-0 px-1.5 py-1.5 dark:bg-input dark:[color-scheme:dark] rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
                   name="Revoke_Date"
                   value={currentRow.Revoke_Date}
                   onChange={(e) =>
@@ -160,7 +160,7 @@ const Page: React.FC = () => {
                 <input
                   type="date"
                   name="Lost_Date"
-                  className="border-0 px-1.5 py-1.5 dark:bg-input  rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                  className="border-0 px-1.5 py-1.5 dark:bg-input dark:[color-scheme:dark] rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
                   value={currentRow.Lost_Date}
                   onChange={(e) =>
                     handleInputChange("Lost_Date", e.target.value)

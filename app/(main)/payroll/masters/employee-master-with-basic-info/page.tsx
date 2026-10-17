@@ -914,14 +914,14 @@ const fetchMasters = async () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-4 sm:p-6 lg:p-7 space-y-4 sm:space-y-5">
+    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 lg:p-7 space-y-4 sm:space-y-5 overflow-x-hidden">
       {/* Top Header & Tab Pills */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-3.5 sm:gap-4">
         <div>
-          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
+          <h1 className="text-[19px] sm:text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
             Employee master · basic info
           </h1>
-          <p className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1">
+          <p className="text-[12px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 break-words">
             Create a record with the minimum required fields, then complete it later in{" "}
             <Link
               href="/payroll/masters/Employee_Master"
@@ -935,41 +935,41 @@ const fetchMasters = async () => {
         </div>
 
         {/* Tab Buttons & Back Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full xl:w-auto shrink-0">
           <AButton
             type="button"
             variant="outline"
             size="sm"
             onClick={() => router.push("/dashboard")}
             icon={<ArrowLeft className="h-4 w-4" />}
-            className="h-[34px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] font-[550] px-3 py-2 cursor-pointer hover:bg-[#F1F5F9] dark:hover:bg-[#182235] whitespace-nowrap shadow-2xs transition-colors"
+            className="h-[34px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] text-[12.5px] font-[550] px-3 py-2 cursor-pointer hover:bg-[#F1F5F9] dark:hover:bg-[#182235] whitespace-nowrap shadow-2xs transition-colors shrink-0"
           >
             Back
           </AButton>
 
-          <div className="flex gap-[3px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[3px]">
+          <div className="grid grid-cols-2 sm:flex gap-[3px] bg-[#F8FAFC] dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] p-[3px] w-full sm:w-auto shrink-0">
             <button
               type="button"
               onClick={() => handleTabChange(1)}
-              className={`flex items-center gap-[7px] border-none rounded-[8px] text-[12.5px] font-[600] px-[15px] py-[8px] cursor-pointer whitespace-nowrap transition-all ${activeTab === 1
+              className={`flex items-center justify-center gap-1 sm:gap-[7px] border-none rounded-[8px] text-[11px] sm:text-[12.5px] font-[600] px-1.5 sm:px-[14px] py-[7px] sm:py-[8px] cursor-pointer whitespace-nowrap transition-all shrink-0 min-w-0 ${activeTab === 1
                 ? "bg-[#4F46E5] text-white shadow-xs"
                 : "bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
                 }`}
             >
-              <UserPlus className="h-4 w-4" />
-              <span>{isEditMode ? "Edit employee" : "Add employee"}</span>
+              <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">{isEditMode ? "Edit employee" : "Add employee"}</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleTabChange(2)}
-              className={`flex items-center gap-[7px] border-none rounded-[8px] text-[12.5px] font-[600] px-[15px] py-[8px] cursor-pointer whitespace-nowrap transition-all ${activeTab === 2
+              className={`flex items-center justify-center gap-1 sm:gap-[7px] border-none rounded-[8px] text-[11px] sm:text-[12.5px] font-[600] px-1.5 sm:px-[14px] py-[7px] sm:py-[8px] cursor-pointer whitespace-nowrap transition-all shrink-0 min-w-0 ${activeTab === 2
                 ? "bg-[#4F46E5] text-white shadow-xs"
                 : "bg-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-[#E7ECF3]"
                 }`}
             >
-              <Pencil className="h-4 w-4" />
-              <span>Update employee</span>
+              <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">Update employee</span>
             </button>
           </div>
         </div>
@@ -983,7 +983,7 @@ const fetchMasters = async () => {
           {/* Main Form Card */}
           <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden">
             {/* Header & Filled Counter */}
-            <div className="flex items-center gap-[10px] px-[18px] py-[13px] border-b border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+            <div className="flex items-center gap-[10px] px-3 sm:px-[18px] py-[13px] border-b border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
               <span className="grid place-items-center text-[#4F46E5] dark:text-[#8B84FF]">
                 <UserPlus className="h-4 w-4" />
               </span>
@@ -996,7 +996,7 @@ const fetchMasters = async () => {
             </div>
 
             {/* Form Fields Grid: 3 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3.5 p-[18px]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3.5 p-3 sm:p-[18px]">
               {/* Emp. Code: spans 2 columns */}
               <div className="md:col-span-2 flex flex-col gap-[5px]">
                 <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
@@ -1190,7 +1190,7 @@ const fetchMasters = async () => {
             </div>
 
             {/* Form Footer */}
-            <div className="flex flex-wrap items-center gap-2.5 px-[18px] py-[14px] border-t border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
+            <div className="flex flex-wrap items-center gap-2.5 px-3 sm:px-[18px] py-[14px] border-t border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524]">
               <div className="flex-1 min-w-[200px]">
                 {requiredFields.length === 0 ? (
                   <span className="text-[12px] font-normal text-[#10B981]">
@@ -1312,8 +1312,8 @@ const fetchMasters = async () => {
       {activeTab === 2 && (
         <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in-50 duration-200">
           {/* Top Search & Filter Bar */}
-          <div className="flex items-center gap-3 p-[14px_18px] border-b border-[#E2E8F0] dark:border-[#1F2937] flex-wrap">
-            <div className="flex items-center gap-[9px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-[#F8FAFC] dark:bg-[#0E1524] px-[11px] py-[7px] w-[300px]">
+          <div className="flex items-center gap-3 p-3 sm:p-[14px_18px] border-b border-[#E2E8F0] dark:border-[#1F2937] flex-wrap">
+            <div className="flex items-center gap-[9px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[10px] bg-[#F8FAFC] dark:bg-[#0E1524] px-[11px] py-[7px] w-full sm:w-[300px]">
               <Search className="h-4 w-4 text-[#64748B] dark:text-[#94A3B8] shrink-0" />
               <input
                 type="text"
