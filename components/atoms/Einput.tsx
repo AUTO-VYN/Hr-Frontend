@@ -78,15 +78,20 @@ const Ainput: FC<AinputProps> = ({
     <div className="w-full space-y-1.5">
       <label
         className={cn(
-          "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 whitespace-nowrap",
+          "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 max-w-full overflow-hidden",
           labelClassName,
         )}
         htmlFor={name}
       >
-        {ShortName ? title : toTitleCase(title)}
-        {redlabel ? <span className="text-red-500">{redlabel}</span> : null}
+        <span className="shrink-0">{ShortName ? title : toTitleCase(title)}</span>
+        {redlabel ? <span className="text-red-500 shrink-0">{redlabel}</span> : null}
         {errorMessage ? (
-          <span className="text-red-500 text-[11px]">{errorMessage}</span>
+          <span
+            className="text-red-500 text-[11px] truncate shrink min-w-0"
+            title={errorMessage}
+          >
+            {errorMessage}
+          </span>
         ) : null}
       </label>
 

@@ -1091,6 +1091,7 @@ function EmployeeMasterContent() {
         "other2", // docPaths[5]
         "other3", // docPaths[6]
         "other4", // docPaths[7]
+        "otherpdf", // docPaths[8]
       ];
 
       const mappedDocPaths: Record<string, string | null> = {};

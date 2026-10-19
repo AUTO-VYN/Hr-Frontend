@@ -399,3 +399,66 @@ input::placeholder {
     }
   }
 }
+
+/* ===== Ant Design Checkbox Dark Mode Fix ===== */
+/* Base box in dark mode */
+.dark .ant-checkbox,
+.dark .ant-checkbox-inner {
+  background-color: #0b1220 !important;
+  border-color: #475569 !important;
+}
+
+.dark .ant-checkbox:hover:not(.ant-checkbox-disabled),
+.dark .ant-checkbox:hover:not(.ant-checkbox-disabled) .ant-checkbox-inner {
+  border-color: #818cf8 !important;
+}
+
+/* Enabled & Checked in dark mode */
+.dark .ant-checkbox-checked,
+.dark .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+
+.dark .ant-checkbox-checked:after,
+.dark .ant-checkbox-checked::after,
+.dark .ant-checkbox-checked .ant-checkbox-inner:after,
+.dark .ant-checkbox-checked .ant-checkbox-inner::after,
+.dark .ant-checkbox-wrapper-checked .ant-checkbox:after,
+.dark .ant-checkbox-wrapper-checked .ant-checkbox::after {
+  border-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Disabled + Checked in dark mode (Verified, Linked with Aadhaar, etc.) */
+.dark .ant-checkbox-disabled.ant-checkbox-checked,
+.dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked,
+.dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.dark .ant-checkbox-disabled.ant-checkbox-checked:after,
+.dark .ant-checkbox-disabled.ant-checkbox-checked::after,
+.dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox:after,
+.dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox::after,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked:after,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked::after,
+.dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner:after,
+.dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked .ant-checkbox-inner:after,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Disabled + Unchecked in dark mode */
+.dark .ant-checkbox-disabled:not(.ant-checkbox-checked),
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox:not(.ant-checkbox-checked),
+.dark .ant-checkbox-disabled:not(.ant-checkbox-checked) .ant-checkbox-inner,
+.dark .ant-checkbox-wrapper-disabled .ant-checkbox:not(.ant-checkbox-checked) .ant-checkbox-inner {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}

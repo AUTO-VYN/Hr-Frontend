@@ -24,7 +24,8 @@ import {
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import DataTable from "@/components/Templates/reacttable";
-import SelectSearch from "@/components/atoms/Select";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import Button from "@/components/atoms/Button";
 import AButton from "@/components/atoms/Button";
 import { useRouter } from "next/navigation";
@@ -998,25 +999,29 @@ const fetchMasters = async () => {
             {/* Form Fields Grid: 3 columns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3.5 p-3 sm:p-[18px]">
               {/* Emp. Code: spans 2 columns */}
-              <div className="md:col-span-2 flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  Emp. code<span className="text-[#EF4444]"> *</span>
-                </span>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="AU19796361"
-                    value={formData.EMPCODE}
-                    readOnly={Boolean(formData.EMPCODE || isEditMode)}
-                    onChange={(e) => handleInputChange("EMPCODE", e.target.value)}
-                    className={`flex-1 min-w-0 h-[37px] px-2.5 py-2 rounded-[9px] border ${showValidationErrors && !formData.EMPCODE?.trim()
-                      ? "border-red-400 dark:border-red-500/80"
-                      : "border-[#E2E8F0] dark:border-[#1F2937]"
+              <div className="md:col-span-2">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1 min-w-0">
+                    <Einput
+                      title="Emp. code"
+                      redlabel="*"
+                      ShortName
+                      name="EMPCODE"
+                      type="text"
+                      placeholder="AU19796361"
+                      value={formData.EMPCODE}
+                      readOnly={Boolean(formData.EMPCODE || isEditMode)}
+                      handleInputChange={handleInputChange}
+                      className={`!h-[37px] !rounded-[9px] !text-[13px] ${showValidationErrors && !formData.EMPCODE?.trim()
+                        ? "!border-red-400 dark:!border-red-500/80"
+                        : "border-[#E2E8F0] dark:border-[#1F2937]"
                       } ${formData.EMPCODE
-                        ? "bg-[#F8FAFC] dark:bg-[#0E1524]/60 text-[#1E293B] dark:text-[#E7ECF3] cursor-not-allowed select-all"
+                        ? "!bg-[#F8FAFC] dark:!bg-[#0E1524]/60 text-[#1E293B] dark:text-[#E7ECF3] cursor-not-allowed select-all"
                         : "bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
-                      } text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]`}
-                  />
+                      }`}
+                      labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
+                    />
+                  </div>
                   {!isEditMode && (
                     <Button
                       type="button"
@@ -1026,7 +1031,7 @@ const fetchMasters = async () => {
                       disabled={isGeneratingCode}
                       loading={isGeneratingCode}
                       icon={!isGeneratingCode ? <Wand2 className="h-3.5 w-3.5 text-[#4F46E5] dark:text-[#8B84FF]" /> : undefined}
-                      className="shrink-0 flex items-center gap-1.5 border border-[#E2E8F0] dark:border-[#1F2937] bg-[#EEF2FF] hover:brightness-95 dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] text-[12px] font-[600] px-3.5 h-[37px] rounded-[9px] cursor-pointer whitespace-nowrap transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-none"
+                      className="shrink-0 flex items-center gap-1.5 border border-[#E2E8F0] dark:border-[#1F2937] bg-[#EEF2FF] hover:brightness-95 dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF] text-[12px] font-[600] px-3.5 h-[37px] rounded-[9px] cursor-pointer whitespace-nowrap transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-none mb-0"
                     >
                       Generate
                     </Button>
@@ -1035,156 +1040,169 @@ const fetchMasters = async () => {
               </div>
 
               {/* First Name: spans 1 column */}
-              <div className="flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  First name<span className="text-[#EF4444]"> *</span>
-                </span>
-                <input
+              <div>
+                <Einput
+                  title="First name"
+                  redlabel="*"
+                  ShortName
+                  name="EMPFIRSTNAME"
                   type="text"
                   placeholder="First name"
                   value={formData.EMPFIRSTNAME}
-                  onChange={(e) => handleInputChange("EMPFIRSTNAME", e.target.value)}
-                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] uppercase ${showValidationErrors && !formData.EMPFIRSTNAME?.trim()
-                    ? "border-red-400 dark:border-red-500/80"
+                  handleInputChange={handleInputChange}
+                  className={`!h-[37px] !rounded-[9px] !text-[13px] uppercase bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.EMPFIRSTNAME?.trim()
+                    ? "!border-red-400 dark:!border-red-500/80"
                     : "border-[#E2E8F0] dark:border-[#1F2937]"
-                    }`}
+                  }`}
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Last Name */}
-              <div className="flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  Last name<span className="text-[#EF4444]"> *</span>
-                </span>
-                <input
+              <div>
+                <Einput
+                  title="Last name"
+                  redlabel="*"
+                  ShortName
+                  name="EMPLASTNAME"
                   type="text"
                   placeholder="Last name"
                   value={formData.EMPLASTNAME}
-                  onChange={(e) => handleInputChange("EMPLASTNAME", e.target.value)}
-                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] uppercase ${showValidationErrors && !formData.EMPLASTNAME?.trim()
-                    ? "border-red-400 dark:border-red-500/80"
+                  handleInputChange={handleInputChange}
+                  className={`!h-[37px] !rounded-[9px] !text-[13px] uppercase bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.EMPLASTNAME?.trim()
+                    ? "!border-red-400 dark:border-red-500/80"
                     : "border-[#E2E8F0] dark:border-[#1F2937]"
-                    }`}
+                  }`}
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Designation */}
-              <div className="flex flex-col gap-[5px]">
-                <SelectSearch
+              <div>
+                <Eselect
                   title="Designation"
                   name="EMPLOYEEDESIGNATION"
-                  options={designationOptions}
-                  selectedValue={formData.EMPLOYEEDESIGNATION}
+                  option={designationOptions}
+                  initialValue={formData.EMPLOYEEDESIGNATION}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
-                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  ShortName
                   placeholder="Select"
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Location */}
-              <div className="flex flex-col gap-[5px]">
-                <SelectSearch
+              <div>
+                <Eselect
                   title="Location"
                   redlabel="*"
                   name="LOCATION"
-                  options={locationOptions}
-                  selectedValue={formData.LOCATION}
+                  option={locationOptions}
+                  initialValue={formData.LOCATION}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
-                  className={`h-[37px] text-[13px] rounded-[9px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.LOCATION
-                    ? "border-red-400 dark:border-red-500/80"
-                    : "border-[#E2E8F0] dark:border-[#1F2937]"
-                    }`}
+                  ShortName
                   placeholder="Select"
+                  className={`!h-[37px] !rounded-[9px] !text-[13px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.LOCATION
+                    ? "!border-red-400 dark:!border-red-500/80"
+                    : "border-[#E2E8F0] dark:border-[#1F2937]"
+                  }`}
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Email */}
-              <div className="flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  Email
-                </span>
-                <input
+              <div>
+                <Einput
+                  title="Email"
+                  ShortName
+                  name="EMAILID"
                   type="email"
                   placeholder="name@autovyn.com"
                   value={formData.EMAILID}
-                  onChange={(e) => handleInputChange("EMAILID", e.target.value)}
-                  className="w-full h-[37px] px-2.5 py-2 rounded-[9px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]"
+                  handleInputChange={handleInputChange}
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Mobile Number */}
-              <div className="flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  Mobile number<span className="text-[#EF4444]"> *</span>
-                </span>
-                <input
+              <div>
+                <Einput
+                  title="Mobile number"
+                  redlabel="*"
+                  ShortName
+                  name="MOBILE_NO"
                   type="tel"
                   placeholder="+91"
                   maxLength={10}
                   value={formData.MOBILE_NO}
-                  onChange={(e) => handleInputChange("MOBILE_NO", e.target.value)}
-                  className={`w-full h-[37px] px-2.5 py-2 rounded-[9px] border bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B] ${showValidationErrors && !formData.MOBILE_NO?.trim()
-                    ? "border-red-400 dark:border-red-500/80"
+                  handleInputChange={handleInputChange}
+                  className={`!h-[37px] !rounded-[9px] !text-[13px] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] ${showValidationErrors && !formData.MOBILE_NO?.trim()
+                    ? "!border-red-400 dark:!border-red-500/80"
                     : "border-[#E2E8F0] dark:border-[#1F2937]"
-                    }`}
+                  }`}
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* MSPIN */}
-              <div className="flex flex-col gap-[5px]">
-                <span className="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                  MSPIN
-                </span>
-                <input
+              <div>
+                <Einput
+                  title="MSPIN"
+                  ShortName
+                  name="MSPIN"
                   type="text"
                   placeholder="MSPIN"
                   value={formData.MSPIN}
-                  onChange={(e) => handleInputChange("MSPIN", e.target.value)}
-                  className="w-full h-[37px] px-2.5 py-2 rounded-[9px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3] text-[13px] placeholder:text-[#64748B]/70 outline-none focus:border-[#4F46E5] dark:focus:border-[#8B84FF] focus:ring-2 focus:ring-[#EEF2FF] dark:focus:ring-[#1E1B4B]"
+                  handleInputChange={handleInputChange}
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Reporting 1 */}
-              <div className="flex flex-col gap-[5px]">
-                <SelectSearch
+              <div>
+                <Eselect
                   title="Reporting 1"
                   name="REPORTING_1"
-                  options={employeeOptions}
-                  selectedValue={formData.REPORTING_1}
+                  option={employeeOptions}
+                  initialValue={formData.REPORTING_1}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
-                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  ShortName
                   placeholder="Select"
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Reporting 2 */}
-              <div className="flex flex-col gap-[5px]">
-                <SelectSearch
+              <div>
+                <Eselect
                   title="Reporting 2"
                   name="REPORTING_2"
-                  options={employeeOptions}
-                  selectedValue={formData.REPORTING_2}
+                  option={employeeOptions}
+                  initialValue={formData.REPORTING_2}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
-                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  ShortName
                   placeholder="Select"
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
 
               {/* Reporting 3 */}
-              <div className="flex flex-col gap-[5px]">
-                <SelectSearch
+              <div>
+                <Eselect
                   title="Reporting 3"
                   name="REPORTING_3"
-                  options={employeeOptions}
-                  selectedValue={formData.REPORTING_3}
+                  option={employeeOptions}
+                  initialValue={formData.REPORTING_3}
                   handleInputChange={handleInputChange}
-                  labelClass="text-[11.5px] font-[550] text-[#64748B] dark:text-[#94A3B8] mb-0"
-                  className="h-[37px] text-[13px] rounded-[9px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  ShortName
                   placeholder="Select"
+                  className="!h-[37px] !rounded-[9px] !text-[13px] border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#0E1524] text-[#1E293B] dark:text-[#E7ECF3]"
+                  labelClassName="!text-[11.5px] !font-[550] !text-[#64748B] dark:!text-[#94A3B8]"
                 />
               </div>
             </div>

@@ -306,6 +306,21 @@ export default function CreateJobOpeningPage() {
   // ============================================================================
 
   const handleSaveLead = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
     if (!formData.NAME.trim()) {
       showSideAlert("Candidate Name is mandatory. Please fill it out.", "warning");
       return;
@@ -386,6 +401,21 @@ export default function CreateJobOpeningPage() {
   };
 
   const handleUpdateLead = async () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return;
+    }
+
     if (!formData.NAME.trim()) {
       showSideAlert("Candidate Name is mandatory.", "warning");
       return;

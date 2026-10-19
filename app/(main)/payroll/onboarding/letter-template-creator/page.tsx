@@ -26,22 +26,80 @@ import {
   PenTool,
   FileText,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import AButton from "@/components/atoms/Button";
-import ATextArea from "@/components/atoms/textArea";
-import CustomRichEditor from "@/components/Templates/CustomRichEditor";
+import CustomRichEditor, {
+  CustomRichEditorRef,
+} from "@/components/Templates/CustomRichEditor";
+
+const DEFAULT_LETTER_CONTENT = `<p style="text-align: center; margin-bottom: 10px;"><strong>Experience Letter</strong></p>
+<p style="margin-bottom: 10px;">Date: {TODAYDATE}</p>
+<p style="margin-bottom: 10px;"><strong>To Whom It May Concern</strong></p>
+<p style="margin-bottom: 10px; text-align: justify; line-height: 1.6;">This is to certify that <strong>{EMPNAME}</strong> was employed with <strong>{COMPNAME}</strong> as a <strong>{EMPDESIGNATION}</strong> from <strong>{EMPJOINDATE}</strong> to <strong>{EMPENDDATE}</strong> in <strong>{EMPDEPARTMENT}</strong> department. During their tenure with us, He/She exhibited a strong work ethic, professionalism, and dedication to their role. They have been an asset to our team and have made valuable contributions to our organization. He/She consistently demonstrated reliability and a positive attitude. They worked well both independently and as part of a team, maintaining excellent relationships with colleagues and supervisors. We wish Him/Her all the best in their future endeavors and are confident that they will excel in any position they pursue.</p>
+<p style="margin-bottom: 2px;">Sincerely,</p>
+<p style="margin-bottom: 0;"><strong>{COMPNAME}</strong><br />GHRM</p>`;
+
+const formatToLetterStructure = (text: string) => {
+  if (!text || !text.trim()) return DEFAULT_LETTER_CONTENT;
+
+  const pCount = (text.match(/<p[\s>]/gi) || []).length;
+  const brCount = (text.match(/<br\s*\/?>/gi) || []).length;
+  if (pCount > 1 || brCount > 1) {
+    return text;
+  }
+
+  if (text.includes("Experience Letter") || text.includes("To Whom It May Concern")) {
+    let formatted = text
+      .replace(
+        /(^|>|\s*)Experience Letter(\s*<|\s+Date:)/i,
+        '<p style="text-align: center; margin-bottom: 10px;"><strong>Experience Letter</strong></p><p style="margin-bottom: 10px;">Date:'
+      )
+      .replace(
+        /\s*To Whom It May Concern:?\s*/i,
+        '</p><p style="margin-bottom: 10px;"><strong>To Whom It May Concern</strong></p><p style="margin-bottom: 10px; text-align: justify; line-height: 1.6;">'
+      )
+      .replace(
+        /\s*Sincerely,?\s*/i,
+        '</p><p style="margin-bottom: 2px;">Sincerely,</p><p style="margin-bottom: 0;">'
+      )
+      .replace(
+        /\s*GHRM/i,
+        '<br />GHRM'
+      );
+
+    if (!formatted.startsWith("<p")) {
+      formatted = `<p style="margin-bottom: 10px;">${formatted}</p>`;
+    }
+    return formatted;
+  }
+
+  if (text.includes("\n")) {
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => `<p style="margin-bottom: 10px;">${line}</p>`)
+      .join("");
+  }
+
+  return text;
+};
 
 export default function LetterCreatorPage() {
   const user = useCurrentUser();
   const componentRef = useRef<HTMLDivElement>(null);
+  const customRichEditorRef = useRef<CustomRichEditorRef>(null);
 
   const [formData, setFormData] = useState({
-    TEMPLATE_NAME: "",
-    CONTENT: "",
+    TEMPLATE_NAME: "Experience Letter",
+    CONTENT: DEFAULT_LETTER_CONTENT,
     KEYWORDS: "",
     SHOW_HEADER: 1,
   });
@@ -62,6 +120,8 @@ export default function LetterCreatorPage() {
   const [generatedLetter, setGeneratedLetter] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [currentEmployeeIndex, setCurrentEmployeeIndex] = useState<number>(0);
+  const employeeCacheRef = useRef<Record<string, any>>({});
 
   const headerFooterOptions = [
     { label: "Header & Footer : Yes", value: "1" },
@@ -157,12 +217,22 @@ export default function LetterCreatorPage() {
 
   // ── 4. Fetch Single Employee Details ──
   const empdataapi = useCallback(
-    async (codeToFetch?: string) => {
+    async (codeToFetch?: string | any) => {
       const compCode = getCompCode();
       if (!compCode) return;
       try {
-        const targetCode =
+        const rawCode =
           codeToFetch !== undefined ? codeToFetch : fetchdata.SRNO || "0003";
+        const targetCode = Array.isArray(rawCode)
+          ? rawCode[0] || "0003"
+          : rawCode;
+        if (!targetCode) return;
+
+        if (employeeCacheRef.current[String(targetCode)]) {
+          setSelectEmployeedata(employeeCacheRef.current[String(targetCode)]);
+          return;
+        }
+
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}/template/empdata`,
           { empcode: targetCode, compcode: compCode },
@@ -175,6 +245,7 @@ export default function LetterCreatorPage() {
         );
         if (response.data?.data && response.data.data.length > 0) {
           const emp = response.data.data[0];
+          employeeCacheRef.current[String(targetCode)] = emp;
           setSelectEmployeedata(emp);
         }
       } catch (error) {
@@ -234,7 +305,10 @@ export default function LetterCreatorPage() {
   const fetchTemplateContent = useCallback(async () => {
     const compCode = getCompCode();
     if (!compCode) return;
-    if (fetchdata.TEMPLATENAME === "" && fetchdata.SRNO === "") {
+    const targetSrNo = Array.isArray(fetchdata.SRNO)
+      ? fetchdata.SRNO[0] || ""
+      : fetchdata.SRNO;
+    if (fetchdata.TEMPLATENAME === "" && (!targetSrNo || targetSrNo === "")) {
       Swal.fire({
         icon: "warning",
         title: "Please Select",
@@ -246,7 +320,7 @@ export default function LetterCreatorPage() {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/template/FindTemplateContent`,
         {
-          SRNO: fetchdata.SRNO,
+          SRNO: targetSrNo,
           value: fetchdata.TEMPLATENAME,
           compcode: compCode,
         },
@@ -262,13 +336,17 @@ export default function LetterCreatorPage() {
         const savedHeader = templateData?.SHOW_HEADER ?? 1;
         setShowHeader(Number(savedHeader) === 1);
 
+        const formattedContent = formatToLetterStructure(
+          templateData?.CONTENT || ""
+        );
+
         setFormData((prev) => ({
           ...prev,
           TEMPLATE_NAME:
             templateData?.Label ||
             templateData?.TEMPLATE_NAME ||
             prev.TEMPLATE_NAME,
-          CONTENT: templateData.CONTENT || "",
+          CONTENT: formattedContent,
           KEYWORDS: templateData.KEYWORDS || prev.KEYWORDS,
           SHOW_HEADER: Number(savedHeader),
         }));
@@ -329,7 +407,7 @@ export default function LetterCreatorPage() {
 
   // ── 8. Generate Letter Logic (exact matching reference) ──
   const generateLetter = useCallback(() => {
-    let content = formData.CONTENT || "";
+    let content = formatToLetterStructure(formData.CONTENT || "");
     const placeholderArray = (formData.KEYWORDS || "").split(",");
     const placeholdersMap: Record<string, string> = {};
 
@@ -391,6 +469,12 @@ export default function LetterCreatorPage() {
         : SelectEmployeedata?.CTC || "",
       PROBATION_PERIOD: SelectEmployeedata?.PROBATION_PERIOD || "6 Months",
       EMPJOINDATE: formatDateDDMMYYYY(SelectEmployeedata?.EMPJOINDATE),
+      EMPLASTDATE: formatDateDDMMYYYY(
+        SelectEmployeedata?.EMPLASTDATE || SelectEmployeedata?.EMPENDDATE,
+      ),
+      EMPENDDATE: formatDateDDMMYYYY(
+        SelectEmployeedata?.EMPENDDATE || SelectEmployeedata?.EMPLASTDATE,
+      ),
       COMPNAME: company?.Comp_Name,
       TODAYDATE: formatDateDDMMYYYY(new Date()),
       COMPCODE:
@@ -432,7 +516,13 @@ export default function LetterCreatorPage() {
       );
     });
 
-    setGeneratedLetter(content || "");
+    // Clean up excessive leading spacing and empty tags so all templates have proper tight spacing
+    const cleanedContent = (content || "")
+      .replace(/^(\s*<p>(&nbsp;|\s|<br\s*\/?>)*<\/p>|\s*<div>(&nbsp;|\s|<br\s*\/?>)*<\/div>|\s*<br\s*\/?>|\s*&nbsp;|\s*[\r\n])+/gi, "")
+      .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
+      .replace(/(<p>(&nbsp;|\s|<br\s*\/?>)*<\/p>\s*){2,}/gi, "<p><br></p>");
+
+    setGeneratedLetter(cleanedContent);
   }, [
     formData.CONTENT,
     formData.KEYWORDS,
@@ -471,26 +561,36 @@ export default function LetterCreatorPage() {
       ...prevData,
       [name]: value,
     }));
-    if (name === "SRNO" && value) {
-      empdataapi(value);
+    if (name === "SRNO") {
+      setCurrentEmployeeIndex(0);
+      if (value) {
+        const firstCode = Array.isArray(value) ? value[0] : value;
+        if (firstCode) {
+          empdataapi(firstCode);
+        }
+      }
     }
   };
 
   const handleInsertToken = (tokenKey: string) => {
-    const tokenTag = `{${tokenKey}}`;
-    setFormData((prev) => {
-      const current = prev.CONTENT || "";
-      return {
-        ...prev,
-        CONTENT: current ? `${current} ${tokenTag}` : tokenTag,
-      };
-    });
+    if (customRichEditorRef.current?.insertToken) {
+      customRichEditorRef.current.insertToken(tokenKey);
+    } else {
+      const tokenTag = `{${tokenKey}}`;
+      setFormData((prev) => {
+        const current = prev.CONTENT || "";
+        return {
+          ...prev,
+          CONTENT: current ? `${current} ${tokenTag}` : tokenTag,
+        };
+      });
+    }
   };
 
   const refresh = () => {
     setFormData({
-      TEMPLATE_NAME: " ",
-      CONTENT: "",
+      TEMPLATE_NAME: "Experience Letter",
+      CONTENT: DEFAULT_LETTER_CONTENT,
       KEYWORDS: " ",
       SHOW_HEADER: 1,
     });
@@ -880,6 +980,88 @@ export default function LetterCreatorPage() {
     return Math.max(1, Math.ceil(wordCount / 350));
   }, [wordCount]);
 
+  const selectedEmployeeCodes = useMemo(() => {
+    if (!fetchdata.SRNO) return [];
+    if (Array.isArray(fetchdata.SRNO)) return fetchdata.SRNO.filter(Boolean);
+    return [String(fetchdata.SRNO)].filter(Boolean);
+  }, [fetchdata.SRNO]);
+
+  const employeeMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (Array.isArray(employeedata)) {
+      employeedata.forEach((emp: any) => {
+        const val =
+          emp?.value ??
+          emp?.EMPCODE ??
+          emp?.empcode ??
+          emp?.SRNO ??
+          emp?.srno ??
+          emp?.id ??
+          "";
+        if (val) {
+          map.set(String(val), emp);
+        }
+      });
+    }
+    return map;
+  }, [employeedata]);
+
+  useEffect(() => {
+    if (
+      currentEmployeeIndex >= selectedEmployeeCodes.length &&
+      selectedEmployeeCodes.length > 0
+    ) {
+      setCurrentEmployeeIndex(0);
+    }
+  }, [selectedEmployeeCodes.length, currentEmployeeIndex]);
+
+  const currentEmployeeCode = useMemo(() => {
+    if (selectedEmployeeCodes.length === 0) return "";
+    return (
+      selectedEmployeeCodes[currentEmployeeIndex] ||
+      selectedEmployeeCodes[0] ||
+      ""
+    );
+  }, [selectedEmployeeCodes, currentEmployeeIndex]);
+
+  useEffect(() => {
+    if (currentEmployeeCode) {
+      empdataapi(currentEmployeeCode);
+    }
+  }, [currentEmployeeCode, empdataapi]);
+
+  const handlePrevEmployee = () => {
+    if (selectedEmployeeCodes.length <= 1) return;
+    setCurrentEmployeeIndex((prev) =>
+      prev > 0 ? prev - 1 : selectedEmployeeCodes.length - 1
+    );
+  };
+
+  const handleNextEmployee = () => {
+    if (selectedEmployeeCodes.length <= 1) return;
+    setCurrentEmployeeIndex((prev) =>
+      prev < selectedEmployeeCodes.length - 1 ? prev + 1 : 0
+    );
+  };
+
+  const currentEmpData = useMemo(() => {
+    if (!currentEmployeeCode) return null;
+    return employeeMap.get(String(currentEmployeeCode));
+  }, [employeeMap, currentEmployeeCode]);
+
+  const currentEmpDisplayName = useMemo(() => {
+    if (!currentEmployeeCode) return "";
+    return (
+      currentEmpData?.EMPNAME ||
+      currentEmpData?.empname ||
+      currentEmpData?.NAME ||
+      currentEmpData?.name ||
+      SelectEmployeedata?.EMPNAME ||
+      SelectEmployeedata?.NAME ||
+      ""
+    );
+  }, [currentEmpData, SelectEmployeedata, currentEmployeeCode]);
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-24">
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -975,6 +1157,7 @@ export default function LetterCreatorPage() {
                   placeholder="Select employee data..."
                   ShortName
                   className="h-[32px]"
+                  checkbox
                 />
               </div>
 
@@ -1065,9 +1248,15 @@ export default function LetterCreatorPage() {
                   <AButton
                     key={token.key}
                     type="button"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", `{${token.key}}`);
+                      e.dataTransfer.setData("application/x-token", token.key);
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
                     onClick={() => handleInsertToken(token.key)}
-                    title={`Click to insert {${token.key}}`}
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-pointer select-none active:scale-95 ${
+                    title={`Click or drag to insert {${token.key}}`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-grab active:cursor-grabbing select-none active:scale-95 ${
                       isUsed
                         ? "bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
                         : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300"
@@ -1098,6 +1287,7 @@ export default function LetterCreatorPage() {
             {/* CustomRichEditor */}
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/80">
               <CustomRichEditor
+                ref={customRichEditorRef}
                 value={formData.CONTENT}
                 onChange={handleContentChange}
                 placeholder="Enter letter content here..."
@@ -1146,7 +1336,7 @@ export default function LetterCreatorPage() {
               </div>
             </div>
 
-            {/* KEYWORDS ATextArea Field (from reference code) */}
+            {/* KEYWORDS / Variables (Draggable & Clickable) */}
             <div className="pt-3 pb-2">
               <label
                 htmlFor="KEYWORDS"
@@ -1154,13 +1344,34 @@ export default function LetterCreatorPage() {
               >
                 Example (Title:Mr/Mrs, Name:Himanshu, ...):
               </label>
-              <ATextArea
-                rows={4}
-                name="KEYWORDS"
-                handleInputChange={handleSelectChange}
-                value={formData.KEYWORDS}
-                className="px-3.5 py-3 dark:bg-slate-900 rounded-xl text-sm sm:text-base font-normal leading-relaxed border border-slate-200 dark:border-slate-700 shadow-xs focus:outline-none focus:ring w-full transition-all min-h-[110px]"
-              />
+              <div className="px-3.5 py-3 bg-white dark:bg-slate-900 rounded-xl text-sm sm:text-base font-normal leading-relaxed border border-slate-200 dark:border-slate-700 shadow-xs w-full transition-all min-h-[110px] max-h-[170px] overflow-y-auto select-none">
+                {((formData.KEYWORDS || "").trim() || SuggestionToken.join(", "))
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+                  .map((token, index, arr) => (
+                    <React.Fragment key={`${token}-${index}`}>
+                      <span
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", `{${token}}`);
+                          e.dataTransfer.setData("application/x-token", token);
+                          e.dataTransfer.effectAllowed = "copy";
+                        }}
+                        onClick={() => handleInsertToken(token)}
+                        className="inline-block cursor-grab active:cursor-grabbing hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded px-1 -mx-0.5 transition-colors text-slate-800 dark:text-slate-200 font-medium"
+                        title={`Click or drag to insert {${token}}`}
+                      >
+                        {token}
+                      </span>
+                      {index < arr.length - 1 && (
+                        <span className="text-slate-400 dark:text-slate-500 mr-1.5">
+                          ,
+                        </span>
+                      )}
+                    </React.Fragment>
+                  ))}
+              </div>
             </div>
 
             {/* Preview Spacing Controls */}
@@ -1220,7 +1431,7 @@ export default function LetterCreatorPage() {
                       id={`preview-${key}`}
                       type="range"
                       min={0}
-                      max={120}
+                      max={60}
                       step={1}
                       value={previewSpacing[key]}
                       onChange={(e) =>
@@ -1228,13 +1439,87 @@ export default function LetterCreatorPage() {
                       }
                       className="w-full cursor-pointer accent-indigo-600"
                     />
+
+                    <div className="flex justify-between items-center text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 px-0.5 select-none tabular-nums">
+                      <span>0</span>
+                      <span>20</span>
+                      <span>40</span>
+                      <span>60 px</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Generated Letter Container matching componentRef */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0E1524] p-2 sm:p-5 overflow-hidden">
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0E1524] p-2 sm:p-5 overflow-hidden space-y-3">
+              {/* Template Navigation Toolbar (matching Screenshot 2 with current app styling) */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 w-full">
+                  {/* Previous Button */}
+                  <button
+                    type="button"
+                    onClick={handlePrevEmployee}
+                    disabled={selectedEmployeeCodes.length <= 1}
+                    className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs shrink-0"
+                    title="Previous employee template"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {/* Center Template Selector */}
+                  <div className="relative flex-1 min-w-0">
+                    <div className="flex items-center justify-between h-10 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:border-indigo-500 transition-colors cursor-pointer text-xs sm:text-sm font-semibold shadow-xs">
+                      <span className="truncate pr-2">
+                        {selectedEmployeeCodes.length > 0
+                          ? `PRINT ${currentEmployeeIndex + 1} / ${selectedEmployeeCodes.length} — ${currentEmployeeCode} ${currentEmpDisplayName}`
+                          : "No employee selected"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+                    </div>
+                    {selectedEmployeeCodes.length > 0 && (
+                      <select
+                        value={currentEmployeeIndex}
+                        onChange={(e) => setCurrentEmployeeIndex(Number(e.target.value))}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        title="Select employee to preview"
+                      >
+                        {selectedEmployeeCodes.slice(0, 500).map((code: any, idx: number) => {
+                          const emp = employeeMap.get(String(code));
+                          const name = emp?.EMPNAME || emp?.name || emp?.label || code;
+                          return (
+                            <option key={`${code}-${idx}`} value={idx} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white py-1">
+                              {idx + 1} / {selectedEmployeeCodes.length} — {code} {name}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    type="button"
+                    onClick={handleNextEmployee}
+                    disabled={selectedEmployeeCodes.length <= 1}
+                    className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs shrink-0"
+                    title="Next employee template"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Sub-header info bar matching Screenshot 2 */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[11px] sm:text-xs text-slate-600 dark:text-slate-300">
+                  <span className="font-medium">
+                    {pageCount} page · same layout as print and PDF
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">
+                    {showHeader ? "Header and Footer on Every Page" : "No Header & Footer"}
+                  </span>
+                </div>
+              </div>
+
               <div
                 ref={componentRef}
                 id="generatedLetter"
@@ -1245,15 +1530,14 @@ export default function LetterCreatorPage() {
                   paddingLeft: `${previewSpacing.left}px`,
                   paddingRight: `${previewSpacing.right}px`,
                   fontSize: "14px",
-                  lineHeight: "1.8",
+                  lineHeight: "1.6",
                   overflowY: "auto",
-                  whiteSpace: "pre-wrap",
                   minHeight: "700px",
                 }}
               >
                 {showHeader && (
                   <div
-                    className="mb-4 w-full min-w-0"
+                    className="mb-2.5 w-full min-w-0"
                     style={{ width: "100%" }}
                   >
                     <div
@@ -1348,7 +1632,8 @@ export default function LetterCreatorPage() {
                 )}
                 <div
                   dangerouslySetInnerHTML={{ __html: generatedLetter }}
-                  className="mt-8 min-w-0 break-words overflow-wrap-anywhere"
+                  className="mt-2.5 min-w-0 break-words overflow-wrap-anywhere [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_div]:mb-2.5 [&_div:last-child]:mb-0"
+                  style={{ lineHeight: "1.6" }}
                 />
               </div>
             </div>

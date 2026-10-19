@@ -2291,8 +2291,8 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
                   value={formData.EmpMst?.PASSPORTNO}
                   handleInputChange={handleInputChange}
                   errorMessage={
-                    errors.PASSPORTNO
-                      ? "Invalid Passport Number (Format: A1234567)"
+                    errors.PASSPORTNO && formData.EmpMst?.PASSPORTNO
+                      ? "Invalid Passport No."
                       : ""
                   }
                   redlabel={isMandatory("PASSPORTNO") ? "*" : ""}
@@ -2676,6 +2676,28 @@ const MobileNumberpreviousDeatils = async (mobile: string) => {
       </Dialog>
 
       <HashloaderComponent isLoading={isLoading} />
+
+      <style jsx global>{`
+        /* Fix checkbox tick mark in dark mode */
+        .dark .ant-checkbox-checked::after,
+        .dark .ant-checkbox-checked:after,
+        .dark .ant-checkbox-disabled.ant-checkbox-checked::after,
+        .dark .ant-checkbox-disabled.ant-checkbox-checked:after,
+        .dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox::after,
+        .dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox:after,
+        .dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after,
+        .dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner:after {
+          border-color: #ffffff !important;
+          opacity: 1 !important;
+        }
+
+        .dark .ant-checkbox-disabled.ant-checkbox-checked,
+        .dark .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked .ant-checkbox,
+        .dark .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
+          background-color: rgba(255, 255, 255, 0.16) !important;
+          border-color: rgba(255, 255, 255, 0.35) !important;
+        }
+      `}</style>
     </div>
   );
 };

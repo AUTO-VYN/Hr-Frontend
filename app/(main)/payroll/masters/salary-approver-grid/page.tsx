@@ -21,7 +21,8 @@ import { useToast } from "@/app/hooks/useToast";
 import useExcelDownload from "@/app/hooks/excel-download";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import ServiceTablePagination from "@/components/Templates/reacttable";
-import SelectSearch from "@/components/atoms/Select";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import {
   Dialog,
   DialogContent,
@@ -1011,60 +1012,59 @@ export default function SalaryApproverGridPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-end">
           {/* DATE FROM */}
           <div className="md:col-span-3 lg:col-span-2">
-            <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              DATE FROM
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                name="DATE_FROM"
-                value={dates.DATE_FROM}
-                onChange={(e) => handleDateChange("DATE_FROM", e.target.value)}
-                className="w-full h-11 sm:h-12 px-3.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-[15px] font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA]"
-              />
-            </div>
+            <Einput
+              type="date"
+              title="DATE FROM"
+              name="DATE_FROM"
+              value={dates.DATE_FROM}
+              handleInputChange={handleDateChange}
+              ShortName
+              className="!h-11 sm:!h-12 border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-[15px] font-medium text-slate-800 dark:text-slate-100"
+              labelClassName="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+            />
           </div>
 
           {/* DATE TO */}
           <div className="md:col-span-3 lg:col-span-2">
-            <label className="block text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              DATE TO
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                name="DATE_TO"
-                value={dates.DATE_TO}
-                onChange={(e) => handleDateChange("DATE_TO", e.target.value)}
-                className="w-full h-11 sm:h-12 px-3.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-[15px] font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4338CA]"
-              />
-            </div>
+            <Einput
+              type="date"
+              title="DATE TO"
+              name="DATE_TO"
+              value={dates.DATE_TO}
+              handleInputChange={handleDateChange}
+              ShortName
+              className="!h-11 sm:!h-12 border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-[15px] font-medium text-slate-800 dark:text-slate-100"
+              labelClassName="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+            />
           </div>
 
           {/* BRANCH */}
           <div className="md:col-span-3 lg:col-span-3">
-            <SelectSearch
+            <Eselect
               title="BRANCH"
-              options={branch}
               name="branch"
+              option={branch}
+              initialValue={dates.branch?.toString()}
               handleInputChange={handleDateChange}
-              selectedValue={dates.branch?.toString()}
-              isSelectAll={true}
-              className="h-11 sm:h-12 border-slate-300 dark:border-slate-600 text-base sm:text-lg rounded-xl font-medium"
-              labelClass="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+              ShortName
+              placeholder="Select branch"
+              className="!h-11 sm:!h-12 border-slate-300 dark:border-slate-600 rounded-xl font-medium"
+              labelClassName="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
             />
           </div>
 
           {/* STATUS */}
           <div className="md:col-span-3 lg:col-span-3">
-            <SelectSearch
+            <Eselect
               title="STATUS"
-              options={StatusOptions}
               name="status"
+              option={StatusOptions}
+              initialValue={dates.status?.toString()}
               handleInputChange={handleDateChange}
-              selectedValue={dates.status?.toString()}
-              className="h-11 sm:h-12 border-slate-300 dark:border-slate-600 text-lg sm:text-xl rounded-xl font-medium"
-              labelClass="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+              ShortName
+              placeholder="Select status"
+              className="!h-11 sm:!h-12 border-slate-300 dark:border-slate-600 rounded-xl font-medium"
+              labelClassName="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
             />
           </div>
 
@@ -1099,12 +1099,15 @@ export default function SalaryApproverGridPage() {
         <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-30 w-auto bg-white dark:bg-[#0B1220] border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-4 sm:px-8 py-3.5 sm:py-4 animate-in slide-in-from-bottom duration-200 transition-[left] duration-150 ease-in-out">
           <div className="max-w-[1700px] mx-auto flex flex-col sm:flex-row items-center gap-3.5">
             <div className="flex-1 w-full">
-              <input
+              <Einput
                 type="text"
+                title=""
+                name="remark"
                 placeholder="Remark (applies to all selected records)"
                 value={remark}
-                onChange={(e) => setRemark(e.target.value)}
-                className="w-full h-12 px-4 sm:px-5 text-[15px] border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#4338CA] shadow-2xs font-medium"
+                handleInputChange={(_, val) => setRemark(val)}
+                labelClassName="hidden"
+                className="!h-12 px-4 sm:px-5 text-[15px] border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
               />
             </div>
 
@@ -1335,9 +1338,11 @@ export default function SalaryApproverGridPage() {
               </div>
             </div>
 
-            <div className="text-center text-sm font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-800/80">
-              Please review the employee salary details carefully before approving or rejecting.
-            </div>
+            {isPending && (
+              <div className="text-center text-sm font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-800/80">
+                Please review the employee salary details carefully before approving or rejecting.
+              </div>
+            )}
 
             {/* Cancel / Close Button */}
             <div className="flex justify-end pt-1">

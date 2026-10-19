@@ -25,7 +25,6 @@ import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Eselect from "@/components/atoms/Eselect";
-import SelectSearch from "@/components/atoms/Select";
 import { useFormData } from "../Employee_Master/Context/FormDataContext";
 import { Button } from "@/components/ui/button";
 import { FaEllipsisH } from "react-icons/fa";
@@ -2731,22 +2730,22 @@ const SalaryDetails = ({
 
             <div className={cardBodyClass}>
               <div className={fieldGridClass}>
-                <SelectSearch
+                <Eselect
                   title="PF (Yes/No)"
                   name="PFNO"
-                  options={PFYN}
-                  selectedValue={formData?.EmpMst?.PFNO?.toString()}
+                  option={PFYN}
+                  initialValue={formData?.EmpMst?.PFNO?.toString()}
                   handleInputChange={handleInputChange}
                   ShortName={true}
                   disabled={disapleForSalary}
                   redlabel={isMandatory("PFNO") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="PF%"
                   name="pfper"
-                  options={PFPERCoption}
-                  selectedValue={
+                  option={PFPERCoption}
+                  initialValue={
                     formData?.EmpMst?.pfper
                       ? formData?.EmpMst?.pfper?.toString()
                       : ""
@@ -2779,11 +2778,11 @@ const SalaryDetails = ({
                   redlabel={isMandatory("pfnumber") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="ESIC (Yes/No)"
-                  options={yesno}
+                  option={yesno}
                   name={"ESINO"}
-                  selectedValue={formData?.EmpMst?.ESINO?.toString()}
+                  initialValue={formData?.EmpMst?.ESINO?.toString()}
                   handleInputChange={handleInputChange}
                   ShortName={true}
                   disabled={disapleForSalary}
@@ -2823,48 +2822,48 @@ const SalaryDetails = ({
                   redlabel={isMandatory("UAN_No") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="LWF"
                   name="LWFNO"
-                  options={LWFYESNO}
-                  selectedValue={formData?.EmpMst?.LWFNO?.toString()}
+                  option={LWFYESNO}
+                  initialValue={formData?.EmpMst?.LWFNO?.toString()}
                   handleInputChange={handleInputChange}
                   ShortName={true}
                   disabled={disapleForSalary}
                   redlabel={isMandatory("LWFNO") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Weekly Off:"
-                  options={WEEKLYOFF}
+                  option={WEEKLYOFF}
                   name="WEEKLYOFF"
-                  selectedValue={formData?.EmpMst?.WEEKLYOFF?.toString()}
+                  initialValue={formData?.EmpMst?.WEEKLYOFF?.toString()}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("WEEKLYOFF") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Bonus"
                   name="BONUS"
-                  selectedValue={formData?.EmpMst?.BONUS?.toString()}
-                  options={BONUS}
+                  initialValue={formData?.EmpMst?.BONUS?.toString()}
+                  option={BONUS}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("BONUS") ? "*" : ""}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Professional Tax"
                   name="pro_tax"
-                  options={ProTax}
-                  selectedValue={formData?.EmpMst?.pro_tax?.toString()}
+                  option={ProTax}
+                  initialValue={formData?.EmpMst?.pro_tax?.toString()}
                   handleInputChange={handleInputChange}
                   disabled={disapleForSalary}
                   redlabel={isMandatory("pro_tax") ? "*" : ""}
                 />
 
-                <SelectSearch
-                  selectedValue={formData?.EmpMst?.EMP_SHIFT}
-                  options={EmpShift}
+                <Eselect
+                  initialValue={formData?.EmpMst?.EMP_SHIFT}
+                  option={EmpShift}
                   title="EMP. Shift"
                   name="EMP_SHIFT"
                   handleInputChange={handleInputChange}
@@ -2882,9 +2881,9 @@ const SalaryDetails = ({
                   redlabel={isMandatory("LIN_NO") ? "*" : ""}
                 />
 
-                <SelectSearch
-                  selectedValue={formData?.EmpMst?.GRADE}
-                  options={GRADEoption}
+                <Eselect
+                  initialValue={formData?.EmpMst?.GRADE}
+                  option={GRADEoption}
                   title="Grade"
                   name="GRADE"
                   handleInputChange={handleInputChange}
@@ -2892,21 +2891,21 @@ const SalaryDetails = ({
                   ShortName
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Salary View at Region:"
                   name="Sal_Region"
-                  options={SalRegionoption}
-                  selectedValue={formData?.EmpMst?.Sal_Region?.toString()}
+                  option={SalRegionoption}
+                  initialValue={formData?.EmpMst?.Sal_Region?.toString()}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("Sal_Region") ? "*" : ""}
                 />
 
                 <div className="md:col-span-2">
-                  <SelectSearch
+                  <Eselect
                     title="Employee Punch Type:"
                     name="Punch_Type"
-                    options={PunchType}
-                    selectedValue={formData?.EmpMst?.Punch_Type?.toString()}
+                    option={PunchType}
+                    initialValue={formData?.EmpMst?.Punch_Type?.toString()}
                     handleInputChange={handleInputChange}
                     redlabel={isMandatory("Punch_Type") ? "*" : ""}
                   />
@@ -2925,9 +2924,9 @@ const SalaryDetails = ({
                 )}
 
                 {user?.Comp_Code?.trim()?.toUpperCase() === "DDMM-25" && (
-                  <SelectSearch
-                    selectedValue={formData?.EmpMst?.DD_CLUB}
-                    options={DDCLUBOPTION}
+                  <Eselect
+                    initialValue={formData?.EmpMst?.DD_CLUB}
+                    option={DDCLUBOPTION}
                     title="DD CLUB"
                     name="DD_CLUB"
                     handleInputChange={handleInputChange}
@@ -2991,11 +2990,11 @@ const SalaryDetails = ({
             <div className={cardBodyClass}>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-3">
                 {/* Row 1 */}
-                <SelectSearch
+                <Eselect
                   title="Bank Name:"
                   name="BANKNAME"
-                  options={Bankoption}
-                  selectedValue={formData?.EmpMst?.BANKNAME}
+                  option={Bankoption}
+                  initialValue={formData?.EmpMst?.BANKNAME}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("BANKNAME") ? "*" : ""}
                   disabled={isBankLocked}
@@ -3237,22 +3236,22 @@ const SalaryDetails = ({
                   disabled={isBankLocked}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Account Type:"
                   name="ACCOUNT_TYPE"
-                  options={ACCOUNT_TYPE}
-                  selectedValue={formData?.EmpMst?.ACCOUNT_TYPE}
+                  option={ACCOUNT_TYPE}
+                  initialValue={formData?.EmpMst?.ACCOUNT_TYPE}
                   handleInputChange={handleInputChange}
                   redlabel={isMandatory("ACCOUNT_TYPE") ? "*" : ""}
                   disabled={isBankLocked}
                 />
 
-                <SelectSearch
+                <Eselect
                   title="Payment Mode:"
                   name="PAYMENTMODE"
                   handleInputChange={handleInputChange}
-                  selectedValue={formData?.EmpMst?.PAYMENTMODE}
-                  options={PmtMode}
+                  initialValue={formData?.EmpMst?.PAYMENTMODE}
+                  option={PmtMode}
                   redlabel={isMandatory("PAYMENTMODE") ? "*" : ""}
                   disabled={isBankLocked}
                 />
@@ -3346,21 +3345,17 @@ const SalaryDetails = ({
                   {/* Effective from & Monthly Gross */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div>
-                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                        EFFECTIVE FROM
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          name="Effective_date"
-                          value={formData1?.Effective_date || ""}
-                          onChange={(e) =>
-                            handleInputChange("Effective_date", e.target.value)
-                          }
-                          disabled={isDailyWagesActive}
-                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
-                        />
-                      </div>
+                      <Einput
+                        type="date"
+                        title="EFFECTIVE FROM"
+                        ShortName={true}
+                        name="Effective_date"
+                        value={formData1?.Effective_date || ""}
+                        handleInputChange={handleInputChange}
+                        disabled={isDailyWagesActive}
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
+                      />
                     </div>
 
                     <div>
@@ -3481,66 +3476,58 @@ const SalaryDetails = ({
                   {/* 4 Bottom Inputs Grid */}
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        EMP SALARY
-                      </label>
-                      <input
+                      <Einput
                         type="number"
+                        title="EMP SALARY"
+                        ShortName={true}
                         name="Gross_Salary"
                         value={formData1?.Gross_Salary ?? ""}
-                        onChange={(e) =>
-                          handleInputChange("Gross_Salary", e.target.value)
-                        }
+                        handleInputChange={handleInputChange}
                         disabled={isDailyWagesActive}
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        PF SALARY LIMIT
-                      </label>
-                      <input
+                      <Einput
                         type="number"
+                        title="PF SALARY LIMIT"
+                        ShortName={true}
                         name="PFSALARY_LIMIT"
                         value={formData1?.PFSALARY_LIMIT ?? ""}
-                        onChange={(e) =>
-                          handleInputChange("PFSALARY_LIMIT", e.target.value)
-                        }
+                        handleInputChange={handleInputChange}
                         disabled={isDailyWagesActive}
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        LWF
-                      </label>
-                      <input
+                      <Einput
                         type="number"
+                        title="LWF"
+                        ShortName={true}
                         name="LWF"
                         value={formData1?.LWF ?? ""}
-                        onChange={(e) =>
-                          handleInputChange("LWF", e.target.value)
-                        }
+                        handleInputChange={handleInputChange}
                         disabled={isDailyWagesActive}
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        BONUS
-                      </label>
-                      <input
+                      <Einput
                         type="number"
+                        title="BONUS"
+                        ShortName={true}
                         name="BONUS_AMOUNT"
                         value={formData1?.BONUS_AMOUNT ?? ""}
-                        onChange={(e) =>
-                          handleInputChange("BONUS_AMOUNT", e.target.value)
-                        }
+                        handleInputChange={handleInputChange}
                         disabled={isDailyWagesActive || GratuityCompKeyData}
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                       />
                     </div>
                   </div>
@@ -3813,11 +3800,11 @@ const SalaryDetails = ({
                     </div>
 
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <SelectSearch
+                      <Eselect
                         title="Salary Type"
                         name="Salary_Type"
-                        options={SLTY}
-                        selectedValue={formData1?.Salary_Type}
+                        option={SLTY}
+                        initialValue={formData1?.Salary_Type}
                         handleInputChange={handleInputChange}
                         className="text-right"
                         disabled={isDailyWagesActive}
