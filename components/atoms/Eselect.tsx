@@ -23,6 +23,7 @@ type Props = {
 
   className?: string;
   isMulti?: boolean;
+  checkbox?: boolean;
   initialValue?: any;
 
   disabled?: boolean;
@@ -46,6 +47,7 @@ const Eselect = ({
   handleInputChange,
   className,
   isMulti,
+  checkbox = false,
   initialValue,
   disabled,
   autoFocus,
@@ -65,10 +67,28 @@ const Eselect = ({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [dropup, setDropup] = useState(false);
   const [maxOptionWidth, setMaxOptionWidth] = useState(0);
+  const [displayLimit, setDisplayLimit] = useState(80);
 
   // ✅ portal positioning
   const [mounted, setMounted] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const isMultiMode = isMulti || checkbox;
+
+  const selectedValuesSet = useMemo(() => {
+    return new Set(selectedOptions.map((o) => String(o.value)));
+  }, [selectedOptions]);
+
+  useEffect(() => {
+    setDisplayLimit(80);
+  }, [inputValue, open]);
+
+  const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollTop + clientHeight >= scrollHeight - 60) {
+      setDisplayLimit((prev) => Math.min(prev + 80, filteredOptions.length));
+    }
+  };
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLDivElement | null>(null);
@@ -179,14 +199,24 @@ const Eselect = ({
         values = Object.values(initialValue).map(normalize);
       }
 
-      const selected = (option || []).filter((o) => values.includes(normalize(o.value)));
+      if (
+        selectedOptions.length === values.length &&
+        values.every((v) => selectedValuesSet.has(v))
+      ) {
+        return;
+      }
+
+      const valSet = new Set(values);
+      const selected = (option || []).filter((o) => valSet.has(normalize(o.value)));
       setSelectedOptions(selected);
     } else {
-      setSelectedOptions([]);
+      if (selectedOptions.length > 0) {
+        setSelectedOptions([]);
+      }
     }
 
     if (autoFocus && triggerRef.current) triggerRef.current.focus();
-  }, [initialValue, option, autoFocus]);
+  }, [initialValue, option, autoFocus, selectedValuesSet, selectedOptions.length]);
 
   // ✅ click outside close (portal-safe)
   useEffect(() => {
@@ -267,7 +297,7 @@ const Eselect = ({
       } else if (event.key === "Tab") {
         event.preventDefault();
         if (
-          !isMulti &&
+          !isMultiMode &&
           focusedIndex >= 0 &&
           focusedIndex < filteredOptions.length
         ) {
@@ -282,15 +312,70 @@ const Eselect = ({
 
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, disabled, filteredOptions, focusedIndex, isMulti, name, handleInputChange, focusNextElement]);
+  }, [open, disabled, filteredOptions, focusedIndex, isMultiMode, name, handleInputChange, focusNextElement]);
+
+  const isAllSelected = useMemo(() => {
+    if (!checkbox || !option?.length) return false;
+    const target = filteredOptions.length > 0 ? filteredOptions : option;
+    if (target.length === 0) return false;
+    if (target.length === option.length && selectedOptions.length === option.length) {
+      return true;
+    }
+    return target.every((o) => selectedValuesSet.has(String(o.value)));
+  }, [checkbox, option, filteredOptions, selectedOptions.length, selectedValuesSet]);
+
+  const lastSelectAllTimeRef = useRef(0);
+  const lastSelectRef = useRef<{ val: string; time: number }>({ val: "", time: 0 });
+
+  const handleSelectAll = () => {
+    if (disabled) return;
+
+    const now = Date.now();
+    if (now - lastSelectAllTimeRef.current < 250) {
+      return;
+    }
+    lastSelectAllTimeRef.current = now;
+
+    const target = filteredOptions.length > 0 ? filteredOptions : option;
+    if (isAllSelected) {
+      if (target.length === option.length) {
+        setSelectedOptions([]);
+        handleInputChange(name, []);
+      } else {
+        const targetValues = new Set(target.map((o) => String(o.value)));
+        const newSelected = selectedOptions.filter(
+          (s) => !targetValues.has(String(s.value))
+        );
+        setSelectedOptions(newSelected);
+        handleInputChange(name, newSelected.map((o) => o.value));
+      }
+    } else {
+      if (target.length === option.length) {
+        setSelectedOptions([...option]);
+        handleInputChange(name, option.map((o) => o.value));
+      } else {
+        const toAdd = target.filter((o) => !selectedValuesSet.has(String(o.value)));
+        const newSelected = [...selectedOptions, ...toAdd];
+        setSelectedOptions(newSelected);
+        handleInputChange(name, newSelected.map((o) => o.value));
+      }
+    }
+  };
 
   const handleSelect = (selectedOption: Option) => {
     if (disabled) return;
 
-    if (isMulti) {
-      const exists = selectedOptions.some((o) => String(o.value) === String(selectedOption.value));
+    const optVal = String(selectedOption.value);
+    const now = Date.now();
+    if (lastSelectRef.current.val === optVal && now - lastSelectRef.current.time < 250) {
+      return;
+    }
+    lastSelectRef.current = { val: optVal, time: now };
+
+    if (isMultiMode) {
+      const exists = selectedValuesSet.has(optVal);
       const newSelected = exists
-        ? selectedOptions.filter((o) => String(o.value) !== String(selectedOption.value))
+        ? selectedOptions.filter((o) => String(o.value) !== optVal)
         : [...selectedOptions, selectedOption];
 
       setSelectedOptions(newSelected);
@@ -302,7 +387,9 @@ const Eselect = ({
       setOpen(false);
       triggerRef.current?.focus();
     }
-    setInputValue("");
+    if (!checkbox) {
+      setInputValue("");
+    }
   };
 
   useEffect(() => {
@@ -334,11 +421,11 @@ const Eselect = ({
     const rect = containerRef.current.getBoundingClientRect();
 
     // dropdown height (measured if possible)
-    const measuredH = dropdownRef.current?.offsetHeight || 170;
+    const measuredH = dropdownRef.current?.offsetHeight || (checkbox ? 210 : 170);
 
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    const need = Math.min(measuredH, 180);
+    const need = Math.min(measuredH, checkbox ? 220 : 180);
 
     const shouldDropup = spaceBelow < need && spaceAbove > need;
     setDropup(shouldDropup);
@@ -469,7 +556,11 @@ const Eselect = ({
         )}
       >
         <div className={cn("truncate", selectedOptions.length ? "" : "text-slate-400")}>
-          {selectedOptions.length ? selectedOptions.map((o) => o.label).join(", ") : placeholder}
+          {selectedOptions.length
+            ? checkbox && selectedOptions.length === option.length && option.length > 1
+              ? `All Selected (${option.length})`
+              : selectedOptions.map((o) => o.label).join(", ")
+            : placeholder}
         </div>
 
         {!disabled ? (
@@ -491,7 +582,7 @@ const Eselect = ({
             ref={dropdownRef}
             className={cn(
               "fixed z-[99999] rounded-xl border border-slate-200 dark:border-slate-800",
-              "bg-white dark:bg-black shadow-lg overflow-hidden"
+              "bg-white dark:bg-black shadow-lg overflow-hidden pointer-events-auto"
             )}
             style={{ top: pos.top, left: pos.left, width: `${pos.width}px` }}
           >
@@ -518,34 +609,84 @@ const Eselect = ({
               />
             </div>
 
+            {/* select all checkbox row */}
+            {checkbox && option.length > 0 && (
+              <div
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelectAll();
+                }}
+                className="flex items-center gap-2.5 px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors text-[13px] select-none"
+              >
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  readOnly
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none accent-indigo-600 shrink-0"
+                />
+                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                  Select All {filteredOptions.length < option.length ? `(${filteredOptions.length})` : `(${option.length})`}
+                </span>
+                {selectedOptions.length > 0 && (
+                  <span className="ml-auto text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                    {selectedOptions.length} selected
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* list */}
             <ul
               ref={listRef}
+              onScroll={handleScroll}
               className={cn(
-                "max-h-[118px] overflow-y-auto py-1",
+                "max-h-[160px] overflow-y-auto py-1",
                 "[scrollbar-width:thin] [scrollbar-color:rgb(203_213_225)_transparent]",
                 "[&::-webkit-scrollbar]:w-[6px]",
                 "[&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full",
                 "dark:[&::-webkit-scrollbar-thumb]:bg-slate-700/60"
               )}
-              onMouseDown={(e) => e.preventDefault()}
             >
-              {filteredOptions.map((opt, index) => (
-                <li
-                  key={`${String(opt.value)}_${index}`}
-                  ref={focusedIndex === index ? focusedItemRef : null}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleSelect(opt)}
-                  className={cn(
-                    "px-3 py-2 text-[13px] cursor-pointer transition-colors",
-                    "text-slate-700 dark:text-slate-200",
-                    "hover:bg-slate-50 dark:hover:bg-blue-600 dark:hover:text-white",
-                    focusedIndex === index && "bg-slate-50 dark:bg-blue-600 dark:text-white"
-                  )}
-                >
-                  {opt.label}
+              {filteredOptions.slice(0, displayLimit).map((opt, index) => {
+                const isSelected = selectedValuesSet.has(String(opt.value));
+                return (
+                  <li
+                    key={`${String(opt.value)}_${index}`}
+                    ref={focusedIndex === index ? focusedItemRef : null}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelect(opt);
+                    }}
+                    className={cn(
+                      "px-3 py-2 text-[13px] cursor-pointer transition-colors flex items-center gap-2.5",
+                      "text-slate-700 dark:text-slate-200",
+                      "hover:bg-slate-50 dark:hover:bg-blue-600 dark:hover:text-white",
+                      focusedIndex === index &&
+                        "bg-slate-50 dark:bg-blue-600 dark:text-white",
+                      isSelected &&
+                        checkbox &&
+                        "bg-indigo-50/60 dark:bg-indigo-950/40 font-medium text-indigo-900 dark:text-indigo-200"
+                    )}
+                  >
+                    {checkbox && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        readOnly
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none accent-indigo-600 shrink-0"
+                      />
+                    )}
+                    <span className="truncate">{opt.label}</span>
+                  </li>
+                );
+              })}
+              {filteredOptions.length > displayLimit ? (
+                <li className="px-3 py-1.5 text-center text-xs text-slate-400 select-none">
+                  Showing {displayLimit} of {filteredOptions.length} (scroll for more)
                 </li>
-              ))}
+              ) : null}
               {!filteredOptions.length ? (
                 <li className="px-3 py-2 text-[13px] text-slate-400">No results</li>
               ) : null}

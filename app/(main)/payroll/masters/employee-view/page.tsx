@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import Ainput from "@/components/atoms/Input";
 import AButton from "@/components/atoms/Button";
-import SelectSearch from "@/components/atoms/Select";
+import Eselect from "@/components/atoms/Eselect";
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import CardView from "@/components/Templates/card";
@@ -1034,60 +1034,60 @@ export default function Page() {
         {/* Filters card */}
         <div className="filter-card-wrapper bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] p-3.5 sm:p-4 shadow-sm mb-3.5">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_150px_150px_auto] gap-3 items-end">
-            <SelectSearch
+            <Eselect
               title="CLUSTER"
               name="Br_Location"
-              options={Br_Location}
-              selectedValue={dashbord.Br_Location}
+              option={Br_Location}
+              initialValue={dashbord.Br_Location}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Br_Location: v }));
               }}
               placeholder="All cluster"
               ShortName
               className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
-              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
+              labelClassName="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
-            <SelectSearch
+            <Eselect
               title="BRANCH"
               name="Location"
-              options={Location}
-              selectedValue={dashbord.Location}
+              option={Location}
+              initialValue={dashbord.Location}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Location: v }));
               }}
               placeholder="All branch"
               ShortName
               className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
-              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
+              labelClassName="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
-            <SelectSearch
+            <Eselect
               title="SECTION"
               name="Section"
-              options={Section}
-              selectedValue={dashbord.Section}
+              option={Section}
+              initialValue={dashbord.Section}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Section: v }));
               }}
               placeholder="All section"
               ShortName
               className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
-              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
+              labelClassName="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
-            <SelectSearch
+            <Eselect
               title="CHANNEL"
               name="Channel"
-              options={Channel}
-              selectedValue={dashbord.Channel}
+              option={Channel}
+              initialValue={dashbord.Channel}
               handleInputChange={(name, v) => {
                 setDashbord((p) => ({ ...p, Channel: v }));
               }}
               placeholder="All channel"
               ShortName
               className="!h-[38px] !rounded-[9px] dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 !text-[12.5px] font-medium w-full"
-              labelClass="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
+              labelClassName="!text-[11px] !font-[600] !text-[#64748B] !tracking-[0.03em] !uppercase mb-1"
             />
 
             <Ainput

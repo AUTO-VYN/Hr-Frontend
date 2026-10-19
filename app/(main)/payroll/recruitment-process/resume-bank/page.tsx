@@ -750,8 +750,8 @@ export default function ResumeBankPage() {
           </h1>
           <p className="text-sm sm:text-base lg:text-xl text-slate-500 dark:text-slate-400 font-normal mt-1">
             Screen one dossier at a time.{" "}
-            <strong className="text-slate-500 dark:text-white font-normal">
-             <span className="font-semibold text-black">{statusCounts.unscreened}</span>  resumes still unscreened.
+            <strong className="text-slate-500 dark:text-slate-400 font-normal">
+             <span className="font-semibold text-black dark:text-white">{statusCounts.unscreened}</span>  resumes still unscreened.
             </strong>
           </p>
         </div>
@@ -849,6 +849,7 @@ export default function ResumeBankPage() {
           <div>
             <Eselect
               title="Current CTC"
+              ShortName
               name="CURRENT_CTC"
               option={ctcOptions.map((ctc) => ({ label: ctc, value: ctc }))}
               initialValue={filterCtc}

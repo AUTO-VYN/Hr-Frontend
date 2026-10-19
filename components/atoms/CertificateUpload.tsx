@@ -37,6 +37,27 @@ type CertificatesUploadProps = {
   showAttachedCount?: boolean;
 };
 
+const getDisplayFileName = (file: File | any, fallback: string = "Preview file"): string => {
+  if (!file) return "";
+  if (file instanceof File) return file.name || fallback;
+  if (typeof file === "string") {
+    try {
+      if (file.includes("filePath=")) {
+        const match = file.match(/filePath=([^&]+)/);
+        if (match && match[1]) {
+          const decoded = decodeURIComponent(match[1]);
+          const base = decoded.split("/").pop()?.split("\\").pop();
+          if (base && base.trim() !== "") return base;
+        }
+      }
+    } catch (e) {}
+    const clean = file.split("?")[0];
+    const name = clean.split("/").pop()?.split("\\").pop();
+    return name && name.trim() !== "" ? name : fallback;
+  }
+  return fallback;
+};
+
 // ==========================================
 // PREVIEW MODAL
 // ==========================================
@@ -52,17 +73,29 @@ function PreviewModal({
   const [url, setUrl] = useState<string>("");
 
   const fileName = useMemo(() => {
-    if (!file) return "";
-    if (typeof file === "string") return file.split("/").pop() || title;
-    return file.name || title;
+    return getDisplayFileName(file, title);
   }, [file, title]);
 
   const fileType = useMemo(() => {
     if (!file) return "unknown";
     if (typeof file === "string") {
-      const lower = file.toLowerCase();
-      if (lower.endsWith(".pdf")) return "pdf";
-      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(lower)) return "image";
+      let targetPath = file;
+      try {
+        if (targetPath.includes("filePath=")) {
+          const match = targetPath.match(/filePath=([^&]+)/);
+          if (match && match[1]) {
+            targetPath = decodeURIComponent(match[1]);
+          }
+        }
+      } catch (e) {}
+      const cleanPath = targetPath.split("?")[0].toLowerCase();
+      if (cleanPath.endsWith(".pdf") || cleanPath.includes(".pdf")) return "pdf";
+      if (
+        /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(cleanPath) ||
+        /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(cleanPath)
+      ) {
+        return "image";
+      }
       return "unknown";
     }
     if (
@@ -91,9 +124,14 @@ function PreviewModal({
         file.startsWith("blob:")
       ) {
         setUrl(file);
-      } else {
+      } else if (file.startsWith("/")) {
         const baseUrl = process.env.NEXT_PUBLIC_URL || "";
-        setUrl(file.startsWith("/") ? `${baseUrl}${file}` : `${baseUrl}/${file}`);
+        setUrl(`${baseUrl}${file}`);
+      } else {
+        const fetchBase =
+          process.env.NEXT_PUBLIC_imagepath ||
+          `${process.env.NEXT_PUBLIC_URL || "https://erp.autovyn.com/backend"}/fetch?filePath=`;
+        setUrl(`${fetchBase}${encodeURIComponent(file)}`);
       }
       return;
     }
@@ -283,7 +321,7 @@ function CompactUploadTile({
                 : "text-slate-400"
             }`}
           >
-            {file ? file.name || "Attached" : subtitle || "Click to attach"}
+            {file ? getDisplayFileName(file, "Attached") : subtitle || "Click to attach"}
           </div>
         </div>
       </label>
@@ -389,7 +427,7 @@ function UploadTile({
               title="Click to preview file"
             >
               <Eye size={13} className="text-indigo-600 dark:text-indigo-400 group-hover/pill:scale-110 transition-transform shrink-0" />
-              <span className="truncate">{file?.name || "Preview file"}</span>
+              <span className="truncate">{getDisplayFileName(file, "Preview file")}</span>
             </button>
           ) : null}
         </div>

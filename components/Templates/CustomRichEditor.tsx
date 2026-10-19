@@ -1,5 +1,12 @@
 "use client";
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import {
   Bold,
   Italic,
@@ -18,6 +25,11 @@ import {
   Outdent,
 } from "lucide-react";
 
+export interface CustomRichEditorRef {
+  insertToken: (token: string) => void;
+  focus: () => void;
+}
+
 export interface CustomRichEditorProps {
   value?: string;
   onChange?: (value: string) => void;
@@ -27,14 +39,18 @@ export interface CustomRichEditorProps {
   keywordsList?: any;
 }
 
-const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
-  value,
-  onChange,
-  placeholder,
-  className,
-  defaultHeight = 400,
-  keywordsList = [],
-}) => {
+const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
+  (
+    {
+      value,
+      onChange,
+      placeholder,
+      className,
+      defaultHeight = 400,
+      keywordsList = [],
+    },
+    ref
+  ) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -225,12 +241,153 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
     }
   };
 
-  const saveSelection = () => {
+  const saveSelection = useCallback(() => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
-      savedRangeRef.current = selection.getRangeAt(0).cloneRange();
+      const range = selection.getRangeAt(0);
+      if (
+        editorRef.current &&
+        editorRef.current.contains(range.commonAncestorContainer)
+      ) {
+        savedRangeRef.current = range.cloneRange();
+      }
+    }
+  }, []);
+
+  const insertToken = useCallback(
+    (tokenKey: string) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      const tokenTag = tokenKey.startsWith("{") ? tokenKey : `{${tokenKey}}`;
+      editor.focus();
+
+      let range: Range | null = null;
+      const selection = window.getSelection();
+
+      if (
+        savedRangeRef.current &&
+        editor.contains(savedRangeRef.current.commonAncestorContainer)
+      ) {
+        range = savedRangeRef.current.cloneRange();
+      } else if (
+        selection &&
+        selection.rangeCount > 0 &&
+        editor.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ) {
+        range = selection.getRangeAt(0);
+      }
+
+      if (range && selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+        if (
+          document.queryCommandSupported &&
+          document.queryCommandSupported("insertText")
+        ) {
+          document.execCommand("insertText", false, tokenTag);
+        } else {
+          range.deleteContents();
+          const node = document.createTextNode(tokenTag);
+          range.insertNode(node);
+          range.setStartAfter(node);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } else {
+        const node = document.createTextNode(
+          editor.innerHTML.trim() ? ` ${tokenTag}` : tokenTag
+        );
+        editor.appendChild(node);
+        const newRange = document.createRange();
+        newRange.selectNodeContents(editor);
+        newRange.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(newRange);
+      }
+
+      saveSelection();
+      if (onChange) {
+        onChange(editor.innerHTML);
+      }
+    },
+    [onChange, saveSelection]
+  );
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const token =
+      e.dataTransfer.getData("application/x-token") ||
+      e.dataTransfer.getData("text/plain");
+    if (!token) return;
+
+    const tokenTag = token.startsWith("{") ? token : `{${token}}`;
+
+    editorRef.current?.focus();
+
+    let range: Range | null = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    } else if ((document as any).caretPositionFromPoint) {
+      const pos = (document as any).caretPositionFromPoint(
+        e.clientX,
+        e.clientY
+      );
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    }
+
+    const selection = window.getSelection();
+    if (range && selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    if (
+      document.queryCommandSupported &&
+      document.queryCommandSupported("insertText")
+    ) {
+      document.execCommand("insertText", false, tokenTag);
+    } else {
+      if (range) {
+        range.deleteContents();
+        const textNode = document.createTextNode(tokenTag);
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.collapse(true);
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } else if (editorRef.current) {
+        const textNode = document.createTextNode(` ${tokenTag}`);
+        editorRef.current.appendChild(textNode);
+      }
+    }
+
+    saveSelection();
+    if (editorRef.current && onChange) {
+      onChange(editorRef.current.innerHTML);
     }
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      insertToken,
+      focus: () => editorRef.current?.focus(),
+    }),
+    [insertToken]
+  );
 
   const insertKeyword = (keyword: string) => {
     const editor = editorRef.current;
@@ -240,6 +397,7 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
     const container = containerRef.current;
     const scrollTop = container?.scrollTop || 0;
     const scrollLeft = container?.scrollLeft || 0;
+    const editorScrollTop = editor.scrollTop;
 
     // Don't force focus immediately - this causes scroll jump
     // editor.focus();  // ❌ COMMENT THIS OUT
@@ -304,6 +462,9 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
     }
 
     // ✅ Restore scroll position
+    if (editor) {
+      editor.scrollTop = editorScrollTop;
+    }
     if (container) {
       container.scrollTop = scrollTop;
       container.scrollLeft = scrollLeft;
@@ -535,10 +696,12 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
   return (
     <div
       ref={containerRef}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       className={`border border-borderColor dark:border-borderColor-dark rounded-lg overflow-hidden flex flex-col relative ${className || ""}`}
       style={{
         resize: "vertical",
-        overflow: "auto",
+        overflow: "hidden",
         minHeight: "200px",
         maxHeight: "2000px",
         height: `${defaultHeight}px`,
@@ -667,15 +830,32 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
-        onInput={handleInput}
-        onKeyUp={checkActiveFormats}
-        onMouseUp={handleMouseUp}
-        onClick={checkActiveFormats}
+        onInput={() => {
+          handleInput();
+          saveSelection();
+        }}
+        onKeyUp={() => {
+          checkActiveFormats();
+          saveSelection();
+        }}
+        onMouseUp={() => {
+          handleMouseUp();
+          saveSelection();
+        }}
+        onClick={() => {
+          checkActiveFormats();
+          saveSelection();
+        }}
+        onBlur={saveSelection}
         onKeyDown={handleKeyDown}
-        className="flex-1 p-4 bg-white dark:bg-black text-gray-900 dark:text-gray-100 focus:outline-none overflow-y-auto"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className="flex-1 min-h-0 p-4 bg-white dark:bg-black text-gray-900 dark:text-gray-100 focus:outline-none overflow-y-auto overflow-x-hidden break-words [&>p]:mb-2.5 [&>p:last-child]:mb-0 [&>div]:mb-2.5 [&>div:last-child]:mb-0"
         style={{
           lineHeight: "1.6",
           fontSize: "14px",
+          wordBreak: "break-word",
+          overflowWrap: "break-word",
         }}
         placeholder={placeholder}
       />
@@ -828,6 +1008,8 @@ const CustomRichEditor: React.FC<CustomRichEditorProps> = ({
       )}
     </div>
   );
-};
+});
+
+CustomRichEditor.displayName = "CustomRichEditor";
 
 export default CustomRichEditor;

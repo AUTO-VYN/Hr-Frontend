@@ -70,10 +70,36 @@ export default function YNDynamicTable({
 
     let v = value ?? "";
 
+    const colIndex = Array.isArray(columns) ? columns.indexOf(colKey) : -1;
+    const showHeader =
+      colIndex !== -1 && Array.isArray(columnsShow) ? columnsShow[colIndex] : "";
+
+    const isDecimalOrPercentage = Boolean(
+      rule.type === "DECIMAL" ||
+      rule.type === "PERCENTAGE" ||
+      rule.allowDecimal ||
+      colKey?.toLowerCase()?.includes("percent") ||
+      colKey?.toLowerCase()?.includes("cgpa") ||
+      showHeader?.toLowerCase()?.includes("percent") ||
+      showHeader?.toLowerCase()?.includes("cgpa") ||
+      rule.placeholder?.toLowerCase()?.includes("percent") ||
+      rule.placeholder?.toLowerCase()?.includes("cgpa") ||
+      rule.placeholder?.includes(".")
+    );
+
     // NUMBER constraint
-    if (rule.type === "NUMBER") {
-      // keep only digits (same spirit as your DynamicTable NUMBER check)
-      v = String(v).replace(/[^\d]/g, "");
+    if (rule.type === "NUMBER" || rule.type === "DECIMAL" || rule.type === "PERCENTAGE") {
+      if (isDecimalOrPercentage) {
+        // keep digits and at most one decimal point
+        v = String(v).replace(/[^0-9.]/g, "");
+        const parts = v.split(".");
+        if (parts.length > 2) {
+          v = parts[0] + "." + parts.slice(1).join("");
+        }
+      } else {
+        // keep only digits
+        v = String(v).replace(/[^\d]/g, "");
+      }
     } else {
       v = String(v);
     }

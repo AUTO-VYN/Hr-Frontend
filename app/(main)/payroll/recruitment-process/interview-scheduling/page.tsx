@@ -1758,8 +1758,12 @@ export default function InterviewSchedulingPage() {
       {/* ────────────────────────────────────────────────────────────────────────── */}
 
       {/* Create Employee Master Modal */}
-      <Dialog open={isEmpModalOpen} onOpenChange={setIsEmpModalOpen}>
-        <DialogContent className="w-full max-w-2xl bg-white dark:bg-[#0B1220] p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <Dialog open={isEmpModalOpen} onOpenChange={setIsEmpModalOpen} modal={false}>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          className="w-full max-w-2xl bg-white dark:bg-[#0B1220] p-6 rounded-2xl border border-slate-200 dark:border-slate-800"
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 pb-2 border-b border-slate-100 dark:border-slate-800">
               Create Employee Master
@@ -1771,87 +1775,90 @@ export default function InterviewSchedulingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Employee Code
-              </label>
               <Einput
                 disabled
                 type="text"
                 title="Employee Code"
+                ShortName
                 name="EMPCODE"
                 value={formData1?.EMPCODE || ""}
                 handleInputChange={handleInputChange}
                 className="!h-10 !font-mono font-semibold"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Date of Joining <span className="text-rose-500">*</span>
-              </label>
               <Einput
                 type="date"
                 title="Date of Joining"
+                redlabel="*"
+                ShortName
                 name="CURRENTJOINDATE"
                 value={formData1?.CURRENTJOINDATE || ""}
                 handleInputChange={handleInputChange}
                 className="!h-10"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Location <span className="text-rose-500">*</span>
-              </label>
               <Eselect
-                title="Select location"
+                title="Location"
+                redlabel="*"
+                ShortName
                 name="LOC_CODE"
                 option={locationOptions}
                 initialValue={formData1?.LOC_CODE?.toString() || ""}
                 handleInputChange={handleInputChange}
+                placeholder="Select location"
                 className="!h-10"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Designation <span className="text-rose-500">*</span>
-              </label>
               <Eselect
-                title="Select designation"
+                title="Designation"
+                redlabel="*"
+                ShortName
                 name="DESIGNATION"
                 option={designationOptions}
                 initialValue={formData1?.DESIGNATION?.toString() || ""}
                 handleInputChange={handleInputChange}
+                placeholder="Select designation"
                 className="!h-10"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Department <span className="text-rose-500">*</span>
-              </label>
               <Eselect
-                title="Select department"
+                title="Department"
+                redlabel="*"
+                ShortName
                 name="DIVISION"
                 option={divisionOptions}
                 initialValue={formData1?.DIVISION?.toString() || ""}
                 handleInputChange={handleInputChange}
+                placeholder="Select department"
                 className="!h-10"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Region <span className="text-rose-500">*</span>
-              </label>
               <Eselect
-                title="Select region"
+                title="Region"
+                redlabel="*"
+                ShortName
                 name="Sal_Region"
                 option={salRegionOptions}
                 initialValue={formData1?.Sal_Region?.toString() || ""}
                 handleInputChange={handleInputChange}
+                placeholder="Select region"
                 className="!h-10"
+                labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               />
             </div>
           </div>

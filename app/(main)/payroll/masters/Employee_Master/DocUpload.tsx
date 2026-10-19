@@ -41,9 +41,35 @@ const Docupload = () => {
   const { formData, setFormData } = useFormData();
   const { toast } = useToast();
 
-  const getFileOrNull = (key: string): File | null => {
-    const v = formData?.EmpMst?.[key];
-    return v instanceof File ? v : null;
+  const docIndexMap: Record<string, number> = {
+    adhar: 1,
+    pan: 2,
+    salary: 3,
+    other1: 4,
+    other2: 5,
+    other3: 6,
+    other4: 7,
+    otherpdf: 8,
+  };
+
+  const getFileOrNull = (key: string): File | string | null => {
+    const v = formData?.EmpMst?.[key] ?? (formData as any)?.[key];
+    if (v && v !== "null" && v !== "undefined") {
+      if (v instanceof File) return v;
+      if (typeof v === "string" && v.trim() !== "") return v.trim();
+      if (typeof v === "object") {
+        const url = (v as any).url || (v as any).path || (v as any).File_Name || (v as any).filePath || (v as any).SMBPath;
+        if (typeof url === "string" && url.trim() !== "") return url.trim();
+      }
+    }
+    const idx = docIndexMap[key];
+    if (idx !== undefined && (formData as any)?.docPaths?.[idx]) {
+      const p = (formData as any).docPaths[idx];
+      if (typeof p === "string" && p.trim() !== "" && p !== "null") {
+        return p.trim();
+      }
+    }
+    return null;
   };
 
   // --- UI like screenshot: 2 sections (4 tiles each) ---
