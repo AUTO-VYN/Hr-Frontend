@@ -62,9 +62,11 @@ export default function EmployeeMiniHeader({
 
   const [IsGenerate, setIsGenerate] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedEmp, setSelectedEmp] = useState<string>("");
 
   // wrapper for selecting employee from dropdown
   const handleEmpSelectChange = (name: string, value: any) => {
+    setSelectedEmp(value ? String(value) : "");
     handleEmpChange(name, value);
     if (value) {
       setIsGenerate(true);
@@ -73,6 +75,7 @@ export default function EmployeeMiniHeader({
 
   // wrapper
   const handleGenerateCode = async () => {
+    setSelectedEmp("");
     await Generatecode();      // aapka existing function
     setIsGenerate(true);       // ✅ generate ke baad field readonly
   };
@@ -83,6 +86,11 @@ export default function EmployeeMiniHeader({
     formData?.EmpMst?.UTD ||
     formData?.EmpMst?.SrNo
   );
+
+  const currentEmpValue =
+    selectedEmp ||
+    formData?.EmpMst?.SrNo?.toString() ||
+    "";
 
   return (
     <div className="bg-white dark:bg-black border-b border-[#E6E8EF] dark:border-[#2A2F3A]">
@@ -109,7 +117,7 @@ export default function EmployeeMiniHeader({
                     handleInputChange={handleEmpSelectChange}
                     option={empcodeOptions}
                     disabled={SaveDisable}
-                    initialValue=""
+                    initialValue={currentEmpValue}
                   />
                 ) : (
                   <div />

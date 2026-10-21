@@ -725,36 +725,36 @@ export default function SalaryApproverGridPage() {
           );
         },
       },
-      {
-        Header: "PROPOSED SALARY",
-        accessor: "Proposed_Salary",
-        Cell: ({ row }: any) => {
-          const currentSalary = Number(row.original?.Gross_Salary || row.original?.Basic || 0);
-          const proposedSalary = Number(row.original?.Proposed_Salary || row.original?.Gross_Salary || 0);
-          const diff = proposedSalary - currentSalary;
-          const diffPercent =
-            currentSalary > 0 ? Math.round((diff / currentSalary) * 100) : 0;
+      // {
+      //   Header: "PROPOSED SALARY",
+      //   accessor: "Proposed_Salary",
+      //   Cell: ({ row }: any) => {
+      //     const currentSalary = Number(row.original?.Gross_Salary || row.original?.Basic || 0);
+      //     const proposedSalary = Number(row.original?.Proposed_Salary || row.original?.Gross_Salary || 0);
+      //     const diff = proposedSalary - currentSalary;
+      //     const diffPercent =
+      //       currentSalary > 0 ? Math.round((diff / currentSalary) * 100) : 0;
 
-          return (
-            <div>
-              <div className="font-bold text-[14px] text-slate-900 dark:text-white">
-                {formatCurrency(proposedSalary)}
-              </div>
-              {diff !== 0 && (
-                <div
-                  className={`text-[12px] font-semibold mt-0.5 ${diff > 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-500"
-                    }`}
-                >
-                  {diff > 0 ? `+${formatCurrency(diff)}` : formatCurrency(diff)} (
-                  {diffPercent}%)
-                </div>
-              )}
-            </div>
-          );
-        },
-      },
+      //     return (
+      //       <div>
+      //         <div className="font-bold text-[14px] text-slate-900 dark:text-white">
+      //           {formatCurrency(proposedSalary)}
+      //         </div>
+      //         {diff !== 0 && (
+      //           <div
+      //             className={`text-[12px] font-semibold mt-0.5 ${diff > 0
+      //               ? "text-emerald-600 dark:text-emerald-400"
+      //               : "text-red-500"
+      //               }`}
+      //           >
+      //             {diff > 0 ? `+${formatCurrency(diff)}` : formatCurrency(diff)} (
+      //             {diffPercent}%)
+      //           </div>
+      //         )}
+      //       </div>
+      //     );
+      //   },
+      // },
       {
         Header: "EFFECTIVE DATE",
         accessor: "NewEffective_Date",

@@ -734,8 +734,17 @@ const SalaryDetails = ({
         const ctc =
           annualGross + BONUS_AMOUNT + LWF + PFSALARY_LIMIT + Gratuity;
 
+        const rawEffDate =
+          empData?.Effective_date ||
+          empData?.EFFECTIVE_DATE ||
+          empData?.NewEffective_Date;
+        const formattedEffDate = rawEffDate
+          ? String(rawEffDate).split("T")[0].split(" ")[0]
+          : "";
+
         const updatedData = {
           ...empData,
+          Effective_date: formattedEffDate || empData?.Effective_date,
           CTC: ctc,
         };
 
@@ -770,11 +779,19 @@ const SalaryDetails = ({
   const saveData = async () => {
     const isDailyWages = hasMeaningfulValue(formData1?.Daily_Wages);
     if (!isDailyWages) {
-      if (formData1?.Salary_Type == null) {
+      if (
+        formData1?.Salary_Type == null ||
+        formData1?.Salary_Type === "" ||
+        String(formData1?.Salary_Type).trim() === ""
+      ) {
         showSideAlert("Please Select Salary Type", "warning");
         return;
       }
-      if (formData1?.Effective_date == null) {
+      if (
+        formData1?.Effective_date == null ||
+        formData1?.Effective_date === "" ||
+        String(formData1?.Effective_date).trim() === ""
+      ) {
         showSideAlert("Please Select Effective Date", "warning");
         return;
       }
@@ -865,6 +882,25 @@ const SalaryDetails = ({
           },
         },
       );
+
+      if (
+        response.data?.Status === false ||
+        response.data?.status === false ||
+        response.data?.success === false
+      ) {
+        const msg =
+          response.data?.Message ||
+          response.data?.message ||
+          "Cannot save salary data.";
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: msg,
+        });
+        showSideAlert(msg, "warning");
+        return;
+      }
+
       setIsDialogOpen2(false);
       Swal.fire({
         icon: "success",
@@ -874,11 +910,18 @@ const SalaryDetails = ({
       ViewData();
       setFalg(true);
       setFalg1(true);
-    } catch (error) {
-      toast({
-        title: `${error.response.data.Message}`,
-        variant: "destructive",
+    } catch (error: any) {
+      const errMsg =
+        error?.response?.data?.Message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error saving salary details";
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: errMsg,
       });
+      showSideAlert(errMsg, "error");
     } finally {
       setIsLoading(false);
     }
@@ -964,13 +1007,6 @@ const SalaryDetails = ({
   };
 
   const handleSaveSalaryBreakup = async () => {
-    if (formData1?.Salary_Type == null) {
-      setFormData1((prev: any) => ({
-        ...prev,
-        Salary_Type: isSalarySaved ? "1" : "0",
-      }));
-      formData1.Salary_Type = isSalarySaved ? "1" : "0";
-    }
     await saveData();
   };
 
@@ -2618,6 +2654,20 @@ const SalaryDetails = ({
                   {/* Effective from & Monthly Gross */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div>
+                      <Eselect
+                        title="SALARY TYPE"
+                        name="Salary_Type"
+                        ShortName={true}
+                        option={SLTY}
+                        initialValue={formData1?.Salary_Type?.toString()}
+                        handleInputChange={handleInputChange}
+                        disabled={disapleForSalary || isDailyWagesActive}
+                        className="!h-11 rounded-xl text-base font-semibold"
+                        labelClassName="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
+                      />
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         EFFECTIVE FROM
                       </label>
@@ -2635,7 +2685,7 @@ const SalaryDetails = ({
                       </div>
                     </div>
 
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         MONTHLY GROSS
                       </label>
@@ -3186,7 +3236,7 @@ const SalaryDetails = ({
                         disabled={isDailyWagesActive}
                       />
 
-                      {(salaryType === "1" || formData1?.Salary_Type === "1") && (
+                      {/* {(salaryType === "1" || formData1?.Salary_Type === "1") && (
                         <Einput
                           type="text"
                           title="Proposed salary"
@@ -3195,7 +3245,7 @@ const SalaryDetails = ({
                           value={formData1?.Proposed_Salary}
                           className="text-right"
                         />
-                      )}
+                      )} */}
                     </div>
                   </div>
 

@@ -199,15 +199,17 @@ const Eselect = ({
         values = Object.values(initialValue).map(normalize);
       }
 
-      if (
-        selectedOptions.length === values.length &&
-        values.every((v) => selectedValuesSet.has(v))
-      ) {
+      const valSet = new Set(values);
+      const selected = (option || []).filter((o) => valSet.has(normalize(o.value)));
+
+      const isSame =
+        selected.length === selectedOptions.length &&
+        selected.every((s, i) => String(s.value) === String(selectedOptions[i]?.value));
+
+      if (isSame) {
         return;
       }
 
-      const valSet = new Set(values);
-      const selected = (option || []).filter((o) => valSet.has(normalize(o.value)));
       setSelectedOptions(selected);
     } else {
       if (selectedOptions.length > 0) {
@@ -216,7 +218,7 @@ const Eselect = ({
     }
 
     if (autoFocus && triggerRef.current) triggerRef.current.focus();
-  }, [initialValue, option, autoFocus, selectedValuesSet, selectedOptions.length]);
+  }, [initialValue, option, autoFocus]);
 
   // ✅ click outside close (portal-safe)
   useEffect(() => {
