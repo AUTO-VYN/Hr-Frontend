@@ -85,10 +85,12 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Employee Vacant Position", slug: "employee-vacant-position" },
       { name: "Employee Hierarchy View", slug: "employee-hierarchy-view" },
       { name: "Employee Salary Review", slug: "employee-salary-review" },
-      { name: "Employee Appraisal", slug: "employee-appraisal" },
-      { name: "Employee Appraisal View", slug: "employee-appraisal-view" },
+      { name: "QR Scanner", slug: "qr-scanner" },
+      {name:"Employee Transfer Form",slug:"employee-transfer-form"},
       { name: "Mispunch InOut Document", slug: "mispunch-inout-document" },
       { name: "Daily HR Report", slug: "daily-hr-report" },
+      {name:"Comp Off Run Page",slug:"comp-off-run-page"},
+      {name:"Emp Transfer History",slug:'emp-transfer-history'}
     ],
   },
   {

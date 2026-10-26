@@ -53,6 +53,7 @@ const CustomSelectSearch = ({
   ShortName = false,
   placeholder = "Select",
   rightElement,
+  usePortal,
   ...props
 }: any) => {
   const [selected, setSelected] = useState(selectedValue || "");
@@ -69,7 +70,16 @@ const CustomSelectSearch = ({
   const optionsRef = useRef<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => setMounted(true), []);
+  const [isInDialog, setIsInDialog] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (containerRef.current?.closest('[role="dialog"]')) {
+      setIsInDialog(true);
+    }
+  }, []);
+
+  const shouldPortal = usePortal !== undefined ? usePortal : !isInDialog;
 
   useEffect(() => {
     setSelected(selectedValue || "");
@@ -374,24 +384,35 @@ const CustomSelectSearch = ({
         ) : null}
       </div>
 
-      {/* ✅ Dropdown (PORTAL) */}
-      {isOpen && mounted && typeof document !== "undefined"
-        ? createPortal(
+      {/* ✅ Dropdown */}
+      {isOpen && mounted && typeof document !== "undefined" ? (
+        (() => {
+          const dropdownContent = (
             <div
               ref={dropdownRef}
               className={cn(
-                "fixed z-[99999] w-full min-w-[200px] rounded-xl shadow-lg overflow-hidden",
-                "bg-white dark:bg-black border border-slate-200 dark:border-slate-800"
+                shouldPortal
+                  ? "fixed z-[99999] w-full min-w-[200px] rounded-xl shadow-lg overflow-hidden bg-white dark:bg-black border border-slate-200 dark:border-slate-800"
+                  : "absolute left-0 top-full mt-1.5 z-[9999] w-full min-w-[200px] rounded-xl shadow-lg overflow-hidden bg-white dark:bg-black border border-slate-200 dark:border-slate-800"
               )}
-              style={{
-                top: pos.top,
-                left: pos.left,
-                width: pos.width,
-                maxHeight: "300px",
-              }}
+              style={
+                shouldPortal
+                  ? {
+                      top: pos.top,
+                      left: pos.left,
+                      width: pos.width,
+                      maxHeight: "300px",
+                    }
+                  : {
+                      maxHeight: "300px",
+                    }
+              }
             >
               {/* Search */}
-              <div className="p-2 border-b border-slate-200 dark:border-slate-800 bg-inherit">
+              <div
+                className="p-2 border-b border-slate-200 dark:border-slate-800 bg-inherit"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 <Input
                   ref={searchInputRef}
                   placeholder="Search..."
@@ -404,6 +425,7 @@ const CustomSelectSearch = ({
 
               {/* Options */}
               <div
+                onWheel={(e) => e.stopPropagation()}
                 className={cn(
                   "max-h-60 overflow-y-auto",
                   "[scrollbar-width:thin] [scrollbar-color:rgb(203_213_225)_transparent]",
@@ -425,6 +447,11 @@ const CustomSelectSearch = ({
                           highlightedIndex === 0 && "bg-slate-50 dark:bg-white/5",
                           isAllSelected() && "bg-indigo-50/70 dark:bg-indigo-950/20"
                         )}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectionChange(ALL_VALUE);
+                        }}
                         onClick={(e) => handleOptionClick(e, ALL_VALUE)}
                         onMouseEnter={() => setHighlightedIndex(0)}
                       >
@@ -464,6 +491,11 @@ const CustomSelectSearch = ({
                               highlightedIndex === actualIndex && "bg-slate-50 dark:bg-white/5",
                               selectedNow && "bg-indigo-50/70 dark:bg-indigo-950/20"
                             )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSelectionChange(opt.value);
+                            }}
                             onClick={(e) => handleOptionClick(e, opt.value)}
                             onMouseEnter={() => setHighlightedIndex(actualIndex)}
                           >
@@ -498,10 +530,12 @@ const CustomSelectSearch = ({
                   </div>
                 )}
               </div>
-            </div>,
-            document.body
-          )
-        : null}
+            </div>
+          );
+
+          return shouldPortal ? createPortal(dropdownContent, document.body) : dropdownContent;
+        })()
+      ) : null}
     </div>
   );
 };

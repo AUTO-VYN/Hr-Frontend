@@ -256,6 +256,26 @@ export default function ServiceTablePagination({
   const maxLoadedPageRef = useRef<number>(0);
   const isFetchingMoreRef = useRef(false);
 
+  // ✅ Windowing / Virtualization state
+  const [rowRange, setRowRange] = useState({ start: 0, end: 40 });
+  const rangeRef = useRef({ start: 0, end: 40 });
+  const animFrameRef = useRef<number | null>(null);
+  const rowHeightRef = useRef<number>(44);
+
+  const handleRowRef = (node: HTMLTableRowElement | null) => {
+    if (node && node.offsetHeight > 0 && Math.abs(node.offsetHeight - rowHeightRef.current) > 2) {
+      rowHeightRef.current = node.offsetHeight;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, []);
+
   const uiHeight = typeof height === "number" ? `${height}px` : height;
 
   const currentPage = serverMode ? serverPagination?.currentPage || 1 : 1;
@@ -364,13 +384,12 @@ export default function ServiceTablePagination({
               aria-checked={
                 isAllSelected ? "true" : isIndeterminate ? "mixed" : "false"
               }
-              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${
-                isAllSelected
+              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isAllSelected
                   ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                   : isIndeterminate
                     ? "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600"
                     : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
-              }`}
+                }`}
             >
               {isAllSelected ? (
                 <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
@@ -398,11 +417,10 @@ export default function ServiceTablePagination({
             <div
               role="checkbox"
               aria-checked={isChecked}
-              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${
-                isChecked
+              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all select-none ${isChecked
                   ? "bg-[#4338CA] border border-[#4338CA] text-white shadow-2xs"
                   : "bg-white dark:bg-slate-900 border-[1.5px] border-slate-300 dark:border-slate-600 hover:border-[#4338CA]"
-              }`}
+                }`}
             >
               {isChecked && (
                 <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
@@ -524,7 +542,9 @@ export default function ServiceTablePagination({
       setAllModeData(Array.isArray(data) ? [...data] : []);
       loadedPagesRef.current = new Set([1]);
       maxLoadedPageRef.current = 1;
-      isFetchingMoreRef.current = false;
+      rangeRef.current = { start: 0, end: 40 };
+      setRowRange({ start: 0, end: 40 });
+      if (scrollWrapRef.current) scrollWrapRef.current.scrollTop = 0;
       return;
     }
 
@@ -570,6 +590,25 @@ export default function ServiceTablePagination({
 
   const displayedCount = rowsToRender.length;
 
+  // ✅ DOM Windowing / Virtualization calculation
+  const totalRowCount = rowsToRender.length;
+  const isVirtual = totalRowCount > 50;
+  const currentRowHeight = rowHeightRef.current || 44;
+
+  const startIndex = isVirtual ? Math.min(rowRange.start, Math.max(0, totalRowCount - 1)) : 0;
+  const endIndex = isVirtual ? Math.min(rowRange.end, totalRowCount) : totalRowCount;
+
+  const paddingTop = isVirtual && startIndex > 0 ? startIndex * currentRowHeight : 0;
+  const paddingBottom =
+    isVirtual && endIndex < totalRowCount
+      ? (totalRowCount - endIndex) * currentRowHeight
+      : 0;
+
+  const visibleRows = useMemo(() => {
+    if (!isVirtual) return rowsToRender;
+    return rowsToRender.slice(startIndex, endIndex);
+  }, [rowsToRender, isVirtual, startIndex, endIndex]);
+
   const clientCanPrev = pageIndex > 0;
   const clientCanNext =
     pageIndex + 1 < (pageOptions.length || clientCalculatedPageCount);
@@ -612,6 +651,9 @@ export default function ServiceTablePagination({
         loadedPagesRef.current = new Set([currentPage || 1]);
         maxLoadedPageRef.current = currentPage || 1;
         isFetchingMoreRef.current = false;
+        rangeRef.current = { start: 0, end: 40 };
+        setRowRange({ start: 0, end: 40 });
+        if (scrollWrapRef.current) scrollWrapRef.current.scrollTop = 0;
 
         // start from page 1 if not already
         if (currentPage !== 1) {
@@ -632,6 +674,9 @@ export default function ServiceTablePagination({
       loadedPagesRef.current = new Set();
       maxLoadedPageRef.current = 0;
       isFetchingMoreRef.current = false;
+      rangeRef.current = { start: 0, end: 40 };
+      setRowRange({ start: 0, end: 40 });
+      if (scrollWrapRef.current) scrollWrapRef.current.scrollTop = 0;
     }
 
     if (serverMode) {
@@ -643,12 +688,41 @@ export default function ServiceTablePagination({
     }
   };
 
-  // ✅ Lazy loading on scroll when AllMode ON (serverMode)
+  // ✅ Lazy loading on scroll when AllMode ON (serverMode) + Virtualization
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const st = el.scrollTop;
+
+    if (isVirtual) {
+      if (animFrameRef.current === null) {
+        animFrameRef.current = requestAnimationFrame(() => {
+          const rHeight = rowHeightRef.current || 44;
+          const pHeight =
+            typeof height === "number" ? height : parseInt(String(height), 10) || 580;
+          const overscan = 12;
+
+          const newStart = Math.max(0, Math.floor(st / rHeight) - overscan);
+          const newEnd = Math.min(
+            totalRowCount,
+            Math.ceil((st + pHeight) / rHeight) + overscan
+          );
+
+          if (
+            Math.abs(newStart - rangeRef.current.start) >= 4 ||
+            (newStart === 0 && rangeRef.current.start !== 0) ||
+            (newEnd === totalRowCount && rangeRef.current.end !== totalRowCount)
+          ) {
+            rangeRef.current = { start: newStart, end: newEnd };
+            setRowRange({ start: newStart, end: newEnd });
+          }
+
+          animFrameRef.current = null;
+        });
+      }
+    }
+
     if (!serverMode || !allMode) return;
     if (!onServerPageChange) return;
-
-    const el = e.currentTarget;
 
     // near bottom
     const threshold = 160;
@@ -704,83 +778,82 @@ export default function ServiceTablePagination({
 
   return (
     <div
-      className={`w-full flex flex-col bg-white dark:bg-[#0B1220] ${
-        containerClassName
+      className={`w-full flex flex-col bg-white dark:bg-[#0B1220] ${containerClassName
           ? containerClassName
           : "rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs"
-      }`}
+        }`}
     >
       {(title ||
         showTopSearch ||
         searchValue !== undefined ||
         onSearchChange ||
         showExcelExport) && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 gap-2.5 bg-slate-50/50 dark:bg-slate-900/50">
-          {title ? (
-            <div className="font-bold text-base text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-              {title}
-            </div>
-          ) : (
-            <div />
-          )}
-
-          <div className="ml-auto flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-            {(showTopSearch || searchValue !== undefined || onSearchChange) && (
-              <div className="relative w-full sm:w-72 md:w-80">
-                <input
-                  type="text"
-                  placeholder={searchPlaceholder || "Search by name or code..."}
-                  value={
-                    searchValue !== undefined ? searchValue : globalFilter || ""
-                  }
-                  onChange={(e) => {
-                    if (onSearchChange) {
-                      onSearchChange(e.target.value);
-                    } else {
-                      setGlobalFilter(e.target.value);
-                    }
-                  }}
-                  className="w-full h-10 pl-10 pr-3.5 text-[14px] font-medium border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] dark:focus:ring-[#6366F1] shadow-2xs"
-                />
-                <svg
-                  className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 gap-2.5 bg-slate-50/50 dark:bg-slate-900/50">
+            {title ? (
+              <div className="font-bold text-base text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                {title}
               </div>
+            ) : (
+              <div />
             )}
 
-            {showExcelExport ? (
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={isExcelLoading}
-                className="h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold
+            <div className="ml-auto flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+              {(showTopSearch || searchValue !== undefined || onSearchChange) && (
+                <div className="relative w-full sm:w-72 md:w-80">
+                  <input
+                    type="text"
+                    placeholder={searchPlaceholder || "Search by name or code..."}
+                    value={
+                      searchValue !== undefined ? searchValue : globalFilter || ""
+                    }
+                    onChange={(e) => {
+                      if (onSearchChange) {
+                        onSearchChange(e.target.value);
+                      } else {
+                        setGlobalFilter(e.target.value);
+                      }
+                    }}
+                    className="w-full h-10 pl-10 pr-3.5 text-[14px] font-medium border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4338CA] dark:focus:ring-[#6366F1] shadow-2xs"
+                  />
+                  <svg
+                    className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+              )}
+
+              {showExcelExport ? (
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={isExcelLoading}
+                  className="h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold
                            hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed
                            dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
                            inline-flex items-center gap-2 shrink-0 shadow-2xs"
-              >
-                <Download className="h-4 w-4" />
-                {isExcelLoading ? "Exporting..." : "Export to Excel"}
-              </button>
-            ) : null}
+                >
+                  <Download className="h-4 w-4" />
+                  {isExcelLoading ? "Exporting..." : "Export to Excel"}
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <div
         ref={scrollWrapRef}
         onScroll={handleScroll}
         className="w-full overflow-x-auto overflow-y-auto custom-scrollbar"
-        style={{ maxHeight: uiHeight }}
+        style={{ maxHeight: uiHeight, willChange: "scroll-position" }}
       >
         <table
           {...getTableProps()}
@@ -803,13 +876,12 @@ export default function ServiceTablePagination({
                         {...column.getHeaderProps(
                           isSelectionCol ? {} : column.getSortByToggleProps(),
                         )}
-                        className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${
-                          isSelectionCol
+                        className={`px-4 py-3.5 text-left text-[12px] font-bold uppercase tracking-wider select-none whitespace-nowrap ${isSelectionCol
                             ? "w-12 text-center !px-3"
                             : isEmpNameCol
                               ? "text-[#4F46E5] dark:text-indigo-400"
                               : "text-slate-500 dark:text-slate-400"
-                        } ${headerClassName || ""}`}
+                          } ${headerClassName || ""}`}
                       >
                         {isSelectionCol ? (
                           <div className="flex items-center justify-center">
@@ -873,9 +945,8 @@ export default function ServiceTablePagination({
                       return (
                         <th
                           key={`${column.id}_filter`}
-                          className={`px-3 py-2 font-normal ${
-                            isSelectionCol ? "w-12 text-center !px-3" : ""
-                          }`}
+                          className={`px-3 py-2 font-normal ${isSelectionCol ? "w-12 text-center !px-3" : ""
+                            }`}
                         >
                           {shouldShowInput ? (
                             <div
@@ -914,7 +985,26 @@ export default function ServiceTablePagination({
             {...getTableBodyProps()}
             className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-[#0B1220]"
           >
-            {rowsToRender.map((row: any) => {
+            {paddingTop > 0 && (
+              <tr
+                style={{ height: `${paddingTop}px` }}
+                aria-hidden="true"
+                className="pointer-events-none select-none hover:!bg-transparent !border-0 !p-0"
+              >
+                <td
+                  colSpan={tableColumns.length}
+                  style={{
+                    padding: 0,
+                    margin: 0,
+                    border: 0,
+                    height: `${paddingTop}px`,
+                    lineHeight: 0,
+                    fontSize: 0,
+                  }}
+                />
+              </tr>
+            )}
+            {visibleRows.map((row: any, idx: number) => {
               prepareRow(row);
               const rowId = row.original[selectValue] || row.original.id;
               const isRowSelected =
@@ -922,13 +1012,13 @@ export default function ServiceTablePagination({
 
               return (
                 <tr
-                  key={row.id}
+                  key={row.id || startIndex + idx}
+                  ref={idx === 0 ? handleRowRef : undefined}
                   {...row.getRowProps()}
-                  className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${
-                    isRowSelected
+                  className={`transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/80 ${isRowSelected
                       ? "bg-[#EEF2FF] dark:bg-indigo-950/40 hover:bg-[#E0E7FF] dark:hover:bg-indigo-950/60"
                       : "hover:bg-slate-50/70 dark:hover:bg-white/[0.04]"
-                  }`}
+                    }`}
                   onDoubleClick={() => onRowDoubleClick?.(row.original)}
                 >
                   {row.cells.map((cell: any, cellIdx: number) => {
@@ -938,18 +1028,16 @@ export default function ServiceTablePagination({
                       <td
                         key={cell.column.id}
                         {...cell.getCellProps()}
-                        className={`whitespace-nowrap text-[14px] text-slate-800 dark:text-slate-200 ${
-                          isSelectionCol
+                        className={`whitespace-nowrap text-[14px] text-slate-800 dark:text-slate-200 ${isSelectionCol
                             ? "w-12 !px-3 text-center"
                             : "px-4 py-3.5"
-                        }`}
+                          }`}
                       >
                         <div
-                          className={`font-normal text-slate-800 dark:text-slate-200 text-[14px] ${
-                            isSelectionCol
+                          className={`font-normal text-slate-800 dark:text-slate-200 text-[14px] ${isSelectionCol
                               ? "flex items-center justify-center"
                               : ""
-                          }`}
+                            }`}
                         >
                           {cell.render("Cell")}
                         </div>
@@ -959,6 +1047,25 @@ export default function ServiceTablePagination({
                 </tr>
               );
             })}
+            {paddingBottom > 0 && (
+              <tr
+                style={{ height: `${paddingBottom}px` }}
+                aria-hidden="true"
+                className="pointer-events-none select-none hover:!bg-transparent !border-0 !p-0"
+              >
+                <td
+                  colSpan={tableColumns.length}
+                  style={{
+                    padding: 0,
+                    margin: 0,
+                    border: 0,
+                    height: `${paddingBottom}px`,
+                    lineHeight: 0,
+                    fontSize: 0,
+                  }}
+                />
+              </tr>
+            )}
           </tbody>
         </table>
 
@@ -1028,7 +1135,7 @@ export default function ServiceTablePagination({
               disabled={
                 serverMode
                   ? (serverPagination?.currentPage || 1) >=
-                    (serverPagination?.totalPages || 1)
+                  (serverPagination?.totalPages || 1)
                   : !clientCanNext
               }
               className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-base font-semibold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"

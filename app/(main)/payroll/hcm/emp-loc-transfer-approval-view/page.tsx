@@ -551,13 +551,13 @@ export default function EmpLocTranshfr() {
     }
   };
 
-  const toggleRow = (id: number | string) => {
-    setExpandedRows((previous) =>
-      previous.includes(id)
-        ? previous.filter((rowId) => rowId !== id)
-        : [...previous, id],
-    );
-  };
+  // const toggleRow = (id: number | string) => {
+  //   setExpandedRows((previous) =>
+  //     previous.includes(id)
+  //       ? previous.filter((rowId) => rowId !== id)
+  //       : [...previous, id],
+  //   );
+  // };
 
   // -------------------------------------------------------
   // Approve / reject requests
