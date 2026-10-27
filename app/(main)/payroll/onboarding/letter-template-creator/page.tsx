@@ -46,8 +46,53 @@ const DEFAULT_LETTER_CONTENT = `<p style="text-align: center; margin-bottom: 10p
 <p style="margin-bottom: 2px;">Sincerely,</p>
 <p style="margin-bottom: 0;"><strong>{COMPNAME}</strong><br />GHRM</p>`;
 
+export type PreviewSpacing = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
+export const getMergedContentWithSpacing = (
+  content: string,
+  spacing: PreviewSpacing
+) => {
+  const clean = (content || "").replace(
+    /<!--\s*SPACING:\s*\{[^}]+\}\s*-->\s*/gi,
+    ""
+  );
+  return `<!-- SPACING: ${JSON.stringify(spacing)} -->\n${clean}`;
+};
+
+export const extractSpacingFromContent = (
+  content: string
+): { cleanContent: string; spacing: PreviewSpacing | null } => {
+  const match = (content || "").match(/<!--\s*SPACING:\s*(\{[^}]+\})\s*-->/i);
+  let spacing: PreviewSpacing | null = null;
+  if (match && match[1]) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      spacing = {
+        top: Number(parsed.top) || 10,
+        bottom: Number(parsed.bottom) || 10,
+        left: Number(parsed.left) || 10,
+        right: Number(parsed.right) || 10,
+      };
+    } catch (err) {
+      console.warn("Failed to parse spacing comment:", err);
+    }
+  }
+  const cleanContent = (content || "").replace(
+    /<!--\s*SPACING:\s*\{[^}]+\}\s*-->\s*/gi,
+    ""
+  );
+  return { cleanContent, spacing };
+};
+
 const formatToLetterStructure = (text: string) => {
-  if (!text || !text.trim()) return DEFAULT_LETTER_CONTENT;
+  if (!text || !text.trim()) return "";
+  const cleaned = text.replace(/<!--\s*SPACING:\s*\{[^}]+\}\s*-->\s*/gi, "");
+  if (!cleaned.trim()) return "";
 
   const pCount = (text.match(/<p[\s>]/gi) || []).length;
   const brCount = (text.match(/<br\s*\/?>/gi) || []).length;
@@ -92,14 +137,72 @@ const formatToLetterStructure = (text: string) => {
   return text;
 };
 
+const getTokenIcon = (key: string) => {
+  const upper = key.toUpperCase();
+  if (
+    upper.includes("NAME") ||
+    upper.includes("TITLE") ||
+    upper.includes("USER") ||
+    upper.includes("FATHER") ||
+    upper.includes("GENDER")
+  ) {
+    return User;
+  }
+  if (upper.includes("DATE") || upper.includes("DOB")) {
+    return Calendar;
+  }
+  if (
+    upper.includes("PERIOD") ||
+    upper.includes("PROBATION") ||
+    upper.includes("SESSION")
+  ) {
+    return Hourglass;
+  }
+  if (
+    upper.includes("DESIG") ||
+    upper.includes("DEPT") ||
+    upper.includes("ROLE") ||
+    upper.includes("BRANCH") ||
+    upper.includes("LOCATION")
+  ) {
+    return Briefcase;
+  }
+  if (upper.includes("COMP") || upper.includes("COMPANY")) {
+    return Building2;
+  }
+  if (
+    upper.includes("CTC") ||
+    upper.includes("SALARY") ||
+    upper.includes("BASIC") ||
+    upper.includes("HRA") ||
+    upper.includes("DA") ||
+    upper.includes("MEDICAL") ||
+    upper.includes("UNIFORM") ||
+    upper.includes("WASHING") ||
+    upper.includes("GROSS") ||
+    upper.includes("CONVEYANCE") ||
+    upper.includes("RUPEE")
+  ) {
+    return IndianRupee;
+  }
+  if (
+    upper.includes("SIGN") ||
+    upper.includes("IMAGE") ||
+    upper.includes("LOGO")
+  ) {
+    return PenTool;
+  }
+  return Hash;
+};
+
 export default function LetterCreatorPage() {
   const user = useCurrentUser();
   const componentRef = useRef<HTMLDivElement>(null);
   const customRichEditorRef = useRef<CustomRichEditorRef>(null);
 
   const [formData, setFormData] = useState({
-    TEMPLATE_NAME: "Experience Letter",
-    CONTENT: DEFAULT_LETTER_CONTENT,
+    TEMPLATE_NAME: "",
+    CONTENT: "",
     KEYWORDS: "",
     SHOW_HEADER: 1,
   });
@@ -121,6 +224,7 @@ export default function LetterCreatorPage() {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [currentEmployeeIndex, setCurrentEmployeeIndex] = useState<number>(0);
+  const [isTokensExpanded, setIsTokensExpanded] = useState<boolean>(false);
   const employeeCacheRef = useRef<Record<string, any>>({});
 
   const headerFooterOptions = [
@@ -222,9 +326,9 @@ export default function LetterCreatorPage() {
       if (!compCode) return;
       try {
         const rawCode =
-          codeToFetch !== undefined ? codeToFetch : fetchdata.SRNO || "0003";
+          codeToFetch !== undefined ? codeToFetch : fetchdata.SRNO;
         const targetCode = Array.isArray(rawCode)
-          ? rawCode[0] || "0003"
+          ? rawCode[0]
           : rawCode;
         if (!targetCode) return;
 
@@ -336,9 +440,39 @@ export default function LetterCreatorPage() {
         const savedHeader = templateData?.SHOW_HEADER ?? 1;
         setShowHeader(Number(savedHeader) === 1);
 
-        const formattedContent = formatToLetterStructure(
-          templateData?.CONTENT || ""
-        );
+        const { cleanContent, spacing: extractedSpacing } =
+          extractSpacingFromContent(templateData?.CONTENT || "");
+
+        const loadedSpacing: PreviewSpacing = {
+          top: Number(
+            templateData?.SPACING_TOP ??
+              templateData?.MARGIN_TOP ??
+              extractedSpacing?.top ??
+              10
+          ),
+          bottom: Number(
+            templateData?.SPACING_BOTTOM ??
+              templateData?.MARGIN_BOTTOM ??
+              extractedSpacing?.bottom ??
+              10
+          ),
+          left: Number(
+            templateData?.SPACING_LEFT ??
+              templateData?.MARGIN_LEFT ??
+              extractedSpacing?.left ??
+              10
+          ),
+          right: Number(
+            templateData?.SPACING_RIGHT ??
+              templateData?.MARGIN_RIGHT ??
+              extractedSpacing?.right ??
+              10
+          ),
+        };
+
+        setPreviewSpacing(loadedSpacing);
+
+        const formattedContent = formatToLetterStructure(cleanContent);
 
         setFormData((prev) => ({
           ...prev,
@@ -383,7 +517,6 @@ export default function LetterCreatorPage() {
     printapi();
     fetchemployeedata();
     fetchExistingTemplateName();
-    empdataapi();
   }, [
     user,
     getCompCode,
@@ -392,11 +525,14 @@ export default function LetterCreatorPage() {
     printapi,
     fetchemployeedata,
     fetchExistingTemplateName,
-    empdataapi,
   ]);
 
   useEffect(() => {
-    empdataapi();
+    if (fetchdata.SRNO) {
+      empdataapi();
+    } else {
+      setSelectEmployeedata({});
+    }
   }, [fetchdata.SRNO, empdataapi]);
 
   useEffect(() => {
@@ -407,6 +543,10 @@ export default function LetterCreatorPage() {
 
   // ── 8. Generate Letter Logic (exact matching reference) ──
   const generateLetter = useCallback(() => {
+    if (!formData.CONTENT || !formData.CONTENT.trim()) {
+      setGeneratedLetter("");
+      return;
+    }
     let content = formatToLetterStructure(formData.CONTENT || "");
     const placeholderArray = (formData.KEYWORDS || "").split(",");
     const placeholdersMap: Record<string, string> = {};
@@ -589,16 +729,24 @@ export default function LetterCreatorPage() {
 
   const refresh = () => {
     setFormData({
-      TEMPLATE_NAME: "Experience Letter",
-      CONTENT: DEFAULT_LETTER_CONTENT,
-      KEYWORDS: " ",
+      TEMPLATE_NAME: "",
+      CONTENT: "",
+      KEYWORDS: "",
       SHOW_HEADER: 1,
     });
     setFetchdata({
       TEMPLATENAME: "",
       SRNO: "",
     });
+    setSelectEmployeedata({});
+    setGeneratedLetter("");
     setShowHeader(true);
+    setPreviewSpacing({
+      top: 10,
+      bottom: 10,
+      left: 10,
+      right: 10,
+    });
   };
 
   // ── Save Template ──
@@ -612,16 +760,73 @@ export default function LetterCreatorPage() {
       });
       return;
     }
+
+    const templateName = (formData.TEMPLATE_NAME || "").trim();
+    if (!templateName) {
+      Swal.fire({
+        icon: "warning",
+        title: "Template Name Required",
+        text: "Please enter a template name.",
+      });
+      return;
+    }
+
+    const isAlreadyExists =
+      existingTemplateName.some((t: any) => {
+        const existingName = String(
+          t?.label ??
+            t?.Label ??
+            t?.TEMPLATE_NAME ??
+            t?.template_name ??
+            t?.Template_Name ??
+            t?.value ??
+            ""
+        )
+          .trim()
+          .toLowerCase();
+        return existingName === templateName.toLowerCase();
+      }) ||
+      templateOptions.some(
+        (opt) => opt.label.trim().toLowerCase() === templateName.toLowerCase()
+      );
+
+    if (isAlreadyExists) {
+      Swal.fire({
+        icon: "warning",
+        title: "Template Already Exists",
+        text: `Template "${templateName}" already exists. Please enter a different template name.`,
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
+      const contentWithSpacing = getMergedContentWithSpacing(
+        formData.CONTENT,
+        previewSpacing
+      );
+
+      const templatePayload = {
+        ...formData,
+        TEMPLATE_NAME: templateName,
+        CONTENT: contentWithSpacing,
+        SPACING_TOP: previewSpacing.top,
+        SPACING_BOTTOM: previewSpacing.bottom,
+        SPACING_LEFT: previewSpacing.left,
+        SPACING_RIGHT: previewSpacing.right,
+        MARGIN_TOP: previewSpacing.top,
+        MARGIN_BOTTOM: previewSpacing.bottom,
+        MARGIN_LEFT: previewSpacing.left,
+        MARGIN_RIGHT: previewSpacing.right,
+        PREVIEW_SPACING: JSON.stringify(previewSpacing),
+        compcode: compCode,
+      };
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/template/insertData`,
         {
           Created_by: user?.name,
-          Template: {
-            ...formData,
-            compcode: compCode,
-          },
+          Template: templatePayload,
           compcode: compCode,
         },
         {
@@ -670,15 +875,32 @@ export default function LetterCreatorPage() {
     }
     setIsUpdating(true);
     try {
+      const contentWithSpacing = getMergedContentWithSpacing(
+        formData.CONTENT,
+        previewSpacing
+      );
+
+      const templatePayload = {
+        ...formData,
+        CONTENT: contentWithSpacing,
+        SPACING_TOP: previewSpacing.top,
+        SPACING_BOTTOM: previewSpacing.bottom,
+        SPACING_LEFT: previewSpacing.left,
+        SPACING_RIGHT: previewSpacing.right,
+        MARGIN_TOP: previewSpacing.top,
+        MARGIN_BOTTOM: previewSpacing.bottom,
+        MARGIN_LEFT: previewSpacing.left,
+        MARGIN_RIGHT: previewSpacing.right,
+        PREVIEW_SPACING: JSON.stringify(previewSpacing),
+        compcode: compCode,
+      };
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/template/updateData`,
         {
           TemplateId: fetchdata.TEMPLATENAME,
           Created_by: user?.name,
-          Template: {
-            ...formData,
-            compcode: compCode,
-          },
+          Template: templatePayload,
           compcode: compCode,
         },
         {
@@ -733,107 +955,29 @@ export default function LetterCreatorPage() {
           <style>
             @page {
               size: A4 portrait;
-              margin: 15mm 20mm;
+              margin: 10mm 15mm;
             }
-           {showHeader && (
-  <div
-    className="mb-4 w-full min-w-0"
-    style={{ width: "100%" }}
-  >
-    <div
-      className="grid grid-cols-12 items-center gap-2 w-full min-w-0"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "70px minmax(0, 1fr) 100px",
-        alignItems: "center",
-        columnGap: "10px",
-        width: "100%",
-      }}
-    >
-      {/* Company Logo */}
-      <div className="flex items-center justify-start min-w-0">
-        <Image
-          src={compLogo || "/logo.png"}
-          alt="Company logo"
-          className="object-contain"
-          width={65}
-          height={45}
-          style={{
-            width: "65px",
-            height: "45px",
-            objectFit: "contain",
-          }}
-        />
-      </div>
-
-      {/* Company Name & Location */}
-      <div
-        className="flex flex-col items-center justify-center text-center min-w-0"
-        style={{
-          textAlign: "center",
-          overflowWrap: "anywhere",
-          minWidth: 0,
-        }}
-      >
-        <h2
-          className="font-bold text-xs sm:text-base"
-          style={{
-            margin: 0,
-            fontSize: "14px",
-            lineHeight: 1.35,
-            fontWeight: 700,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {company?.Comp_Name ||
-            SelectEmployeedata?.COMPANY_NAME_EMP ||
-            ""}
-        </h2>
-
-        <p
-          className="text-xs"
-          style={{
-            margin: "3px 0 0",
-            fontSize: "11px",
-            lineHeight: 1.4,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {SelectEmployeedata?.EMPLOCATION || ""}
-        </p>
-      </div>
-
-      {/* Maruti / Partner Logo */}
-      <div className="flex items-center justify-end min-w-0">
-        <Image
-          src={MarutiLogo || "/maruti.png"}
-          alt="Maruti logo"
-          className="object-contain"
-          width={95}
-          height={50}
-          style={{
-            width: "95px",
-            height: "50px",
-            objectFit: "contain",
-          }}
-        />
-      </div>
-    </div>
-
-    <hr
-      className="mt-2 border-slate-200 dark:border-slate-700"
-      style={{
-        border: 0,
-        borderTop: "1px solid #cbd5e1",
-        marginTop: "8px",
-      }}
-    />
-  </div>
-)}
+            body {
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              color: #0F172A;
+              margin: 0;
+              padding: 0;
+            }
+            .print-container {
+              padding-top: ${previewSpacing.top}px;
+              padding-bottom: ${previewSpacing.bottom}px;
+              padding-left: ${previewSpacing.left}px;
+              padding-right: ${previewSpacing.right}px;
+              font-size: 14px;
+              line-height: 1.6;
+              word-break: break-word;
+            }
           </style>
         </head>
         <body>
-          ${componentRef.current.innerHTML}
+          <div class="print-container">
+            ${componentRef.current.innerHTML}
+          </div>
         </body>
       </html>
     `);
@@ -843,13 +987,6 @@ export default function LetterCreatorPage() {
       printWindow.print();
       printWindow.close();
     }, 300);
-  };
-
-  type PreviewSpacing = {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
   };
 
   const [previewSpacing, setPreviewSpacing] = useState<PreviewSpacing>({
@@ -946,18 +1083,45 @@ export default function LetterCreatorPage() {
   ];
 
   // ── Available Merge Tokens ──
-  const availableTokens = [
-    { key: "TITLE", label: "TITLE", icon: User },
-    { key: "NAME", label: "NAME", icon: User },
-    { key: "COMPCODE", label: "COMPCODE", icon: Hash },
-    { key: "EMPJOINDATE", label: "EMPJOINDATE", icon: Calendar },
-    { key: "PROBATION_PERIOD", label: "PROBATION_PERIOD", icon: Hourglass },
-    { key: "DESIGNATION", label: "DESIGNATION", icon: Briefcase },
-    { key: "COMPNAME", label: "COMPNAME", icon: Building2 },
-    { key: "TODAYDATE", label: "TODAYDATE", icon: CalendarDays },
-    { key: "CTC", label: "CTC", icon: IndianRupee },
-    { key: "SIGN_IMAGE", label: "SIGN_IMAGE", icon: PenTool },
-  ];
+  const availableTokens = useMemo(() => {
+    const raw = (formData.KEYWORDS || "").trim();
+    const source =
+      raw || (fetchdata.TEMPLATENAME ? SuggestionToken.join(", ") : "");
+
+    if (source) {
+      const seen = new Set<string>();
+      const list: Array<{ key: string; label: string; icon: any }> = [];
+
+      source.split(",").forEach((item) => {
+        const trimmed = item.trim();
+        if (!trimmed) return;
+        const key = trimmed.includes(":") ? trimmed.split(":")[0].trim() : trimmed;
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          list.push({
+            key,
+            label: key,
+            icon: getTokenIcon(key),
+          });
+        }
+      });
+
+      if (list.length > 0) return list;
+    }
+
+    return [
+      { key: "TITLE", label: "TITLE", icon: User },
+      { key: "NAME", label: "NAME", icon: User },
+      { key: "COMPCODE", label: "COMPCODE", icon: Hash },
+      { key: "EMPJOINDATE", label: "EMPJOINDATE", icon: Calendar },
+      { key: "PROBATION_PERIOD", label: "PROBATION_PERIOD", icon: Hourglass },
+      { key: "DESIGNATION", label: "DESIGNATION", icon: Briefcase },
+      { key: "COMPNAME", label: "COMPNAME", icon: Building2 },
+      { key: "TODAYDATE", label: "TODAYDATE", icon: CalendarDays },
+      { key: "CTC", label: "CTC", icon: IndianRupee },
+      { key: "SIGN_IMAGE", label: "SIGN_IMAGE", icon: PenTool },
+    ];
+  }, [formData.KEYWORDS, fetchdata.TEMPLATENAME]);
 
   const usedTokensCount = useMemo(() => {
     const content = formData.CONTENT || "";
@@ -966,7 +1130,7 @@ export default function LetterCreatorPage() {
         content.includes(`{${t.key}}`) ||
         new RegExp(`\\b${t.key}\\b`, "i").test(content),
     ).length;
-  }, [formData.CONTENT]);
+  }, [formData.CONTENT, availableTokens]);
 
   const wordCount = useMemo(() => {
     if (!formData.CONTENT) return 0;
@@ -1063,7 +1227,7 @@ export default function LetterCreatorPage() {
   }, [currentEmpData, SelectEmployeedata, currentEmployeeCode]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-24">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-6 space-y-4 max-w-[1780px] mx-auto font-sans transition-colors pb-6 sm:pb-8">
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER & MAIN ACTION BUTTONS */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
@@ -1078,7 +1242,7 @@ export default function LetterCreatorPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
           <AButton
             type="button"
             variant="outline"
@@ -1086,19 +1250,56 @@ export default function LetterCreatorPage() {
             onClick={handlePrint}
             icon={<Printer className="h-4 w-4 shrink-0" />}
             className="
-      !rounded-xl
-      border-slate-300 dark:border-slate-700
-      bg-white dark:bg-slate-900 shadow-xs
-      !h-11
-      w-full sm:w-[110px] md:w-[130px] lg:w-[140px]
-      min-w-0
-      !px-2 sm:!px-3
-      !justify-center
-      text-xs sm:text-sm
-      whitespace-nowrap
-    "
+              !rounded-xl
+              border-slate-300 dark:border-slate-700
+              bg-white dark:bg-slate-900 shadow-xs
+              !h-11
+              !px-3 sm:!px-4
+              !justify-center
+              text-xs sm:text-sm
+              whitespace-nowrap
+            "
           >
             <span>Print letter</span>
+          </AButton>
+
+          <AButton
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={refresh}
+            className="
+              !rounded-xl
+              border-slate-300 dark:border-slate-700
+              bg-white dark:bg-slate-900 shadow-xs
+              !h-11
+              !px-3 sm:!px-4
+              !justify-center
+              text-xs sm:text-sm
+              whitespace-nowrap
+            "
+          >
+            <span>Discard changes</span>
+          </AButton>
+
+          <AButton
+            type="button"
+            variant="secondary"
+            size="lg"
+            disabled={!fetchdata.TEMPLATENAME}
+            onClick={update}
+            loading={isUpdating}
+            className="
+              !rounded-xl shadow-xs
+              disabled:opacity-50
+              !h-11
+              !px-3 sm:!px-4
+              !justify-center
+              text-xs sm:text-sm
+              whitespace-nowrap
+            "
+          >
+            <span>Update template</span>
           </AButton>
 
           <AButton
@@ -1110,18 +1311,16 @@ export default function LetterCreatorPage() {
             loading={isSaving}
             icon={<Save className="h-4 w-4 shrink-0" />}
             className="
-      !rounded-xl
-      !bg-[#4338CA] hover:!bg-[#3730a3]
-      text-white shadow-xs
-      disabled:opacity-50
-      !h-11
-      w-full sm:w-[110px] md:w-[130px] lg:w-[140px]
-      min-w-0
-      !px-2 sm:!px-3
-      !justify-center
-      text-xs sm:text-sm
-      whitespace-nowrap
-    "
+              !rounded-xl
+              !bg-[#4338CA] hover:!bg-[#3730a3]
+              text-white shadow-xs
+              disabled:opacity-50
+              !h-11
+              !px-3 sm:!px-4
+              !justify-center
+              text-xs sm:text-sm
+              whitespace-nowrap
+            "
           >
             <span>Save</span>
           </AButton>
@@ -1213,15 +1412,30 @@ export default function LetterCreatorPage() {
           </div>
 
           {/* Card 2: Merge tokens */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-4 sm:p-5 shadow-xs transition-all">
+            <div
+              onClick={() => setIsTokensExpanded((prev) => !prev)}
+              className="flex items-center justify-between cursor-pointer select-none group"
+              title={
+                isTokensExpanded
+                  ? "Click to collapse merge tokens"
+                  : "Click to expand merge tokens"
+              }
+            >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
                   <span className="font-mono font-bold text-sm">{"{}"}</span>
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-                    Merge tokens
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>Merge tokens</span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                        isTokensExpanded
+                          ? "rotate-180 text-indigo-600 dark:text-indigo-400"
+                          : ""
+                      }`}
+                    />
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Click to append at the end of the letter
@@ -1234,40 +1448,44 @@ export default function LetterCreatorPage() {
               </span>
             </div>
 
-            {/* Token Pills */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {availableTokens.map((token) => {
-                const IconComp = token.icon;
-                const isUsed =
-                  (formData.CONTENT || "").includes(`{${token.key}}`) ||
-                  new RegExp(`\\b${token.key}\\b`, "i").test(
-                    formData.CONTENT || "",
-                  );
+            {/* Token Pills (Shown only when clicked/expanded) */}
+            {isTokensExpanded && (
+              <div className="flex flex-wrap gap-2 pt-3 max-h-[82px] overflow-y-auto pr-1 select-none border-t border-slate-100 dark:border-slate-800 mt-3">
+                {availableTokens.map((token) => {
+                  const IconComp = token.icon;
+                  const isUsed =
+                    (formData.CONTENT || "").includes(`{${token.key}}`) ||
+                    new RegExp(`\\b${token.key}\\b`, "i").test(
+                      formData.CONTENT || "",
+                    );
 
-                return (
-                  <AButton
-                    key={token.key}
-                    type="button"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", `{${token.key}}`);
-                      e.dataTransfer.setData("application/x-token", token.key);
-                      e.dataTransfer.effectAllowed = "copy";
-                    }}
-                    onClick={() => handleInsertToken(token.key)}
-                    title={`Click or drag to insert {${token.key}}`}
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border transition-all cursor-grab active:cursor-grabbing select-none active:scale-95 ${
-                      isUsed
-                        ? "bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
-                        : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300"
-                    }`}
-                  >
-                    <IconComp className="h-3 w-3 shrink-0" />
-                    <span>{token.label}</span>
-                  </AButton>
-                );
-              })}
-            </div>
+                  return (
+                    <AButton
+                      key={token.key}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", `{${token.key}}`);
+                        e.dataTransfer.setData("application/x-token", token.key);
+                        e.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onClick={() => handleInsertToken(token.key)}
+                      title={`Click or drag to insert {${token.key}}`}
+                      className={`!h-auto !py-1 !px-2.5 sm:!px-3 !rounded-full text-md sm:text-md font-semibold border transition-all cursor-grab active:cursor-grabbing select-none active:scale-95 ${
+                        isUsed
+                          ? "!bg-indigo-50/90 dark:!bg-indigo-950/60 !border-indigo-300 dark:!border-indigo-700 !text-indigo-700 dark:!text-indigo-300 hover:!bg-indigo-100 hover:!border-indigo-400 hover:!text-indigo-800 dark:hover:!bg-indigo-900/60 dark:hover:!text-indigo-200"
+                          : "!bg-slate-50 dark:!bg-slate-800/60 !border-slate-200 dark:!border-slate-700 !text-slate-600 dark:!text-slate-400 hover:!bg-indigo-50 hover:!border-indigo-300 hover:!text-indigo-600 dark:hover:!bg-indigo-950/60 dark:hover:!border-indigo-700 dark:hover:!text-indigo-300"
+                      }`}
+                    >
+                      <IconComp className="h-3 w-3 shrink-0" />
+                      <span>{token.label}</span>
+                    </AButton>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Card 3: Letter content */}
@@ -1293,7 +1511,11 @@ export default function LetterCreatorPage() {
                 placeholder="Enter letter content here..."
                 defaultHeight={420}
                 className="w-full"
-                keywordsList={SuggestionToken}
+                keywordsList={
+                  (formData.KEYWORDS && formData.KEYWORDS.trim())
+                    ? formData.KEYWORDS
+                    : SuggestionToken
+                }
               />
             </div>
           </div>
@@ -1302,80 +1524,8 @@ export default function LetterCreatorPage() {
         {/* RIGHT COLUMN: LIVE GENERATED LETTER PREVIEW */}
         <div className="lg:col-span-6 space-y-4 min-w-0">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
-            {/* Header of Preview Card */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
-                  <Eye className="h-4 w-4" />
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  Generated Letter
-                </h2>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AButton
-                  variant="outline"
-                  size="md"
-                  onClick={refresh}
-                  icon={<RefreshCw className="h-4 w-4" />}
-                  className="!rounded-xl border-slate-300 dark:border-slate-700 !h-10 px-4 text-sm font-semibold shadow-xs"
-                >
-                  <span>Refresh</span>
-                </AButton>
-
-                <AButton
-                  variant="primary"
-                  size="md"
-                  onClick={handlePrint}
-                  icon={<Printer className="h-4 w-4" />}
-                  className="!rounded-xl !bg-[#4338CA] hover:!bg-[#3730a3] text-white !h-10 px-4 text-sm font-semibold shadow-xs"
-                >
-                  <span>Print</span>
-                </AButton>
-              </div>
-            </div>
-
-            {/* KEYWORDS / Variables (Draggable & Clickable) */}
-            <div className="pt-3 pb-2">
-              <label
-                htmlFor="KEYWORDS"
-                className="block uppercase text-lg sm:text-lg font-semibold mb-1.5 text-[#193A69] dark:text-[#E2E8F0]"
-              >
-                Example (Title:Mr/Mrs, Name:Himanshu, ...):
-              </label>
-              <div className="px-3.5 py-3 bg-white dark:bg-slate-900 rounded-xl text-sm sm:text-base font-normal leading-relaxed border border-slate-200 dark:border-slate-700 shadow-xs w-full transition-all min-h-[110px] max-h-[170px] overflow-y-auto select-none">
-                {((formData.KEYWORDS || "").trim() || SuggestionToken.join(", "))
-                  .split(",")
-                  .map((t) => t.trim())
-                  .filter(Boolean)
-                  .map((token, index, arr) => (
-                    <React.Fragment key={`${token}-${index}`}>
-                      <span
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/plain", `{${token}}`);
-                          e.dataTransfer.setData("application/x-token", token);
-                          e.dataTransfer.effectAllowed = "copy";
-                        }}
-                        onClick={() => handleInsertToken(token)}
-                        className="inline-block cursor-grab active:cursor-grabbing hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded px-1 -mx-0.5 transition-colors text-slate-800 dark:text-slate-200 font-medium"
-                        title={`Click or drag to insert {${token}}`}
-                      >
-                        {token}
-                      </span>
-                      {index < arr.length - 1 && (
-                        <span className="text-slate-400 dark:text-slate-500 mr-1.5">
-                          ,
-                        </span>
-                      )}
-                    </React.Fragment>
-                  ))}
-              </div>
-            </div>
-
             {/* Preview Spacing Controls */}
-            <div className="mt-3 mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-4">
+            <div className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -1535,7 +1685,7 @@ export default function LetterCreatorPage() {
                   minHeight: "700px",
                 }}
               >
-                {showHeader && (
+                {showHeader && Boolean(formData.CONTENT || generatedLetter) && (
                   <div
                     className="mb-2.5 w-full min-w-0"
                     style={{ width: "100%" }}
@@ -1636,128 +1786,6 @@ export default function LetterCreatorPage() {
                   style={{ lineHeight: "1.6" }}
                 />
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────────────── */}
-      {/* 3. RESPONSIVE BOTTOM FLOATING ACTION BAR */}
-      {/* ────────────────────────────────────────────────────────────── */}
-      <div
-        className="
-    fixed bottom-0
-    left-0 sm:left-[var(--sidebar-width,68px)]
-    right-0 z-40
-    bg-white/95 dark:bg-[#0B1220]/95
-    backdrop-blur-md
-    border-t border-slate-200 dark:border-slate-800
-    shadow-lg
-    transition-[left] duration-150 ease-in-out
-    px-3 sm:px-5 lg:px-6
-    py-3
-    max-h-[45vh] overflow-y-auto
-  "
-      >
-        <div className="w-full max-w-[1780px] mx-auto">
-          <div
-            className="
-        flex flex-col
-        lg:flex-row
-        lg:items-center
-        lg:justify-between
-        gap-3 lg:gap-5
-      "
-          >
-            {/* Template information */}
-            <div
-              className="
-          min-w-0 w-full lg:flex-1
-          text-xs sm:text-sm
-          text-slate-500 dark:text-slate-400
-          flex flex-wrap items-center gap-x-2 gap-y-1
-          leading-relaxed
-        "
-            >
-              <span className="font-semibold text-slate-700 dark:text-slate-200 break-words">
-                {formData.TEMPLATE_NAME?.trim() || "Untitled Template"}
-              </span>
-
-              <span className="hidden sm:inline">·</span>
-
-              <span>
-                {showHeader ? "Header & Footer: Yes" : "Header & Footer: No"}
-              </span>
-
-              <span className="hidden sm:inline">·</span>
-
-              <span className="tabular-nums whitespace-nowrap">
-                {wordCount} words
-              </span>
-            </div>
-
-            {/* Action buttons */}
-            <div
-              className="
-          grid grid-cols-1
-          sm:grid-cols-3
-          gap-2
-          w-full lg:w-auto
-          lg:shrink-0
-        "
-            >
-              <AButton
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={refresh}
-                className="
-            !rounded-xl
-            border-slate-300 dark:border-slate-700
-            bg-white dark:bg-slate-900
-            w-full !justify-center
-            whitespace-nowrap
-          "
-              >
-                <span>Discard changes</span>
-              </AButton>
-
-              <AButton
-                type="button"
-                variant="secondary"
-                size="lg"
-                disabled={!fetchdata.TEMPLATENAME}
-                onClick={update}
-                loading={isUpdating}
-                className="
-            !rounded-xl shadow-xs
-            disabled:opacity-50
-            w-full !justify-center
-            whitespace-nowrap
-          "
-              >
-                <span>Update template</span>
-              </AButton>
-
-              <AButton
-                type="button"
-                variant="primary"
-                size="lg"
-                disabled={Boolean(fetchdata.TEMPLATENAME)}
-                onClick={save}
-                loading={isSaving}
-                icon={<Save className="h-4 w-4" />}
-                className="
-            !rounded-xl
-            !bg-[#4338CA] hover:!bg-[#3730a3]
-            text-white shadow-xs
-            disabled:opacity-50
-            w-full !justify-center
-            whitespace-nowrap
-          "
-              >
-                <span>Save template</span>
-              </AButton>
             </div>
           </div>
         </div>
