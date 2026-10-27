@@ -205,7 +205,7 @@ export default function PrintLetterPage() {
               `Template ${idx + 1}`;
 
             const contentStr = item.CONTENT || "";
-            const tokenMatches = contentStr.match(/\{[A-Z0-9_]+\}/g);
+            const tokenMatches = (formData.CONTENT || "").match(/\{[A-Z0-9_]+\}/g);
             const tokenCount = tokenMatches ? new Set(tokenMatches).size : 0;
 
             return {
@@ -245,7 +245,7 @@ export default function PrintLetterPage() {
   // Helper to format employee record cleanly
   const formatEmployeeRecord = useCallback(
     (emp: any, index: number = 0) => {
-      const empCode =
+      const empCode = String(
         emp.EMPCODE ||
         emp.EmpCode ||
         emp.EMP_CODE ||
@@ -254,9 +254,10 @@ export default function PrintLetterPage() {
         emp.id ||
         (emp.label && emp.label.includes(" - ")
           ? emp.label.split(" - ")[0].trim()
-          : "");
+          : "")
+      ).trim();
 
-      let empName =
+      let empName = String(
         emp.EMPLOYEENAME ||
         emp.Employee_Name ||
         emp.EMPNAME ||
@@ -265,18 +266,27 @@ export default function PrintLetterPage() {
         emp.Emp_Name ||
         emp.NAME ||
         emp.Name ||
-        "";
+        ""
+      ).trim();
 
       if (!empName && emp.label) {
         if (emp.label.includes(" - ")) {
           const parts = emp.label.split(" - ");
           empName = parts.slice(1).join(" - ").trim();
-          if (empName.includes("(") && empName.endsWith(")")) {
-            empName = empName.replace(/\s*\([^)]*\)$/, "").trim();
-          }
         } else {
           empName = String(emp.label).trim();
         }
+      }
+
+      // Strip empCode or leading code prefix from empName so only the employee name remains
+      if (empCode && empName.startsWith(empCode)) {
+        empName = empName.slice(empCode.length).replace(/^[\s\-–—:]+/, "").trim();
+      } else if (/^\d+\s*[-–—:]*\s*/.test(empName)) {
+        empName = empName.replace(/^\d+\s*[-–—:]*\s*/, "").trim();
+      }
+
+      if (empName.includes("(") && empName.endsWith(")")) {
+        empName = empName.replace(/\s*\([^)]*\)$/, "").trim();
       }
 
       let empDesig =
@@ -344,6 +354,8 @@ export default function PrintLetterPage() {
         ) {
           statusVal = "Not issued";
         } else if (s === "in approval" || s === "in_approval") {
+          statusVal = "In approval";
+        } else if (s === "in approval" || s === "in_approval" || s === "pending") {
           statusVal = "In approval";
         }
       }
@@ -771,7 +783,21 @@ export default function PrintLetterPage() {
         Header: "EMPLOYEE",
         accessor: "EMPLOYEENAME",
         Cell: ({ row }: any) => {
-          const { initial, color } = getAvatar(row.original.EMPLOYEENAME);
+          const empCode = String(row.original.EMPCODE || "").trim();
+          let name = String(
+            row.original.EMPLOYEENAME ||
+              row.original.NAME ||
+              row.original.EMPNAME ||
+              ""
+          ).trim();
+
+          if (empCode && name.startsWith(empCode)) {
+            name = name.slice(empCode.length).replace(/^[\s\-–—:]+/, "").trim();
+          } else if (/^\d+\s*[-–—:]*\s*/.test(name)) {
+            name = name.replace(/^\d+\s*[-–—:]*\s*/, "").trim();
+          }
+
+          const { initial, color } = getAvatar(name || "Employee");
           return (
             <div className="flex items-center gap-2.5">
               <div
@@ -781,7 +807,7 @@ export default function PrintLetterPage() {
                 {initial}
               </div>
               <span className="font-bold text-slate-900 dark:text-slate-100 text-lg truncate max-w-[220px]">
-                {row.original.EMPLOYEENAME}
+                {name}
               </span>
             </div>
           );
@@ -1396,7 +1422,7 @@ body h2 {
                 </h2>
               </div>
               <span className="text-base text-slate-400 font-medium">
-                {activeTemplateObj?.tokens || 6} merge tokens
+                {activeTemplateObj?.tokens} merge tokens
               </span>
             </div>
 

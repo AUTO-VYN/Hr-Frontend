@@ -432,8 +432,11 @@ export default function PrintLetterApproverWindowPage() {
       { bg: "#F3E8FF", text: "#7C3AED" },
       { bg: "#E0F2FE", text: "#0284C7" },
     ];
+    const safeName = name || "A";
     const initial = (name || "A").trim().charAt(0).toUpperCase();
-    const hash = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    
+    safeName.trim().charAt(0).toUpperCase();
+   const hash = safeName.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const color = palettes[hash % palettes.length];
     return { initial, color };
   };

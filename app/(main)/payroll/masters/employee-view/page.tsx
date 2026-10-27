@@ -349,7 +349,8 @@ export default function Page() {
   const formatCellFromOptions = (
     raw: any,
     options: Option[],
-    fallbackFilterVal?: string
+    fallbackFilterVal?: string,
+    precomputedMap?: Map<string, string>
   ) => {
     if (
       raw === null ||
@@ -362,22 +363,28 @@ export default function Page() {
         fallbackFilterVal &&
         !String(fallbackFilterVal).toUpperCase().startsWith("ALL")
       ) {
+        const fallbackLower = String(fallbackFilterVal).trim().toLowerCase();
+        const lbl = precomputedMap?.get(fallbackLower);
+        if (lbl) return formatCellText(lbl);
+
         const opt = options.find(
           (o) =>
-            String(o.value).trim().toLowerCase() ===
-            String(fallbackFilterVal).trim().toLowerCase() ||
-            String(o.label).trim().toLowerCase() ===
-            String(fallbackFilterVal).trim().toLowerCase()
+            String(o.value).trim().toLowerCase() === fallbackLower ||
+            String(o.label).trim().toLowerCase() === fallbackLower
         );
         return formatCellText(opt?.label || fallbackFilterVal);
       }
       return renderDash();
     }
     const str = String(raw).trim();
+    const strLower = str.toLowerCase();
+    const mapped = precomputedMap?.get(strLower);
+    if (mapped) return formatCellText(mapped);
+
     const opt = options.find(
       (o) =>
-        String(o.value).trim().toLowerCase() === str.toLowerCase() ||
-        String(o.label).trim().toLowerCase() === str.toLowerCase()
+        String(o.value).trim().toLowerCase() === strLower ||
+        String(o.label).trim().toLowerCase() === strLower
     );
     return formatCellText(opt?.label || str);
   };
@@ -650,6 +657,51 @@ export default function Page() {
     }
   };
 
+  // Precomputed Option Maps for instant O(1) cell lookup
+  const locationMap = useMemo(() => {
+    const map = new Map<string, string>();
+    Location.forEach((opt) => {
+      if (opt.value !== undefined && opt.value !== null)
+        map.set(String(opt.value).trim().toLowerCase(), opt.label);
+      if (opt.label)
+        map.set(String(opt.label).trim().toLowerCase(), opt.label);
+    });
+    return map;
+  }, [Location]);
+
+  const sectionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    Section.forEach((opt) => {
+      if (opt.value !== undefined && opt.value !== null)
+        map.set(String(opt.value).trim().toLowerCase(), opt.label);
+      if (opt.label)
+        map.set(String(opt.label).trim().toLowerCase(), opt.label);
+    });
+    return map;
+  }, [Section]);
+
+  const clusterMap = useMemo(() => {
+    const map = new Map<string, string>();
+    Br_Location.forEach((opt) => {
+      if (opt.value !== undefined && opt.value !== null)
+        map.set(String(opt.value).trim().toLowerCase(), opt.label);
+      if (opt.label)
+        map.set(String(opt.label).trim().toLowerCase(), opt.label);
+    });
+    return map;
+  }, [Br_Location]);
+
+  const channelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    Channel.forEach((opt) => {
+      if (opt.value !== undefined && opt.value !== null)
+        map.set(String(opt.value).trim().toLowerCase(), opt.label);
+      if (opt.label)
+        map.set(String(opt.label).trim().toLowerCase(), opt.label);
+    });
+    return map;
+  }, [Channel]);
+
   // =========================
   // Columns
   // =========================
@@ -709,7 +761,8 @@ export default function Page() {
           formatCellFromOptions(
             value ?? getRowLocation(row?.original),
             Location,
-            dashbord.Location
+            dashbord.Location,
+            locationMap
           ),
       },
       { Header: "Department", accessor: "Department", Cell: ({ value }: any) => formatCellText(value) },
@@ -724,7 +777,8 @@ export default function Page() {
           formatCellFromOptions(
             value ?? getRowSection(row?.original),
             Section,
-            dashbord.Section
+            dashbord.Section,
+            sectionMap
           ),
       },
       { Header: "Mobile no", accessor: "MOBILENO", Cell: ({ value }: any) => formatCellText(value) },
@@ -778,7 +832,8 @@ export default function Page() {
           formatCellFromOptions(
             value ?? getRowCluster(row?.original),
             Br_Location,
-            dashbord.Br_Location
+            dashbord.Br_Location,
+            clusterMap
           ),
       },
       {
@@ -788,7 +843,8 @@ export default function Page() {
           formatCellFromOptions(
             value ?? getRowChannel(row?.original),
             Channel,
-            dashbord.Channel
+            dashbord.Channel,
+            channelMap
           ),
       },
       { Header: "Cost centre", accessor: "COSTCENTRE", Cell: ({ value }: any) => formatCellText(value) },
@@ -832,7 +888,17 @@ export default function Page() {
       { Header: "Source name", accessor: "Source_Name", Cell: ({ value }: any) => formatCellText(value) },
       { Header: "Photo URL", accessor: "photoUrl", Cell: ({ value }: any) => formatCellText(value) },
     ],
-    [Location, Section, Br_Location, Channel, dashbord]
+    [
+      Location,
+      Section,
+      Br_Location,
+      Channel,
+      dashbord,
+      locationMap,
+      sectionMap,
+      clusterMap,
+      channelMap,
+    ]
   );
 
   // =========================
@@ -872,14 +938,11 @@ export default function Page() {
     refreshTabCounts(emptyDash);
   };
 
-  const fetchAllForExport = async () => {
-    if (allFilteredRowsRef.current.length > 0) {
-      return allFilteredRowsRef.current;
-    }
-    const clusterArr = resolveOptionValues(Br_Location, dashbord.Br_Location);
-    const sectionArr = resolveOptionValues(Section, dashbord.Section);
-    const locationArr = resolveOptionValues(Location, dashbord.Location);
-    const channelArr = resolveOptionValues(Channel, dashbord.Channel);
+ const fetchAllForExport = async () => {
+  const clusterArr = resolveOptionValues(Br_Location, dashbord.Br_Location);
+  const sectionArr = resolveOptionValues(Section, dashbord.Section);
+  const locationArr = resolveOptionValues(Location, dashbord.Location);
+  const channelArr = resolveOptionValues(Channel, dashbord.Channel);
 
     const isAllBranchSelected = Boolean(
       dashbord.Location && String(dashbord.Location).trim().toUpperCase().startsWith("ALL")

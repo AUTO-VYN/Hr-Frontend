@@ -198,10 +198,35 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
     const rect = range.getBoundingClientRect();
     const containerRect = containerRef.current?.getBoundingClientRect();
 
-    return {
-      x: rect.left - (containerRect?.left || 0),
-      y: rect.bottom - (containerRect?.top || 0) + 5,
-    };
+    if (!containerRect) {
+      return {
+        x: rect.left,
+        y: rect.bottom + 5,
+      };
+    }
+
+    const dropdownWidth = 240;
+    const dropdownHeight = 200;
+
+    let x = rect.left - containerRect.left;
+    let y = rect.bottom - containerRect.top + 5;
+
+    // Boundary check for right edge: shift left if dropdown overflows container
+    if (x + dropdownWidth > containerRect.width - 15) {
+      x = Math.max(10, containerRect.width - dropdownWidth - 15);
+    } else {
+      x = Math.max(10, x);
+    }
+
+    // Boundary check for bottom edge: show above caret if overflows container bottom
+    if (
+      y + dropdownHeight > containerRect.height - 10 &&
+      rect.top - containerRect.top > dropdownHeight + 10
+    ) {
+      y = Math.max(10, rect.top - containerRect.top - dropdownHeight - 5);
+    }
+
+    return { x, y };
   };
 
   // Get selection position for floating toolbar
@@ -550,6 +575,22 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
     setFilteredKeywords(filtered);
     setSelectedIndex(0);
   }, [searchTerm, showDropdown]);
+
+  // Keep dropdown inside container boundaries when rendered
+  useEffect(() => {
+    if (showDropdown && dropdownRef.current && containerRef.current) {
+      const dropdownRect = dropdownRef.current.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+
+      if (dropdownRect.right > containerRect.right - 12) {
+        const overflow = dropdownRect.right - (containerRect.right - 12);
+        setCursorPosition((prev) => ({
+          ...prev,
+          x: Math.max(10, prev.x - overflow),
+        }));
+      }
+    }
+  }, [showDropdown, filteredKeywords]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -963,7 +1004,8 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
           style={{
             left: `${cursorPosition.x}px`,
             top: `${cursorPosition.y}px`,
-            minWidth: "200px",
+            minWidth: "220px",
+            maxWidth: "280px",
             backgroundColor: "#ffffff",
             border: "1px solid #d1d5db",
           }}
