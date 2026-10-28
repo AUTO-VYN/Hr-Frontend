@@ -1384,10 +1384,10 @@ body h2 {
                 <Users className="w-4 h-4 text-slate-600 dark:text-slate-300" />
               }
               onClick={() =>
-                router.push("/payroll/masters/salary-approver-grid")
+                router.push("/payroll/onboarding/print-letter-approver-window")
               }
             >
-              Approver grid
+              Approver Grid
             </AButton>
 
             <AButton
