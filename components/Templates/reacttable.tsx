@@ -13,7 +13,6 @@ import {
   ChevronDown,
   ArrowDown,
   Download,
-  FileSpreadsheet,
   Check,
   Minus,
 } from "lucide-react";
@@ -837,13 +836,13 @@ export default function ServiceTablePagination({
                   type="button"
                   onClick={handleExport}
                   disabled={isExcelLoading}
-                  className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs sm:text-sm font-semibold
-                           hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed
-                           dark:border-slate-700 dark:bg-[#0B1220] dark:text-slate-200 dark:hover:bg-slate-800
-                           inline-flex items-center gap-2 shrink-0 shadow-xs transition-all"
+                  className="h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold
+                           hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed
+                           dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
+                           inline-flex items-center gap-2 shrink-0 shadow-2xs"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>{isExcelLoading ? "Exporting..." : "Export to Excel"}</span>
+                  <Download className="h-4 w-4" />
+                  {isExcelLoading ? "Exporting..." : "Export to Excel"}
                 </button>
               ) : null}
             </div>
