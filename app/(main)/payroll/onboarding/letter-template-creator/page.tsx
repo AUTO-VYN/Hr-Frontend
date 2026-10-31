@@ -29,6 +29,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Search,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -226,6 +228,11 @@ export default function LetterCreatorPage() {
   const [currentEmployeeIndex, setCurrentEmployeeIndex] = useState<number>(0);
   const [isTokensExpanded, setIsTokensExpanded] = useState<boolean>(false);
   const employeeCacheRef = useRef<Record<string, any>>({});
+
+  // Refs to prevent duplicate API hits on tab switch / window focus
+  const hasInitialFetched = useRef<boolean>(false);
+  const lastFetchedSrNoRef = useRef<string>("");
+  const lastFetchedTemplateKeyRef = useRef<string>("");
 
   const headerFooterOptions = [
     { label: "Header & Footer : Yes", value: "1" },
@@ -507,10 +514,11 @@ export default function LetterCreatorPage() {
     };
   }, []);
 
-  // Initial load runs only when user and compcode are available
+  // Initial load runs only once when user and compcode are available (prevents tab switch refresh)
   useEffect(() => {
     const compCode = getCompCode();
-    if (!compCode) return;
+    if (!compCode || hasInitialFetched.current) return;
+    hasInitialFetched.current = true;
 
     getSignatory();
     fetchCompLogoAndMarutiLogo();
@@ -518,7 +526,6 @@ export default function LetterCreatorPage() {
     fetchemployeedata();
     fetchExistingTemplateName();
   }, [
-    user,
     getCompCode,
     getSignatory,
     fetchCompLogoAndMarutiLogo,
@@ -528,33 +535,46 @@ export default function LetterCreatorPage() {
   ]);
 
   useEffect(() => {
-    if (fetchdata.SRNO) {
-      empdataapi();
+    const currentSrNo = Array.isArray(fetchdata.SRNO)
+      ? fetchdata.SRNO.join(",")
+      : String(fetchdata.SRNO || "");
+
+    if (currentSrNo) {
+      if (lastFetchedSrNoRef.current !== currentSrNo) {
+        lastFetchedSrNoRef.current = currentSrNo;
+        empdataapi();
+      }
     } else {
+      lastFetchedSrNoRef.current = "";
       setSelectEmployeedata({});
     }
   }, [fetchdata.SRNO, empdataapi]);
 
   useEffect(() => {
     if (fetchdata?.TEMPLATENAME) {
-      fetchTemplateContent();
+      const srNoKey = Array.isArray(fetchdata.SRNO)
+        ? fetchdata.SRNO.join(",")
+        : String(fetchdata.SRNO || "");
+      const key = `${fetchdata.TEMPLATENAME}_${srNoKey}`;
+
+      if (lastFetchedTemplateKeyRef.current !== key) {
+        lastFetchedTemplateKeyRef.current = key;
+        fetchTemplateContent();
+      }
+    } else {
+      lastFetchedTemplateKeyRef.current = "";
     }
   }, [fetchdata.TEMPLATENAME, fetchdata.SRNO, fetchTemplateContent]);
 
   // ── 8. Generate Letter Logic (exact matching reference) ──
-  const generateLetter = useCallback(() => {
-    if (!formData.CONTENT || !formData.CONTENT.trim()) {
-      setGeneratedLetter("");
-      return;
-    }
-    let content = formatToLetterStructure(formData.CONTENT || "");
+  const placeholdersMap = useMemo(() => {
+    const map: Record<string, string> = {};
     const placeholderArray = (formData.KEYWORDS || "").split(",");
-    const placeholdersMap: Record<string, string> = {};
 
     placeholderArray.forEach((placeholder) => {
       const [key, value] = placeholder.split(":");
       if (key && value) {
-        placeholdersMap[key.trim()] = value.trim();
+        map[key.trim()] = value.trim();
       }
     });
 
@@ -608,6 +628,10 @@ export default function LetterCreatorPage() {
         ? `₹ ${Number(SelectEmployeedata.CURRENT_CTC).toLocaleString("en-IN")}`
         : SelectEmployeedata?.CTC || "",
       PROBATION_PERIOD: SelectEmployeedata?.PROBATION_PERIOD || "6 Months",
+      PROBATION_:
+        SelectEmployeedata?.PROBATION_ ||
+        SelectEmployeedata?.PROBATION_PERIOD ||
+        "",
       EMPJOINDATE: formatDateDDMMYYYY(SelectEmployeedata?.EMPJOINDATE),
       EMPLASTDATE: formatDateDDMMYYYY(
         SelectEmployeedata?.EMPLASTDATE || SelectEmployeedata?.EMPENDDATE,
@@ -627,7 +651,26 @@ export default function LetterCreatorPage() {
       SIGN_IMAGE: signatureHTML,
     };
 
-    const keysString = Object.keys(specificPlaceholders).join(", ");
+    Object.assign(map, specificPlaceholders);
+    return map;
+  }, [
+    formData.KEYWORDS,
+    formData.TEMPLATE_NAME,
+    SelectEmployeedata,
+    signatory?.File_Path,
+    getCompCode,
+    company?.Comp_Name,
+    user?.Comp_Code,
+  ]);
+
+  const generateLetter = useCallback(() => {
+    if (!formData.CONTENT || !formData.CONTENT.trim()) {
+      setGeneratedLetter("");
+      return;
+    }
+    let content = formatToLetterStructure(formData.CONTENT || "");
+
+    const keysString = Object.keys(placeholdersMap).join(", ");
     setFormData((prevData) => {
       if (prevData.KEYWORDS === keysString) return prevData;
       return {
@@ -635,8 +678,6 @@ export default function LetterCreatorPage() {
         KEYWORDS: keysString,
       };
     });
-
-    Object.assign(placeholdersMap, specificPlaceholders);
 
     Object.keys(placeholdersMap).forEach((key) => {
       if (!key) return;
@@ -663,16 +704,7 @@ export default function LetterCreatorPage() {
       .replace(/(<p>(&nbsp;|\s|<br\s*\/?>)*<\/p>\s*){2,}/gi, "<p><br></p>");
 
     setGeneratedLetter(cleanedContent);
-  }, [
-    formData.CONTENT,
-    formData.KEYWORDS,
-    SelectEmployeedata,
-    formData.TEMPLATE_NAME,
-    company,
-    signatory,
-    getCompCode,
-    user?.Comp_Code,
-  ]);
+  }, [formData.CONTENT, placeholdersMap]);
 
   useEffect(() => {
     generateLetter();
@@ -718,16 +750,18 @@ export default function LetterCreatorPage() {
     } else {
       const tokenTag = `{${tokenKey}}`;
       setFormData((prev) => {
-        const current = prev.CONTENT || "";
+        const current = (prev.CONTENT || "").trim();
         return {
           ...prev,
-          CONTENT: current ? `${current} ${tokenTag}` : tokenTag,
+          CONTENT: current ? `${current} ${tokenTag} ` : `${tokenTag} `,
         };
       });
     }
   };
 
   const refresh = () => {
+    lastFetchedSrNoRef.current = "";
+    lastFetchedTemplateKeyRef.current = "";
     setFormData({
       TEMPLATE_NAME: "",
       CONTENT: "",
@@ -841,6 +875,10 @@ export default function LetterCreatorPage() {
           icon: "success",
           title: "Success!",
           text: "Template saved successfully.",
+          timer: 2000,
+          timerProgressBar: true,
+        }).then(() => {
+          window.location.reload();
         });
         fetchExistingTemplateName();
       } else {
@@ -915,6 +953,10 @@ export default function LetterCreatorPage() {
           icon: "success",
           title: "Success!",
           text: "Template updated successfully.",
+          timer: 2000,
+          timerProgressBar: true,
+        }).then(() => {
+          window.location.reload();
         });
         fetchExistingTemplateName();
       } else {
@@ -1140,6 +1182,51 @@ export default function LetterCreatorPage() {
       .filter(Boolean).length;
   }, [formData.CONTENT]);
 
+  // ── Missing employee data tokens in content ──
+  const missingTokens = useMemo(() => {
+    const hasEmployee =
+      SelectEmployeedata && Object.keys(SelectEmployeedata).length > 0;
+    if (!hasEmployee) return [];
+
+    const content = formData.CONTENT || "";
+    if (!content.trim()) return [];
+
+    const missing: string[] = [];
+    availableTokens.forEach((token) => {
+      const key = token.key;
+      const regexWithBraces = new RegExp(`\\{${key}\\}`, "i");
+      const regexWord = new RegExp(`\\b${key}\\b`, "i");
+      const isUsed = regexWithBraces.test(content) || regexWord.test(content);
+
+      if (isUsed) {
+        const val = placeholdersMap[key];
+        if (
+          val === undefined ||
+          val === null ||
+          String(val).trim() === "" ||
+          String(val).trim() === "-"
+        ) {
+          missing.push(key);
+        }
+      }
+    });
+
+    return missing;
+  }, [formData.CONTENT, SelectEmployeedata, availableTokens, placeholdersMap]);
+
+  // ── Search in Merge Tokens ──
+  const [tokenSearch, setTokenSearch] = useState("");
+
+  const filteredTokens = useMemo(() => {
+    if (!tokenSearch.trim()) return availableTokens;
+    const q = tokenSearch.trim().toLowerCase();
+    return availableTokens.filter(
+      (t) =>
+        t.key.toLowerCase().includes(q) ||
+        t.label.toLowerCase().includes(q),
+    );
+  }, [availableTokens, tokenSearch]);
+
   const pageCount = useMemo(() => {
     return Math.max(1, Math.ceil(wordCount / 350));
   }, [wordCount]);
@@ -1279,7 +1366,7 @@ export default function LetterCreatorPage() {
               whitespace-nowrap
             "
           >
-            <span>Discard changes</span>
+            <span>Reset</span>
           </AButton>
 
           <AButton
@@ -1369,7 +1456,7 @@ export default function LetterCreatorPage() {
                   className="h-[30.5px]"
                   value={formData.TEMPLATE_NAME}
                   handleInputChange={handleSelectChange}
-                  placeholder="e.g. Appointment letter — Sales"
+                  placeholder="Add a new template..."
                   required
                   ShortName
                 />
@@ -1450,40 +1537,82 @@ export default function LetterCreatorPage() {
 
             {/* Token Pills (Shown only when clicked/expanded) */}
             {isTokensExpanded && (
-              <div className="flex flex-wrap gap-2 pt-3 max-h-[82px] overflow-y-auto pr-1 select-none border-t border-slate-100 dark:border-slate-800 mt-3">
-                {availableTokens.map((token) => {
-                  const IconComp = token.icon;
-                  const isUsed =
-                    (formData.CONTENT || "").includes(`{${token.key}}`) ||
-                    new RegExp(`\\b${token.key}\\b`, "i").test(
-                      formData.CONTENT || "",
-                    );
-
-                  return (
-                    <AButton
-                      key={token.key}
+              <div className="border-t border-slate-100 dark:border-slate-800 mt-3 pt-3">
+                {/* Search Bar for Tokens */}
+                <div className="relative mb-2.5">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={tokenSearch}
+                    onChange={(e) => setTokenSearch(e.target.value)}
+                    placeholder="Search merge tokens (e.g. EMPNAME, PROBATION_)..."
+                    className="w-full h-8 pl-8 pr-7 text-md rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
+                  {tokenSearch && (
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", `{${token.key}}`);
-                        e.dataTransfer.setData("application/x-token", token.key);
-                        e.dataTransfer.effectAllowed = "copy";
-                      }}
-                      onClick={() => handleInsertToken(token.key)}
-                      title={`Click or drag to insert {${token.key}}`}
-                      className={`!h-auto !py-1 !px-2.5 sm:!px-3 !rounded-full text-md sm:text-md font-semibold border transition-all cursor-grab active:cursor-grabbing select-none active:scale-95 ${
-                        isUsed
-                          ? "!bg-indigo-50/90 dark:!bg-indigo-950/60 !border-indigo-300 dark:!border-indigo-700 !text-indigo-700 dark:!text-indigo-300 hover:!bg-indigo-100 hover:!border-indigo-400 hover:!text-indigo-800 dark:hover:!bg-indigo-900/60 dark:hover:!text-indigo-200"
-                          : "!bg-slate-50 dark:!bg-slate-800/60 !border-slate-200 dark:!border-slate-700 !text-slate-600 dark:!text-slate-400 hover:!bg-indigo-50 hover:!border-indigo-300 hover:!text-indigo-600 dark:hover:!bg-indigo-950/60 dark:hover:!border-indigo-700 dark:hover:!text-indigo-300"
-                      }`}
+                      onClick={() => setTokenSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
                     >
-                      <IconComp className="h-3 w-3 shrink-0" />
-                      <span>{token.label}</span>
-                    </AButton>
-                  );
-                })}
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 max-h-[110px] overflow-y-auto pr-1 select-none">
+                  {filteredTokens.length === 0 ? (
+                    <div className="text-xs text-slate-400 py-2">
+                      No tokens found matching "{tokenSearch}"
+                    </div>
+                  ) : (
+                    filteredTokens.map((token) => {
+                      const IconComp = token.icon;
+                      const isUsed =
+                        (formData.CONTENT || "").includes(`{${token.key}}`) ||
+                        new RegExp(`\\b${token.key}\\b`, "i").test(
+                          formData.CONTENT || "",
+                        );
+                      const isMissingData =
+                        isUsed && missingTokens.includes(token.key);
+
+                      return (
+                        <AButton
+                          key={token.key}
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("text/plain", `{${token.key}}`);
+                            e.dataTransfer.setData("application/x-token", token.key);
+                            e.dataTransfer.effectAllowed = "copy";
+                          }}
+                          onClick={() => handleInsertToken(token.key)}
+                          title={
+                            isMissingData
+                              ? `Missing employee data: {${token.key}} is used in letter but has no data in preview!`
+                              : `Click or drag to insert {${token.key}}`
+                          }
+                          className={`!h-auto !py-1 !px-2.5 sm:!px-3 !rounded-full text-md sm:text-md font-semibold border transition-all cursor-grab active:cursor-grabbing select-none active:scale-95 ${
+                            isMissingData
+                              ? "!bg-amber-50/90 dark:!bg-amber-950/60 !border-amber-400 dark:!border-amber-600 !text-amber-700 dark:!text-amber-300 hover:!bg-amber-100 hover:!border-amber-500 shadow-xs"
+                              : isUsed
+                              ? "!bg-indigo-50/90 dark:!bg-indigo-950/60 !border-indigo-300 dark:!border-indigo-700 !text-indigo-700 dark:!text-indigo-300 hover:!bg-indigo-100 hover:!border-indigo-400 hover:!text-indigo-800 dark:hover:!bg-indigo-900/60 dark:hover:!text-indigo-200"
+                              : "!bg-slate-50 dark:!bg-slate-800/60 !border-slate-200 dark:!border-slate-700 !text-slate-600 dark:!text-slate-400 hover:!bg-indigo-50 hover:!border-indigo-300 hover:!text-indigo-600 dark:hover:!bg-indigo-950/60 dark:hover:!border-indigo-700 dark:hover:!text-indigo-300"
+                          }`}
+                        >
+                          <IconComp className="h-3 w-3 shrink-0" />
+                          <span>{token.label}</span>
+                          {isMissingData && (
+                            <span className="ml-1 px-1 rounded bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 text-[10px] font-bold">
+                              No Data
+                            </span>
+                          )}
+                        </AButton>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1502,6 +1631,9 @@ export default function LetterCreatorPage() {
               </span>
             </div>
 
+            {/* Warning indicator if tokens have no employee data */}
+       
+
             {/* CustomRichEditor */}
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/80">
               <CustomRichEditor
@@ -1516,6 +1648,7 @@ export default function LetterCreatorPage() {
                     ? formData.KEYWORDS
                     : SuggestionToken
                 }
+                missingTokens={missingTokens}
               />
             </div>
           </div>

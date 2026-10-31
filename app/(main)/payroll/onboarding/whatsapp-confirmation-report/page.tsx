@@ -13,7 +13,6 @@ import {
 import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
-import FileViewer from "@/components/atoms/FileviewerBank";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -34,20 +33,33 @@ export default function WhatsappConfirmationReportPage() {
   };
 
   const formatDate = (dateString: any) => {
-    if (!dateString) return "-";
+    if (!dateString) return "—";
     try {
       const cleanDate = String(dateString).replace("Z", "");
       const date = new Date(cleanDate);
       if (isNaN(date.getTime())) return String(dateString);
 
-      return date.toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
+      const day = String(date.getDate()).padStart(2, "0");
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+
+      return `${day} ${month} ${year}, ${hours}:${minutes}`;
     } catch {
       return String(dateString);
     }
@@ -107,10 +119,26 @@ export default function WhatsappConfirmationReportPage() {
       );
 
       if (response.data?.data?.Template) {
-        const cleanList = response.data.data.Template.map((item: any) => {
-          const label = (item.label || "").trim();
-          return label ? { value: label, label } : null;
-        }).filter(Boolean);
+        const seen = new Set<string>();
+        const cleanList: { value: string; label: string }[] = [];
+
+        response.data.data.Template.forEach((item: any) => {
+          const rawLabel =
+            item.label ||
+            item.Label ||
+            item.TEMPLATE_NAME ||
+            item.TEMPLATENAME ||
+            item.Template_Name ||
+            item.Template ||
+            item.value ||
+            "";
+          const label = String(rawLabel).trim();
+          const lower = label.toLowerCase();
+          if (label && !seen.has(lower) && lower !== "all") {
+            seen.add(lower);
+            cleanList.push({ value: label, label });
+          }
+        });
 
         setExistingTemplateOptions([
           { value: "ALL", label: "ALL" },
@@ -138,14 +166,24 @@ export default function WhatsappConfirmationReportPage() {
 
       const empList = response.data?.data || [];
       if (Array.isArray(empList)) {
-        const cleanEmps = empList.map((emp: any) => ({
-          value: String(
+        const seenEmp = new Set<string>();
+        const cleanEmps: { value: string; label: string }[] = [];
+        empList.forEach((emp: any) => {
+          const val = String(
             emp.value || emp.Emp_Code || emp.EMPCODE || emp.id || "",
-          ),
-          label: String(
+          ).trim();
+          const lbl = String(
             emp.label || emp.EMPNAME || emp.Empname || emp.value || "",
-          ),
-        }));
+          ).trim();
+          if (
+            val &&
+            !seenEmp.has(val.toLowerCase()) &&
+            val.toLowerCase() !== "all"
+          ) {
+            seenEmp.add(val.toLowerCase());
+            cleanEmps.push({ value: val, label: lbl || val });
+          }
+        });
         setEmpCodeOptions([{ value: "ALL", label: "ALL" }, ...cleanEmps]);
       }
     } catch (err) {
@@ -178,8 +216,18 @@ export default function WhatsappConfirmationReportPage() {
         {
           dateFrom: dates?.DATE_FROM,
           dateTo: dates?.DATE_TO,
-          empcode: dates?.EmpCode === "ALL" ? "" : dates?.EmpCode,
-          template: dates?.Template === "ALL" ? "" : dates?.Template?.trim(),
+          empcode:
+            dates?.EmpCode === "ALL"
+              ? ""
+              : String(dates?.EmpCode || "")
+                  .split(",")[0]
+                  ?.trim(),
+          template:
+            dates?.Template === "ALL"
+              ? ""
+              : String(dates?.Template || "")
+                  .split(",")[0]
+                  ?.trim(),
         },
         {
           headers: {
@@ -191,12 +239,47 @@ export default function WhatsappConfirmationReportPage() {
 
       const records = result?.data?.Result || result?.data?.data || [];
       if (Array.isArray(records)) {
-        const enrichedRecords = records.map((rec: any, idx: number) => ({
-          ...rec,
-          row_id:
-            rec.id ||
-            `${rec.EMPCODE || "emp"}_${rec.Letter_Name || "let"}_${rec.Created_At || "date"}_${idx}`,
-        }));
+        const enrichedRecords = records.map((rec: any, idx: number) => {
+          const rawStatus = rec.STATUS;
+          let statusStr = "Pending";
+          if (
+            rawStatus === 1 ||
+            rawStatus === "1" ||
+            String(rawStatus).toLowerCase() === "delivered" ||
+            String(rawStatus).toLowerCase() === "accepted"
+          ) {
+            statusStr = "Delivered";
+          } else if (
+            rawStatus === 3 ||
+            rawStatus === "3" ||
+            String(rawStatus).toLowerCase() === "read"
+          ) {
+            statusStr = "Read";
+          } else if (
+            rawStatus === 2 ||
+            rawStatus === "2" ||
+            String(rawStatus).toLowerCase() === "failed" ||
+            String(rawStatus).toLowerCase() === "rejected"
+          ) {
+            statusStr = "Failed";
+          } else if (
+            rawStatus === 0 ||
+            rawStatus === "0" ||
+            String(rawStatus).toLowerCase() === "pending"
+          ) {
+            statusStr = "Pending";
+          } else if (rawStatus) {
+            statusStr = String(rawStatus);
+          }
+
+          return {
+            ...rec,
+            STATUS_TEXT: statusStr,
+            row_id:
+              rec.id ||
+              `${rec.EMPCODE || "emp"}_${rec.Letter_Name || "let"}_${rec.Created_At || "date"}_${idx}`,
+          };
+        });
         setTableData(enrichedRecords);
       } else {
         setTableData([]);
@@ -242,10 +325,10 @@ export default function WhatsappConfirmationReportPage() {
         Header: "SR NO",
         accessor: (_row: any, i: number) => i + 1,
         id: "srNo",
-        width: 80,
-        filterPlaceholder: "All sr no",
+        width: 70,
+        disableFilter: true,
         Cell: ({ value }: any) => (
-          <span className="font-normal text-slate-700 dark:text-slate-300 text-[14px]">
+          <span className="font-normal text-slate-600 dark:text-slate-400 text-[12.5px]">
             {value}
           </span>
         ),
@@ -253,13 +336,13 @@ export default function WhatsappConfirmationReportPage() {
       {
         Header: "EMPCODE",
         accessor: "EMPCODE",
-        width: 140,
-        filterPlaceholder: "All empcode",
+        width: 130,
+        disableFilter: false,
         Cell: ({ value, row }: any) => {
           const val =
             value || row.original?.Emp_Code || row.original?.empcode || "—";
           return (
-            <span className="font-medium text-slate-800 dark:text-slate-200 text-[14px]">
+            <span className="font-normal text-slate-700 dark:text-slate-300 text-[12.5px]">
               {val}
             </span>
           );
@@ -268,7 +351,7 @@ export default function WhatsappConfirmationReportPage() {
       {
         Header: "EMPLOYEE NAME",
         accessor: "Empname",
-        width: 200,
+        width: 190,
         filterPlaceholder: "All employee name",
         Cell: ({ value, row }: any) => {
           const val =
@@ -277,7 +360,7 @@ export default function WhatsappConfirmationReportPage() {
             row.original?.Employee_Name ||
             "—";
           return (
-            <span className="font-medium text-slate-900 dark:text-slate-100 text-[14px]">
+            <span className="font-normal text-slate-900 dark:text-slate-100 text-[12.5px]">
               {val}
             </span>
           );
@@ -286,13 +369,13 @@ export default function WhatsappConfirmationReportPage() {
       {
         Header: "LETTER NAME",
         accessor: "Letter_Name",
-        width: 200,
+        width: 190,
         filterPlaceholder: "All letter name",
         Cell: ({ value, row }: any) => {
           const val =
             value || row.original?.Template || row.original?.template || "—";
           return (
-            <span className="font-normal text-slate-800 dark:text-slate-200 text-[14px]">
+            <span className="font-normal text-slate-700 dark:text-slate-300 text-[12.5px]">
               {val}
             </span>
           );
@@ -302,9 +385,9 @@ export default function WhatsappConfirmationReportPage() {
         Header: "SENT ON",
         accessor: "Created_At",
         width: 160,
-        filterPlaceholder: "All sent on",
+        disableFilter: false,
         Cell: ({ value }: any) => (
-          <span className="font-normal text-slate-700 dark:text-slate-300 text-[14px] whitespace-nowrap">
+          <span className="font-normal text-slate-600 dark:text-slate-400 text-[12px] whitespace-nowrap">
             {formatDate(value)}
           </span>
         ),
@@ -312,12 +395,8 @@ export default function WhatsappConfirmationReportPage() {
       {
         Header: "PDF LINK",
         accessor: "path",
-        width: 140,
-        filterPlaceholder: "All pdf link",
-        filterOptions: [
-          { value: "", label: "All pdf link" },
-          { value: "pdf", label: "View PDF" },
-        ],
+        width: 130,
+        disableFilter: false,
         Cell: ({ value, row }: any) => {
           const filePath =
             value || row.original?.Path || row.original?.file_path;
@@ -329,106 +408,108 @@ export default function WhatsappConfirmationReportPage() {
 
           if (!publicUrl) {
             return (
-              <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium text-[14px]">
-                <FileX className="w-4 h-4 text-slate-500 dark:text-slate-400 " />
+              <span className="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-normal text-[12px]">
+                <FileX className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 <span>No resume</span>
               </span>
             );
           }
 
           return (
-            <div className="flex items-center gap-1.5">
-              <a
-                href={publicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-[#5B43F7] hover:text-[#4338CA] dark:text-[#818CF8] dark:hover:text-[#A5B4FC] font-semibold text-[14px] transition-colors"
-              >
-                <FileText className="w-6 h-6 text-[#5B43F7] dark:text-[#818CF8] " />
-                <span>View PDF</span>
-              </a>
-            </div>
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[#4F46E5] hover:text-[#4338CA] dark:text-[#8B84FF] dark:hover:text-[#A5B4FC] font-semibold text-[12px] transition-colors"
+            >
+              <FileText className="w-4 h-4 shrink-0 text-[#4F46E5] dark:text-[#8B84FF]" />
+              <span>View PDF</span>
+            </a>
           );
         },
       },
       {
         Header: "STATUS",
-        accessor: "STATUS",
+        accessor: "STATUS_TEXT",
         width: 140,
         filterPlaceholder: "All status",
         filterOptions: [
           { value: "", label: "All status" },
-          { value: "0", label: "Pending" },
-          { value: "1", label: "Delivered" },
-          { value: "3", label: "Read" },
-          { value: "2", label: "Failed" },
+          { value: "Delivered", label: "Delivered" },
+          { value: "Read", label: "Read" },
+          { value: "Failed", label: "Failed" },
+          { value: "Pending", label: "Pending" },
         ],
         Cell: ({ value, row }: any) => {
-          const raw = value ?? row.original?.STATUS;
+          const raw =
+            value ?? row.original?.STATUS_TEXT ?? row.original?.STATUS;
 
-          // Pending -> Yellow
-          if (
-            raw === 0 ||
-            raw === "0" ||
-            String(raw).toLowerCase() === "pending"
-          ) {
-            return (
-              <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-400 dark:border-yellow-800/40">
-                <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                Pending
-              </span>
-            );
-          }
+          let label = "Pending";
+          let tint = "#F59E0B";
 
-          // Delivered / Accepted -> Sky blue
           if (
             raw === 1 ||
             raw === "1" ||
             String(raw).toLowerCase() === "delivered" ||
             String(raw).toLowerCase() === "accepted"
           ) {
-            return (
-              <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-sky-50 text-sky-700 border border-sky-200/80 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-800/40">
-                <span className="w-2 h-2 rounded-full bg-sky-500" />
-                Delivered
-              </span>
-            );
-          }
-
-          // Read -> Emerald Green
-          if (
+            label = "Delivered";
+            tint = "#0EA5E9";
+          } else if (
             raw === 3 ||
             raw === "3" ||
             String(raw).toLowerCase() === "read"
           ) {
-            return (
-              <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/40">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Read
-              </span>
-            );
-          }
-
-          // Failed / Rejected -> Red
-          if (
+            label = "Read";
+            tint = "#10B981";
+          } else if (
             raw === 2 ||
             raw === "2" ||
             String(raw).toLowerCase() === "failed" ||
             String(raw).toLowerCase() === "rejected"
           ) {
-            return (
-              <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/40">
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
-                Failed
-              </span>
-            );
+            label = "Failed";
+            tint = "#E11D48";
+          } else if (
+            raw === 0 ||
+            raw === "0" ||
+            String(raw).toLowerCase() === "pending"
+          ) {
+            label = "Pending";
+            tint = "#F59E0B";
+          } else {
+            label = String(raw || "Pending");
+            tint = "#F59E0B";
           }
 
-          // Default Fallback
           return (
-            <span className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[13px] font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-400 dark:border-yellow-800/40">
-              <span className="w-2 h-2 rounded-full bg-yellow-500" />
-              {String(raw || "Pending")}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "11px",
+                fontWeight: 600,
+                color: tint,
+                backgroundColor: `${tint}14`,
+                border: `1px solid ${tint}55`,
+                padding: "4px 8px",
+                borderRadius: "8px",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
+                lineHeight: "1.2",
+              }}
+            >
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: tint,
+                  flex: "0 0 auto",
+                }}
+              />
+              {label}
             </span>
           );
         },
@@ -517,18 +598,18 @@ export default function WhatsappConfirmationReportPage() {
     <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#070D18] px-3 sm:px-5 lg:px-7 py-4 text-slate-900 dark:text-slate-100">
       <div className="max-w-[1600px] mx-auto space-y-4">
         {/* ── 1. PAGE HEADER ─────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
               Letter WhatsApp confirmation
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal mt-1">
+            <p className="text-lg text-slate-500 dark:text-slate-400 font-normal mt-1">
               Delivery and read status for every letter pushed to an employee
               over WhatsApp.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
             {/* Reset filters button */}
             <AButton
               type="button"
@@ -536,11 +617,11 @@ export default function WhatsappConfirmationReportPage() {
               size="sm"
               onClick={handleResetFilters}
               icon={
-                <SlidersHorizontal className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                <SlidersHorizontal className="w-4 h-4 shrink-0 text-slate-600 dark:text-slate-300" />
               }
-              className="!h-10 !px-4 bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs"
+              className="!h-10 !px-3 sm:!px-4 bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs whitespace-nowrap flex-1 sm:flex-none justify-center text-xs sm:text-sm"
             >
-              Reset filters
+              <span>Reset filters</span>
             </AButton>
 
             {/* Export to Excel button */}
@@ -549,10 +630,10 @@ export default function WhatsappConfirmationReportPage() {
               variant="primary"
               size="sm"
               onClick={handleExportToExcel}
-              icon={<FileSpreadsheet className="w-4 h-4 text-white" />}
-              className="!h-10 !px-4 !bg-[#4338CA] hover:!bg-[#3730A3] text-white font-semibold shadow-sm"
+              icon={<FileSpreadsheet className="w-4 h-4 shrink-0 text-white" />}
+              className="!h-10 !px-3 sm:!px-4 !bg-[#4338CA] hover:!bg-[#3730A3] text-white font-semibold shadow-sm whitespace-nowrap flex-1 sm:flex-none justify-center text-xs sm:text-sm"
             >
-              Export to Excel
+              <span>Export to Excel</span>
             </AButton>
           </div>
         </div>
@@ -597,9 +678,22 @@ export default function WhatsappConfirmationReportPage() {
                 option={existingTemplateOptions}
                 initialValue={dates.Template}
                 handleInputChange={(name, val) => {
+                  let selectedVal = "ALL";
+                  if (Array.isArray(val)) {
+                    selectedVal = val[0]
+                      ? String(val[0].value || val[0])
+                      : "ALL";
+                  } else if (val && typeof val === "object") {
+                    selectedVal = String(val.value || val.label || "ALL");
+                  } else if (val) {
+                    selectedVal = String(val);
+                  }
+                  if (selectedVal.includes(",")) {
+                    selectedVal = selectedVal.split(",")[0].trim();
+                  }
                   setDates((prev) => ({
                     ...prev,
-                    Template: val ? String(val.value || val) : "ALL",
+                    Template: selectedVal || "ALL",
                   }));
                 }}
               />
@@ -616,9 +710,22 @@ export default function WhatsappConfirmationReportPage() {
                 option={empCodeOptions}
                 initialValue={dates.EmpCode}
                 handleInputChange={(name, val) => {
+                  let selectedVal = "ALL";
+                  if (Array.isArray(val)) {
+                    selectedVal = val[0]
+                      ? String(val[0].value || val[0])
+                      : "ALL";
+                  } else if (val && typeof val === "object") {
+                    selectedVal = String(val.value || val.label || "ALL");
+                  } else if (val) {
+                    selectedVal = String(val);
+                  }
+                  if (selectedVal.includes(",")) {
+                    selectedVal = selectedVal.split(",")[0].trim();
+                  }
                   setDates((prev) => ({
                     ...prev,
-                    EmpCode: val ? String(val.value || val) : "ALL",
+                    EmpCode: selectedVal || "ALL",
                   }));
                 }}
               />
@@ -641,7 +748,7 @@ export default function WhatsappConfirmationReportPage() {
         </div>
 
         {/* ── 3. DATA TABLE CARD WITH REACTTABLE ─────────────────────────── */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs overflow-hidden">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs overflow-hidden whatsapp-report-card">
           <DataTable
             title="Letters sent"
             columns={columns}
@@ -649,15 +756,42 @@ export default function WhatsappConfirmationReportPage() {
             check={true}
             selectValue="row_id"
             showColumnFilters={true}
-            showTopSearch={false}
+            showTopSearch={true}
             showExcelExport={false}
             showPageSizeInFooter={true}
             setSelectedRows={setSelectedRows}
             selectedRows={selectedRows}
-            initialPageSize={20}
+            columnFiltersResetTrigger={true}
             footerTextMode="showing"
           />
         </div>
+
+        {/* Scoped Table Styles to match target design */}
+        <style jsx global>{`
+          .whatsapp-report-card .font-bold.text-base.uppercase {
+            text-transform: capitalize !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            letter-spacing: normal !important;
+            color: #0f172a !important;
+          }
+          .dark .whatsapp-report-card .font-bold.text-base.uppercase {
+            color: #f8fafc !important;
+          }
+          .whatsapp-report-card table th {
+            font-size: 10.5px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em !important;
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+          }
+          .whatsapp-report-card table td {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+          }
+        `}</style>
       </div>
 
       {/* Global Loader */}

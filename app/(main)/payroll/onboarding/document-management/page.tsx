@@ -18,6 +18,7 @@ import {
   Trash2,
   FileText,
   Image as ImageIcon,
+  ExternalLink,
 } from "lucide-react";
 
 import Swal from "sweetalert2";
@@ -122,7 +123,30 @@ export default function DocumentManagementPage() {
      USER
   ======================================================= */
 
-  const user = useCurrentUser();
+  const user = useCurrentUser() as any;
+
+  /* =======================================================
+     MULTILOCATION CHECK
+  ======================================================= */
+
+  const checkMultiLocation = useCallback(() => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      user?.branch === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return true;
+    }
+    return false;
+  }, [user?.branchName, user?.branch]);
 
   /* =======================================================
      STATE
@@ -383,8 +407,9 @@ export default function DocumentManagementPage() {
   ======================================================= */
 
   const handleBrowse = useCallback(() => {
+    if (checkMultiLocation()) return;
     fileInputRef.current?.click();
-  }, []);
+  }, [checkMultiLocation]);
 
   /* =======================================================
      FILE HANDLING
@@ -496,9 +521,11 @@ export default function DocumentManagementPage() {
 
       setIsDragOver(false);
 
+      if (checkMultiLocation()) return;
+
       handleFiles(event.dataTransfer.files);
     },
-    [handleFiles],
+    [handleFiles, checkMultiLocation],
   );
 
   /* =======================================================
@@ -668,11 +695,11 @@ export default function DocumentManagementPage() {
           .map((item: any) => {
             const fileName = normalize(
               item.OriginalName ??
-                item.File_Name ??
-                item.FileName ??
-                item.filename ??
-                item.name ??
-                "Document",
+              item.File_Name ??
+              item.FileName ??
+              item.filename ??
+              item.name ??
+              "Document",
             );
 
             const extension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -687,30 +714,30 @@ export default function DocumentManagementPage() {
 
             const fileRefNo = normalize(
               item.RefId ??
-                item.refId ??
-                item.RefNum ??
-                item.ReferenceNo ??
-                item.refNo ??
-                referenceNumber,
+              item.refId ??
+              item.RefNum ??
+              item.ReferenceNo ??
+              item.refNo ??
+              referenceNumber,
             );
 
             const docType = normalize(
               item.Doc_Type ??
-                item.DocType ??
-                item.DocumentType ??
-                item.Misc_Abbr ??
-                selectedMaster?.Misc_Abbr ??
-                selectedMaster?.value ??
-                documentReference,
+              item.DocType ??
+              item.DocumentType ??
+              item.Misc_Abbr ??
+              selectedMaster?.Misc_Abbr ??
+              selectedMaster?.value ??
+              documentReference,
             );
 
             const refType = normalize(
               item.DocReference ??
-                selectedMaster?.label ??
-                item.DocumentType ??
-                item.DocType ??
-                item.Doc_Type ??
-                documentReference,
+              selectedMaster?.label ??
+              item.DocumentType ??
+              item.DocType ??
+              item.Doc_Type ??
+              documentReference,
             );
 
             const sequence =
@@ -748,19 +775,19 @@ export default function DocumentManagementPage() {
 
               uploadedBy: normalize(
                 item.UploadedBy ??
-                  item.User_Name ??
-                  item.UserName ??
-                  item.Created_by ??
-                  "",
+                item.User_Name ??
+                item.UserName ??
+                item.Created_by ??
+                "",
               ),
 
               uploadedAt: uploadDate
                 ? (() => {
-                    const date = new Date(uploadDate);
-                    return Number.isNaN(date.getTime())
-                      ? String(uploadDate)
-                      : date.toLocaleString();
-                  })()
+                  const date = new Date(uploadDate);
+                  return Number.isNaN(date.getTime())
+                    ? String(uploadDate)
+                    : date.toLocaleString();
+                })()
                 : "",
 
               kind: extension === "pdf" ? "pdf" : "img",
@@ -779,10 +806,10 @@ export default function DocumentManagementPage() {
               CreatedAt: uploadDate,
               DocumentType: normalize(
                 item.DocumentType ??
-                  item.DocType ??
-                  item.Doc_Type ??
-                  selectedMaster?.value ??
-                  documentReference,
+                item.DocType ??
+                item.Doc_Type ??
+                selectedMaster?.value ??
+                documentReference,
               ),
 
               RefId: fileRefNo,
@@ -834,8 +861,8 @@ export default function DocumentManagementPage() {
 
         showSideAlert(
           error?.response?.data?.message ||
-            error?.response?.data?.Message ||
-            "Unable to load previous documents",
+          error?.response?.data?.Message ||
+          "Unable to load previous documents",
           "error",
         );
       }
@@ -881,6 +908,10 @@ export default function DocumentManagementPage() {
 
   const handleUpload = async () => {
     try {
+      if (checkMultiLocation()) {
+        return;
+      }
+
       // =========================================================
       // VALIDATION
       // =========================================================
@@ -1061,9 +1092,9 @@ export default function DocumentManagementPage() {
         "Misc_Abbr",
         String(
           selectedMaster.Misc_Abbr ||
-            selectedMaster.label ||
-            selectedMaster.value ||
-            docRef,
+          selectedMaster.label ||
+          selectedMaster.value ||
+          docRef,
         ),
       );
 
@@ -1094,7 +1125,7 @@ export default function DocumentManagementPage() {
       // =========================================================
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_local}/DocManage/Save`,
+        `${process.env.NEXT_PUBLIC_URL}/DocManage/Save`,
         formData,
         {
           headers: {
@@ -1125,8 +1156,8 @@ export default function DocumentManagementPage() {
       if (!isSuccess) {
         throw new Error(
           response.data?.Message ||
-            response.data?.message ||
-            "Document upload failed.",
+          response.data?.message ||
+          "Document upload failed.",
         );
       }
 
@@ -1140,16 +1171,16 @@ export default function DocumentManagementPage() {
 
       const documentTypeLabel = String(
         selectedMaster.label ||
-          selectedMaster.Misc_Abbr ||
-          selectedMaster.value ||
-          docRef,
+        selectedMaster.Misc_Abbr ||
+        selectedMaster.value ||
+        docRef,
       ).trim();
 
       const miscAbbr = String(
         selectedMaster.Misc_Abbr ||
-          selectedMaster.label ||
-          selectedMaster.value ||
-          docRef,
+        selectedMaster.label ||
+        selectedMaster.value ||
+        docRef,
       ).trim();
 
       const uploadedFiles: StoredFile[] = queue.map((queueFile) => ({
@@ -1273,6 +1304,10 @@ export default function DocumentManagementPage() {
   ======================================================= */
   const handleDelete = async (item: StoredFile) => {
     try {
+      if (checkMultiLocation()) {
+        return;
+      }
+
       const confirmed = await Swal.fire({
         icon: "info",
         title: item.name,
@@ -1477,8 +1512,8 @@ export default function DocumentManagementPage() {
 
       showSideAlert(
         error?.response?.data?.message ||
-          error?.message ||
-          "Unable to download document.",
+        error?.message ||
+        "Unable to download document.",
         "error",
       );
     }
@@ -1639,11 +1674,11 @@ export default function DocumentManagementPage() {
 
           refNo: String(
             item.RefId ||
-              item.refId ||
-              item.RefNum ||
-              item.ReferenceNo ||
-              item.EMPCODE ||
-              "",
+            item.refId ||
+            item.RefNum ||
+            item.ReferenceNo ||
+            item.EMPCODE ||
+            "",
           ),
 
           uploadedBy:
@@ -1685,12 +1720,12 @@ export default function DocumentManagementPage() {
             item.keywords ??
             getKeywordBySeqNo(
               item.Seq_No ??
-                item.SEQ_NO ??
-                item.SeqNo ??
-                item.seq_no ??
-                item.sequence_no ??
-                item.Sequence_No ??
-                "",
+              item.SEQ_NO ??
+              item.SeqNo ??
+              item.seq_no ??
+              item.sequence_no ??
+              item.Sequence_No ??
+              "",
             ),
 
           CreatedAt: item.CreatedAt ?? item.Upload_Date ?? "",
@@ -1754,8 +1789,8 @@ export default function DocumentManagementPage() {
       // Don't clear frontend files on API error.
       showSideAlert(
         error?.response?.data?.message ||
-          error?.response?.data?.Message ||
-          "Unable to load all documents",
+        error?.response?.data?.Message ||
+        "Unable to load all documents",
         "error",
       );
     }
@@ -2401,16 +2436,15 @@ export default function DocumentManagementPage() {
     text-[var(--muted)]
   "
                       >
-                        {`${
-                          Number(
-                            file.Seq_No ||
-                              file.SRNO ||
-                              KEYWORD_SEQUENCE_OPTIONS.find(
-                                (item) => item.label === file.Keywords,
-                              )?.value ||
-                              0,
-                          ) || "-"
-                        } · Seq`}{" "}
+                        {`${Number(
+                          file.Seq_No ||
+                          file.SRNO ||
+                          KEYWORD_SEQUENCE_OPTIONS.find(
+                            (item) => item.label === file.Keywords,
+                          )?.value ||
+                          0,
+                        ) || "-"
+                          } · Seq`}{" "}
                         · {file.refType} · {file.refNo} · {file.uploadedAt} ·{" "}
                         {file.uploadedBy}
                       </span>
@@ -2449,7 +2483,7 @@ export default function DocumentManagementPage() {
                         event.stopPropagation();
                         void handleDownload(file);
                       }}
-                            className="
+                      className="
                   grid
                   h-[34px]
                   w-[34px]
@@ -2700,18 +2734,40 @@ export default function DocumentManagementPage() {
           >
             {previewFile && previewUrl ? (
               previewFile.kind === "pdf" ? (
-                <iframe
-                  src={previewUrl}
-                  title={previewFile.name || "PDF Preview"}
-                  className="
-              h-full
-              w-full
-              rounded-[8px]
-              border
-              border-[var(--border)]
-              bg-white
-            "
-                />
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 shadow-sm dark:bg-rose-950/40">
+                    <FileText size={34} />
+                  </div>
+
+                  <h4 className="mt-4 max-w-md truncate text-[15px] font-semibold text-slate-800 dark:text-slate-100">
+                    {previewFile.name || "PDF Document"}
+                  </h4>
+
+                  <p className="mt-2 max-w-sm text-[12.5px] text-slate-500 dark:text-slate-400">
+                    The PDF cannot be previewed directly here. Please click the button below to view the PDF.                  </p>
+
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <AButton
+                      type="button"
+                      onClick={() =>
+                        window.open(previewUrl, "_blank", "noopener,noreferrer")
+                      }
+                      className="inline-flex h-[38px] items-center gap-2 rounded-[9px] bg-indigo-600 px-4 text-[12.5px] font-[600] text-white shadow-sm transition hover:bg-indigo-700"
+                    >
+                      <ExternalLink size={15} />
+                      Open PDF in New Tab
+                    </AButton>
+
+                    <AButton
+                      type="button"
+                      onClick={() => handleDownload(previewFile)}
+                      className="inline-flex h-[38px] items-center gap-2 rounded-[9px] border border-slate-200 bg-white px-4 text-[12.5px] font-[550] text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                    >
+                      <Download size={15} />
+                      Download
+                    </AButton>
+                  </div>
+                </div>
               ) : (
                 <img
                   src={previewUrl}

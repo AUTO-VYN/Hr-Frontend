@@ -743,12 +743,19 @@ export default function ServiceTablePagination({
   };
 
   const handleExport = async () => {
+    const downloadCols =
+      columnsDownload ||
+      (columns || []).filter(
+        (col: any) =>
+          col && col.showInExcel !== false && col.accessor !== "Delete",
+      );
+
     // ✅ Sirf All mode me hone par sara data export hoga
     if (allMode && onExportAll) {
       try {
         const fullData = await onExportAll();
         if (fullData && Array.isArray(fullData) && fullData.length > 0) {
-          handleExcelDownload(columnsDownload || columns, fullData);
+          handleExcelDownload(downloadCols, fullData);
           return;
         }
       } catch (err) {
@@ -758,7 +765,7 @@ export default function ServiceTablePagination({
 
     // ✅ Normal page size (10, 20, 50, 100) me sirf table me dikh rhi rows hi export hongi
     const exportData = rowsToRender.map((r: any) => r.original);
-    handleExcelDownload(columnsDownload || columns, exportData);
+    handleExcelDownload(downloadCols, exportData);
   };
 
   // ✅ dropdown me "All" select dikhane ke liye

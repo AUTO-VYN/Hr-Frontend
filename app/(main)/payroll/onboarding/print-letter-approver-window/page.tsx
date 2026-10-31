@@ -816,7 +816,7 @@ return (
           setsellectedrowdata={setsellectedrowdata}
           height={520}
           showTopSearch={true}
-          searchPlaceholder="Search by ID, name, code, template..."
+          searchPlaceholder="Search  Employee"
           showExcelExport={false}
           onRowDoubleClick={(row: any) => {
             setSelectedRowDetail(row);

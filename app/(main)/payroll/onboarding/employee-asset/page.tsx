@@ -387,6 +387,19 @@ export default function EmployeeAssetPage() {
             }
             return datePart;
           }
+          if (str.includes(" ")) {
+            const datePart = str.split(" ")[0];
+            if (
+              datePart.startsWith("1900-01-01") ||
+              datePart.startsWith("1970-01-01") ||
+              datePart.startsWith("0000-00-00")
+            ) {
+              return "";
+            }
+            if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+              return datePart;
+            }
+          }
           if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
             if (
               str.startsWith("1900-01-01") ||
@@ -404,17 +417,33 @@ export default function EmployeeAssetPage() {
 
         const fetchedAssets =
           assetRes?.data?.data?.AssetIssue?.map((item: any) => {
-            const createdAt = item.created_at ? new Date(item.created_at) : new Date();
-            const date = createdAt.toISOString().split("T")[0];
-            const time = createdAt.toTimeString().split(" ")[0].slice(0, 5);
+            const rawCreatedAt = item.created_at || item.Created_at || item.CREATED_AT;
+            const strCreatedAt = rawCreatedAt ? String(rawCreatedAt).trim() : "";
+            const rawTime = item.created_at_time ? String(item.created_at_time).trim() : "";
+
+            let time = "";
+            if (strCreatedAt.includes("T")) {
+              time = strCreatedAt.split("T")[1].slice(0, 5);
+            } else if (strCreatedAt.includes(" ")) {
+              time = strCreatedAt.split(" ")[1].slice(0, 5);
+            } else if (rawTime) {
+              time = rawTime.includes("T")
+                ? rawTime.split("T")[1].slice(0, 5)
+                : rawTime.includes(" ")
+                ? rawTime.split(" ")[1].slice(0, 5)
+                : rawTime.slice(0, 5);
+            } else {
+              time = new Date().toLocaleTimeString("en-US", { hour12: false }).slice(0, 5);
+            }
 
             return {
               ...item,
               Issue_Date: toDateInputString(item.Issue_Date),
               Revoke_Date: toDateInputString(item.Revoke_Date),
               Lost_Date: toDateInputString(item.Lost_Date),
-              created_at_date: item.created_at_date || date,
-              created_at_time: item.created_at_time || time,
+              created_at_date: toDateInputString(item.created_at_date) || toDateInputString(rawCreatedAt) || new Date().toISOString().split("T")[0],
+              created_at_time: time,
+              Created_by: item.Created_by || item.created_by || item.CreatedBy || user?.name || "admin",
               isIssued: true,
               isEditing: false,
               It_category: item.It_category?.trim() || "",
@@ -518,6 +547,10 @@ export default function EmployeeAssetPage() {
   const handleCardDoubleClick = (asset: any) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString("en-US", { hour12: false }).slice(0, 5);
+    const currentDate = now.toISOString().split("T")[0];
+
     setServices((prev) => {
       // Filter out completely blank new rows
       const filtered = prev.filter((s) => {
@@ -542,6 +575,8 @@ export default function EmployeeAssetPage() {
             ...s,
             isIssued: false,
             isEditing: true,
+            created_at_time: currentTime,
+            created_at_date: currentDate,
           };
         }
         return s;
@@ -623,8 +658,30 @@ export default function EmployeeAssetPage() {
     );
   };
 
+  // ── Multilocation Check ───────────────────────────────────────────────
+  const checkMultiLocation = () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      user?.branch === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return true;
+    }
+    return false;
+  };
+
   // ── Save New Assets ────────────────────────────────────────────────────
   const SaveAssets = async () => {
+    if (checkMultiLocation()) return;
+
     if (!selectedEmpCode) {
       showSideAlert("Please select Employee Code first", "info");
       return;
@@ -647,6 +704,9 @@ export default function EmployeeAssetPage() {
       Revoke_Date: isValidDateValue(r.Revoke_Date) ? r.Revoke_Date : null,
       Lost_Date: isValidDateValue(r.Lost_Date) ? r.Lost_Date : null,
       Revoke_Rem: r.Revoke_Rem || null,
+      Created_by: r.Created_by || user?.name || "admin",
+      created_at_date: r.created_at_date || created_at_date,
+      created_at_time: r.created_at_time || created_at_time,
     }));
 
     setIsLoading(true);
@@ -679,6 +739,8 @@ export default function EmployeeAssetPage() {
 
   // ── Update Assets (e.g. Return/Revoke or Edit) ─────────────────────────
   const UpdateAssets = async (overrideServices?: any[]) => {
+    if (checkMultiLocation()) return;
+
     if (!selectedEmpCode) {
       showSideAlert("Please select Employee Code first", "info");
       return;
@@ -699,6 +761,10 @@ export default function EmployeeAssetPage() {
       (s) => s.isIssued || isRowValid(s) || s.isEditing
     );
 
+    const now = new Date();
+    const nowTime = now.toLocaleTimeString("en-US", { hour12: false }).slice(0, 5);
+    const nowDate = now.toISOString().split("T")[0];
+
     const updatedServices = dataToSend.map((service) => {
       const { UTD, isIssued, isEditing, ...serviceWithoutUTD } = service;
       return {
@@ -706,6 +772,8 @@ export default function EmployeeAssetPage() {
         Revoke_Date: isValidDateValue(serviceWithoutUTD.Revoke_Date) ? serviceWithoutUTD.Revoke_Date : null,
         Lost_Date: isValidDateValue(serviceWithoutUTD.Lost_Date) ? serviceWithoutUTD.Lost_Date : null,
         Revoke_Rem: serviceWithoutUTD.Revoke_Rem || null,
+        created_at_time: isEditing ? nowTime : (serviceWithoutUTD.created_at_time || nowTime),
+        created_at_date: isEditing ? nowDate : (serviceWithoutUTD.created_at_date || nowDate),
       };
     });
 
@@ -736,6 +804,8 @@ export default function EmployeeAssetPage() {
 
   // ── Handle Return Dialog Submit ────────────────────────────────────────
   const handleConfirmReturn = async () => {
+    if (checkMultiLocation()) return;
+
     if (!selectedReturnAsset) return;
 
     const updatedServices = services.map((s) => {
@@ -1075,7 +1145,7 @@ export default function EmployeeAssetPage() {
                 Assets to issue
               </h2>
               <span className="text-xs text-slate-400 dark:text-slate-500 font-medium shrink-0 whitespace-nowrap">
-                {newAssetsToIssue.length} row(s)
+                {newAssetsToIssue.length} row
               </span>
             </div>
 
@@ -1092,9 +1162,9 @@ export default function EmployeeAssetPage() {
 
           {/* Table Container with Custom Scrollbar */}
           <div className="overflow-x-auto custom-scrollbar">
-            <div className="min-w-[1760px]">
+            <div className="min-w-[2220px]">
               {/* Header Grid */}
-              <div className="grid grid-cols-[56px_180px_170px_170px_160px_200px_160px_160px_160px_160px_200px_140px_48px] bg-[#FAFBFD] dark:bg-[#0B1220] border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+              <div className="grid grid-cols-[56px_180px_170px_170px_160px_200px_160px_160px_160px_160px_200px_160px_160px_130px_140px_48px] bg-[#FAFBFD] dark:bg-[#0B1220] border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
                 <span className="py-3 px-3 text-center">#</span>
                 <span className="py-3 px-3">ASSET CATEGORY</span>
                 <span className="py-3 px-3">IT CATEGORY</span>
@@ -1106,6 +1176,9 @@ export default function EmployeeAssetPage() {
                 <span className="py-3 px-3">RETURN DATE</span>
                 <span className="py-3 px-3">LOST DATE</span>
                 <span className="py-3 px-3">REMARK</span>
+                <span className="py-3 px-3">CREATED BY</span>
+                <span className="py-3 px-3">CREATED AT</span>
+                <span className="py-3 px-3">TIME</span>
                 <span className="py-3 px-3">IMAGE</span>
                 <span className="py-3 px-3 text-center"></span>
               </div>
@@ -1128,7 +1201,7 @@ export default function EmployeeAssetPage() {
                   return (
                     <div
                       key={actualIndex}
-                      className={`grid grid-cols-[56px_180px_170px_170px_160px_200px_160px_160px_160px_160px_200px_140px_48px] items-center border-b border-slate-100 dark:border-slate-800/80 py-2.5 px-1.5 transition-colors ${ok ? "bg-white dark:bg-[#111827]" : "bg-[#FFFDF7] dark:bg-[#1C1813]/40"
+                      className={`grid grid-cols-[56px_180px_170px_170px_160px_200px_160px_160px_160px_160px_200px_160px_160px_130px_140px_48px] items-center border-b border-slate-100 dark:border-slate-800/80 py-2.5 px-1.5 transition-colors ${ok ? "bg-white dark:bg-[#111827]" : "bg-[#FFFDF7] dark:bg-[#1C1813]/40"
                         }`}
                     >
                       {/* Index & Dot */}
@@ -1240,7 +1313,7 @@ export default function EmployeeAssetPage() {
                           name="Issue_Date"
                           value={service.Issue_Date || ""}
                           handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
-                          className="!h-10 !text-xs sm:!text-[13px] !bg-[#FFFDF7] dark:!bg-[#181E2B] !border-[#F59E0B]/70 dark:!border-[#F59E0B]/50 !rounded-xl shadow-2xs cursor-pointer font-medium"
+                          className="!h-10 !py-0 !text-xs sm:!text-[13px] !bg-[#FFFDF7] dark:!bg-[#181E2B] !border-[#F59E0B]/70 dark:!border-[#F59E0B]/50 !rounded-xl shadow-2xs cursor-pointer font-medium"
                         />
                       </span>
 
@@ -1252,7 +1325,7 @@ export default function EmployeeAssetPage() {
                           name="Revoke_Date"
                           value={service.Revoke_Date || ""}
                           handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
-                          className="!h-10 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                          className="!h-10 !py-0 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
                         />
                       </span>
 
@@ -1264,7 +1337,7 @@ export default function EmployeeAssetPage() {
                           name="Lost_Date"
                           value={service.Lost_Date || ""}
                           handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
-                          className="!h-10 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                          className="!h-10 !py-0 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
                         />
                       </span>
 
@@ -1278,6 +1351,45 @@ export default function EmployeeAssetPage() {
                           handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
                           placeholder="Optional note"
                           className="!h-10 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-800 dark:text-slate-100 placeholder:text-[#94A3B8] font-medium"
+                        />
+                      </span>
+
+                      {/* Created By */}
+                      <span className="py-1 px-1.5 min-w-0">
+                        <Einput
+                          title=""
+                          type="text"
+                          name="Created_by"
+                          value={service.Created_by || user?.name || "admin"}
+                          handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
+                          readOnly
+                          className="!h-10 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 font-medium cursor-default"
+                        />
+                      </span>
+
+                      {/* Created At */}
+                      <span className="py-1 px-1.5 min-w-0">
+                        <Einput
+                          title=""
+                          type="date"
+                          name="created_at_date"
+                          value={service.created_at_date || ""}
+                          handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
+                          readOnly
+                          className="!h-10 !py-0 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 font-medium cursor-default"
+                        />
+                      </span>
+
+                      {/* Time */}
+                      <span className="py-1 px-1.5 min-w-0">
+                        <Einput
+                          title=""
+                          type="time"
+                          name="created_at_time"
+                          value={service.created_at_time || ""}
+                          handleInputChange={(name, value) => handleFieldChange(actualIndex, name, value)}
+                          readOnly
+                          className="!h-10 !text-xs sm:!text-[13px] !border-transparent hover:!border-slate-200 !bg-transparent text-slate-700 dark:text-slate-300 font-medium cursor-default"
                         />
                       </span>
 
@@ -1442,6 +1554,7 @@ export default function EmployeeAssetPage() {
                           type="button"
                           variant="outline"
                           onClick={() => {
+                            if (checkMultiLocation()) return;
                             setSelectedReturnAsset(asset);
                             setReturnData({
                               Revoke_Date: new Date().toISOString().split("T")[0],

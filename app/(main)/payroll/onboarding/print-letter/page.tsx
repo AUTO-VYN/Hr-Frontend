@@ -31,6 +31,7 @@ import {
   Building2,
   X,
   FileDown,
+  Flag,
 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -387,7 +388,9 @@ export default function PrintLetterPage() {
       const response = await axios.post(
         // `${process.env.NEXT_PUBLIC_URL}/template/AllSelectempdata`,
         `${process.env.NEXT_PUBLIC_URL}/employee/All`,
-        {},
+        {
+          flag:1
+        },
         { headers: { compcode: compCode, name: user?.name || "" } },
       );
       if (

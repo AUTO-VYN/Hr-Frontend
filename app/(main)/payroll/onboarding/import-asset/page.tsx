@@ -129,102 +129,80 @@ export default function AssetImportPage() {
 
   // ── Download Sample Excel Sheet ───────────────────────────────────────────
   const handleDownloadSample = async () => {
+    if (!user?.Comp_Code) {
+      showSideAlert("Company code not found", "error");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Asset_Template");
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_URL}/employee/importformatmini1`,
+        {
+          params: { compcode: user?.Comp_Code },
+          responseType: "blob",
+        }
+      );
 
-      // Columns header setup
-      worksheet.columns = [
-        { header: "Emp.Code", key: "empCode", width: 16 },
-        { header: "Asset Category", key: "category", width: 18 },
-        { header: "IT Category", key: "itCategory", width: 18 },
-        { header: "SERIAL NO", key: "serialNo", width: 20 },
-        { header: "ASSET CODE", key: "assetCode", width: 20 },
-        { header: "ASSET NAME", key: "assetName", width: 24 },
-        { header: "ASSET TYPE", key: "assetType", width: 16 },
-        { header: "ISSUE DATE", key: "issueDate", width: 16 },
-        { header: "RETURN DATE", key: "returnDate", width: 16 },
-        { header: "LOST DATE", key: "lostDate", width: 16 },
-        { header: "REMARK", key: "remark", width: 22 },
-        { header: "UPLOAD IMAGE", key: "uploadImage", width: 18 },
-      ];
+      if (
+        response.data.type?.includes("html") ||
+        response.data.type?.includes("json") ||
+        response.data.type?.includes("text")
+      ) {
+        const text = await response.data.text();
+        try {
+          const json = JSON.parse(text);
+          showSideAlert(
+            json.Message || json.Error || "Failed to download sample file.",
+            "error"
+          );
+        } catch {
+          showSideAlert("Failed to download sample file from server.", "error");
+        }
+        return;
+      }
 
-      // Sample demonstration rows
-      worksheet.addRow({
-        empCode: "1979601",
-        category: "IT",
-        itCategory: "Laptop",
-        serialNo: "SN-DELL-88392",
-        assetCode: "AV-ASSET-0501",
-        assetName: "Dell Latitude 3550",
-        assetType: "Fixed",
-        issueDate: "2026-10-08",
-        returnDate: "",
-        lostDate: "",
-        remark: "Assigned to employee",
-        uploadImage: "",
-      });
-
-      worksheet.addRow({
-        empCode: "",
-        category: "IT",
-        itCategory: "Desktop",
-        serialNo: "SN-LOGI-99231",
-        assetCode: "AV-ASSET-0502",
-        assetName: "Logitech MK270 combo",
-        assetType: "Fixed",
-        issueDate: "2026-10-08",
-        returnDate: "",
-        lostDate: "",
-        remark: "In store backup",
-        uploadImage: "",
-      });
-
-      worksheet.addRow({
-        empCode: "18000078",
-        category: "NON-IT",
-        itCategory: "",
-        serialNo: "AIRTEL-SIM-19001",
-        assetCode: "AV-ASSET-0503",
-        assetName: "Airtel SIM 98873 19001",
-        assetType: "Consumable",
-        issueDate: "2026-10-08",
-        returnDate: "",
-        lostDate: "",
-        remark: "Company SIM",
-        uploadImage: "",
-      });
-
-      // Style headers
-      const headerRow = worksheet.getRow(1);
-      headerRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF4F46E5" },
-        };
-        cell.alignment = { vertical: "middle", horizontal: "center" };
-      });
-
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
+      const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      saveAs(blob, "Asset_Import_Sample_Template.xlsx");
+      saveAs(blob, "Asset_Import_Template.xlsx");
       showSideAlert("Sample template downloaded", "success");
     } catch (error) {
-      console.error("Error creating sample sheet:", error);
-      // Fallback to backend sample format endpoint
+      console.error("Error downloading sample sheet:", error);
+      // Fallback
       window.location.href = `${process.env.NEXT_PUBLIC_URL}/employee/importformatmini1?compcode=${user?.Comp_Code}`;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── Multilocation Check ──────────────────────────────────────────────────
+  const checkMultiLocation = () => {
+    const isMulti =
+      user?.branchName === "MultiLocation" ||
+      user?.branch === "MultiLocation" ||
+      (user?.branch ? String(user.branch).includes(",") : false);
+
+    if (isMulti) {
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "You are in multilocation. Please switch to single branch.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4338CA",
+      });
+      return true;
+    }
+    return false;
+  };
+
   // ── Process and Upload File ───────────────────────────────────────────────
   const processUploadFile = async (file: File) => {
+    if (checkMultiLocation()) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (extension !== "xlsx" && extension !== "xls" && extension !== "csv") {
       showSideAlert(
@@ -322,57 +300,148 @@ export default function AssetImportPage() {
 
           const errorWb = new ExcelJS.Workbook();
           await errorWb.xlsx.load(uint8Array.buffer);
-          const errSheet = errorWb.worksheets[0];
+          const errSheet =
+            errorWb.getWorksheet("Non Imported Data") ||
+            errorWb.worksheets.find((ws) =>
+              ws.name?.toLowerCase().includes("non")
+            ) ||
+            (errorWb.worksheets.length > 1
+              ? errorWb.worksheets[1]
+              : errorWb.worksheets[0]);
 
-          const rawRows: { rowNumber: number; vals: any[] }[] = [];
-          errSheet.eachRow((row, rowNumber) => {
-            if (rowNumber === 1) return;
-            const vals = (row.values as any[]) || [];
-            rawRows.push({ rowNumber, vals });
-          });
-
-          const isFullSheet = rawRows.length > nonInsertedCount;
-
-          rawRows.forEach(({ rowNumber, vals }) => {
-            const rawReason = vals[vals.length - 1];
-            const reasonStr =
-              rawReason !== undefined && rawReason !== null
-                ? String(rawReason).trim()
-                : "";
-            const isSuccessCode =
-              reasonStr === "1" ||
-              reasonStr === "0" ||
-              reasonStr === "true" ||
-              reasonStr.toLowerCase() === "success" ||
-              reasonStr.toLowerCase() === "imported" ||
-              reasonStr.toLowerCase() === "inserted" ||
-              reasonStr === "";
-
-            // If backend returned all rows in error sheet, filter out successfully imported rows
-            if (isFullSheet && isSuccessCode) {
-              return;
-            }
-
-            const cleanReason =
-              !isSuccessCode && reasonStr ? reasonStr : "Validation failed";
-
-            errorRowsParsed.push({
-              row: rowNumber,
-              empCode: vals[1] ? String(vals[1]).trim() : "—",
-              category: vals[2] ? String(vals[2]).trim() : "—",
-              itCategory: vals[3] ? String(vals[3]).trim() : "—",
-              serialNo: vals[4] ? String(vals[4]).trim() : "—",
-              assetCode: vals[5] ? String(vals[5]).trim() : "—",
-              assetName: vals[6] ? String(vals[6]).trim() : "—",
-              assetType: vals[7] ? String(vals[7]).trim() : "—",
-              issueDate: vals[8] ? formatDateStr(vals[8]) : "—",
-              returnDate: vals[9] ? formatDateStr(vals[9]) : "—",
-              lostDate: vals[10] ? formatDateStr(vals[10]) : "—",
-              remark: vals[11] ? String(vals[11]).trim() : "—",
-              uploadImage: vals[12] ? String(vals[12]).trim() : "—",
-              reason: cleanReason,
+          if (errSheet) {
+            const headerRow = errSheet.getRow(1);
+            const colMap: Record<string, number> = {};
+            headerRow.eachCell((cell, colNumber) => {
+              const headerText = String(cell.value || "")
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "");
+              colMap[headerText] = colNumber;
             });
-          });
+
+            const getVal = (row: any, keys: string[], fallbackIdx: number) => {
+              for (const k of keys) {
+                const colIdx =
+                  colMap[k.toLowerCase().replace(/[^a-z0-9]/g, "")];
+                if (colIdx) {
+                  const cellVal = row.getCell(colIdx).value;
+                  if (
+                    cellVal !== undefined &&
+                    cellVal !== null &&
+                    cellVal !== ""
+                  ) {
+                    return String(cellVal).trim();
+                  }
+                }
+              }
+              const fallbackVal = row.getCell(fallbackIdx).value;
+              if (
+                fallbackVal !== undefined &&
+                fallbackVal !== null &&
+                fallbackVal !== ""
+              ) {
+                return String(fallbackVal).trim();
+              }
+              return "";
+            };
+
+            errSheet.eachRow((row, rowNumber) => {
+              if (rowNumber === 1) return;
+
+              let reason = getVal(
+                row,
+                ["rejectionreasons", "rejectionreason", "reason", "reasons"],
+                13
+              );
+              if (reason.endsWith("|")) {
+                reason = reason.slice(0, -1).trim();
+              }
+              if (!reason) {
+                reason = "Duplicate serial number";
+              }
+
+              const sNo = getVal(
+                row,
+                ["assetserialno", "serialno", "serial_no", "asset_serial_no"],
+                4
+              );
+              const aCode = getVal(
+                row,
+                ["asetcode", "assetcode", "aset_code", "asset_code"],
+                5
+              );
+              const matchClient = clientRows.find(
+                (c) =>
+                  (sNo && c.serialNo === sNo) || (aCode && c.assetCode === aCode)
+              );
+
+              errorRowsParsed.push({
+                row: matchClient?.rowNum || rowNumber,
+                empCode:
+                  getVal(row, ["empcode", "emp_code"], 1) ||
+                  matchClient?.empCode ||
+                  "—",
+                category:
+                  getVal(
+                    row,
+                    ["assetcategory", "category", "asset_category"],
+                    2
+                  ) ||
+                  matchClient?.category ||
+                  "—",
+                itCategory:
+                  getVal(row, ["itcategory", "it_category"], 3) ||
+                  matchClient?.itCategory ||
+                  "—",
+                serialNo: sNo || matchClient?.serialNo || "—",
+                assetCode: aCode || matchClient?.assetCode || "—",
+                assetName:
+                  getVal(
+                    row,
+                    ["asetname", "assetname", "aset_name", "asset_name"],
+                    6
+                  ) ||
+                  matchClient?.assetName ||
+                  "—",
+                assetType:
+                  getVal(row, ["assettype", "asset_type"], 7) ||
+                  matchClient?.assetType ||
+                  "—",
+                issueDate:
+                  formatDateStr(
+                    getVal(row, ["issuedate", "issue_date"], 8) ||
+                      matchClient?.issueDate
+                  ) || "—",
+                returnDate:
+                  formatDateStr(
+                    getVal(
+                      row,
+                      ["revokedate", "revoke_date", "returndate"],
+                      9
+                    ) || matchClient?.returnDate
+                  ) || "—",
+                lostDate:
+                  formatDateStr(
+                    getVal(row, ["lostdate", "lost_date"], 10) ||
+                      matchClient?.lostDate
+                  ) || "—",
+                remark:
+                  getVal(row, ["revokerem", "revoke_rem", "remark"], 11) ||
+                  matchClient?.remark ||
+                  "—",
+                uploadImage:
+                  getVal(
+                    row,
+                    ["uploadeddocument", "uploaded_document", "uploadimage"],
+                    12
+                  ) ||
+                  matchClient?.uploadImage ||
+                  "—",
+                reason,
+              });
+            });
+          }
         } catch (e) {
           console.error("Error reading backend error sheet:", e);
         }
@@ -442,6 +511,11 @@ export default function AssetImportPage() {
               .filter((e) => e.assetCode && e.assetCode !== "—")
               .map((e) => e.assetCode),
           );
+          const errorSerialNos = new Set(
+            errorRowsParsed
+              .filter((e) => e.serialNo && e.serialNo !== "—")
+              .map((e) => e.serialNo),
+          );
 
           importedParsed = clientRows
             .filter(
@@ -449,7 +523,10 @@ export default function AssetImportPage() {
                 !errorRowNumbers.has(r.rowNum) &&
                 (!r.assetCode ||
                   r.assetCode === "—" ||
-                  !errorAssetCodes.has(r.assetCode)),
+                  !errorAssetCodes.has(r.assetCode)) &&
+                (!r.serialNo ||
+                  r.serialNo === "—" ||
+                  !errorSerialNos.has(r.serialNo)),
             )
             .slice(0, insertedCount)
             .map((r, i) => ({
@@ -510,6 +587,10 @@ export default function AssetImportPage() {
   const handleFileInputChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    if (checkMultiLocation()) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     const file = event.target.files?.[0];
     if (file) {
       processUploadFile(file);
@@ -730,20 +811,14 @@ export default function AssetImportPage() {
         ),
       },
       {
-        Header: "HOLDER",
+        Header: "EMP.CODE",
         accessor: "empCode",
-        width: 180,
+        width: 140,
         Cell: ({ value }: any) => {
           const emp =
-            value && value !== "—" ? `Employee · ${value}` : "In store";
+            value && value !== "—" && value !== "In store" ? value : "—";
           return (
-            <span
-              className={`font-semibold text-[14px] ${
-                emp === "In store"
-                  ? "text-slate-500 dark:text-slate-400"
-                  : "text-slate-700 dark:text-slate-300"
-              }`}
-            >
+            <span className="font-semibold text-slate-700 dark:text-slate-300 text-[14px]">
               {emp}
             </span>
           );
@@ -879,7 +954,10 @@ export default function AssetImportPage() {
               />
 
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (checkMultiLocation()) return;
+                  fileInputRef.current?.click();
+                }}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setIsDragging(true);
@@ -891,16 +969,16 @@ export default function AssetImportPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragging(false);
+                  if (checkMultiLocation()) return;
                   const file = e.dataTransfer.files?.[0];
                   if (file) processUploadFile(file);
                 }}
-                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${
-                  selectedFile && stats
+                className={`w-full rounded-xl border border-dashed cursor-pointer py-10 sm:py-12 px-6 flex flex-col items-center justify-center text-center transition-all ${selectedFile && stats
                     ? "border-emerald-400/80 bg-emerald-50/20 dark:bg-emerald-950/10 dark:border-emerald-700/60"
                     : isDragging
                       ? "border-[#4F46E5] bg-[#EEF2FF]/40 dark:bg-[#1E1B4B]/20"
                       : "border-indigo-300/80 hover:border-[#4F46E5] bg-[#FAFAFE] hover:bg-[#F5F5FE] dark:bg-[#0B1220] dark:hover:bg-[#0E1524] dark:border-indigo-900/60"
-                }`}
+                  }`}
               >
                 {selectedFile && stats ? (
                   <>
@@ -1128,29 +1206,31 @@ export default function AssetImportPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-700 dark:text-slate-200">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold flex items-center justify-center text-xs">
-                      —
+                    <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
+                      <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" /> 
                     </span>
-                    Serial no
+                    Employee code
                   </span>
                   <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
-                    optional
+                   required
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-700 dark:text-slate-200">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold flex items-center justify-center text-xs">
-                      —
+                    <span className="w-5 h-5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center">
+                       <Asterisk className="w-3.5 h-3.5 stroke-[2.8]" /> 
                     </span>
-                    Employee code
+                    Serial no
                   </span>
                   <span className="text-[13px] text-slate-500 dark:text-slate-400 font-normal">
-                    blank = in store
+                   required
                   </span>
                 </div>
+
+              
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2.5 font-semibold text-[14px] text-slate-700 dark:text-slate-200">
