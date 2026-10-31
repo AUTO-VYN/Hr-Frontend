@@ -124,7 +124,7 @@ export default function Topbar() {
             }}
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 200)}
-            placeholder="Search any module, employee, or action..."
+            placeholder="Search any sub module"
             className="w-full min-w-0 border-none bg-transparent text-[13px] text-fg outline-none placeholder:text-muted"
           />
           {q && (

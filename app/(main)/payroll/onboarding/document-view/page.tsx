@@ -2811,7 +2811,7 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
 
               }}
 
-              searchPlaceholder="Search by file, keyword or reference..."
+              searchPlaceholder="Search by file"
 
               onServerPageChange={(page: number) => {
 

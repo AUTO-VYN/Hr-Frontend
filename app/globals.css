@@ -386,9 +386,36 @@ input::placeholder {
   cursor: pointer;
 }
 
-/* Ensure date text doesn't overlap the indicator area */
+/* Ensure date text doesn't sink, overlap, or clip at the bottom */
+.date-end-icon {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
 .date-end-icon::-webkit-datetime-edit {
-  padding-right: 28px;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-right: 28px !important;
+  height: 100% !important;
+  line-height: 1 !important;
+}
+
+.date-end-icon::-webkit-datetime-edit-fields-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.date-end-icon::-webkit-date-and-time-value {
+  min-height: 0 !important;
+  height: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 @layer base {

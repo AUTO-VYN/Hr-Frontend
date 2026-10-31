@@ -38,7 +38,8 @@ import { FaImage } from "react-icons/fa";
 type StatVariant = "amber" | "emerald" | "rose" | "purple";
 
 const statIconTone: Record<StatVariant, string> = {
-  amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
+  amber:
+    "bg-yellow-50 text-yellow-500 dark:bg-yellow-500/20 dark:text-yellow-400",
   emerald:
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
   rose: "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
@@ -74,7 +75,7 @@ function StatCard({
     >
       <div className="flex items-center gap-2.5 sm:gap-3">
         <span
-          className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg ${statIconTone[variant]}`}
+          className={`flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl ${statIconTone[variant]}`}
         >
           {icon}
         </span>
@@ -121,6 +122,29 @@ const formatDate = (value: any) => {
     month: "short",
     year: "numeric",
   });
+};
+
+const getImageUrl = (path?: string) => {
+  if (!path || typeof path !== "string") return "";
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
+
+  // 1. Agar already complete HTTP/HTTPS URL hai
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  // 2. Windows backslash ko forward slash me convert karein
+  // const cleanPath = trimmed.replace(/\\/g, "/");
+
+  // 3. Backend fetch endpoint lagayein
+  const basePath =
+    process.env.NEXT_PUBLIC_imagepath 
+
+    const cleanPath = trimmed.replace(/^undefined/i, "").replace(/\\/g, "/");
+
+
+  return `${basePath}${cleanPath}`;
 };
 
 export default function AttendancePunchingApprovalPage() {
@@ -581,7 +605,7 @@ export default function AttendancePunchingApprovalPage() {
   const renderStatusBadge = (status: "Pending" | "Approved" | "Rejected") => {
     if (status === "Approved") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-md font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
           <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
           Approved
         </span>
@@ -589,7 +613,7 @@ export default function AttendancePunchingApprovalPage() {
     }
     if (status === "Rejected") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-md font-medium bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800">
           <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48]"></span>
           Rejected
         </span>
@@ -597,7 +621,7 @@ export default function AttendancePunchingApprovalPage() {
     }
     // Pending (Amber / Yellow pill)
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-md font-medium bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
         <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
         Pending
       </span>
@@ -620,7 +644,7 @@ export default function AttendancePunchingApprovalPage() {
         Header: "SR NO",
         accessor: "Utd",
         Cell: ({ value }: any) => (
-          <span className="font-mono font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">
+          <span className="text-md font-medium font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
             {value || "—"}
           </span>
         ),
@@ -629,7 +653,7 @@ export default function AttendancePunchingApprovalPage() {
         Header: "EMP. CODE",
         accessor: "EmpCode",
         Cell: ({ value }: any) => (
-          <span className="font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
+          <span className="text-md font-medium font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
             {value || "—"}
           </span>
         ),
@@ -639,7 +663,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "EmpName",
         Cell: ({ value }: any) => (
           <span
-            className="font-semibold text-slate-900 dark:text-slate-100 max-w-[170px] truncate block"
+            className="text-md font-medium text-slate-900 dark:text-slate-100 max-w-[170px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -651,7 +675,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "EmployeeDesignation",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-600 dark:text-slate-300 max-w-[130px] truncate block"
+            className="text-md font-medium text-slate-600 dark:text-slate-300 max-w-[130px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -662,7 +686,7 @@ export default function AttendancePunchingApprovalPage() {
         Header: "IN TIME",
         accessor: "In1",
         Cell: ({ value }: any) => (
-          <span className="font-mono text-slate-700 dark:text-slate-300">
+          <span className="text-md font-medium font-mono text-slate-700 dark:text-slate-300">
             {value || "—"}
           </span>
         ),
@@ -671,7 +695,7 @@ export default function AttendancePunchingApprovalPage() {
         Header: "OUT TIME",
         accessor: "Out1",
         Cell: ({ value }: any) => (
-          <span className="font-mono text-slate-700 dark:text-slate-300">
+          <span className="text-md font-medium font-mono text-slate-700 dark:text-slate-300">
             {value || "—"}
           </span>
         ),
@@ -680,7 +704,7 @@ export default function AttendancePunchingApprovalPage() {
         Header: "DATE",
         accessor: "Date",
         Cell: ({ value }: any) => (
-          <span className="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+          <span className="text-md font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
             {formatDate(value)}
           </span>
         ),
@@ -690,7 +714,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "Mipunch_Reason",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-500 dark:text-slate-400 max-w-[140px] truncate block"
+            className="text-md font-medium text-slate-500 dark:text-slate-400 max-w-[140px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -702,7 +726,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "MI_Remark",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
+            className="text-md font-medium text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -715,7 +739,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "Spl_Remark",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
+            className="text-md font-medium text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -727,7 +751,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "head_remark_by",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-600 dark:text-slate-300 max-w-[140px] truncate block"
+            className="text-md font-medium text-slate-600 dark:text-slate-300 max-w-[140px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -740,7 +764,7 @@ export default function AttendancePunchingApprovalPage() {
         accessor: "head_remark",
         Cell: ({ value }: any) => (
           <span
-            className="text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
+            className="text-md font-medium text-slate-600 dark:text-slate-300 max-w-[180px] truncate block"
             title={value}
           >
             {value || "—"}
@@ -780,7 +804,7 @@ export default function AttendancePunchingApprovalPage() {
   const hasSelection = selectedRows.length > 0;
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#060B13] text-slate-800 dark:text-slate-100 p-3 sm:p-6 space-y-5 pb-36">
+    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#060B13] text-slate-800 dark:text-slate-100 p-3 sm:p-6 space-y-5 pb-6">
       {/* 1. Page Title & Subtitle + Approver Matrix Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -818,7 +842,7 @@ export default function AttendancePunchingApprovalPage() {
               prev === "Pending" ? "All" : "Pending",
             );
           }}
-          icon={<Clock className="w-4 h-4 stroke-[2.5]" />}
+          icon={<Clock className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />}
         />
 
         {/* Card 2: APPROVED */}
@@ -832,7 +856,7 @@ export default function AttendancePunchingApprovalPage() {
               prev === "Approved" ? "All" : "Approved",
             );
           }}
-          icon={<CheckCircle2 className="w-4 h-4 stroke-[2.5]" />}
+          icon={<CheckCircle2 className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />}
         />
 
         {/* Card 3: REJECTED */}
@@ -846,7 +870,7 @@ export default function AttendancePunchingApprovalPage() {
               prev === "Rejected" ? "All" : "Rejected",
             );
           }}
-          icon={<XCircle className="w-4 h-4 stroke-[2.5]" />}
+          icon={<XCircle className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />}
         />
 
         {/* Card 4: ALL RECORDS */}
@@ -858,7 +882,7 @@ export default function AttendancePunchingApprovalPage() {
           onClick={() => {
             setSelectedStatusFilter("All");
           }}
-          icon={<Layers className="w-4 h-4 stroke-[2.5]" />}
+          icon={<Layers className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />}
         />
       </div>
 
@@ -874,7 +898,7 @@ export default function AttendancePunchingApprovalPage() {
               value={dateFrom}
               handleInputChange={(_, val) => setDateFrom(val)}
               ShortName
-              className="!h-10 border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 w-full"
+              className="!h-10 border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-md font-medium text-slate-800 dark:text-slate-100 w-full"
               labelClassName="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
             />
           </div>
@@ -888,7 +912,7 @@ export default function AttendancePunchingApprovalPage() {
               value={dateTo}
               handleInputChange={(_, val) => setDateTo(val)}
               ShortName
-              className="!h-10 border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 w-full"
+              className="!h-10 border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-md font-medium text-slate-800 dark:text-slate-100 w-full"
               labelClassName="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
             />
           </div>
@@ -950,8 +974,8 @@ export default function AttendancePunchingApprovalPage() {
         title="Punch records awaiting sign-off"
         columns={columns}
         data={filteredData}
-        check={true}
-        onlyOnecheck={true}
+        check={false}
+        onlyOnecheck={false}
         selectValue="Utd"
         setsellectedrowdata={setSelectedRows}
         selectedRows={selectedRows}
@@ -966,59 +990,8 @@ export default function AttendancePunchingApprovalPage() {
         columnsDownload={columnsForExcel}
         onExportAll={() => filteredData}
       />
-      {/* 6. Always-visible Footer Action Bar (responsive layout with sidebar offset) */}
-      <div className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-3 sm:px-8 py-3 transition-[left] duration-150 ease-in-out">
-        <div className="max-w-[1700px] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-          <div
-            className={`text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 ${
-              hasSelection
-                ? "text-slate-800 dark:text-slate-100"
-                : "text-slate-400 dark:text-slate-500"
-            }`}
-          >
-            {selectedRows.length} selected
-          </div>
 
-          <div className="flex-1 w-full min-w-0">
-            <Einput
-              type="text"
-              title=""
-              name="quickRemark"
-              placeholder="Remark (required when rejecting)..."
-              value={quickRemark}
-              handleInputChange={(_, val) => setQuickRemark(val)}
-              labelClassName="hidden"
-              className="!h-10 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-medium w-full"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-            <AButton
-              variant="outline"
-              size="md"
-              onClick={() => handleBulkAction("0")}
-              disabled={!hasSelection || isLoading}
-              icon={<X className="w-4 h-4 stroke-[2.5] text-rose-600" />}
-              className="flex-1 sm:flex-initial h-10 px-4 rounded-xl text-xs sm:text-sm font-semibold border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40 disabled:opacity-50"
-            >
-              Reject
-            </AButton>
-
-            <AButton
-              variant="primary"
-              size="md"
-              onClick={() => handleBulkAction("1")}
-              disabled={!hasSelection || isLoading}
-              icon={<Check className="w-4 h-4 stroke-[2.5]" />}
-              className="flex-1 sm:flex-initial h-10 px-5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
-            >
-              Approve punches
-            </AButton>
-          </div>
-        </div>
-      </div>
-
-      {/* 7. Punch Details Modal Dialog (Triggered on Row Double Click) */}
+      {/* 6. Punch Details Modal Dialog (Triggered on Row Double Click) */}
       <Dialog open={isModalVisible} onOpenChange={setIsModalVisible}>
         <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] shadow-2xl">
           <DialogHeader>
@@ -1168,19 +1141,25 @@ export default function AttendancePunchingApprovalPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
                 Punch In Image
               </span>
-              <div className="h-44 w-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
-                {model?.fileIn ? (
+              <div className="h-44 w-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                {model?.fileIn && getImageUrl(model.fileIn) ? (
                   <img
-                    src={model.fileIn}
+                    src={getImageUrl(model.fileIn)}
                     alt="Punch In"
                     className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
-                  <FaImage className="w-16 h-16 text-slate-300 dark:text-slate-700" />
-                )}
+                ) : null}
+                <FaImage
+                  className={`w-16 h-16 text-slate-300 dark:text-slate-700 ${
+                    model?.fileIn && getImageUrl(model.fileIn) ? "hidden" : "block"
+                  }`}
+                />
               </div>
               <div className="mt-2">
-                <FileViewer fileLink={model?.fileIn || ""} celldata="" />
+                <FileViewer fileLink={getImageUrl(model?.fileIn)} celldata="" />
               </div>
             </div>
 
@@ -1189,19 +1168,25 @@ export default function AttendancePunchingApprovalPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
                 Punch Out Image
               </span>
-              <div className="h-44 w-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
-                {model?.fileOut ? (
+              <div className="h-44 w-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                {model?.fileOut && getImageUrl(model.fileOut) ? (
                   <img
-                    src={model.fileOut}
+                    src={getImageUrl(model.fileOut)}
                     alt="Punch Out"
                     className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
                   />
-                ) : (
-                  <FaImage className="w-16 h-16 text-slate-300 dark:text-slate-700" />
-                )}
+                ) : null}
+                <FaImage
+                  className={`w-16 h-16 text-slate-300 dark:text-slate-700 ${
+                    model?.fileOut && getImageUrl(model.fileOut) ? "hidden" : "block"
+                  }`}
+                />
               </div>
               <div className="mt-2">
-                <FileViewer fileLink={model?.fileOut || ""} celldata="" />
+                <FileViewer fileLink={getImageUrl(model?.fileOut)} celldata="" />
               </div>
             </div>
           </div>

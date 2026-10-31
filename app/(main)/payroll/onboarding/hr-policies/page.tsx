@@ -332,7 +332,7 @@ const handleOpenDocument = (row: PolicyRow) => {
 
       return {
         ...item,
-        srNo: item.Utd ?? item.SRNO ?? item.tran_id ?? index + 1,
+        srNo: index + 1,
         refType:
           item.DocTypeName ??
           item.DocType ??
@@ -647,6 +647,32 @@ const getDocumentUrl = useCallback(
   [getDocumentPath],
 );
 
+const handleDownloadFile = async (fileUrl: string, fileName: string) => {
+  if (!fileUrl) {
+    showSideAlert("Document link is not available.", "warn");
+    return;
+  }
+
+  try {
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error("Network response was not ok");
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = fileName || "document.pdf";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(blobUrl);
+    }, 1000);
+    showSideAlert("Document downloaded successfully.", "success");
+  } catch (error) {
+    window.open(fileUrl, "_blank");
+  }
+};
+
 useEffect(() => {
   let rows = [...(tabledata || [])];
 
@@ -681,11 +707,18 @@ useEffect(() => {
       {
         Header: "SR NO.",
         accessor: "srNo",
-        Cell: ({ value }: any) => (
-          <span className="text-[12px] text-slate-500 dark:text-slate-400">
-            {value ?? "—"}
-          </span>
-        ),
+        Cell: ({ row, value }: any) => {
+          const effectivePageSize = pageSize === -1 ? 0 : pageSize;
+          const displaySrNo =
+            row?.index !== undefined
+              ? (currentPage - 1) * effectivePageSize + row.index + 1
+              : (value ?? "—");
+          return (
+            <span className="text-[12px] text-slate-500 dark:text-slate-400">
+              {displaySrNo}
+            </span>
+          );
+        },
       },
       {
         Header: "DOCUMENT NAME",
@@ -775,21 +808,33 @@ useEffect(() => {
  {
   Header: "Document",
   accessor: "File_Name",
+  showInExcel: false, 
   Cell: ({ row }: any) => {
     const policy = row.original;
 
     return (
-      <FileViewer
-        fileLink={getDocumentUrl(policy)}
-        celldata="View Document"
-        Title={getDocumentName(policy)}
-      />
+      <div className="flex items-center gap-2">
+        <FileViewer
+          fileLink={getDocumentUrl(policy)}
+          celldata="Download Document"
+          Title={getDocumentName(policy)}
+        />
+        <button
+          type="button"
+          title="Download document"
+          onClick={() => handleDownloadFile(getDocumentUrl(policy), getDocumentName(policy))}
+          className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
+        >
+          <Download size={14} />
+        </button>
+      </div>
     );
   },
 },
       {
         Header: "Delete",
         accessor: "Delete",
+        showInExcel: false, 
         Cell: ({ row }: any) => {
           const item = row.original;
           return (
@@ -809,7 +854,25 @@ useEffect(() => {
         },
       },
     ],
-    [category],
+    [category, currentPage, pageSize],
+  );
+
+  const columnsDownload = useMemo(
+    () => [
+      { Header: "SR NO.", accessor: "srNo" },
+      { Header: "DOCUMENT NAME", accessor: "name" },
+      { Header: "CATEGORY", accessor: "Category" },
+      { Header: "VERSION", accessor: "Version" },
+      {
+        Header: "ACKNOWLEDGED",
+        accessor: "AcknowledgementPercent",
+        Cell: ({ row }: any) => {
+          const item = row.original;
+          return `${item.Acknowledged ?? 0} / ${item.EmployeeCount ?? 0}`;
+        },
+      },
+    ],
+    [],
   );
 
   const isImagePreview = /\.(png|jpe?g|webp)$/i.test(previewName || "");
@@ -1025,6 +1088,7 @@ useEffect(() => {
             showPageSizeInFooter={true}
             showTopSearch={true}
             searchValue={searchInput}
+            columnsDownload={columnsDownload}
             onSearchChange={(value: string) => {
               setSearchInput(value);
               setCurrentPage(1);

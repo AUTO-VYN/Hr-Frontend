@@ -4,6 +4,15 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const { nextUrl } = req;
 
+  // Allow public verification of employee ID card via QR scan
+  if (
+    !isLoggedIn &&
+    nextUrl.pathname === "/payroll/attendance-punch/employee-id-card" &&
+    nextUrl.searchParams.has("empcode")
+  ) {
+    return;
+  }
+
   // Not logged in -> only "/" (login) is allowed
   if (!isLoggedIn && nextUrl.pathname !== "/") {
     return Response.redirect(new URL("/", nextUrl));

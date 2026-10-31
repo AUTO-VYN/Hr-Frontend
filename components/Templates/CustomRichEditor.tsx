@@ -37,6 +37,7 @@ export interface CustomRichEditorProps {
   className?: string;
   defaultHeight?: number;
   keywordsList?: any;
+  missingTokens?: string[];
 }
 
 const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
@@ -48,6 +49,7 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
       className,
       defaultHeight = 400,
       keywordsList = [],
+      missingTokens = [],
     },
     ref
   ) => {
@@ -279,6 +281,75 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
     }
   }, []);
 
+  // Helper to format token with proper spacing based on surrounding text/context
+  const formatTokenWithSpacing = (
+    tokenTag: string,
+    range: Range | null,
+    editor: HTMLElement
+  ): string => {
+    if (!range) {
+      return `${tokenTag} `;
+    }
+
+    let needLeadingSpace = false;
+    let needTrailingSpace = true;
+
+    try {
+      const container =
+        range.startContainer.nodeType === Node.ELEMENT_NODE
+          ? (range.startContainer as HTMLElement)
+          : range.startContainer.parentElement;
+
+      const block =
+        container?.closest(
+          "p, div, li, h1, h2, h3, h4, h5, h6, blockquote, td, th"
+        ) || editor;
+
+      // Check preceding text inside the block
+      const preRange = document.createRange();
+      preRange.selectNodeContents(block);
+      preRange.setEnd(range.startContainer, range.startOffset);
+      const textBefore = preRange.toString();
+
+      if (textBefore.length > 0) {
+        const lastChar = textBefore.slice(-1);
+        const isWhitespace = /\s/.test(lastChar) || lastChar === "\u00A0";
+        const isOpeningPunctuation = /[({\['"]/.test(lastChar);
+        if (!isWhitespace && !isOpeningPunctuation) {
+          needLeadingSpace = true;
+        }
+      }
+
+      // Check succeeding text inside the block
+      const postRange = document.createRange();
+      postRange.selectNodeContents(block);
+      postRange.setStart(range.endContainer, range.endOffset);
+      const textAfter = postRange.toString();
+
+      if (textAfter.length > 0) {
+        const firstChar = textAfter.charAt(0);
+        const isWhitespace = /\s/.test(firstChar) || firstChar === "\u00A0";
+        const isClosingPunctuation = /[.,;:!?)}\]'"]/.test(firstChar);
+
+        if (isWhitespace || isClosingPunctuation) {
+          needTrailingSpace = false;
+        } else {
+          needTrailingSpace = true;
+        }
+      } else {
+        needTrailingSpace = true;
+      }
+    } catch (err) {
+      console.warn("Error calculating token spacing:", err);
+      return ` ${tokenTag} `;
+    }
+
+    const prefix = needLeadingSpace ? " " : "";
+    const suffix = needTrailingSpace ? " " : "";
+
+    return `${prefix}${tokenTag}${suffix}`;
+  };
+
   const insertToken = useCallback(
     (tokenKey: string) => {
       const editor = editorRef.current;
@@ -303,6 +374,8 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
         range = selection.getRangeAt(0);
       }
 
+      const textToInsert = formatTokenWithSpacing(tokenTag, range, editor);
+
       if (range && selection) {
         selection.removeAllRanges();
         selection.addRange(range);
@@ -310,10 +383,10 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
           document.queryCommandSupported &&
           document.queryCommandSupported("insertText")
         ) {
-          document.execCommand("insertText", false, tokenTag);
+          document.execCommand("insertText", false, textToInsert);
         } else {
           range.deleteContents();
-          const node = document.createTextNode(tokenTag);
+          const node = document.createTextNode(textToInsert);
           range.insertNode(node);
           range.setStartAfter(node);
           range.collapse(true);
@@ -321,8 +394,9 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
           selection.addRange(range);
         }
       } else {
+        const hasContent = Boolean(editor.textContent?.trim());
         const node = document.createTextNode(
-          editor.innerHTML.trim() ? ` ${tokenTag}` : tokenTag
+          hasContent ? ` ${tokenTag} ` : `${tokenTag} `
         );
         editor.appendChild(node);
         const newRange = document.createRange();
@@ -377,15 +451,20 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
       selection.addRange(range);
     }
 
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const textToInsert = formatTokenWithSpacing(tokenTag, range, editor);
+
     if (
       document.queryCommandSupported &&
       document.queryCommandSupported("insertText")
     ) {
-      document.execCommand("insertText", false, tokenTag);
+      document.execCommand("insertText", false, textToInsert);
     } else {
       if (range) {
         range.deleteContents();
-        const textNode = document.createTextNode(tokenTag);
+        const textNode = document.createTextNode(textToInsert);
         range.insertNode(textNode);
         range.setStartAfter(textNode);
         range.collapse(true);
@@ -394,7 +473,7 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
           selection.addRange(range);
         }
       } else if (editorRef.current) {
-        const textNode = document.createTextNode(` ${tokenTag}`);
+        const textNode = document.createTextNode(` ${textToInsert}`);
         editorRef.current.appendChild(textNode);
       }
     }
@@ -621,6 +700,82 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
       editorRef.current.innerHTML = value || "";
     }
   }, [value]);
+
+  // Highlight missing tokens using CSS Custom Highlight API (no DOM/innerHTML mutations)
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    // @ts-ignore
+    if (typeof CSS !== "undefined" && CSS.highlights) {
+      if (!missingTokens || missingTokens.length === 0) {
+        // @ts-ignore
+        CSS.highlights.delete("missing-token-highlight");
+        return;
+      }
+
+      const ranges: Range[] = [];
+      const treeWalker = document.createTreeWalker(
+        editorRef.current,
+        NodeFilter.SHOW_TEXT
+      );
+
+      let currentNode = treeWalker.nextNode();
+      while (currentNode) {
+        const text = currentNode.textContent || "";
+        missingTokens.forEach((token) => {
+          if (!token) return;
+          const patterns = [`{${token}}`, token];
+          patterns.forEach((pattern) => {
+            let startIndex = 0;
+            const upperText = text.toUpperCase();
+            const upperPattern = pattern.toUpperCase();
+            while (
+              (startIndex = upperText.indexOf(upperPattern, startIndex)) !== -1
+            ) {
+              if (!pattern.startsWith("{")) {
+                const prevChar = startIndex > 0 ? text[startIndex - 1] : " ";
+                const nextChar =
+                  startIndex + pattern.length < text.length
+                    ? text[startIndex + pattern.length]
+                    : " ";
+                if (
+                  /[a-zA-Z0-9_]/.test(prevChar) ||
+                  /[a-zA-Z0-9_]/.test(nextChar)
+                ) {
+                  startIndex += pattern.length;
+                  continue;
+                }
+              }
+              try {
+                const range = new Range();
+                range.setStart(currentNode, startIndex);
+                range.setEnd(currentNode, startIndex + pattern.length);
+                ranges.push(range);
+              } catch (e) {
+                // ignore
+              }
+              startIndex += pattern.length;
+            }
+          });
+        });
+        currentNode = treeWalker.nextNode();
+      }
+
+      try {
+        if (ranges.length > 0) {
+          // @ts-ignore
+          const highlight = new Highlight(...ranges);
+          // @ts-ignore
+          CSS.highlights.set("missing-token-highlight", highlight);
+        } else {
+          // @ts-ignore
+          CSS.highlights.delete("missing-token-highlight");
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+  }, [missingTokens, value]);
 
   // Floating Toolbar Button
   const FloatingButton = ({
@@ -900,6 +1055,14 @@ const CustomRichEditor = forwardRef<CustomRichEditorRef, CustomRichEditorProps>(
         }}
         placeholder={placeholder}
       />
+
+      <style>{`
+        ::highlight(missing-token-highlight) {
+          background-color: #fef08a !important;
+          color: #854d0e !important;
+          text-decoration: underline wavy #ef4444 !important;
+        }
+      `}</style>
 
       {/* Floating Toolbar */}
       {showFloatingToolbar && (

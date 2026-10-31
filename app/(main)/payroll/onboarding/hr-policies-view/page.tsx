@@ -533,7 +533,7 @@ const [previewBlobUrl, setPreviewBlobUrl] = useState("");
         return {
           ...item,
 
-          srNo: srNo ?? index + 1,
+          srNo:index + 1,
 
           refType:
             item.DocTypeName ??
@@ -987,58 +987,43 @@ const handleOpenDocument = async (row: PolicyRow) => {
       },
 
       
-  {
-    Header: "View Document",
-    accessor: "File_Name",
-    Cell: ({ row }: any) => {
-      const policy = row.original;
+      {
+        Header: "View Document",
+        accessor: "File_Name",
+        showInExcel: false,
+        Cell: ({ row }: any) => {
+          const policy = row.original;
 
-      return (
-        <FileViewer
-          fileLink={getDocumentUrl(policy)}
-          celldata="View Document"
-          Title={getDocumentName(policy)}
-        />
-      );
-    },
-  },
+          return (
+            <div className="flex items-center gap-2">
+              <FileViewer
+                fileLink={getDocumentUrl(policy)}
+                celldata="Download Document"
+                Title={getDocumentName(policy)}
+              />
+              <button
+                type="button"
+                title="Download document"
+                onClick={() => handleViewFileDownload(policy)}
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300"
+              >
+                <Download size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
 
       {
         Header: "Delete",
         accessor: "Delete",
+        showInExcel: false,
 
         Cell: ({ row }: any) => {
           const item = row.original;
 
           return (
             <div className="flex items-center gap-1.5">
-              {/* <button
-                type="button"
-                title="View document"
-                onClick={() => handleOpenDocument(item)}
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
-              >
-                <Eye size={15} />
-              </button> */}
-
-              {/* <button
-                type="button"
-                title="Download document"
-                onClick={() => handleViewFileDownload(item)}
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-emerald-950/40"
-              >
-                <Download size={15} />
-              </button> */}
-
-              {/* <button
-                type="button"
-                title="Send acknowledgement"
-                onClick={() => handleNotify(item)}
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/40"
-              >
-                <Bell size={15} />
-              </button> */}
-
               <button
                 type="button"
                 title="Delete"
@@ -1052,7 +1037,7 @@ const handleOpenDocument = async (row: PolicyRow) => {
         },
       },
     ],
-    [handleDelete, handleNotify, handleOpenDocument, handleViewFileDownload],
+    [handleDelete, handleNotify, handleOpenDocument, handleViewFileDownload, getDocumentUrl, getDocumentName],
   );
 
   // =========================================================
@@ -1061,6 +1046,26 @@ const handleOpenDocument = async (row: PolicyRow) => {
 
   const publishedPolicies = tabledata.length;
   const totalEmployees = 486;
+
+  const columnsDownload = useMemo(
+    () => [
+      { Header: "SR NO.", accessor: "srNo" },
+      { Header: "DOCUMENT NAME", accessor: "name" },
+      { Header: "CATEGORY", accessor: "Category" },
+      { Header: "VERSION", accessor: "Version" },
+      {
+        Header: "ACKNOWLEDGED",
+        accessor: "AcknowledgementPercent",
+        Cell: ({ row }: any) => {
+          const item = row.original;
+          return `${item.Acknowledged ?? 0} / ${
+            item.EmployeeCount ?? totalEmployees
+          }`;
+        },
+      },
+    ],
+    [totalEmployees],
+  );
 
   const totalAcknowledged = tabledata.reduce(
     (sum: number, item: PolicyRow) =>
@@ -1391,6 +1396,7 @@ const handleOpenDocument = async (row: PolicyRow) => {
               showPageSizeInFooter={true}
               showTopSearch={false}
               searchValue={searchInput}
+              columnsDownload={columnsDownload}
               onSearchChange={(val: string) => {
                 setSearchInput(val);
                 setCurrentPage(1);
