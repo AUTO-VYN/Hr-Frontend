@@ -111,7 +111,7 @@ const Ainput: FC<AinputProps> = ({
             "dark:focus-visible:ring-indigo-500/20 dark:focus-visible:border-indigo-400",
             "dark:disabled:bg-[#0B1220] dark:disabled:text-slate-500",
             // date input: keep room + class for moving native icon to end
-            isDate ? "date-end-icon pr-10" : "",
+            isDate ? "date-end-icon pr-8" : "",
             // right attached element: override padding (more space)
             rightElement ? "pr-[112px]" : "",
             // error

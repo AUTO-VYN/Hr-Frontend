@@ -557,7 +557,7 @@ const Eselect = ({
           className
         )}
       >
-        <div className={cn("truncate", selectedOptions.length ? "" : "text-slate-400")}>
+        <div className={cn("min-w-0 flex-1 truncate pr-1.5", selectedOptions.length ? "" : "text-slate-400")}>
           {selectedOptions.length
             ? checkbox && selectedOptions.length === option.length && option.length > 1
               ? `All Selected (${option.length})`
@@ -568,7 +568,7 @@ const Eselect = ({
         {!disabled ? (
           <BiChevronDown
             size={18}
-            className={cn("text-slate-500 transition", open && "rotate-180")}
+            className={cn("text-slate-500 transition shrink-0 ml-1", open && "rotate-180")}
           />
         ) : null}
 
