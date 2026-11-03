@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import { useDateRange } from "@/app/hooks/use-date-range";
 import useExcelDownload from "@/app/hooks/excel-download";
+import { useSecureStorage } from "@/app/hooks/comp-key-data";
 
 import ServiceTablePagination from "@/components/Templates/reacttable";
 import Einput from "@/components/atoms/Einput";
@@ -41,7 +42,9 @@ import { GoX } from "react-icons/go";
 export default function Addattendance() {
   const router = useRouter();
   const user = useCurrentUser();
-  const globalDateRange = useDateRange();
+  const { compdata } = useSecureStorage();
+  const isMultipleOutAllowed = Number(compdata?.Enable_Multiple_Punch_Out) === 1;
+  // const globalDateRange = useDateRange({ preset: "last_30_days" });
   const {  handleExcelDownload } = useExcelDownload();
 
   function showSideAlert(message: any, type: any) {
@@ -125,6 +128,7 @@ export default function Addattendance() {
   const [useFrontCamera, setUseFrontCamera] = useState(true);
   const [apprData, setApprData] = useState<any[]>([]);
   const [isModalVisible1, setIsModalVisible1] = useState(false);
+  
 
   // --- Date Range Helper ---
   function getCurrentDate(monthsBack = 0) {
@@ -137,11 +141,12 @@ export default function Addattendance() {
     if (day < 10) day = "0" + day;
     return `${year}-${month}-${day}`;
   }
-
+  
   const todayOneMonthBackDate = getCurrentDate(1);
   const [dates, setDates] = useState({
-    DATE_FROM: globalDateRange?.DATE_FROM || todayOneMonthBackDate,
-    DATE_TO: globalDateRange?.DATE_TO || getCurrentDate(),
+   DATE_FROM: todayOneMonthBackDate,
+   DATE_TO: getCurrentDate(),
+
     head_remark: "",
   });
 
@@ -397,15 +402,7 @@ export default function Addattendance() {
           );
 
           if (location) {
-            context.font = "20px Arial";
-            context.fillStyle = "red";
-            context.textBaseline = "bottom";
-
-            const maxWidth = canvas.width - 20;
-            const lineHeight = 28;
-            const y = 15;
-            const x = canvas.height - 15;
-            wrapText(context, location, x, y, maxWidth, lineHeight);
+            drawLocationWatermark(context, location, canvas.width, canvas.height);
           }
           const dataUrl = canvas.toDataURL("image/png");
           setImageSrc(dataUrl);
@@ -421,29 +418,87 @@ export default function Addattendance() {
     }
   };
 
-  const wrapText = (
+  const drawLocationWatermark = (
     context: any,
-    text: any,
-    x: any,
-    y: any,
-    maxWidth: any,
-    lineHeight: any
+    text: string,
+    width: number,
+    height: number
   ) => {
+    const fontSize = 20;
+    const lineHeight = 27;
+    context.font = `600 ${fontSize}px Arial, sans-serif`;
+
+    const marginX = 16;
+    // Container object-cover crops ~50-55px from the bottom of a 480px frame; safe margin keeps full badge visible
+    const safeBottomMargin = Math.max(68, Math.round(height * 0.14));
+    const paddingX = 12;
+    const paddingY = 7;
+    const badgeWidth = width - marginX * 2;
+    const maxTextWidth = badgeWidth - (paddingX * 2 + 16);
+
+    // Word wrap calculation
     const words = text.split(" ");
-    let line = "";
+    const lines: string[] = [];
+    let currentLine = "";
+
     for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
+      const testLine = currentLine ? `${currentLine} ${words[n]}` : words[n];
       const metrics = context.measureText(testLine);
-      const testWidth = metrics.width;
-      if (testWidth > maxWidth && n > 0) {
-        context.fillText(line, y, x);
-        line = words[n] + " ";
-        x -= lineHeight;
+      if (metrics.width > maxTextWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = words[n];
       } else {
-        line = testLine;
+        currentLine = testLine;
       }
     }
-    context.fillText(line, y, x);
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    const badgeHeight = lines.length * lineHeight + paddingY * 2;
+    const badgeX = marginX;
+    const badgeY = height - safeBottomMargin - badgeHeight;
+
+    context.save();
+
+    // Dark semi-transparent background badge
+    context.fillStyle = "rgba(15, 23, 42, 0.88)";
+    if (typeof (context as any).roundRect === "function") {
+      (context as any).roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8);
+      context.fill();
+    } else {
+      context.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+    }
+
+    // Subtle white border
+    context.strokeStyle = "rgba(255, 255, 255, 0.22)";
+    context.lineWidth = 1;
+    if (typeof (context as any).roundRect === "function") {
+      (context as any).roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8);
+      context.stroke();
+    } else {
+      context.strokeRect(badgeX, badgeY, badgeWidth, badgeHeight);
+    }
+
+    // Red location indicator dot on first line
+    const dotX = badgeX + paddingX + 4;
+    const dotY = badgeY + paddingY + lineHeight / 2;
+    context.beginPath();
+    context.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    context.fillStyle = "#EF4444";
+    context.fill();
+
+    // Crisp white text
+    context.fillStyle = "#FFFFFF";
+    context.textBaseline = "middle";
+
+    lines.forEach((line, index) => {
+      const textX = dotX + 10;
+      const textY = badgeY + paddingY + index * lineHeight + lineHeight / 2;
+      context.fillText(line, textX, textY);
+    });
+
+    context.restore();
   };
 
   const toggleCamera = () => {
@@ -930,9 +985,9 @@ export default function Addattendance() {
               <button
                 type="button"
                 onClick={AddpunchOut}
-                disabled={isOpenCameraDisabledOUT}
+                disabled={!isOpenCameraDisabledIN || (!isMultipleOutAllowed && isOpenCameraDisabledOUT)}
                 className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all text-center select-none ${
-                  isOpenCameraDisabledOUT
+                  !isMultipleOutAllowed && isOpenCameraDisabledOUT
                     ? "bg-[#E11D48]/10 border-[#E11D48]/45 text-[#E11D48] dark:bg-rose-950/20 dark:border-rose-800/40 dark:text-rose-400 cursor-not-allowed"
                     : isOpenCameraDisabledIN
                     ? "bg-[#E11D48] text-white border-transparent hover:brightness-105 cursor-pointer shadow-xs active:scale-[0.99]"
@@ -946,7 +1001,7 @@ export default function Addattendance() {
                 <span className="text-[11px] opacity-85 font-medium tabular-nums mt-0.5">
                   {punchData?.App_Out1?.date
                     ? getDisplayPunchTime(punchData.App_Out1.date)
-                    : isOpenCameraDisabledOUT
+                    : !isMultipleOutAllowed && isOpenCameraDisabledOUT
                     ? "punched"
                     : isOpenCameraDisabledIN
                     ? "pending"
@@ -1111,61 +1166,53 @@ export default function Addattendance() {
         <div className="space-y-3.5 min-w-0">
           {/* Top Filter Bar */}
           <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] p-3 sm:p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[180px_180px_minmax(0,1fr)_auto_auto] gap-3 items-end">
-              <div>
-                <Einput
-                  title="DATE FROM"
-                  type="date"
-                  name="DATE_FROM"
-                  value={dates.DATE_FROM}
-                  handleInputChange={handleDateChange}
-                  labelClassName="!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase"
-                  className="!h-[38px] !text-[12.5px] !rounded-[9px] !border-slate-200 dark:!border-slate-800"
-                />
-              </div>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              {/* Left: Dates + Show */}
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="w-full sm:w-[180px]">
+                  <Einput
+                    title="DATE FROM"
+                    type="date"
+                    name="DATE_FROM"
+                    value={dates.DATE_FROM}
+                    handleInputChange={handleDateChange}
+                    labelClassName="!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase"
+                    className="!h-[38px] !text-[12.5px] !rounded-[9px] !border-slate-200 dark:!border-slate-800"
+                  />
+                </div>
 
-              <div>
-                <Einput
-                  title="DATE TO"
-                  type="date"
-                  name="DATE_TO"
-                  value={dates.DATE_TO}
-                  handleInputChange={handleDateChange}
-                  labelClassName="!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase"
-                  className="!h-[38px] !text-[12.5px] !rounded-[9px] !border-slate-200 dark:!border-slate-800"
-                />
-              </div>
+                <div className="w-full sm:w-[180px]">
+                  <Einput
+                    title="DATE TO"
+                    type="date"
+                    name="DATE_TO"
+                    value={dates.DATE_TO}
+                    handleInputChange={handleDateChange}
+                    labelClassName="!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase"
+                    className="!h-[38px] !text-[12.5px] !rounded-[9px] !border-slate-200 dark:!border-slate-800"
+                  />
+                </div>
 
-              <div className="sm:col-span-2 lg:col-span-1">
-                <Einput
-                  title="SEARCH"
-                  type="text"
-                  name="search"
-                  placeholder="Employee, reason, remark..."
-                  value={searchQuery}
-                  handleInputChange={(_, val) => setSearchQuery(val)}
-                  labelClassName="!text-[11px] !font-semibold !text-[#64748B] dark:!text-[#94A3B8] !tracking-[0.03em] !uppercase"
-                  className="!h-[38px] !text-[12.5px] !rounded-[9px] !border-slate-200 dark:!border-slate-800"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1 w-full lg:w-auto">
                 <AButton
                   variant="primary"
                   size="md"
                   type="button"
                   onClick={handleFilter}
-                  className="flex-1 lg:flex-initial !bg-[#10B981] hover:!bg-[#059669] !text-white !h-[38px] !px-5 !rounded-[9px] !text-[12.5px] !font-semibold shadow-xs whitespace-nowrap"
+                  className="!bg-[#10B981] hover:!bg-[#059669] !text-white !h-[38px] !px-5 !rounded-[9px] !text-[12.5px] !font-semibold shadow-xs whitespace-nowrap"
                 >
                   Show
                 </AButton>
+              </div>
+
+              {/* Right: Export + Approver Hierarchy (Akhir mein) */}
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <AButton
                   variant="outline"
                   size="md"
                   type="button"
                   onClick={handleExportData}
                   icon={<Download className="w-4 h-4" />}
-                  className="flex-1 lg:flex-initial !h-[38px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !border-slate-200 dark:!border-slate-700 !bg-white dark:!bg-[#111827] !text-[#1E293B] dark:!text-[#E7ECF3] hover:!bg-slate-50 dark:hover:!bg-slate-800 shadow-xs whitespace-nowrap"
+                  className="!h-[38px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !border-slate-200 dark:!border-slate-700 !bg-white dark:!bg-[#111827] !text-[#1E293B] dark:!text-[#E7ECF3] hover:!bg-slate-50 dark:hover:!bg-slate-800 shadow-xs whitespace-nowrap"
                   title="Export to Excel"
                 >
                   Export
@@ -1248,10 +1295,8 @@ export default function Addattendance() {
               <ServiceTablePagination
                 columns={columns}
                 data={displayData}
-                showTopSearch={false}
-                searchValue={searchQuery}
+                showTopSearch={true}
                 showColumnFilters={true}
-                onSearchChange={setSearchQuery}
                 showExcelExport={true}
                 columnsDownload={columnsDownload}
                 containerClassName="border-0 shadow-none p-0 !bg-transparent w-full"

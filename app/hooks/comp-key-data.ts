@@ -92,7 +92,13 @@ export const useSecureStorage = () => {
             Show_Attn_Summary: value?.Show_Attn_Summary,
             fuel_module: value?.fuel_module,
             allow_chng_Date_EmpDed: value?.allow_chng_Date_EmpDed,
-            EMP_LASTWOR_DATE_VALD: value?.EMP_LASTWOR_DATE_VALD
+            EMP_LASTWOR_DATE_VALD: value?.EMP_LASTWOR_DATE_VALD,
+            Enable_Multiple_Punch_Out: value?.Enable_Multiple_Punch_Out,
+            Disable_Gallary_option: value?.Disable_Gallary_option,
+            IS_PAST_MP_ALLOW:value?.IS_PAST_MP_ALLOW,
+            Mnd_Add_Rmk:value?.Mnd_Add_Rmk,
+            Show_Address_On_MP_Img:value?.Show_Address_On_MP_Img,
+            MP_IMG_REQUIRED:value?.MP_IMG_REQUIRED,
         };
 
         const encrypted = encrypt(filteredData);

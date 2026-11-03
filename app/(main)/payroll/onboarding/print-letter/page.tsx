@@ -386,8 +386,8 @@ export default function PrintLetterPage() {
     if (!compCode) return;
     try {
       const response = await axios.post(
-        // `${process.env.NEXT_PUBLIC_URL}/template/AllSelectempdata`,
-        `${process.env.NEXT_PUBLIC_URL}/employee/All`,
+        `${process.env.NEXT_PUBLIC_URL}/template/AllSelectempdata`,
+        // `${process.env.NEXT_PUBLIC_URL}/employee/All`,
         {
           flag:1
         },
@@ -1425,7 +1425,7 @@ body h2 {
                 </h2>
               </div>
               <span className="text-base text-slate-400 font-medium">
-                {activeTemplateObj?.tokens} merge tokens
+                 {templates.length} merge tokens
               </span>
             </div>
 
@@ -1648,7 +1648,7 @@ body h2 {
               <div className="mt-3 pt-2">
                 <StatCard
                   title="Merge Tokens"
-                  count={activeTemplateObj?.tokens || 0}
+                  count={templates.length}
                   variant="indigo"
                   className="!h-[64px] !min-h-[64px] !p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40"
                   titleClassName="text-[10px]"

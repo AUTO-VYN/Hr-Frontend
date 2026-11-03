@@ -210,6 +210,7 @@ export default function MispunchRequestPage() {
   const [imageSrc1, setImageSrc1] = useState<string>(""); // Punch In Preview
   const [punchIn, setPunchIn] = useState<File | Blob | null>(null);
   const [punchOut, setPunchOut] = useState<File | Blob | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("environment");
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -288,7 +289,10 @@ export default function MispunchRequestPage() {
           },
         }
       );
-      const pastAllowed = response.data?.past_mp_allowed || 0;
+      const pastAllowed =
+        compdata?.IS_PAST_MP_ALLOW != null
+          ? Number(compdata.IS_PAST_MP_ALLOW)
+          : response.data?.past_mp_allowed || 0;
       setMPList(response.data?.Result || []);
       setPast_mp_allowed(pastAllowed);
       if (pastAllowed === 1) {
@@ -299,7 +303,19 @@ export default function MispunchRequestPage() {
     } catch (error) {
       console.error("Error fetching MP list:", error);
     }
-  }, [user?.Comp_Code, user?.name]);
+  }, [user?.Comp_Code, user?.name, compdata?.IS_PAST_MP_ALLOW]);
+
+  useEffect(() => {
+    if (compdata?.IS_PAST_MP_ALLOW != null) {
+      const allowed = Number(compdata.IS_PAST_MP_ALLOW);
+      setPast_mp_allowed(allowed);
+      if (allowed === 1) {
+        setTypeOptions(restrictedTypeOptions);
+      } else {
+        setTypeOptions(allTypeOptions);
+      }
+    }
+  }, [compdata?.IS_PAST_MP_ALLOW]);
 
   // 3. Fetch Mispunch Remarks
   const getMPRemarksList = useCallback(async () => {
@@ -355,6 +371,133 @@ export default function MispunchRequestPage() {
     }
   }, [user?.EMPCODE, user?.Comp_Code, employeeview, getMPList, getMPRemarksList, showDataOFAPPRVL]);
 
+  // --- Geolocation & Address Fetching ---
+  const fetchAddress = async (latitude: any, longitude: any) => {
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/reverse`,
+        {
+          params: {
+            lat: latitude,
+            lon: longitude,
+            format: "json",
+          },
+        }
+      );
+      return response.data?.display_name || "";
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return "";
+    }
+  };
+
+  const getLocation = useCallback(() => {
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const address = await fetchAddress(latitude, longitude);
+          const latLonStr = `Lat: ${latitude.toFixed(6)}, Lon: ${longitude.toFixed(6)}`;
+          setLocation(address ? `${address} (${latLonStr})` : latLonStr);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        }
+      );
+    }
+  }, []);
+
+  const drawLocationWatermark = (
+    context: any,
+    text: string,
+    width: number,
+    height: number
+  ) => {
+    const fontSize = 16;
+    const lineHeight = 22;
+    context.font = `600 ${fontSize}px Arial, sans-serif`;
+
+    const marginX = 14;
+    const safeBottomMargin = Math.max(16, Math.round(height * 0.04));
+    const paddingX = 10;
+    const paddingY = 6;
+    const badgeWidth = width - marginX * 2;
+    const maxTextWidth = badgeWidth - (paddingX * 2 + 16);
+
+    // Word wrap calculation
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = currentLine ? `${currentLine} ${words[n]}` : words[n];
+      const metrics = context.measureText(testLine);
+      if (metrics.width > maxTextWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = words[n];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    const badgeHeight = lines.length * lineHeight + paddingY * 2;
+    const badgeX = marginX;
+    const badgeY = height - safeBottomMargin - badgeHeight;
+
+    context.save();
+
+    // Dark semi-transparent background badge
+    context.fillStyle = "rgba(15, 23, 42, 0.88)";
+    if (typeof (context as any).roundRect === "function") {
+      (context as any).roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8);
+      context.fill();
+    } else {
+      context.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+    }
+
+    // Subtle white border
+    context.strokeStyle = "rgba(255, 255, 255, 0.22)";
+    context.lineWidth = 1;
+    if (typeof (context as any).roundRect === "function") {
+      (context as any).roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8);
+      context.stroke();
+    } else {
+      context.strokeRect(badgeX, badgeY, badgeWidth, badgeHeight);
+    }
+
+    // Red location indicator dot on first line
+    const dotX = badgeX + paddingX + 4;
+    const dotY = badgeY + paddingY + lineHeight / 2;
+    context.beginPath();
+    context.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    context.fillStyle = "#EF4444";
+    context.fill();
+
+    // Crisp white text
+    context.fillStyle = "#FFFFFF";
+    context.textBaseline = "middle";
+
+    lines.forEach((line, index) => {
+      const textX = dotX + 10;
+      const textY = badgeY + paddingY + index * lineHeight + lineHeight / 2;
+      context.fillText(line, textX, textY);
+    });
+
+    context.restore();
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, [getLocation]);
+
   // Camera Management
   const getMediaStream = () => {
     const constraints = {
@@ -389,13 +532,14 @@ export default function MispunchRequestPage() {
     stopMediaStream();
     if (formdata.misspunchData?.Type !== null) {
       getMediaStream();
+      getLocation();
     } else {
       stopMediaStream();
     }
     return () => {
       stopMediaStream();
     };
-  }, [formdata.misspunchData?.Type, cameraFacingMode]);
+  }, [formdata.misspunchData?.Type, cameraFacingMode, getLocation]);
 
   const handleCameraToggle = () => {
     setCameraFacingMode((prevMode) =>
@@ -414,6 +558,16 @@ export default function MispunchRequestPage() {
     if (!ctx) return;
 
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
+    const showAddressOnImg =
+      compdata?.Show_Address_On_MP_Img !== undefined &&
+      compdata?.Show_Address_On_MP_Img !== null
+        ? Number(compdata?.Show_Address_On_MP_Img) === 1
+        : true;
+
+    if (location && showAddressOnImg) {
+      drawLocationWatermark(ctx, location, canvas.width, canvas.height);
+    }
 
     if (type == 3) {
       if (!punchIn) {
@@ -504,7 +658,12 @@ export default function MispunchRequestPage() {
       }
     }
 
-    if (name === "MP_Date" && past_mp_allowed === 1) {
+    const isPastAllowed =
+      compdata?.IS_PAST_MP_ALLOW != null
+        ? Number(compdata.IS_PAST_MP_ALLOW)
+        : past_mp_allowed;
+
+    if (name === "MP_Date" && isPastAllowed === 1) {
       const today = new Date().toISOString().split("T")[0];
       if (value < today) {
         toast({
@@ -522,7 +681,7 @@ export default function MispunchRequestPage() {
       }
     }
 
-    if ((name === "In_Time" || name === "Out_Time") && past_mp_allowed === 1) {
+    if ((name === "In_Time" || name === "Out_Time") && isPastAllowed === 1) {
       const selectedDate = formdata?.misspunchData?.MP_Date;
       const today = new Date().toISOString().split("T")[0];
       const currentTime = new Date();
@@ -555,13 +714,18 @@ export default function MispunchRequestPage() {
   };
 
   useEffect(() => {
-    if (past_mp_allowed === 1) {
+    const isPastAllowed =
+      compdata?.IS_PAST_MP_ALLOW != null
+        ? Number(compdata.IS_PAST_MP_ALLOW)
+        : past_mp_allowed;
+
+    if (isPastAllowed === 1) {
       const today = new Date().toISOString().split("T")[0];
       if (formdata?.misspunchData?.MP_Date && formdata.misspunchData.MP_Date < today) {
         handleInputChange("MP_Date", today);
       }
     }
-  }, [past_mp_allowed]);
+  }, [past_mp_allowed, compdata?.IS_PAST_MP_ALLOW]);
 
   // Submit Handler with exact logic and warnings from original code
   const submitbtn = async () => {
@@ -622,7 +786,10 @@ export default function MispunchRequestPage() {
           variant: "destructive",
         });
         return;
-      } else if (formdata.misspunchData?.MP_Remark == null) {
+      } else if (
+        Number(compdata?.Mnd_Add_Rmk) === 1 &&
+        formdata.misspunchData?.MP_Remark == null
+      ) {
         toast({
           title: "Please Select Mispunch Remark",
           variant: "destructive",
@@ -638,7 +805,12 @@ export default function MispunchRequestPage() {
           variant: "destructive",
         });
         return;
-      } else if (!punchIn && !punchOut) {
+      } else if (
+        (compdata?.MP_IMG_REQUIRED == null ||
+          Number(compdata?.MP_IMG_REQUIRED) === 0) &&
+        !punchIn &&
+        !punchOut
+      ) {
         toast({
           title: "Please capture at least one image (Punch In or Punch Out)",
           variant: "destructive",
@@ -648,7 +820,12 @@ export default function MispunchRequestPage() {
     }
 
     // Restriction check when saving
-    if (past_mp_allowed === 1) {
+    const isPastAllowed =
+      compdata?.IS_PAST_MP_ALLOW != null
+        ? Number(compdata.IS_PAST_MP_ALLOW)
+        : past_mp_allowed;
+
+    if (isPastAllowed === 1) {
       const selectedDate = formdata?.misspunchData?.MP_Date;
       const today = new Date().toISOString().split("T")[0];
       const currentTime = new Date();
@@ -1183,7 +1360,7 @@ export default function MispunchRequestPage() {
               {/* REMARK Selection Field */}
               <label className="flex flex-col gap-[5px]">
                 <span className="text-[11px] font-[600] text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase">
-                  REMARK
+                  REMARK{Number(compdata?.Mnd_Add_Rmk) === 1 && <span className="text-[#E11D48]"> *</span>} 
                 </span>
                 <Eselect
                   title=""
@@ -1225,7 +1402,13 @@ export default function MispunchRequestPage() {
               {/* ======================================================== */}
               <div>
                 <span className="block text-[11px] font-[600] text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase mb-[6px]">
-                  PROOF (OPTIONAL)
+                  {Number(compdata?.MP_IMG_REQUIRED) === 1 ? (
+                    "PROOF (OPTIONAL)"
+                  ) : (
+                    <>
+                      PROOF<span className="text-[#E11D48]"> *</span>
+                    </>
+                  )}
                 </span>
 
                 {/* Upload proof cards */}
@@ -1309,13 +1492,13 @@ export default function MispunchRequestPage() {
                 {/* Live Camera Stream */}
                 {formdata.misspunchData?.Type !== null && (
                   <div className="mt-3 p-3 rounded-[10px] border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8FAFC] dark:bg-[#0E1524] space-y-2">
-                    <div className="relative h-40 w-full rounded-[8px] overflow-hidden bg-black flex items-center justify-center">
+                    <div className="relative aspect-[4/3] w-full rounded-[8px] overflow-hidden bg-black flex items-center justify-center">
                       <video
                         ref={videoRef}
                         autoPlay
                         playsInline
                         muted
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                       />
                     </div>
                     <div className="flex items-center gap-2 pt-1">
@@ -1340,6 +1523,73 @@ export default function MispunchRequestPage() {
                         Flip
                       </AButton>
                     </div>
+
+                    {/* Captured Images Preview Card */}
+                    {(imageSrc1 || imageSrc) && (
+                      <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1F2937] space-y-2">
+                        <div className={`grid ${imageSrc1 && imageSrc ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
+                          {imageSrc1 && (
+                            <div className="relative rounded-[8px] border border-[#10B981]/30 bg-[rgba(16,185,129,0.05)] p-2">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] font-[600] text-[#10B981] flex items-center gap-1">
+                                  <Check className="w-3.5 h-3.5" />
+                                  {formdata.misspunchData?.Type === 3 ? "In punch photo" : "Captured photo"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setImageSrc1("");
+                                    setPunchIn(null);
+                                  }}
+                                  className="text-[11px] text-[#EF4444] hover:text-[#DC2626] font-[500] flex items-center gap-0.5 cursor-pointer"
+                                  title="Retake / Remove"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                  <span>Retake</span>
+                                </button>
+                              </div>
+                              <div className="relative aspect-[4/3] w-full rounded-[6px] overflow-hidden bg-slate-900/5 dark:bg-black/30 border border-[#E2E8F0] dark:border-[#1F2937] flex items-center justify-center">
+                                <img
+                                  src={imageSrc1}
+                                  alt="Captured In Punch"
+                                  className="h-full w-full object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {imageSrc && (
+                            <div className="relative rounded-[8px] border border-[#10B981]/30 bg-[rgba(16,185,129,0.05)] p-2">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] font-[600] text-[#10B981] flex items-center gap-1">
+                                  <Check className="w-3.5 h-3.5" />
+                                  {formdata.misspunchData?.Type === 3 ? "Out punch photo" : "Captured photo"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setImageSrc("");
+                                    setPunchOut(null);
+                                  }}
+                                  className="text-[11px] text-[#EF4444] hover:text-[#DC2626] font-[500] flex items-center gap-0.5 cursor-pointer"
+                                  title="Retake / Remove"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                  <span>Retake</span>
+                                </button>
+                              </div>
+                              <div className="relative aspect-[4/3] w-full rounded-[6px] overflow-hidden bg-slate-900/5 dark:bg-black/30 border border-[#E2E8F0] dark:border-[#1F2937] flex items-center justify-center">
+                                <img
+                                  src={imageSrc}
+                                  alt="Captured Out Punch"
+                                  className="h-full w-full object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
