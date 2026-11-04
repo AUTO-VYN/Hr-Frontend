@@ -8,6 +8,7 @@ import { useSecureStorage } from "@/app/hooks/comp-key-data";
 import FileViewer from "@/components/atoms/Fileviewer";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import ReactTable from "@/components/Templates/reacttable";
+import AttendanceDataTable from "./components/AttendanceDataTable";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import AButton from "@/components/atoms/Button";
@@ -19,21 +20,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
+  Award,
+  Briefcase,
+  CalendarDays,
   Check,
   ChevronDown,
   ChevronUp,
   Clock,
+  Clock4,
+  ExternalLink,
+  Eye,
   FileCheck2,
   ListChecks,
   MousePointerClick,
+  PartyPopper,
   RefreshCw,
   Replace,
   RotateCcw,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
+  Trash2,
   Upload,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -42,8 +55,7 @@ import {
 
 const PAGE_SIZE_KEY = "manualAttendance.pageSize";
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-const DEFAULT_PAGE_SIZE = 50;
-
+const DEFAULT_PAGE_SIZE = 10;
 
 const API_URL = process.env.NEXT_PUBLIC_URL;
 const FILE_BASE_URL =
@@ -61,6 +73,10 @@ const TIME_LOCK_REASON = 31;
 
 // Role that bypasses the back-date rule for range updates (production only).
 const BACKDATE_OVERRIDE_ROLE = "12.1.17";
+
+const RERUN_POLL_MS = 30000;
+
+// Old ERP behaviour: while EMPRUN is true, every roster row is yellow (#FEF08A).
 
 const WEEKDAY_OPTIONS = [
   { label: "Monday", value: "1" },
@@ -111,7 +127,23 @@ const LEAVE_TEMPLATE = [
 
 const pad = (n: number | string) => String(n).padStart(2, "0");
 
-function showSideAlert(message: string, type: "success" | "error" | "warning" | "info") {
+// Old ERP priority: MAN_REJ "Y" → red, shift "501" → sky blue, re-run → yellow.
+function rowTintOf(row: any, empRunning: boolean) {
+  if (row?.MAN_REJ == "Y") return "red";
+  if (String(row?.shift) === "501") return "skyblue";
+  if (empRunning) return "yellow";
+  return "";
+}
+
+// Applied to the table wrapper. Each rule colours the row's cells and every element inside them.
+// !important is needed because the cell content has its own dark-mode text classes.
+const ROW_TINT_CLASSES = "";
+
+
+function showSideAlert(
+  message: string,
+  type: "success" | "error" | "warning" | "info",
+) {
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -128,7 +160,22 @@ function showSideAlert(message: string, type: "success" | "error" | "warning" | 
   Toast.fire({ icon: type, title: message });
 }
 
-function getErrorMessage(error: any, fallback = "Something went wrong. Please try again.") {
+// Escapes text before it is placed into Swal "html". Server messages are untrusted.
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+}
+
+function getErrorMessage(
+  error: any,
+  fallback = "Something went wrong. Please try again.",
+) {
   return (
     error?.response?.data?.Message ||
     error?.response?.data?.message ||
@@ -139,7 +186,9 @@ function getErrorMessage(error: any, fallback = "Something went wrong. Please tr
 
 // Backend success flags. Production accepts all three.
 function isOk(data: any) {
-  return data?.Status === true || data?.Status === "true" || data?.success === true;
+  return (
+    data?.Status === true || data?.Status === "true" || data?.success === true
+  );
 }
 
 // Parse "YYYY-MM-DD", "DD/MM/YYYY" or an ISO timestamp into a LOCAL date.
@@ -147,7 +196,9 @@ function isOk(data: any) {
 function toLocalDate(value?: string | null): Date | null {
   if (!value) return null;
   const datePart = String(value).split("T")[0];
-  const parts = datePart.includes("/") ? datePart.split("/").reverse() : datePart.split("-");
+  const parts = datePart.includes("/")
+    ? datePart.split("/").reverse()
+    : datePart.split("-");
   const [y, m, d] = parts.map(Number);
   if (!y || !m || !d) return null;
   const date = new Date(y, m - 1, d);
@@ -169,6 +220,29 @@ function isBackDated(value?: string | null) {
   return !!d && d < todayLocal();
 }
 
+// Back-date rule from company settings.
+// Blocked only when back_date_mipunch_allowed is not 1 (0 or null) AND the reason has dis_back_date = 1.
+// The override role is never blocked.
+function isBackDateBlocked(
+  dateValue: string | null | undefined,
+  reason: any,
+  compdata: any,
+  roleOverride: boolean,
+) {
+  return (
+    !roleOverride &&
+    Number(compdata?.back_date_mipunch_allowed) !== 1 &&
+    Number(reason?.dis_back_date) === 1 &&
+    isBackDated(dateValue)
+  );
+}
+
+// True when the date is after today.
+function isFutureDate(value?: string | null) {
+  const d = toLocalDate(value);
+  return !!d && d > todayLocal();
+}
+
 function isBeforeDate(value?: string | null, limit?: string | null) {
   const a = toLocalDate(value);
   const b = toLocalDate(limit);
@@ -179,6 +253,18 @@ function isAfterDate(value?: string | null, limit?: string | null) {
   const a = toLocalDate(value);
   const b = toLocalDate(limit);
   return !!a && !!b && a > b;
+}
+
+// Every calendar day from start to end (inclusive), as "YYYY-MM-DD".
+function eachDate(start?: string | null, end?: string | null): string[] {
+  const s = toLocalDate(start);
+  const e = toLocalDate(end);
+  if (!s || !e || s > e) return [];
+  const out: string[] = [];
+  for (const d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+    out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+  }
+  return out;
 }
 
 // Production rule: "00" is not a valid time.
@@ -249,7 +335,10 @@ function checkDateWindow({
     return null;
   }
 
-  if (s.getMonth() + 1 !== selectedMonth || e.getMonth() + 1 !== selectedMonth) {
+  if (
+    s.getMonth() + 1 !== selectedMonth ||
+    e.getMonth() + 1 !== selectedMonth
+  ) {
     return "Start date and end date must be within the selected month";
   }
   return null;
@@ -258,17 +347,28 @@ function checkDateWindow({
 function getDayLabel(dateStr?: string | null) {
   const d = toLocalDate(dateStr);
   if (!d) return "";
-  return WEEKLY_OFF_LABELS.find((x) => x.value === String(d.getDay()))?.label ?? "";
+  return (
+    WEEKLY_OFF_LABELS.find((x) => x.value === String(d.getDay()))?.label ?? ""
+  );
 }
 
-// Machine punches arrive as ISO strings. toISOString() matches production's display.
+// Machine punches arrive as ISO strings. The time is read from the string as sent.
+// Placeholder dates and 00:00 are treated as "no punch".
 function hhmm(value: any) {
-  if (!value) return null;
-  try {
-    return new Date(value).toISOString().split("T")[1]?.slice(0, 5) ?? null;
-  } catch {
-    return null;
-  }
+  if (value === null || value === undefined || value === "") return null;
+  const s = String(value).trim();
+
+  // Placeholder dates such as 0001-01-01, 1899-12-30 or 1900-01-01
+  if (/^(0001|1899|1900)/.test(s)) return null;
+
+  const m = s.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h === 0 && min === 0) return null;
+
+  return `${pad(h)}:${pad(min)}`;
 }
 
 function shortDate(value: any) {
@@ -284,16 +384,154 @@ const numFixed = (v: any) =>
   v === undefined || v === null || v === "" ? "—" : Number(v).toFixed(2);
 
 function statusBadgeClass(value: any) {
-  const st = String(value || "").toUpperCase();
-  const isPresent = st === "P" || st.includes("PRESENT");
+  const st = String(value ?? "").trim().toUpperCase();
+  const isPresent = st === "P" || st.includes("PRESENT") || st === "W" || st.includes("WORK");
   const isAbsent = st === "A" || st.includes("ABSENT");
-  const isWO = st === "WO" || st.includes("OFF");
-  const isMP = st.includes("MISPUNCH") || st.includes("MP");
-  if (isPresent) return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200";
-  if (isAbsent) return "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200";
-  if (isWO) return "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200";
-  if (isMP) return "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200";
-  return "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border-indigo-200";
+  const isWO = st === "WO" || st === "W-OFF" || st.includes("OFF");
+  const isOT = st === "OT" || st.includes("OVERTIME");
+  const isLateOrHalf =
+    st === "LM" || st === "L" || st.includes("LATE") || st === "HD" || st === "HL" || st.includes("HALF");
+  const isMP = st === "MP" || st.includes("MISPUNCH");
+  if (isPresent)
+    return "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0] dark:bg-[#064E3B]/80 dark:text-[#6EE7B7] dark:border-[#059669]/60";
+  if (isAbsent)
+    return "bg-[#F1F2FF] text-[#BE123C] border-[#FECDD3] dark:bg-[#881337]/80 dark:text-[#FDA4AF] dark:border-[#E11D48]/60";
+  if (isWO)
+    return "bg-[#ECFEFF] text-[#0E7490] border-[#A5F3FC] dark:bg-[#164E63]/80 dark:text-[#67E8F9] dark:border-[#0891B2]/60";
+  if (isOT)
+    return "bg-[#F5F3FF] text-[#7C3AED] border-[#DDD6FE] dark:bg-[#4C1D95]/80 dark:text-[#C4B5FD] dark:border-[#7C3AED]/60";
+  if (isLateOrHalf)
+    return "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A] dark:bg-[#78350F]/80 dark:text-[#FDE68A] dark:border-[#D97706]/60";
+  if (isMP)
+    return "bg-[#FEFCE8] text-[#854D0E] border-[#FDE047] dark:bg-[#78350F]/80 dark:text-[#FDE68A] dark:border-[#D97706]/60";
+  return "bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE] dark:bg-[#312E81]/80 dark:text-[#A5B4FC] dark:border-[#6366F1]/60";
+}
+
+function statusLabel(value: any) {
+  const st = String(value ?? "").trim().toUpperCase();
+  if (!st || st === "—" || st === "-") return "—";
+  if (st === "A" || st.includes("ABSENT")) return "Absent";
+  if (st === "P" || st.includes("PRESENT")) return "Present";
+  if (st === "W" || st === "WRK" || st.includes("WORK")) return "Working";
+  if (st === "WO" || st === "W-OFF" || st === "W/O" || st.includes("WEEK OFF") || st.includes("WEEKOFF") || st === "OFF") return "Week off";
+  if (st === "OT" || st.includes("OVERTIME")) return "Overtime";
+  if (st === "HD" || st === "HL" || st === "HF" || st.includes("HALF")) return "Half Day";
+  if (st === "LM" || st === "L" || st.includes("LATE")) return "Late mark";
+  if (st === "OD" || st.includes("DUTY")) return "On Duty";
+  if (st === "CO" || st === "C-OFF" || st.includes("COMP")) return "Comp Off";
+  if (st === "H" || st === "HOL" || st.includes("HOLIDAY")) return "Holiday";
+  if (st === "CL" || st.includes("CASUAL")) return "Casual Leave";
+  if (st === "SL" || st.includes("SICK")) return "Sick Leave";
+  if (st === "PL" || st === "EL" || st.includes("PAID LEAVE") || st.includes("EARNED")) return "Paid Leave";
+  if (st === "ML" || st.includes("MATERNITY")) return "Maternity Leave";
+  if (st === "LV" || st === "LVE" || st.includes("LEAVE")) return "Leave";
+  if (st === "MP" || st.includes("MISPUNCH")) return "Mispunch";
+  if (st === "REJ" || st.includes("REJECT")) return "Rejected";
+  return dash(value);
+}
+
+function getPaidDayMeta(rawKey: string, value: any) {
+  const k = String(rawKey || "").trim().toUpperCase();
+
+  if (k.includes("PRESENT")) {
+    return {
+      label: "Presents",
+      Icon: UserCheck,
+      iconWrap: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 dark:bg-emerald-500/20",
+      valueColor: "text-emerald-600 dark:text-emerald-400",
+      accentBg: "hover:border-emerald-300 dark:hover:border-emerald-500/40",
+      gradient: "from-emerald-500/5 to-transparent",
+    };
+  }
+  if (k.includes("ABSENT")) {
+    return {
+      label: "Absents",
+      Icon: UserX,
+      iconWrap: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 dark:bg-rose-500/20",
+      valueColor: "text-rose-600 dark:text-rose-400",
+      accentBg: "hover:border-rose-300 dark:hover:border-rose-500/40",
+      gradient: "from-rose-500/5 to-transparent",
+    };
+  }
+  if (k.includes("HALF")) {
+    return {
+      label: "Half Days",
+      Icon: Clock4,
+      iconWrap: "bg-amber-500/15 text-[#D97706] dark:text-[#FBBF24] border border-amber-500/25 dark:bg-amber-500/20",
+      valueColor: "text-[#D97706] dark:text-[#FBBF24]",
+      accentBg: "hover:border-amber-300 dark:hover:border-amber-500/40",
+      gradient: "from-amber-500/5 to-transparent",
+    };
+  }
+  if (k.includes("HOLIDAY")) {
+    return {
+      label: "Holidays",
+      Icon: PartyPopper,
+      iconWrap: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25 dark:bg-purple-500/20",
+      valueColor: "text-purple-600 dark:text-purple-400",
+      accentBg: "hover:border-purple-300 dark:hover:border-purple-500/40",
+      gradient: "from-purple-500/5 to-transparent",
+    };
+  }
+  if (k === "WO" || k.includes("WEEK") || k.includes("OFF")) {
+    return {
+      label: "Week Off",
+      Icon: CalendarDays,
+      iconWrap: "bg-sky-500/15 text-[#0284C7] dark:text-[#38BDF8] border border-sky-500/25 dark:bg-sky-500/20",
+      valueColor: "text-[#0284C7] dark:text-[#38BDF8]",
+      accentBg: "hover:border-sky-300 dark:hover:border-sky-500/40",
+      gradient: "from-sky-500/5 to-transparent",
+    };
+  }
+  if (k.includes("RELAX")) {
+    return {
+      label: "Relaxations",
+      Icon: ShieldCheck,
+      iconWrap: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25 dark:bg-teal-500/20",
+      valueColor: "text-teal-600 dark:text-teal-400",
+      accentBg: "hover:border-teal-300 dark:hover:border-teal-500/40",
+      gradient: "from-teal-500/5 to-transparent",
+    };
+  }
+  if (k.includes("UNAPR") || k.includes("MISPUNCH") || k.includes("MP")) {
+    return {
+      label: "Unapproved MP",
+      Icon: AlertCircle,
+      iconWrap: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/25 dark:bg-orange-500/20",
+      valueColor: "text-orange-600 dark:text-orange-400",
+      accentBg: "hover:border-orange-300 dark:hover:border-orange-500/40",
+      gradient: "from-orange-500/5 to-transparent",
+    };
+  }
+  if (k.includes("LEAVE")) {
+    return {
+      label: "Leaves",
+      Icon: Briefcase,
+      iconWrap: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 dark:bg-indigo-500/20",
+      valueColor: "text-indigo-600 dark:text-indigo-400",
+      accentBg: "hover:border-indigo-300 dark:hover:border-indigo-500/40",
+      gradient: "from-indigo-500/5 to-transparent",
+    };
+  }
+  if (k.includes("PAID")) {
+    return {
+      label: "Paid Days",
+      Icon: Award,
+      iconWrap: "bg-blue-600 text-white shadow-xs border border-blue-500",
+      valueColor: Number(value) < 0 ? "text-rose-600 dark:text-rose-400 font-extrabold" : "text-blue-600 dark:text-blue-400 font-extrabold",
+      accentBg: "hover:border-blue-400 dark:hover:border-blue-500/50 ring-1 ring-blue-500/20",
+      gradient: "from-blue-500/10 to-transparent",
+    };
+  }
+
+  return {
+    label: rawKey,
+    Icon: Check,
+    iconWrap: "bg-slate-500/15 text-slate-600 dark:text-slate-300 border border-slate-500/25 dark:bg-slate-500/20",
+    valueColor: "text-slate-800 dark:text-slate-100",
+    accentBg: "hover:border-slate-300 dark:hover:border-slate-600",
+    gradient: "from-slate-500/5 to-transparent",
+  };
 }
 
 function rowKeyOf(row: any) {
@@ -301,7 +539,11 @@ function rowKeyOf(row: any) {
 }
 
 function isSameRow(a: any, b: any) {
-  return !!a && !!b && (a.UTD === b.UTD || a.formatted_dateoffice === b.formatted_dateoffice);
+  return (
+    !!a &&
+    !!b &&
+    (a.UTD === b.UTD || a.formatted_dateoffice === b.formatted_dateoffice)
+  );
 }
 
 // Times for a row, depending on whether the reason is fixed-time.
@@ -327,156 +569,251 @@ const MONTH_COLUMNS: Array<{
   width?: number;
   render?: (value: any, row: any, selected: any) => React.ReactNode;
 }> = [
-  { Header: "Emp_Code", accessor: "Emp_Code", width: 100 },
-  {
-    Header: "Atn_Date",
-    accessor: "formatted_dateoffice",
-    width: 120,
-    render: (v, row, selected) => (
-      <span
-        className={`font-semibold whitespace-nowrap ${
-          isSameRow(selected, row)
-            ? "text-indigo-600 dark:text-indigo-400 font-bold"
-            : "text-slate-800 dark:text-slate-200"
-        }`}
-      >
-        {v || dateOnly(row.dateoffice) || "—"}
-      </span>
-    ),
-  },
-  {
-    Header: "DAY",
-    accessor: (r: any) => getDayLabel(r.formatted_dateoffice),
-    width: 75,
-    render: (v) => (
-      <span
-        className={`font-bold whitespace-nowrap ${
-          v === "SUN" ? "text-sky-600 dark:text-sky-400" : "text-slate-600 dark:text-slate-300"
-        }`}
-      >
-        {dash(v)}
-      </span>
-    ),
-  },
-  {
-    Header: "StTime",
-    accessor: "shiftstarttime",
-    width: 75,
-    render: (v) => <span className="font-mono text-slate-500 text-xs">{numFixed(v)}</span>,
-  },
-  {
-    Header: "EndTime",
-    accessor: "shiftendtime",
-    width: 75,
-    render: (v) => <span className="font-mono text-slate-500 text-xs">{numFixed(v)}</span>,
-  },
-  {
-    Header: "InTime",
-    accessor: "In_1",
-    width: 85,
-    render: (v) => {
-      const t = hhmm(v);
-      return t ? (
-        <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{t}</span>
-      ) : (
-        <span className="text-rose-500 font-bold">—</span>
-      );
+    {
+      Header: "Emp_Code",
+      accessor: "Emp_Code",
+      width: 100,
+      render: (v) => (
+        <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
+          {v || "—"}
+        </span>
+      ),
     },
-  },
-  {
-    Header: "OutTime",
-    accessor: "Out_1",
-    width: 85,
-    render: (v) => {
-      const t = hhmm(v);
-      return t ? (
-        <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400">{t}</span>
-      ) : (
-        <span className="text-rose-500 font-bold">—</span>
-      );
+    {
+      Header: "Atn_Date",
+      accessor: "formatted_dateoffice",
+      width: 120,
+      render: (v, row, selected) => (
+        <span
+          className={`font-semibold whitespace-nowrap text-[13px] ${isSameRow(selected, row)
+              ? "text-indigo-600 dark:text-indigo-400 font-bold"
+              : "text-slate-800 dark:text-slate-200"
+            }`}
+        >
+          {v || dateOnly(row.dateoffice) || "—"}
+        </span>
+      ),
     },
-  },
-  {
-    Header: "Work_Hrs",
-    accessor: "hoursworked",
-    width: 85,
-    render: (v) => <span className="font-mono font-medium">{dash(v)}</span>,
-  },
-  {
-    Header: "Status",
-    accessor: "status",
-    width: 110,
-    render: (v) => (
-      <span
-        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold border ${statusBadgeClass(v)}`}
-      >
-        {dash(v)}
-      </span>
-    ),
-  },
-  { Header: "Mp_Status", accessor: "MP_Status", width: 90 },
-  { Header: "Mp_Aprvl", accessor: "MAN_APPR", width: 90 },
-  {
-    Header: "MI_REMARK",
-    accessor: "MI_REMARK",
-    width: 140,
-    render: (v) => (
-      <span className="block max-w-[140px] truncate" title={v}>
-        {dash(v)}
-      </span>
-    ),
-  },
-  {
-    Header: "SPL_REMARK",
-    accessor: "SPL_REMARK",
-    width: 140,
-    render: (v) => (
-      <span className="block max-w-[140px] truncate" title={v}>
-        {dash(v)}
-      </span>
-    ),
-  },
-  { Header: "Shift", accessor: "shift", width: 80, render: (v) => v || "GEN" },
-  { Header: "PresentValue", accessor: "presentvalue", width: 90 },
-  { Header: "AbsentValue", accessor: "absentvalue", width: 90 },
-  {
-    Header: "CURRENTJOIN",
-    accessor: "CURRENTJOINDATE",
-    width: 110,
-    render: (v) => shortDate(v),
-  },
-  { Header: "Region", accessor: "Region", width: 90 },
-  { Header: "Sal_region", accessor: "salreason", width: 100 },
-  { Header: "MISPUNCH_REC", accessor: "MISPUNCH_REC", width: 110 },
-  { Header: "WO_Value", accessor: "wo_value", width: 90 },
-  { Header: "LeaveValue", accessor: "leavevalue", width: 90 },
-  { Header: "Prob_Period", accessor: "in1mannual", width: 90 },
-  { Header: "NightShift", accessor: "NightShift", width: 90 },
-  { Header: "Reject_By", accessor: "Reject_By", width: 90 },
-  { Header: "App_in1", accessor: "App_in1", width: 80 },
-  { Header: "App_out1", accessor: "App_out1", width: 80 },
-  { Header: "BM_IN1", accessor: "BM_IN1", width: 85, render: (v) => hhmm(v) ?? "—" },
-  { Header: "BM_OUT1", accessor: "BM_OUT1", width: 85, render: (v) => hhmm(v) ?? "—" },
-  { Header: "In_Add", accessor: "In_Add", width: 80 },
-  // Header corrected from "Our_Add". The accessor was already Out_Add.
-  { Header: "Out_Add", accessor: "Out_Add", width: 80 },
-  { Header: "MAN_REJ", accessor: "MAN_REJ", width: 80 },
-  { Header: "mp_in1", accessor: "mp_in1", width: 80 },
-  { Header: "mp_out1", accessor: "mp_out1", width: 80 },
-  { Header: "Approver1_Code", accessor: "Approver1_Code", width: 100 },
-  { Header: "Approver1_Name", accessor: "Approver1_Name", width: 120 },
-  { Header: "Approver1_Status", accessor: "Approver1_Status", width: 100 },
-  { Header: "Approver2_Code", accessor: "Approver2_Code", width: 100 },
-  { Header: "Approver2_Name", accessor: "Approver2_Name", width: 120 },
-  { Header: "Approver2_Status", accessor: "Approver2_Status", width: 100 },
-  { Header: "Approver3_Code", accessor: "Approver3_Code", width: 100 },
-  { Header: "Approver3_Name", accessor: "Approver3_Name", width: 120 },
-  { Header: "Appr_3_Rem", accessor: "Appr_3_Rem", width: 110 },
-  { Header: "Appr_3_date", accessor: "Appr_3_date", width: 110 },
-  { Header: "Approver3_Status", accessor: "Approver3_Status", width: 100 },
-];
+    {
+      Header: "DAY",
+      accessor: (r: any) => getDayLabel(r.formatted_dateoffice),
+      width: 75,
+      render: (v) => (
+        <span
+          className={`font-bold whitespace-nowrap text-[13px] ${v === "SUN"
+              ? "text-[#0284C7] dark:text-[#38BDF8]"
+              : "text-slate-600 dark:text-slate-300"
+            }`}
+        >
+          {statusLabel(v)}
+        </span>
+      ),
+    },
+    {
+      Header: "StTime",
+      accessor: "shiftstarttime",
+      width: 75,
+      render: (v) => (
+        <span className="font-mono text-[13px] font-medium text-slate-600 dark:text-slate-300">{numFixed(v)}</span>
+      ),
+    },
+    {
+      Header: "EndTime",
+      accessor: "shiftendtime",
+      width: 75,
+      render: (v) => (
+        <span className="font-mono text-[13px] font-medium text-slate-600 dark:text-slate-300">{numFixed(v)}</span>
+      ),
+    },
+    {
+      Header: "InTime",
+      accessor: "In_1",
+      width: 85,
+      render: (v) => {
+        const t = hhmm(v);
+        return t ? (
+          <span className="font-mono text-[13px] font-semibold text-emerald-600 dark:text-emerald-400">
+            {t}
+          </span>
+        ) : (
+          <span className="text-slate-400 dark:text-slate-500 font-bold text-[13px]">—</span>
+        );
+      },
+    },
+    {
+      Header: "OutTime",
+      accessor: "Out_1",
+      width: 85,
+      render: (v) => {
+        const t = hhmm(v);
+        return t ? (
+          <span className="font-mono text-[13px] font-semibold text-indigo-600 dark:text-indigo-400">
+            {t}
+          </span>
+        ) : (
+          <span className="text-slate-400 dark:text-slate-500 font-bold text-[13px]">—</span>
+        );
+      },
+    },
+    {
+      Header: "Work_Hrs",
+      accessor: "hoursworked",
+      width: 85,
+      render: (v) => {
+        const s = String(v ?? "").replace(/h$/i, "").trim();
+        if (!s || /^0*:?0*$/.test(s)) {
+          return <span className="text-slate-400 dark:text-slate-500 font-bold text-[13px]">—</span>;
+        }
+        return <span className="font-mono text-[13px] font-medium text-slate-700 dark:text-slate-200">{s}</span>;
+      },
+    },
+    {
+      Header: "Status",
+      accessor: "status",
+      width: 110,
+      render: (v, row) => {
+        const s = String(v ?? "").trim().toUpperCase();
+        const isRej =
+          s.includes("REJ") ||
+          String(row?.MAN_REJ ?? "").trim().toUpperCase() === "Y" ||
+          String(row?.MP_Status ?? "").trim().toUpperCase() === "REJECTED";
+        if (isRej) {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EF4444] text-white shadow-xs">
+              Rejected
+            </span>
+          );
+        }
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border shadow-2xs backdrop-blur-xs ${statusBadgeClass(v)}`}
+          >
+            {statusLabel(v)}
+          </span>
+        );
+      },
+    },
+    {
+      Header: "Mp_Status",
+      accessor: "MP_Status",
+      width: 90,
+      render: (v) => {
+        const s = String(v ?? "").trim().toUpperCase();
+        if (s === "REJECTED" || s === "REJ") {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EF4444] text-white shadow-xs">
+              Rejected
+            </span>
+          );
+        }
+        return <span className="text-[13px] text-slate-700 dark:text-slate-300">{dash(v)}</span>;
+      },
+    },
+    { Header: "Mp_Aprvl", accessor: "MAN_APPR", width: 90 },
+    {
+      Header: "MI_REMARK",
+      accessor: "MI_REMARK",
+      width: 140,
+      render: (v) => (
+        <span className="block max-w-[140px] truncate text-[13px]" title={v}>
+          {statusLabel(v)}
+        </span>
+      ),
+    },
+    {
+      Header: "SPL_REMARK",
+      accessor: "SPL_REMARK",
+      width: 140,
+      render: (v) => (
+        <span className="block max-w-[140px] truncate text-[13px]" title={v}>
+          {statusLabel(v)}
+        </span>
+      ),
+    },
+    {
+      Header: "Shift",
+      accessor: "shift",
+      width: 80,
+      render: (v) => {
+        const s = String(v ?? "").trim();
+        if (s === "501") {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0284C7] text-white shadow-xs">
+              501
+            </span>
+          );
+        }
+        return <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300">{s || "GEN"}</span>;
+      },
+    },
+    { Header: "PresentValue", accessor: "presentvalue", width: 90 },
+    { Header: "AbsentValue", accessor: "absentvalue", width: 90 },
+    {
+      Header: "CURRENTJOIN",
+      accessor: "CURRENTJOINDATE",
+      width: 110,
+      render: (v) => <span className="text-[13px]">{shortDate(v)}</span>,
+    },
+    { Header: "Region", accessor: "Region", width: 90 },
+    { Header: "Sal_region", accessor: "salreason", width: 100 },
+    { Header: "MISPUNCH_REC", accessor: "MISPUNCH_REC", width: 110 },
+    { Header: "WO_Value", accessor: "wo_value", width: 90 },
+    { Header: "LeaveValue", accessor: "leavevalue", width: 90 },
+    { Header: "Prob_Period", accessor: "in1mannual", width: 90 },
+    { Header: "NightShift", accessor: "NightShift", width: 90 },
+    { Header: "Reject_By", accessor: "Reject_By", width: 90 },
+    { Header: "App_in1", accessor: "App_in1", width: 80 },
+    { Header: "App_out1", accessor: "App_out1", width: 80 },
+    {
+      Header: "BM_IN1",
+      accessor: "BM_IN1",
+      width: 85,
+      render: (v) => <span className="font-mono text-[13px]">{hhmm(v) ?? "—"}</span>,
+    },
+    {
+      Header: "BM_OUT1",
+      accessor: "BM_OUT1",
+      width: 85,
+      render: (v) => <span className="font-mono text-[13px]">{hhmm(v) ?? "—"}</span>,
+    },
+    { Header: "In_Add", accessor: "In_Add", width: 80 },
+    // Header corrected from "Our_Add". The accessor was already Out_Add.
+    { Header: "Out_Add", accessor: "Out_Add", width: 80 },
+    {
+      Header: "MAN_REJ",
+      accessor: "MAN_REJ",
+      width: 80,
+      render: (v) => {
+        const s = String(v ?? "").trim().toUpperCase();
+        if (s === "Y") {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#EF4444] text-white shadow-xs">
+              Rejected
+            </span>
+          );
+        }
+        return <span className="text-slate-500 text-[13px]">{dash(v)}</span>;
+      },
+    },
+    { Header: "mp_in1", accessor: "mp_in1", width: 80 },
+    { Header: "mp_out1", accessor: "mp_out1", width: 80 },
+    { Header: "Approver1_Code", accessor: "Approver1_Code", width: 100 },
+    { Header: "Approver1_Name", accessor: "Approver1_Name", width: 120 },
+    { Header: "Approver1_Status", accessor: "Approver1_Status", width: 100 },
+    { Header: "Approver2_Code", accessor: "Approver2_Code", width: 100 },
+    { Header: "Approver2_Name", accessor: "Approver2_Name", width: 120 },
+    { Header: "Approver2_Status", accessor: "Approver2_Status", width: 100 },
+    { Header: "Approver3_Code", accessor: "Approver3_Code", width: 100 },
+    { Header: "Approver3_Name", accessor: "Approver3_Name", width: 120 },
+    { Header: "Appr_3_Rem", accessor: "Appr_3_Rem", width: 110 },
+    { Header: "Appr_3_date", accessor: "Appr_3_date", width: 110 },
+    { Header: "Approver3_Status", accessor: "Approver3_Status", width: 100 },
+  ];
 
-const EXPORT_COLUMNS = MONTH_COLUMNS.map(({ Header, accessor }) => ({ Header, accessor }));
+const EXPORT_COLUMNS = MONTH_COLUMNS.map(({ Header, accessor }) => ({
+  Header,
+  accessor,
+}));
 
 function buildInitialForm() {
   const now = new Date();
@@ -499,7 +836,13 @@ function buildInitialForm() {
 }
 
 function emptyLeaveBalances() {
-  return LEAVE_TEMPLATE.map((l) => ({ ...l, Op_Bal: 0, Gen_Lev: 0, Avail_Lev: 0, Cl_Bal: 0 }));
+  return LEAVE_TEMPLATE.map((l) => ({
+    ...l,
+    Op_Bal: 0,
+    Gen_Lev: 0,
+    Avail_Lev: 0,
+    Cl_Bal: 0,
+  }));
 }
 
 function getCurrentFinancialYear() {
@@ -517,6 +860,17 @@ function buildYearOptions() {
 }
 
 const YEAR_OPTIONS = buildYearOptions();
+
+// Saved table page size. Falls back to the default when nothing valid is stored.
+function readStoredPageSize(): number {
+  if (typeof window === "undefined") return DEFAULT_PAGE_SIZE;
+  try {
+    const saved = Number(window.localStorage.getItem(PAGE_SIZE_KEY));
+    return PAGE_SIZE_OPTIONS.includes(saved) ? saved : DEFAULT_PAGE_SIZE;
+  } catch {
+    return DEFAULT_PAGE_SIZE;
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
@@ -555,6 +909,10 @@ export default function OnlineMarkAttendancePage() {
   const [outSlipFile, setOutSlipFile] = useState<File | null>(null);
   const [inSlipPreview, setInSlipPreview] = useState<string | null>(null);
   const [outSlipPreview, setOutSlipPreview] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
 
   /* ---------------- UI state ---------------- */
   const [showLeaveSummary, setShowLeaveSummary] = useState(false);
@@ -563,6 +921,24 @@ export default function OnlineMarkAttendancePage() {
   const [isMultiMode, setIsMultiMode] = useState(false);
   const [selectedRowsTable, setSelectedRowsTable] = useState<any[]>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+
+  // Sync stored page size after client mount to prevent SSR hydration mismatch
+  useEffect(() => {
+    const saved = readStoredPageSize();
+    if (saved && saved !== DEFAULT_PAGE_SIZE) {
+      setPageSize(saved);
+    }
+  }, []);
+
+  // Remember the chosen page size so it survives re-renders and reloads.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PAGE_SIZE_KEY, String(pageSize));
+    } catch {
+      // Storage can be blocked; the table still works without saving.
+    }
+  }, [pageSize]);
 
   /* ---------------- Bulk entry state ---------------- */
   const [bulkIn, setBulkIn] = useState("09:00");
@@ -573,8 +949,9 @@ export default function OnlineMarkAttendancePage() {
 
   /* ---------------- Derived values ---------------- */
   const reasonRow = useMemo(
-    () => MPList.find((r) => String(r.value) === String(misdata.MP_Reason)) ?? null,
-    [MPList, misdata.MP_Reason]
+    () =>
+      MPList.find((r) => String(r.value) === String(misdata.MP_Reason)) ?? null,
+    [MPList, misdata.MP_Reason],
   );
   const isFixedTimeReason = Number(reasonRow?.Misc_Num1) === 1;
   const isTimeLockReason = Number(misdata.MP_Reason) === TIME_LOCK_REASON;
@@ -583,20 +960,21 @@ export default function OnlineMarkAttendancePage() {
   const isSickReason = SICK_LEAVE_REASONS.includes(Number(misdata.MP_Reason));
   const isDocMandatory = Number(compdata?.mand_SL_Img) === 1;
   const hasSlip = Boolean(inSlipFile || outSlipFile);
-
-  const selectedKeys = useMemo(
-    () => new Set(selectedRowsTable.map(rowKeyOf)),
-    [selectedRowsTable]
-  );
+  const showAttnSummary = Number(compdata?.Show_Attn_Summary) === 1;
 
   const filteredRows = useMemo(() => {
     const q = globalFilter.trim().toLowerCase();
     if (!q) return tabledata;
     return tabledata.filter((row) =>
       MONTH_COLUMNS.some((col) => {
-        const v = typeof col.accessor === "function" ? col.accessor(row) : row[col.accessor];
-        return v !== undefined && v !== null && String(v).toLowerCase().includes(q);
-      })
+        const v =
+          typeof col.accessor === "function"
+            ? col.accessor(row)
+            : row[col.accessor];
+        return (
+          v !== undefined && v !== null && String(v).toLowerCase().includes(q)
+        );
+      }),
     );
   }, [tabledata, globalFilter]);
 
@@ -622,11 +1000,12 @@ export default function OnlineMarkAttendancePage() {
 
   const dynamicMinutes = useMemo(
     () => hoursBetween(misdata.InTime, misdata.OutTime),
-    [misdata.InTime, misdata.OutTime]
+    [misdata.InTime, misdata.OutTime],
   );
 
   const calcLine = useMemo(() => {
-    if (dynamicMinutes === null) return "Both punches are needed to compute work hours";
+    if (dynamicMinutes === null)
+      return "Both punches are needed to compute work hours";
     if (dynamicMinutes < 240) return "Below half-day threshold";
     if (dynamicMinutes < 510) return "Half day / short hours";
     if (dynamicMinutes > 600) return "Overtime beyond shift";
@@ -636,12 +1015,19 @@ export default function OnlineMarkAttendancePage() {
   const calcTint = useMemo(() => {
     if (dynamicMinutes === null) return "text-slate-400";
     if (dynamicMinutes < 240) return "text-rose-600 dark:text-rose-400";
-    if (dynamicMinutes < 510) return "text-amber-600 dark:text-amber-400";
+    if (dynamicMinutes < 510) return "text-[#D97706] dark:text-[#FBBF24]";
     return "text-emerald-600 dark:text-emerald-400";
   }, [dynamicMinutes]);
 
   const punchTypeValue = tabledata?.[0]?.Punch_Type?.toString();
-  const punchTypeLabel = punchTypes.find((p) => String(p.value) === String(punchTypeValue))?.label;
+  const punchTypeLabel = punchTypes.find(
+    (p) => String(p.value) === String(punchTypeValue),
+  )?.label;
+
+  /* ---------------- Re-run guard (Non-blocking: matches legacy ERP) ---------------- */
+
+  // Legacy ERP allowed manual punches and edits even while re-run was in progress.
+  const blockIfRerunning = () => false;
 
   /* ---------------- Master data ---------------- */
 
@@ -652,14 +1038,14 @@ export default function OnlineMarkAttendancePage() {
         const res = await axios.post(
           `${API_URL}/users/findAllEmployee`,
           { branch: userBranch },
-          { headers: { compcode, name: userName } }
+          { headers: { compcode, name: userName } },
         );
         const list = res.data?.data || [];
         setEmployeeOptions(
           list.map((emp: any) => ({
             value: String(emp.value ?? emp.EMPCODE ?? ""),
             label: emp.label || `${emp.EMPCODE} - ${emp.EMPNAME || ""}`,
-          }))
+          })),
         );
       } catch (err) {
         console.error("Error fetching employees:", err);
@@ -681,7 +1067,7 @@ export default function OnlineMarkAttendancePage() {
           list.map((item: any) => ({
             value: String(item.value ?? item.id ?? item),
             label: item.label ?? item.name ?? String(item),
-          }))
+          })),
         );
       } catch (error) {
         console.error("Error fetching MP remarks list:", error);
@@ -713,18 +1099,22 @@ export default function OnlineMarkAttendancePage() {
         const res = await axios.post(
           `${API_URL}/employee/masters`,
           {},
-          { headers: { compcode, name: userName } }
+          { headers: { compcode, name: userName } },
         );
         const data = res.data?.data || {};
         setShiftoption(
           (data.EMP_SHIFT || []).map((item: any) => ({
             value: String(item.value),
             label: item.label,
-          }))
+          })),
         );
-        setLeaveTypeValues((data.LEAVETYPE || []).map((item: any) => String(item.value)));
+        setLeaveTypeValues(
+          (data.LEAVETYPE || []).map((item: any) => String(item.value)),
+        );
         setPunchTypes(
-          (data.EmpPunchType || []).filter((item: any) => String(item.value) !== "0")
+          (data.EmpPunchType || []).filter(
+            (item: any) => String(item.value) !== "0",
+          ),
         );
       } catch (error) {
         console.error("Error fetching masters:", error);
@@ -735,7 +1125,11 @@ export default function OnlineMarkAttendancePage() {
 
   /* ---------------- Fetch attendance ---------------- */
 
-  const fetchAttendanceData = async (empCode: string, month: string, year: string) => {
+  const fetchAttendanceData = async (
+    empCode: string,
+    month: string,
+    year: string,
+  ) => {
     // Reset everything that belongs to the previous employee or month.
     setTabledata([]);
     setSelectedRow(null);
@@ -769,11 +1163,15 @@ export default function OnlineMarkAttendancePage() {
       const res = await axios.post(
         `${API_URL}/ars/fetchAttendanceData`,
         { empcode: empCode, month, year },
-        { headers: { compcode, name: userName, EMPCODE: userEmp } }
+        { headers: { compcode, name: userName, EMPCODE: userEmp } },
       );
 
       if (res.data?.Warning) {
-        Swal.fire({ icon: "warning", title: "Warning", text: String(res.data.Warning) });
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: String(res.data.Warning),
+        });
       }
 
       setTabledata(res.data?.Result || []);
@@ -781,20 +1179,35 @@ export default function OnlineMarkAttendancePage() {
       setMiscDtl2(res.data?.miscDtl2 ?? null);
       setEmpRunning(Boolean(res.data?.EMPRUN));
 
-      const lockRes = await axios.post(
-        `${API_URL}/ars/getShiftLockDate`,
-        { loc_code: userBranch },
-        { headers: { compcode, name: userName } }
-      );
-      const rawLock = lockRes.data?.success ? lockRes.data?.ShiftLockDate : null;
-      setShiftLockDate(rawLock ? String(rawLock).split("T")[0] : null);
+      // Paid-days summary is independent of the other calls.
+      // A failure here must not block the rest, and the other calls must not block it.
+      try {
+        const paid = await axios.get(`${API_URL}/mobile/getAttendance1`, {
+          params: { empCode, month, year },
+          headers: { compcode, name: userName },
+        });
+        const summary = paid.data?.summary;
+        setPaidDays(
+          paid.data?.Status && summary ? Object.entries(summary) : [],
+        );
+      } catch (err) {
+        console.error("Error fetching paid days:", err);
+        setPaidDays([]);
+      }
 
-      const paid = await axios.get(`${API_URL}/mobile/getAttendance1`, {
-        params: { empCode, month, year },
-        headers: { compcode, name: userName },
-      });
-      if (paid.data?.Status && paid.data?.summary) {
-        setPaidDays(Object.entries(paid.data.summary));
+      try {
+        const lockRes = await axios.post(
+          `${API_URL}/ars/getShiftLockDate`,
+          { loc_code: userBranch },
+          { headers: { compcode, name: userName } },
+        );
+        const rawLock = lockRes.data?.success
+          ? lockRes.data?.ShiftLockDate
+          : null;
+        setShiftLockDate(rawLock ? String(rawLock).split("T")[0] : null);
+      } catch (err) {
+        console.error("Error fetching shift lock date:", err);
+        setShiftLockDate(null);
       }
 
       const weeklyOff = res.data?.WEEKLYOFFData?.[0]?.WEEKLYOFF;
@@ -808,15 +1221,21 @@ export default function OnlineMarkAttendancePage() {
           const row = apiLeave.find(
             (a) =>
               a.Leave_Type === leave.Leave_Type &&
-              (a.Op_Bal !== 0 || a.Gen_Lev !== 0 || a.Avail_Lev !== 0 || a.Cl_Bal !== 0)
+              (a.Op_Bal !== 0 ||
+                a.Gen_Lev !== 0 ||
+                a.Avail_Lev !== 0 ||
+                a.Cl_Bal !== 0),
           );
           return row ? { ...leave, ...row } : leave;
-        })
+        }),
       );
 
       const nameRow = res.data?.EmpNameValueData?.[0];
       if (nameRow) {
-        setMiscdata((prev) => ({ ...prev, Name: nameRow.EMPNAME || nameRow.EMP_NAME || null }));
+        setMiscdata((prev) => ({
+          ...prev,
+          Name: nameRow.EMPNAME || nameRow.EMP_NAME || null,
+        }));
       }
     } catch (error: any) {
       console.error("Error fetching attendance data:", error);
@@ -830,12 +1249,83 @@ export default function OnlineMarkAttendancePage() {
     }
   };
 
-  const refresh = () => fetchAttendanceData(misdata.EMPCODE!, misdata.month!, misdata.year!);
+  /* ---------------- Poll until re-run finishes (disabled) ---------------- */
+
+  // While a re-run is active, check the server flag. When EMPRUN turns false,
+  // clear the banner, refresh the table and tell the user.
+  useEffect(() => {
+    if (!empRunning || !misdata.EMPCODE || !misdata.month || !misdata.year)
+      return;
+
+    const id = setInterval(async () => {
+      try {
+        const res = await axios.post(
+          `${API_URL}/ars/fetchAttendanceData`,
+          { empcode: misdata.EMPCODE, month: misdata.month, year: misdata.year },
+          { headers: { compcode, name: userName, EMPCODE: userEmp } },
+        );
+        if (!res.data?.EMPRUN) {
+          setEmpRunning(false);
+          setTabledata(res.data?.Result || []);
+          showSideAlert("Attendance re-run completed", "success");
+        }
+      } catch {
+        // A failed poll is not a completion. Keep polling.
+      }
+    }, RERUN_POLL_MS);
+
+    return () => clearInterval(id);
+  }, [empRunning, misdata.EMPCODE, misdata.month, misdata.year, compcode, userName, userEmp]);
+
+  /* ---------------- Validation helpers ---------------- */
+
+  // Asks the server if attendance is locked for each date.
+  // If the check itself fails, the date is treated as blocked (fail safe).
+  const findLockProblems = async (
+    empCode: string,
+    dates: string[],
+  ): Promise<string[]> => {
+    const unique = Array.from(new Set(dates.filter(Boolean)));
+    const results = await Promise.all(
+      unique.map(async (d) => {
+        try {
+          const res = await axios.post(
+            `${API_URL}/ars/attandancelockedOrNot`,
+            {
+              checkDate: d,
+              selectedLocations: 1,
+              regionCode: 1,
+              EMPCODE: empCode,
+            },
+            { headers: { compcode } },
+          );
+          if (!res.data?.Status) {
+            return `${d}: ${res.data?.Message || "Attendance is locked"}`;
+          }
+          return null;
+        } catch (error) {
+          return `${d}: could not verify lock (${getErrorMessage(error, "network error")})`;
+        }
+      }),
+    );
+    return results.filter((r): r is string => r !== null);
+  };
+
+  const showLockPopup = (problems: string[]) =>
+    Swal.fire({
+      icon: "error",
+      title: "Attendance locked",
+      html: problems.slice(0, 20).map(escapeHtml).join("<br/>"),
+    });
+
+  const refresh = () =>
+    fetchAttendanceData(misdata.EMPCODE!, misdata.month!, misdata.year!);
 
   const handleSearch = () => {
     if (!misdata.month) return showSideAlert("Please select a month", "error");
     if (!misdata.year) return showSideAlert("Please select a year", "error");
-    if (!misdata.EMPCODE) return showSideAlert("Please select an employee", "error");
+    if (!misdata.EMPCODE)
+      return showSideAlert("Please select an employee", "error");
     fetchAttendanceData(misdata.EMPCODE, misdata.month, misdata.year);
   };
 
@@ -846,7 +1336,7 @@ export default function OnlineMarkAttendancePage() {
     setSelectedRowsTable((prev) =>
       prev.some((r) => rowKeyOf(r) === key)
         ? prev.filter((r) => rowKeyOf(r) !== key)
-        : [...prev, row]
+        : [...prev, row],
     );
   };
 
@@ -860,7 +1350,9 @@ export default function OnlineMarkAttendancePage() {
 
       const day = dateOnly(row.dateoffice);
       const reasonValue =
-        row.mipunch_reason !== undefined && row.mipunch_reason !== null && row.mipunch_reason !== ""
+        row.mipunch_reason !== undefined &&
+          row.mipunch_reason !== null &&
+          row.mipunch_reason !== ""
           ? String(row.mipunch_reason)
           : null;
 
@@ -876,12 +1368,19 @@ export default function OnlineMarkAttendancePage() {
         shift: row.shift ? String(row.shift) : null,
       }));
 
-      const baseURL = FILE_BASE_URL;
-      setInSlipPreview(row.Mispunch_In_Image ? `${baseURL}?filePath=${row.Mispunch_In_Image}` : null);
-      setOutSlipPreview(row.Mispunch_Out_Image ? `${baseURL}?filePath=${row.Mispunch_Out_Image}` : null);
+      setInSlipPreview(
+        row.Mispunch_In_Image
+          ? `${FILE_BASE_URL}?filePath=${row.Mispunch_In_Image}`
+          : null,
+      );
+      setOutSlipPreview(
+        row.Mispunch_Out_Image
+          ? `${FILE_BASE_URL}?filePath=${row.Mispunch_Out_Image}`
+          : null,
+      );
       setSelectedRow(row);
     },
-    [isMultiMode, MPList]
+    [isMultiMode, MPList],
   );
 
   // Changing the reason re-applies times for the selected row, as production does.
@@ -901,9 +1400,10 @@ export default function OnlineMarkAttendancePage() {
   const pickSlip = (
     event: React.ChangeEvent<HTMLInputElement>,
     setFile: (f: File | null) => void,
-    setPreview: (s: string | null) => void
+    setPreview: (s: string | null) => void,
   ) => {
     const file = event.target.files?.[0] ?? null;
+    if (!file) return;
     setFile(file);
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
@@ -912,11 +1412,13 @@ export default function OnlineMarkAttendancePage() {
     } else {
       setPreview(null);
     }
+    event.target.value = "";
   };
 
   /* ---------------- Slip upload ---------------- */
 
-  // Returns true on success. Shows an error toast on failure, as production does.
+  // Returns true on success (or when there is nothing to upload).
+  // Shows an error toast on failure, as production does.
   const uploadSlips = async ({
     isSick,
     empCode,
@@ -954,8 +1456,11 @@ export default function OnlineMarkAttendancePage() {
       return true;
     } catch (error) {
       showSideAlert(
-        getErrorMessage(error, "Error while submitting request please try again later"),
-        "error"
+        getErrorMessage(
+          error,
+          "Error while submitting request please try again later",
+        ),
+        "error",
       );
       return false;
     }
@@ -964,6 +1469,8 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Single-day punch update ---------------- */
 
   const handleUpdatePunch = async () => {
+    if (blockIfRerunning()) return;
+
     if (!selectedRow) {
       showSideAlert("Please pick a day from the table first", "warning");
       return;
@@ -984,7 +1491,8 @@ export default function OnlineMarkAttendancePage() {
       }
     }
 
-    if (Number(reasonRow?.dis_back_date) === 1 && isBackDated(selectedRow.dateoffice)) {
+    const roleOverride = !!user?.role1?.includes?.(BACKDATE_OVERRIDE_ROLE);
+    if (isBackDateBlocked(selectedRow.dateoffice, reasonRow, compdata, roleOverride)) {
       Swal.fire({
         icon: "error",
         title: "Permission Denied",
@@ -1002,9 +1510,20 @@ export default function OnlineMarkAttendancePage() {
       return;
     }
 
-    const day = dateOnly(selectedRow.dateoffice);
-    const label = reasonRow?.label || misdata.MP_Reason;
+    const day = dateOnly(selectedRow.dateoffice) as string;
 
+    if (isFutureDate(day)) {
+      showSideAlert("Future dates cannot be marked", "error");
+      return;
+    }
+
+    const lockProblems = await findLockProblems(misdata.EMPCODE!, [day]);
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
+      return;
+    }
+
+    const label = reasonRow?.label || misdata.MP_Reason;
     const confirmed = await Swal.fire({
       icon: "warning",
       title: `Applying ${label}`,
@@ -1031,11 +1550,10 @@ export default function OnlineMarkAttendancePage() {
           Mis_Enterby: userName,
           Empcode: misdata.EMPCODE,
         },
-        { headers: { compcode, name: userName } }
+        { headers: { compcode, name: userName } },
       );
 
       if (!isOk(res.data)) {
-        // Keep the selection and the form so the user can correct and retry.
         Swal.fire({
           icon: "error",
           title: "Failed!",
@@ -1044,8 +1562,22 @@ export default function OnlineMarkAttendancePage() {
         return;
       }
 
-      // Slips upload only after the punch is saved.
-      await uploadSlips({ isSick: isSickReason, empCode: misdata.EMPCODE, startDate: day, endDate: day });
+      const slipsOk = await uploadSlips({
+        isSick: isSickReason,
+        empCode: misdata.EMPCODE,
+        startDate: day,
+        endDate: day,
+      });
+
+      if (!slipsOk) {
+        Swal.fire({
+          icon: "warning",
+          title: "Punch saved, slip failed",
+          text: "The punch was updated, but the slip upload failed. Upload the slip again from this row.",
+        });
+        await refresh();
+        return;
+      }
 
       Swal.fire({
         icon: "success",
@@ -1056,7 +1588,10 @@ export default function OnlineMarkAttendancePage() {
       await refresh();
     } catch (error) {
       console.error("Error in UpdateInOutchange:", error);
-      showSideAlert(getErrorMessage(error, "An error occurred while updating punch."), "error");
+      showSideAlert(
+        getErrorMessage(error, "An error occurred while updating punch."),
+        "error",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -1065,12 +1600,17 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Range punch update (production ChangeMisPunch) ---------------- */
 
   const handleRangePunch = async () => {
+    if (blockIfRerunning()) return;
+
     if (!selectedRow) {
       showSideAlert("Pick a day from the table first", "warning");
       return;
     }
     if (!misdata.MP_Reason || !misdata.MP_Remark) {
-      showSideAlert("Please select mispunch reason and Misspunch Remark", "error");
+      showSideAlert(
+        "Please select mispunch reason and Misspunch Remark",
+        "error",
+      );
       return;
     }
     if (!isValidTime(misdata.InTime) || !isValidTime(misdata.OutTime)) {
@@ -1102,12 +1642,17 @@ export default function OnlineMarkAttendancePage() {
       return;
     }
 
+    const days = eachDate(misdata.startDate, misdata.endDate);
+
+    if (days.some(isFutureDate)) {
+      showSideAlert("Future dates cannot be marked", "error");
+      return;
+    }
+
+    // Back-date rule checks every day in the range, not only the start.
     const roleOverride = !!user?.role1?.includes?.(BACKDATE_OVERRIDE_ROLE);
     if (
-      !roleOverride &&
-      Number(compdata?.back_date_mipunch_allowed) === 0 &&
-      Number(reasonRow?.dis_back_date) === 1 &&
-      isBackDated(misdata.startDate)
+      days.some((d) => isBackDateBlocked(d, reasonRow, compdata, roleOverride))
     ) {
       Swal.fire({
         icon: "error",
@@ -1126,6 +1671,12 @@ export default function OnlineMarkAttendancePage() {
       return;
     }
 
+    const lockProblems = await findLockProblems(misdata.EMPCODE!, days);
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
+      return;
+    }
+
     const confirmed = await Swal.fire({
       icon: "warning",
       title: "Update Multiple Mispunch",
@@ -1136,8 +1687,8 @@ export default function OnlineMarkAttendancePage() {
     });
     if (!confirmed.isConfirmed) return;
 
-    // The time date part comes from the selected row, as production does.
-    // Confirm the backend expects this for every day in the range.
+    // Time date part comes from the selected row, as the old code did.
+    // Backend must confirm it expects this for every day in the range.
     const day = dateOnly(selectedRow.dateoffice);
 
     setIsBusy(true);
@@ -1155,7 +1706,7 @@ export default function OnlineMarkAttendancePage() {
           SPL_REMARK: misdata.SPL_REMARK,
           Mis_Enterby: userName,
         },
-        { headers: { compcode, name: userName } }
+        { headers: { compcode, name: userName } },
       );
 
       if (!isOk(res.data)) {
@@ -1167,12 +1718,22 @@ export default function OnlineMarkAttendancePage() {
         return;
       }
 
-      await uploadSlips({
+      const slipsOk = await uploadSlips({
         isSick: isSickReason,
         empCode: misdata.EMPCODE,
         startDate: misdata.startDate,
         endDate: misdata.endDate,
       });
+
+      if (!slipsOk) {
+        Swal.fire({
+          icon: "warning",
+          title: "Punch saved, slip failed",
+          text: "The range was updated, but the slip upload failed.",
+        });
+        await refresh();
+        return;
+      }
 
       Swal.fire({
         icon: "success",
@@ -1182,7 +1743,10 @@ export default function OnlineMarkAttendancePage() {
       });
       await refresh();
     } catch (error) {
-      showSideAlert(getErrorMessage(error, "An error occurred while updating the Mispunch."), "error");
+      showSideAlert(
+        getErrorMessage(error, "An error occurred while updating the Mispunch."),
+        "error",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -1191,6 +1755,8 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Single-day shift change (production Updateshiftchange1) ---------------- */
 
   const handleSingleShiftChange = async () => {
+    if (blockIfRerunning()) return;
+
     if (!selectedRow) {
       showSideAlert("Select one row from table to update shift", "error");
       return;
@@ -1200,7 +1766,12 @@ export default function OnlineMarkAttendancePage() {
       return;
     }
 
-    const day = dateOnly(selectedRow.dateoffice);
+    const day = dateOnly(selectedRow.dateoffice) as string;
+
+    if (isFutureDate(day)) {
+      showSideAlert("Future dates cannot be marked", "error");
+      return;
+    }
 
     if (shiftLockDate && isBeforeDate(day, shiftLockDate)) {
       showSideAlert(`Shift change not allowed before ${shiftLockDate}`, "error");
@@ -1222,6 +1793,12 @@ export default function OnlineMarkAttendancePage() {
 
     if (Number(compdata?.Is_Shift_PastDate_Updation) === 1 && isBackDated(day)) {
       showSideAlert("You cannot select a past date!", "error");
+      return;
+    }
+
+    const lockProblems = await findLockProblems(misdata.EMPCODE!, [day]);
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
       return;
     }
 
@@ -1249,7 +1826,7 @@ export default function OnlineMarkAttendancePage() {
           loc_code: userBranch,
           create_user: userEmp,
         },
-        { headers: { compcode, name: userName, mod_user: userId } }
+        { headers: { compcode, name: userName, mod_user: userId } },
       );
 
       if (res.data?.success === true) {
@@ -1264,7 +1841,10 @@ export default function OnlineMarkAttendancePage() {
       }
       await refresh();
     } catch (error) {
-      showSideAlert(getErrorMessage(error, "An error occurred while updating shift time."), "error");
+      showSideAlert(
+        getErrorMessage(error, "An error occurred while updating shift time."),
+        "error",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -1273,6 +1853,8 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Range shift change (production Updateshiftchange) ---------------- */
 
   const handleRangeShiftChange = async () => {
+    if (blockIfRerunning()) return;
+
     const { startDate, endDate } = misdata;
     if (!misdata.shift) {
       showSideAlert("Please provide Shift Time", "error");
@@ -1291,7 +1873,18 @@ export default function OnlineMarkAttendancePage() {
       return;
     }
 
-    if (shiftLockDate && (isBeforeDate(startDate, shiftLockDate) || isBeforeDate(endDate, shiftLockDate))) {
+    const days = eachDate(startDate, endDate);
+
+    if (days.some(isFutureDate)) {
+      showSideAlert("Future dates cannot be marked", "error");
+      return;
+    }
+
+    if (
+      shiftLockDate &&
+      (isBeforeDate(startDate, shiftLockDate) ||
+        isBeforeDate(endDate, shiftLockDate))
+    ) {
       showSideAlert(`Shift change not allowed before ${shiftLockDate}`, "error");
       return;
     }
@@ -1319,6 +1912,12 @@ export default function OnlineMarkAttendancePage() {
       }
     }
 
+    const lockProblems = await findLockProblems(misdata.EMPCODE!, days);
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
+      return;
+    }
+
     const confirmed = await Swal.fire({
       icon: "warning",
       title: "Update Multiple Shift",
@@ -1342,7 +1941,7 @@ export default function OnlineMarkAttendancePage() {
           loc_code: userBranch,
           create_user: userEmp,
         },
-        { headers: { compcode, name: userName, mod_user: userId } }
+        { headers: { compcode, name: userName, mod_user: userId } },
       );
 
       if (res.data?.success === true) {
@@ -1357,7 +1956,10 @@ export default function OnlineMarkAttendancePage() {
       }
       await refresh();
     } catch (error) {
-      showSideAlert(getErrorMessage(error, "An error occurred while updating the shift time."), "error");
+      showSideAlert(
+        getErrorMessage(error, "An error occurred while updating the shift time."),
+        "error",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -1366,6 +1968,8 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Bulk multi-select apply ---------------- */
 
   const handleApplyBulk = async () => {
+    if (blockIfRerunning()) return;
+
     const rows = selectedRowsTable;
     if (rows.length === 0) {
       showSideAlert("Please select at least one day from table", "warning");
@@ -1386,7 +1990,10 @@ export default function OnlineMarkAttendancePage() {
     const isSick = SICK_LEAVE_REASONS.includes(Number(bulkReason));
 
     if (isSick && isDocMandatory) {
-      showSideAlert("Sick leave needs documents. Enter those days one at a time.", "error");
+      showSideAlert(
+        "Sick leave needs documents. Enter those days one at a time.",
+        "error",
+      );
       return;
     }
     if (!isLeave && !isFixed) {
@@ -1400,11 +2007,26 @@ export default function OnlineMarkAttendancePage() {
       }
     }
 
-    // Check every row before sending anything.
+    // Future dates are blocked before anything else is checked.
+    const futureRows = rows
+      .map((r) => dateOnly(r.dateoffice) || "")
+      .filter((d) => isFutureDate(d));
+    if (futureRows.length) {
+      Swal.fire({
+        icon: "error",
+        title: "Future dates cannot be marked",
+        html: futureRows.map(escapeHtml).join("<br/>"),
+      });
+      return;
+    }
+
+    // Row-level checks before anything is sent.
+    // Back-date uses the company setting (back_date_mipunch_allowed) and the role override.
+    const roleOverride = !!user?.role1?.includes?.(BACKDATE_OVERRIDE_ROLE);
     const problems: string[] = [];
     rows.forEach((row) => {
       const day = dateOnly(row.dateoffice) || "";
-      if (Number(reason?.dis_back_date) === 1 && isBackDated(day)) {
+      if (isBackDateBlocked(day, reason, compdata, roleOverride)) {
         problems.push(`${day}: back-dated entry not permitted`);
       }
       if (shiftLockDate && isBeforeDate(day, shiftLockDate)) {
@@ -1423,17 +2045,28 @@ export default function OnlineMarkAttendancePage() {
       Swal.fire({
         icon: "error",
         title: "Cannot apply",
-        text: problems.slice(0, 6).join("; "),
+        html: problems.slice(0, 20).map(escapeHtml).join("<br/>"),
       });
+      return;
+    }
+
+    // Attendance lock check for every selected day, before any request is sent.
+    const lockProblems = await findLockProblems(
+      misdata.EMPCODE!,
+      rows.map((r) => dateOnly(r.dateoffice) || ""),
+    );
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
       return;
     }
 
     const confirmed = await Swal.fire({
       icon: "warning",
       title: `Apply to ${rows.length} Selected Days?`,
-      text: isLeave || isFixed
-        ? "Apply the reason to all selected days?"
-        : `Set In Time ${bulkIn} and Out Time ${bulkOut} across all selected days?`,
+      text:
+        isLeave || isFixed
+          ? "Apply the reason to all selected days?"
+          : `Set In Time ${bulkIn} and Out Time ${bulkOut} across all selected days?`,
       confirmButtonText: "Yes, Apply",
       cancelButtonText: "Cancel",
       showCancelButton: true,
@@ -1446,9 +2079,12 @@ export default function OnlineMarkAttendancePage() {
     let okCount = 0;
     try {
       for (const row of rows) {
-        const day = dateOnly(row.dateoffice);
+        const day = dateOnly(row.dateoffice) as string;
         const times = isFixed
-          ? { In: formatShiftDecimal(row.shiftstarttime), Out: formatShiftDecimal(row.shiftendtime) }
+          ? {
+            In: formatShiftDecimal(row.shiftstarttime),
+            Out: formatShiftDecimal(row.shiftendtime),
+          }
           : { In: bulkIn, Out: bulkOut };
         try {
           const res = await axios.post(
@@ -1464,7 +2100,7 @@ export default function OnlineMarkAttendancePage() {
               Mis_Enterby: userName,
               Empcode: misdata.EMPCODE,
             },
-            { headers: { compcode, name: userName } }
+            { headers: { compcode, name: userName } },
           );
           if (isOk(res.data)) okCount++;
           else failures.push(`${day}: ${res.data?.Message || "rejected"}`);
@@ -1473,12 +2109,22 @@ export default function OnlineMarkAttendancePage() {
         }
       }
 
+      // Title and icon follow the real result.
+      const allOk = okCount === rows.length;
+      const noneOk = okCount === 0;
       Swal.fire({
-        icon: failures.length ? "warning" : "success",
-        title: "Bulk Update Complete",
-        text:
+        icon: allOk ? "success" : noneOk ? "error" : "warning",
+        title: allOk
+          ? "Bulk Update Complete"
+          : noneOk
+            ? "Bulk Update Failed"
+            : "Bulk Update Partially Complete",
+        html:
           `Updated ${okCount} of ${rows.length} selected days.` +
-          (failures.length ? ` Failed: ${failures.slice(0, 5).join("; ")}` : ""),
+          (failures.length
+            ? "<br/><br/><b>Failed:</b><br/>" +
+            failures.map(escapeHtml).join("<br/>")
+            : ""),
         confirmButtonColor: "#10B981",
       });
       setSelectedRowsTable([]);
@@ -1487,16 +2133,22 @@ export default function OnlineMarkAttendancePage() {
       setIsBusy(false);
     }
   };
-
   /* ---------------- Manual day reset ---------------- */
 
   const handleResetManualDay = async () => {
+    if (blockIfRerunning()) return;
+
     if (!misdata.EMPCODE) {
       showSideAlert("Please select employee code", "error");
       return;
     }
     if (!misdata.AttdenceDate2) {
       showSideAlert("Please select an attendance date from table", "error");
+      return;
+    }
+
+    if (isFutureDate(misdata.AttdenceDate2)) {
+      showSideAlert("Future dates cannot be marked", "error");
       return;
     }
 
@@ -1509,6 +2161,14 @@ export default function OnlineMarkAttendancePage() {
     });
     if (windowError) {
       showSideAlert(windowError, "error");
+      return;
+    }
+
+    const lockProblems = await findLockProblems(misdata.EMPCODE, [
+      misdata.AttdenceDate2,
+    ]);
+    if (lockProblems.length) {
+      showLockPopup(lockProblems);
       return;
     }
 
@@ -1532,20 +2192,31 @@ export default function OnlineMarkAttendancePage() {
           dateoffice: misdata.AttdenceDate2,
           ResetBy: userEmp,
         },
-        { headers: { compcode, name: userName } }
+        { headers: { compcode, name: userName } },
       );
 
-      if (res.data?.success === true) {
+      if (isOk(res.data) || res.data?.success === true) {
         Swal.fire({
           icon: "success",
           title: "Reset Completed",
-          text: "Manual attendance reset successfully.",
+          text: res.data?.Message || "Manual attendance reset successfully.",
           confirmButtonColor: "#10B981",
+        });
+      } else {
+        // Show the server reason instead of failing silently.
+        Swal.fire({
+          icon: "error",
+          title: "Reset Failed",
+          text: res.data?.Message || "Manual attendance could not be reset.",
         });
       }
       await refresh();
     } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: getErrorMessage(error) });
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: getErrorMessage(error),
+      });
     } finally {
       setIsBusy(false);
     }
@@ -1554,6 +2225,8 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Weekly off ---------------- */
 
   const handleWeeklyOffChange = async () => {
+    if (blockIfRerunning()) return;
+
     if (!misdata.EMPCODE) {
       showSideAlert("Please select employee code", "warning");
       return;
@@ -1584,7 +2257,7 @@ export default function OnlineMarkAttendancePage() {
           month: misdata.month,
           year: misdata.year,
         },
-        { headers: { compcode, name: userName } }
+        { headers: { compcode, name: userName } },
       );
       Swal.fire({
         icon: "success",
@@ -1594,7 +2267,10 @@ export default function OnlineMarkAttendancePage() {
       });
       await refresh();
     } catch (error) {
-      showSideAlert(getErrorMessage(error, "Failed to update weekly off."), "error");
+      showSideAlert(
+        getErrorMessage(error, "Failed to update weekly off."),
+        "error",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -1629,7 +2305,7 @@ export default function OnlineMarkAttendancePage() {
           Year: misdata.year,
           Created_by: userEmp || userId,
         },
-        { headers: { compcode, name: userName } }
+        { headers: { compcode, name: userName } },
       );
       Swal.fire({
         icon: "success",
@@ -1637,6 +2313,7 @@ export default function OnlineMarkAttendancePage() {
         text: "Attendance Re-Run In Process. It may take 1-2 minutes.",
         confirmButtonColor: "#4F46E5",
       });
+      // Banner and edit guard start now.
       setEmpRunning(true);
     } catch (error: any) {
       Swal.fire({
@@ -1652,6 +2329,11 @@ export default function OnlineMarkAttendancePage() {
   /* ---------------- Reset whole month ---------------- */
 
   const handleResetMonth = async () => {
+    if (blockIfRerunning()) {
+      setConfirmResetOpen(false);
+      return;
+    }
+
     if (!misdata.EMPCODE) {
       showSideAlert("Please select an employee first", "warning");
       return;
@@ -1661,15 +2343,23 @@ export default function OnlineMarkAttendancePage() {
     setIsBusy(true);
     try {
       const empId = misdata.EMPCODE;
-      const lastDay = new Date(Number(misdata.year), Number(misdata.month), 0).getDate();
+      const lastDay = new Date(
+        Number(misdata.year),
+        Number(misdata.month),
+        0,
+      ).getDate();
       const dateFrom = `${misdata.year}-${misdata.month}-01`;
       const dateTo = `${misdata.year}-${misdata.month}-${pad(lastDay)}`;
 
       // 1. Attendance range check
       const rangeRes = await axios.post(
         `${API_URL}/ars/getOnlyFormattedDates`,
-        { empcode: empId, month: Number(misdata.month), year: Number(misdata.year) },
-        { headers: { compcode } }
+        {
+          empcode: empId,
+          month: Number(misdata.month),
+          year: Number(misdata.year),
+        },
+        { headers: { compcode } },
       );
       if (!(rangeRes.data?.Dates || []).length) {
         Swal.fire({
@@ -1683,8 +2373,13 @@ export default function OnlineMarkAttendancePage() {
       // 2. Lock check
       const lockRes = await axios.post(
         `${API_URL}/ars/attandancelockedOrNot`,
-        { checkDate: dateTo, selectedLocations: 1, regionCode: 1, EMPCODE: empId },
-        { headers: { compcode } }
+        {
+          checkDate: dateTo,
+          selectedLocations: 1,
+          regionCode: 1,
+          EMPCODE: empId,
+        },
+        { headers: { compcode } },
       );
       if (!lockRes.data?.Status) {
         Swal.fire({
@@ -1699,18 +2394,23 @@ export default function OnlineMarkAttendancePage() {
       const updateRes = await axios.post(
         `${API_URL}/ars/updateRawPunchImport`,
         { Emp_Id: empId, DATE_FROM: dateFrom, DATE_TO: dateTo },
-        { headers: { compcode } }
+        { headers: { compcode } },
       );
       if (updateRes.data?.Status) {
         Swal.fire({
           icon: "success",
           title: "Reset Successful",
-          text: updateRes.data?.Message || "Attendance reset to raw machine logs.",
+          text:
+            updateRes.data?.Message || "Attendance reset to raw machine logs.",
           confirmButtonColor: "#10B981",
         });
         await refresh();
       } else {
-        Swal.fire({ icon: "error", title: "Failed", text: updateRes.data?.Message });
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: updateRes.data?.Message,
+        });
       }
     } catch (error) {
       Swal.fire({
@@ -1723,31 +2423,18 @@ export default function OnlineMarkAttendancePage() {
     }
   };
 
-  /* ---------------- Table columns ---------------- */
-
-  const tableColumns = useMemo(
-    () =>
-      MONTH_COLUMNS.map((col) => ({
-        Header: col.Header,
-        accessor: col.accessor,
-        width: col.width,
-        Cell: ({ value, row }: any) => (
-          <div
-            onClick={() => handleRowClick(row.original)}
-            className="w-full cursor-pointer py-1"
-          >
-            {col.render ? col.render(value, row.original, selectedRow) : dash(value)}
-          </div>
-        ),
-      })),
-    [selectedRow, handleRowClick]
-  );
-
   /* ---------------- Render ---------------- */
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#060B13] text-slate-800 dark:text-slate-100 flex flex-col font-sans pb-32">
-      <main className="flex-1 p-3 sm:p-6 space-y-4 max-w-[1850px] w-full mx-auto">
+    <div className="relative w-full min-h-screen bg-slate-50 dark:bg-[#070D18] text-slate-800 dark:text-slate-100 flex flex-col font-sans pb-32 overflow-hidden">
+      {/* Ambient background glass glowing orbs (Frosted Glass luxury depth) */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-indigo-500/10 blur-[130px] dark:bg-indigo-600/15" />
+        <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-[#0EA5E9]/10 blur-[130px] dark:bg-[#0284C7]/12" />
+        <div className="absolute bottom-20 left-1/3 w-96 h-96 rounded-full bg-emerald-500/8 blur-[140px] dark:bg-purple-600/10" />
+      </div>
+
+      <main className="relative z-10 flex-1 p-3 sm:p-6 space-y-4 max-w-[1850px] w-full mx-auto">
         {/* 1. Title and actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -1755,24 +2442,20 @@ export default function OnlineMarkAttendancePage() {
               Manual attendance
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Correct an employee's punched month by hand. Pick a day to edit in-time, out-time,
-              mispunch reason or shift, or select multiple days to apply the same punch.
+              Correct an employee's punched month by hand. Pick a day to edit
+              in-time, out-time, mispunch reason or shift, or select multiple
+              days to apply the same punch.
             </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            {empRunning && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-200 text-xs font-semibold shadow-xs animate-pulse">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Attn Policy is under Rerun Process... plz wait</span>
-              </div>
-            )}
-
             <AButton
               variant="outline"
               size="sm"
               onClick={handleReRun}
-              icon={<RefreshCw className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+              icon={
+                <RefreshCw className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              }
               className="h-9 px-3 rounded-xl text-xs font-semibold shadow-2xs"
               title="Re-calculate attendance for this month"
             >
@@ -1863,14 +2546,15 @@ export default function OnlineMarkAttendancePage() {
                   setIsMultiMode((prev) => !prev);
                   setSelectedRowsTable([]);
                 }}
-                className={`inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all shadow-xs cursor-pointer ${
-                  isMultiMode
+                className={`inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all shadow-xs cursor-pointer ${isMultiMode
                     ? "bg-indigo-50 border-indigo-400 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-500 dark:text-indigo-300"
                     : "bg-white dark:bg-[#0B1220] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                }`}
+                  }`}
               >
                 <ListChecks className="w-4 h-4" />
-                <span>{isMultiMode ? "Exit multi-select" : "Multiple entry"}</span>
+                <span>
+                  {isMultiMode ? "Exit multi-select" : "Multiple entry"}
+                </span>
               </button>
 
               <button
@@ -1878,7 +2562,11 @@ export default function OnlineMarkAttendancePage() {
                 onClick={() => setShowLeaveSummary((prev) => !prev)}
                 className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
               >
-                {showLeaveSummary ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showLeaveSummary ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
                 <span>Leave balance</span>
               </button>
             </div>
@@ -1887,7 +2575,7 @@ export default function OnlineMarkAttendancePage() {
 
         {/* 3. Leave balance */}
         {showLeaveSummary && (
-          <div className="bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white/90 dark:bg-[#0c1322]/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Leave summary · {misdata.Name || misdata.EMPCODE || "Employee"}
@@ -1905,30 +2593,42 @@ export default function OnlineMarkAttendancePage() {
               {leavedata.map((leave: any) => (
                 <div
                   key={leave.Leave_Type}
-                  className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 bg-slate-50/60 dark:bg-slate-900/40 shadow-2xs"
+                  className="rounded-xl border border-slate-200/80 dark:border-white/10 p-3 sm:p-4 bg-slate-50/70 dark:bg-white/[0.04] backdrop-blur-sm shadow-2xs"
                 >
                   <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
                     <span>{leave.Leave_TypeName}</span>
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leave.tint }} />
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: leave.tint }}
+                    />
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold tracking-tight" style={{ color: leave.tint }}>
+                    <span
+                      className="text-2xl font-bold tracking-tight"
+                      style={{ color: leave.tint }}
+                    >
                       {leave.Cl_Bal ?? 0}
                     </span>
                     <span className="text-xs text-slate-400">closing bal</span>
                   </div>
-                  <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800 grid grid-cols-3 text-[10.5px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-white/10 grid grid-cols-3 text-[10.5px] text-slate-500 dark:text-slate-400">
                     <div>
                       <span className="block opacity-70">Op:</span>
-                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">{leave.Op_Bal ?? 0}</strong>
+                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">
+                        {leave.Op_Bal ?? 0}
+                      </strong>
                     </div>
                     <div>
                       <span className="block opacity-70">Gen:</span>
-                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">{leave.Gen_Lev ?? 0}</strong>
+                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">
+                        {leave.Gen_Lev ?? 0}
+                      </strong>
                     </div>
                     <div>
                       <span className="block opacity-70">Avail:</span>
-                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">{leave.Avail_Lev ?? 0}</strong>
+                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">
+                        {leave.Avail_Lev ?? 0}
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -1937,171 +2637,239 @@ export default function OnlineMarkAttendancePage() {
           </div>
         )}
 
-        {/* 4. Table and inspector */}
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_390px] gap-4 items-start">
-          {/* LEFT: monthly table */}
-          <div className="bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden flex flex-col">
-            <div className="px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                  {misdata.Name ? `${misdata.Name} (${misdata.EMPCODE})` : "Employee Monthly Sheet"}
+        {/* 3b. Attendance summary (paid days). Shown whenever the company flag is 1. */}
+        {showAttnSummary && (
+          <div className="bg-white/95 dark:bg-[#0c1322]/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-slate-100 dark:border-white/10">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Attendance Summary (Paid Days)
                 </span>
-                {punchTypeLabel && (
-                  <span className="inline-flex px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-yellow-50 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300 border border-yellow-200">
-                    {punchTypeLabel}
+                {(misdata.Name || misdata.EMPCODE) && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200 border border-slate-200 dark:border-white/10 backdrop-blur-sm">
+                    {misdata.EMPCODE ? `${misdata.EMPCODE} - ` : ""}{misdata.Name || "Employee"}
                   </span>
                 )}
               </div>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                Monthly Breakdown
+              </span>
+            </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+            {paidDays.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">
+                No paid-day summary for this employee and month.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3">
+                {paidDays.map(([key, value]) => {
+                  const meta = getPaidDayMeta(key, value);
+                  const Icon = meta.Icon;
+
+                  return (
+                    <div
+                      key={key}
+                      className={`relative overflow-hidden rounded-xl border border-slate-200/90 dark:border-white/10 bg-gradient-to-b ${meta.gradient} bg-white dark:bg-white/[0.03] backdrop-blur-md p-3 flex flex-col justify-between gap-2.5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-default ${meta.accentBg}`}
+                    >
+                      {/* Top Header: Label & Styled Logo */}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate" title={meta.label}>
+                          {meta.label}
+                        </span>
+                        <div
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 duration-200 shadow-2xs ${meta.iconWrap}`}
+                        >
+                          <Icon className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </div>
+                      </div>
+
+                      {/* Value Count */}
+                      <div className="flex items-baseline justify-between pt-0.5">
+                        <span
+                          className={`text-xl sm:text-2xl font-black tracking-tight font-sans ${meta.valueColor}`}
+                        >
+                          {value ?? 0}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. Table and inspector */}
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_390px] gap-4 items-start">
+          {/* LEFT: monthly table */}
+          <div className="flex flex-col">
+            <AttendanceDataTable
+              title={
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                    Attendance Table
+                  </span>
+                  {misdata.Name && (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200 border border-slate-200 dark:border-white/10 backdrop-blur-sm">
+                      {misdata.EMPCODE} - {misdata.Name}
+                    </span>
+                  )}
+                  {punchTypeLabel && (
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#FEFCE8] text-[#854D0E] dark:bg-[#78350F]/40 dark:text-[#FDE68A] border border-[#FDE047] dark:border-[#D97706]/40 shadow-2xs backdrop-blur-sm">
+                      {punchTypeLabel}
+                    </span>
+                  )}
+                  {empRunning && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FEF9C3] dark:bg-[#78350F]/40 border border-[#FDE047] dark:border-[#D97706]/40 text-[#854D0E] dark:text-[#FDE68A] shadow-2xs backdrop-blur-sm animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0" />
+                      <span>Attn Policy is under Rerun Process... plz wait</span>
+                    </span>
+                  )}
+                </div>
+              }
+              subtitle="Sample records for illustration. Rows are coloured by status, with rejected rows first in priority."
+              headerSearch={
                 <input
                   type="text"
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
                   placeholder="Search rows..."
-                  className="h-8 px-2.5 w-56 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium focus:outline-none focus:border-indigo-500"
+                  className="h-8 px-2.5 w-56 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-medium focus:outline-none focus:border-indigo-500 transition-all shadow-2xs backdrop-blur-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                 />
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              }
+              headerStats={
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                   {monthStats.map((st) => (
-                    <span key={st.label} className="flex items-center gap-1.5 whitespace-nowrap">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: st.tint }} />
-                      <span>{st.label}</span>
-                      <strong className="text-slate-800 dark:text-slate-200 font-bold">{st.value}</strong>
+                    <span
+                      key={st.label}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 whitespace-nowrap shadow-2xs backdrop-blur-sm"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: st.tint }}
+                      />
+                      <span className="text-[11.5px] font-medium text-slate-600 dark:text-slate-300">
+                        {st.label}
+                      </span>
+                      <strong className="text-slate-800 dark:text-slate-100 font-bold text-[11.5px]">
+                        {st.value}
+                      </strong>
                     </span>
                   ))}
                 </div>
-              </div>
-            </div>
+              }
+              bulkActions={
+                isMultiMode ? (
+                  <div className="px-4 py-2.5 bg-indigo-50/90 dark:bg-indigo-950/60 border-b border-indigo-200 dark:border-indigo-900 flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
+                      {selectedRowsTable.length} days selected
+                    </span>
+                    <span className="h-4 w-px bg-indigo-300 dark:bg-indigo-700" />
 
-            {/* Bulk toolbar */}
-            {isMultiMode && (
-              <div className="px-4 py-2.5 bg-indigo-50/90 dark:bg-indigo-950/60 border-b border-indigo-200 dark:border-indigo-900 flex flex-wrap items-center gap-3">
-                <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
-                  {selectedRowsTable.length} days selected
-                </span>
-                <span className="h-4 w-px bg-indigo-300 dark:bg-indigo-700" />
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="time"
-                    value={bulkIn}
-                    onChange={(e) => setBulkIn(e.target.value)}
-                    disabled={isLeaveReasonBulk(bulkReason, leaveTypeValues) || isFixedBulk(bulkReason, MPList)}
-                    className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
-                    title="Bulk In Time"
-                  />
-                  <span className="text-xs text-slate-400">–</span>
-                  <input
-                    type="time"
-                    value={bulkOut}
-                    onChange={(e) => setBulkOut(e.target.value)}
-                    disabled={isLeaveReasonBulk(bulkReason, leaveTypeValues) || isFixedBulk(bulkReason, MPList)}
-                    className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
-                    title="Bulk Out Time"
-                  />
-                </div>
-
-                <select
-                  value={bulkReason}
-                  onChange={(e) => setBulkReason(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium max-w-[180px]"
-                >
-                  <option value="">Select Reason...</option>
-                  {MPList.map((item: any) => (
-                    <option key={String(item.value)} value={String(item.value)}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={bulkRemark}
-                  onChange={(e) => setBulkRemark(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium max-w-[180px]"
-                >
-                  <option value="">Select Remark...</option>
-                  {MPRemarksList.map((item: any) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="text"
-                  value={bulkSplRemark}
-                  onChange={(e) => setBulkSplRemark(e.target.value)}
-                  placeholder="Payroll remark (optional)"
-                  className="h-8 px-2 w-48 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
-                />
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRowsTable([])}
-                    className="h-8 px-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleApplyBulk}
-                    disabled={isBusy}
-                    className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-xs disabled:opacity-50"
-                  >
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>Apply to selected</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="w-full [&_thead_.lucide-chevrons-up-down]:hidden">
-              <ReactTable
-                columns={tableColumns}
-                data={filteredRows}
-                check={isMultiMode}
-                onlyOnecheck={false}
-                selectValue="formatted_dateoffice"
-                setsellectedrowdata={setSelectedRowsTable}
-                selectedRows={selectedRowsTable}
-                onRowDoubleClick={(row: any) => handleRowClick(row)}
-                showColumnFilters={false}
-                height={580}
-                showPageSizeInFooter={true}
-                initialPageSize={50}
-                showExcelExport={true}
-                columnsDownload={EXPORT_COLUMNS}
-                onExportAll={() => tabledata}
-                containerClassName="!border-0 !shadow-none !rounded-none"
-              />
-            </div>
-
-            {Number(compdata?.Show_Attn_Summary) === 1 && paidDays.length > 0 && (
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
-                  Attendance Summary (Paid Days)
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {paidDays.map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 text-center shadow-2xs"
-                    >
-                      <p className="text-[10px] font-bold text-slate-400 uppercase truncate">{key}</p>
-                      <p className="text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5">{value ?? 0}</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={bulkIn}
+                        onChange={(e) => setBulkIn(e.target.value)}
+                        disabled={
+                          isLeaveReasonBulk(bulkReason, leaveTypeValues) ||
+                          isFixedBulk(bulkReason, MPList)
+                        }
+                        className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
+                        title="Bulk In Time"
+                      />
+                      <span className="text-xs text-slate-400">–</span>
+                      <input
+                        type="time"
+                        value={bulkOut}
+                        onChange={(e) => setBulkOut(e.target.value)}
+                        disabled={
+                          isLeaveReasonBulk(bulkReason, leaveTypeValues) ||
+                          isFixedBulk(bulkReason, MPList)
+                        }
+                        className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
+                        title="Bulk Out Time"
+                      />
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
+                    <select
+                      value={bulkReason}
+                      onChange={(e) => setBulkReason(e.target.value)}
+                      className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium max-w-[180px]"
+                    >
+                      <option value="">Select Reason...</option>
+                      {MPList.map((item: any) => (
+                        <option key={String(item.value)} value={String(item.value)}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={bulkRemark}
+                      onChange={(e) => setBulkRemark(e.target.value)}
+                      className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium max-w-[180px]"
+                    >
+                      <option value="">Select Remark...</option>
+                      {MPRemarksList.map((item: any) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      value={bulkSplRemark}
+                      onChange={(e) => setBulkSplRemark(e.target.value)}
+                      placeholder="Payroll remark (optional)"
+                      className="h-8 px-2 w-48 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                    />
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRowsTable([])}
+                        className="h-8 px-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleApplyBulk}
+                        disabled={isBusy}
+                        className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-xs disabled:opacity-50"
+                      >
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Apply to selected</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : undefined
+              }
+              columns={MONTH_COLUMNS}
+              data={filteredRows}
+              selectedRow={selectedRow}
+              onRowClick={handleRowClick}
+              onRowDoubleClick={handleRowClick}
+              showCheckbox={true}
+              isMultiMode={isMultiMode}
+              selectedRows={selectedRowsTable}
+              onSelectedRowsChange={setSelectedRowsTable}
+              empRunning={empRunning}
+              initialPageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              height={580}
+              columnsDownload={EXPORT_COLUMNS}
+              onExportAll={() => tabledata}
+            />
           </div>
 
           {/* RIGHT: inspector */}
           <div className="sticky top-[75px] space-y-3.5">
             {/* Card 1: edit day */}
-            <div className="bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="bg-white/90 dark:bg-[#0c1322]/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Edit Day
                 </span>
@@ -2117,9 +2885,12 @@ export default function OnlineMarkAttendancePage() {
                   <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400 border border-slate-200 dark:border-slate-700">
                     <MousePointerClick className="w-5 h-5" />
                   </div>
-                  <div className="font-semibold text-xs text-slate-700 dark:text-slate-300 mt-3">Pick a day from the table</div>
+                  <div className="font-semibold text-xs text-slate-700 dark:text-slate-300 mt-3">
+                    Pick a day from the table
+                  </div>
                   <p className="text-[11px] text-slate-400 mt-1 max-w-[240px] mx-auto leading-relaxed">
-                    Click any attendance row to edit in-time, out-time, mispunch reason or shift.
+                    Click any attendance row to edit in-time, out-time, mispunch
+                    reason or shift.
                   </p>
                 </div>
               ) : (
@@ -2151,14 +2922,23 @@ export default function OnlineMarkAttendancePage() {
 
                   <div className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 text-xs">
                     <Clock className={`w-4 h-4 shrink-0 ${calcTint}`} />
-                    <span className="flex-1 min-w-0 text-[11px] text-slate-500 dark:text-slate-400 truncate">{calcLine}</span>
-                    <strong className={`font-mono font-bold text-xs shrink-0 ${calcTint}`}>{fmtMins(dynamicMinutes)}</strong>
+                    <span className="flex-1 min-w-0 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {calcLine}
+                    </span>
+                    <strong
+                      className={`font-mono font-bold text-xs shrink-0 ${calcTint}`}
+                    >
+                      {fmtMins(dynamicMinutes)}
+                    </strong>
                   </div>
 
                   <Eselect
                     title="MISPUNCH REASON"
                     name="MP_Reason"
-                    option={MPList.map((m: any) => ({ value: String(m.value), label: m.label }))}
+                    option={MPList.map((m: any) => ({
+                      value: String(m.value),
+                      label: m.label,
+                    }))}
                     initialValue={misdata.MP_Reason}
                     handleInputChange={handleMispunchData}
                     ShortName
@@ -2186,61 +2966,255 @@ export default function OnlineMarkAttendancePage() {
                     <textarea
                       rows={2}
                       value={misdata.SPL_REMARK || ""}
-                      onChange={(e) => handleMispunchData("SPL_REMARK", e.target.value)}
+                      onChange={(e) =>
+                        handleMispunchData("SPL_REMARK", e.target.value)
+                      }
                       placeholder="Visible to the payroll approver..."
                       maxLength={200}
                       className="w-full p-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 resize-none"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 hover:border-indigo-400 cursor-pointer transition text-center">
-                      {inSlipPreview || inSlipFile ? (
-                        <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-semibold">
-                          <FileCheck2 className="w-4 h-4" />
-                          <span>In Slip Added</span>
+                  {/* Slip upload / live preview cards */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* In-Time Slip Card */}
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        In-Time Slip
+                      </span>
+                      {inSlipPreview ? (
+                        <div className="relative group rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/60 overflow-hidden h-28 sm:h-32 flex flex-col justify-between shadow-2xs">
+                          {/* Image thumbnail */}
+                          <img
+                            src={inSlipPreview}
+                            alt="In Slip"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+
+                          {/* Top label pill */}
+                          <div className="absolute top-1.5 left-1.5 z-10">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-black/75 text-white backdrop-blur-xs shadow-xs">
+                              <FileCheck2 className="w-3 h-3 text-emerald-400" />
+                              <span>Attached</span>
+                            </span>
+                          </div>
+
+                          {/* Hover action overlay */}
+                          <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 p-1 z-20">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewingImage({
+                                  url: inSlipPreview,
+                                  title: "In-Time Slip Preview",
+                                })
+                              }
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="View Full Image"
+                            >
+                              <Eye className="w-4 h-4 text-indigo-600" />
+                            </button>
+
+                            <label
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="Change Image"
+                            >
+                              <Upload className="w-4 h-4 text-emerald-600" />
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/jpg"
+                                onChange={(e) =>
+                                  pickSlip(e, setInSlipFile, setInSlipPreview)
+                                }
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInSlipFile(null);
+                                setInSlipPreview(null);
+                              }}
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="Remove Image"
+                            >
+                              <Trash2 className="w-4 h-4 text-rose-600" />
+                            </button>
+                          </div>
+
+                          {/* Bottom persistent bar for easy single-click access */}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 py-1 flex items-center justify-between text-[10px] text-white z-10">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewingImage({
+                                  url: inSlipPreview,
+                                  title: "In-Time Slip Preview",
+                                })
+                              }
+                              className="inline-flex items-center gap-1 font-semibold hover:text-indigo-300 transition-colors cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View</span>
+                            </button>
+
+                            <label className="inline-flex items-center gap-1 font-semibold hover:text-emerald-300 transition-colors cursor-pointer">
+                              <Upload className="w-3 h-3" />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/jpg"
+                                onChange={(e) =>
+                                  pickSlip(e, setInSlipFile, setInSlipPreview)
+                                }
+                              />
+                            </label>
+                          </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center gap-1 text-slate-500">
-                          <Upload className="w-4 h-4" />
-                          <span className="text-[10.5px] font-medium">In-time slip</span>
-                        </div>
+                        <label className="flex flex-col items-center justify-center h-28 sm:h-32 p-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 cursor-pointer transition-all text-center group">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                            <Upload className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-[10.5px] font-bold text-slate-700 dark:text-slate-200">
+                            Upload In Slip
+                          </span>
+                          <span className="text-[9px] text-slate-400 mt-0.5">
+                            PNG, JPG
+                          </span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/jpg"
+                            onChange={(e) =>
+                              pickSlip(e, setInSlipFile, setInSlipPreview)
+                            }
+                          />
+                        </label>
                       )}
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/jpg"
-                        onChange={(e) => pickSlip(e, setInSlipFile, setInSlipPreview)}
-                      />
-                    </label>
-
-                    <label className="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 hover:border-indigo-400 cursor-pointer transition text-center">
-                      {outSlipPreview || outSlipFile ? (
-                        <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-semibold">
-                          <FileCheck2 className="w-4 h-4" />
-                          <span>Out Slip Added</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1 text-slate-500">
-                          <Upload className="w-4 h-4" />
-                          <span className="text-[10.5px] font-medium">Out-time slip</span>
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/jpg"
-                        onChange={(e) => pickSlip(e, setOutSlipFile, setOutSlipPreview)}
-                      />
-                    </label>
-                  </div>
-
-                  {(inSlipPreview || outSlipPreview) && (
-                    <div className="flex items-center justify-between text-xs px-1 text-slate-400">
-                      {inSlipPreview && <FileViewer fileLink={inSlipPreview} celldata="View In Slip" />}
-                      {outSlipPreview && <FileViewer fileLink={outSlipPreview} celldata="View Out Slip" />}
                     </div>
-                  )}
+
+                    {/* Out-Time Slip Card */}
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                        Out-Time Slip
+                      </span>
+                      {outSlipPreview ? (
+                        <div className="relative group rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/60 overflow-hidden h-28 sm:h-32 flex flex-col justify-between shadow-2xs">
+                          {/* Image thumbnail */}
+                          <img
+                            src={outSlipPreview}
+                            alt="Out Slip"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+
+                          {/* Top label pill */}
+                          <div className="absolute top-1.5 left-1.5 z-10">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-black/75 text-white backdrop-blur-xs shadow-xs">
+                              <FileCheck2 className="w-3 h-3 text-emerald-400" />
+                              <span>Attached</span>
+                            </span>
+                          </div>
+
+                          {/* Hover action overlay */}
+                          <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 p-1 z-20">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewingImage({
+                                  url: outSlipPreview,
+                                  title: "Out-Time Slip Preview",
+                                })
+                              }
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="View Full Image"
+                            >
+                              <Eye className="w-4 h-4 text-indigo-600" />
+                            </button>
+
+                            <label
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="Change Image"
+                            >
+                              <Upload className="w-4 h-4 text-emerald-600" />
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/jpg"
+                                onChange={(e) =>
+                                  pickSlip(e, setOutSlipFile, setOutSlipPreview)
+                                }
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOutSlipFile(null);
+                                setOutSlipPreview(null);
+                              }}
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-800 shadow-xs hover:scale-110 transition-transform cursor-pointer"
+                              title="Remove Image"
+                            >
+                              <Trash2 className="w-4 h-4 text-rose-600" />
+                            </button>
+                          </div>
+
+                          {/* Bottom persistent bar for easy single-click access */}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 py-1 flex items-center justify-between text-[10px] text-white z-10">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewingImage({
+                                  url: outSlipPreview,
+                                  title: "Out-Time Slip Preview",
+                                })
+                              }
+                              className="inline-flex items-center gap-1 font-semibold hover:text-indigo-300 transition-colors cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View</span>
+                            </button>
+
+                            <label className="inline-flex items-center gap-1 font-semibold hover:text-emerald-300 transition-colors cursor-pointer">
+                              <Upload className="w-3 h-3" />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/jpg"
+                                onChange={(e) =>
+                                  pickSlip(e, setOutSlipFile, setOutSlipPreview)
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-28 sm:h-32 p-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 cursor-pointer transition-all text-center group">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                            <Upload className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-[10.5px] font-bold text-slate-700 dark:text-slate-200">
+                            Upload Out Slip
+                          </span>
+                          <span className="text-[9px] text-slate-400 mt-0.5">
+                            PNG, JPG
+                          </span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/jpg"
+                            onChange={(e) =>
+                              pickSlip(e, setOutSlipFile, setOutSlipPreview)
+                            }
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="flex items-center gap-2 pt-1">
                     <button
@@ -2265,7 +3239,7 @@ export default function OnlineMarkAttendancePage() {
             </div>
 
             {/* Card 2: single-day shift */}
-            <div className="bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="bg-white/90 dark:bg-[#0c1322]/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] space-y-3">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 Shift change for this day
               </span>
@@ -2298,7 +3272,7 @@ export default function OnlineMarkAttendancePage() {
             </div>
 
             {/* Card 3: range and advanced tools */}
-            <div className="bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+            <div className="bg-white/90 dark:bg-[#0c1322]/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
               <button
                 type="button"
                 onClick={() => setShowAdvanced((prev) => !prev)}
@@ -2419,11 +3393,15 @@ export default function OnlineMarkAttendancePage() {
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   Every manual correction for{" "}
-                  <strong>{misdata.Name || misdata.EMPCODE || "this employee"}</strong> in month{" "}
+                  <strong>
+                    {misdata.Name || misdata.EMPCODE || "this employee"}
+                  </strong>{" "}
+                  in month{" "}
                   <strong>
                     {misdata.month}/{misdata.year}
                   </strong>{" "}
-                  will be discarded and attendance rebuilt from raw biometric machine logs.
+                  will be discarded and attendance rebuilt from raw biometric
+                  machine logs.
                 </DialogDescription>
               </div>
             </div>
@@ -2449,6 +3427,54 @@ export default function OnlineMarkAttendancePage() {
         </DialogContent>
       </Dialog>
 
+      {/* Slip image preview modal */}
+      <Dialog
+        open={!!viewingImage}
+        onOpenChange={(open) => !open && setViewingImage(null)}
+      >
+        <DialogContent className="w-full max-w-2xl rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] shadow-2xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                <span>{viewingImage?.title || "Slip Image Preview"}</span>
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          {viewingImage?.url && (
+            <div className="mt-3 flex items-center justify-center max-h-[68vh] overflow-hidden rounded-xl bg-slate-950/5 dark:bg-black/40 p-2 border border-slate-200 dark:border-slate-800">
+              <img
+                src={viewingImage.url}
+                alt={viewingImage.title}
+                className="max-h-[62vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {viewingImage?.url && (
+              <a
+                href={viewingImage.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-2xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in new tab</span>
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition shadow-xs ml-auto"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <HashloaderComponent isLoading={isBusy} />
     </div>
   );
@@ -2463,5 +3489,9 @@ function isLeaveReasonBulk(reason: string, leaveValues: string[]) {
 }
 
 function isFixedBulk(reason: string, reasons: any[]) {
-  return Number(reasons.find((r) => String(r.value) === String(reason))?.Misc_Num1) === 1;
+  return (
+    Number(
+      reasons.find((r) => String(r.value) === String(reason))?.Misc_Num1,
+    ) === 1
+  );
 }
