@@ -1780,7 +1780,7 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
         "EMPLOYEE",
         "UPLOADED BY",
         "CREATED AT",
-        "FILE",
+        
       ];
 
       const escapeCSV = (value: unknown) =>
@@ -1794,7 +1794,7 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
         file.Employee || file.RefId || "",
         file.uploadedBy || "",
         file.uploadedAt || "",
-        file.name || "",
+        
       ]);
 
       const csv = [
@@ -2016,6 +2016,7 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
         Header: "FILE",
 
         accessor: "name",
+        showInExcel: false,
 
 
 
@@ -2030,9 +2031,10 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
             <div className="flex min-w-[70px] items-center justify-center">
 
               <FileViewer
-
+                celldata={SMBPath}
                 fileLink={`https://erp.autovyn.com/backend/fetch?filePath=${SMBPath}`}
-
+                rowData={row.original}
+                showDownload={true}
               />
 
             </div>

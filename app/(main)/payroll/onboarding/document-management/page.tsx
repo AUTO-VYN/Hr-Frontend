@@ -2184,19 +2184,7 @@ export default function DocumentManagementPage() {
           >
             {/* MESSAGE */}
 
-            <div
-              className="
-        min-w-0
-        flex-1
-        truncate
-        text-[10.5px]
-        text-[#4F6F9D]
-      "
-            >
-              {docRef && refNo.trim()
-                ? "Ready to upload against this reference."
-                : "Pick a reference type and number before uploading."}
-            </div>
+        
 
             {/* BUTTONS */}
 

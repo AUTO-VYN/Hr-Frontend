@@ -225,18 +225,6 @@ export default function PrintLetterPage() {
           },
         );
         setTemplates(fetched);
-        if (fetched.length > 0) {
-          setSelectedTemplate(fetched[0].value);
-          setFormData({
-            TEMPLATE_NAME: fetched[0].Label,
-            CONTENT: fetched[0].content,
-            KEYWORDS: fetched[0].keywords,
-          });
-          const headerEnabled = Number(fetched[0]?.showHeader ?? 1) === 1;
-
-          setShowCompanyInfo(headerEnabled);
-          setShowHeader(headerEnabled);
-        }
       }
     } catch (error) {
       console.error("Error fetching templates:", error);
@@ -389,7 +377,7 @@ export default function PrintLetterPage() {
         `${process.env.NEXT_PUBLIC_URL}/template/AllSelectempdata`,
         // `${process.env.NEXT_PUBLIC_URL}/employee/All`,
         {
-          flag:1
+          flag: 1
         },
         { headers: { compcode: compCode, name: user?.name || "" } },
       );
@@ -402,10 +390,6 @@ export default function PrintLetterPage() {
           formatEmployeeRecord(emp, index),
         );
         setEmployeedata(mapped);
-        if (mapped.length > 0) {
-          setSelectedRows([mapped[0]]);
-          setSelectEmployeedata([mapped[0]]);
-        }
       }
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -581,12 +565,14 @@ export default function PrintLetterPage() {
           TODAYDATE: new Date().toLocaleDateString(),
           COMPCODE: compCodeVal,
           SIGN_IMAGE: signatureHTML,
+          PROBATION_PERIOD: emp?.PROBATION_PERIOD || emp?.PROBATION_ ,
+          PROBATION_: emp?.PROBATION_ || emp?.PROBATION_PERIOD 
         };
 
         Object.assign(placeholdersMap, specificPlaceholders);
         Object.keys(placeholdersMap).forEach((key) => {
           if (!key) return;
-          const regex = new RegExp(`\\{${key}\\}|${key}`, "g");
+          const regex = new RegExp(`\\{${key}\\}`, "g");
           content = content.replace(
             regex,
             placeholdersMap[key] !== undefined && placeholdersMap[key] !== null
@@ -789,9 +775,9 @@ export default function PrintLetterPage() {
           const empCode = String(row.original.EMPCODE || "").trim();
           let name = String(
             row.original.EMPLOYEENAME ||
-              row.original.NAME ||
-              row.original.EMPNAME ||
-              ""
+            row.original.NAME ||
+            row.original.EMPNAME ||
+            ""
           ).trim();
 
           if (empCode && name.startsWith(empCode)) {
@@ -1362,7 +1348,7 @@ body h2 {
     .join(", ");
 
   const activeTemplateObj =
-    templates.find((t) => t.value === selectedTemplate) || templates[0] || null;
+    templates.find((t) => t.value === selectedTemplate) || null;
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#070D18] flex flex-col text-slate-800 dark:text-slate-100 pb-36 sm:pb-28">
@@ -1410,9 +1396,9 @@ body h2 {
       </div>
 
       {/* ── MAIN CONTENT GRID ───────────────────────────────────────── */}
-     <div className="w-full min-w-0 px-2 sm:px-4 lg:px-5 xl:px-6 grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-4 xl:gap-5 items-start">
+      <div className="w-full min-w-0 px-2 sm:px-4 lg:px-5 xl:px-6 grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-4 xl:gap-5 items-start">
         {/* ── LEFT COLUMN (Templates, Employees, Delivery) ───────────── */}
-       <div className="w-full min-w-0 xl:col-span-7 flex flex-col gap-3 sm:gap-4">
+        <div className="w-full min-w-0 xl:col-span-7 flex flex-col gap-3 sm:gap-4">
           {/* 1. Template Card Section */}
           <div className="bg-white dark:bg-[#0B1220] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs">
             <div className="flex items-center justify-between mb-3">
@@ -1425,50 +1411,49 @@ body h2 {
                 </h2>
               </div>
               <span className="text-base text-slate-400 font-medium">
-                 {templates.length} merge tokens
+                {templates.length} merge tokens
               </span>
             </div>
 
             {/* Template Selection Cards Grid (6 items visible, scroll for rest) */}
-           <div className="max-h-48 sm:max-h-[220px] overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-    {templates.map((tmpl) => {
-      const isSelected = selectedTemplate === tmpl.value;
-      const IconComponent = tmpl.icon || FileText;
+            <div className="max-h-48 sm:max-h-[220px] overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {templates.map((tmpl) => {
+                  const isSelected = selectedTemplate === tmpl.value;
+                  const IconComponent = tmpl.icon || FileText;
 
-      return (
-        <div
-          key={tmpl.id || tmpl.value}
-          onClick={() => selectTemplateHandler(tmpl)}
-          className={`relative min-w-0 rounded-xl border p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 cursor-pointer select-none transition-all ${
-            isSelected
-              ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300"
-          }`}
-        >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50 text-indigo-600">
-            <IconComponent className="w-4 h-4" />
-          </div>
+                  return (
+                    <div
+                      key={tmpl.id || tmpl.value}
+                      onClick={() => selectTemplateHandler(tmpl)}
+                      className={`relative min-w-0 rounded-xl border p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 cursor-pointer select-none transition-all ${isSelected
+                          ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 ring-1 ring-[#4F46E5]/40"
+                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] hover:border-indigo-300"
+                        }`}
+                    >
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50 text-indigo-600">
+                        <IconComponent className="w-4 h-4" />
+                      </div>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-bold truncate">
-              {tmpl.Label}
-            </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
-              {tmpl.tokens} tokens · {tmpl.pages} page
-            </p>
-          </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm sm:text-base font-bold truncate">
+                          {tmpl.Label}
+                        </h3>
+                        <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                           {tmpl.pages} page
+                        </p>
+                      </div>
 
-          {isSelected && (
-            <div className="w-4 h-4 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
-              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </div>
-      );
-    })}
-  </div>
-</div>
           </div>
 
           {/* 2. Template Card Section */}
@@ -1500,22 +1485,22 @@ body h2 {
           </div>
 
           {/* 2. Employees Table Section using ServiceTablePagination */}
-        <div className="w-full min-w-0 overflow-hidden bg-white dark:bg-[#0B1220] rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-  <ServiceTablePagination
-    title={`Employees ${selectedRows.length} of ${employeedata.length} selected`}
-    columns={employeeTableColumns}
-    data={employeedata}
-    check={true}
-    selectValue="EMPCODE"
-    selectedRows={selectedRows}
-    setSelectedRows={handleSelectionChange}
-    height={260}
-    showTopSearch={true}
-    searchPlaceholder="Code, name, designation..."
-    showExcelExport={false}
-    containerClassName="w-full min-w-0 overflow-x-auto rounded-none border-0 shadow-none"
-  />
-</div>
+          <div className="w-full min-w-0 overflow-hidden bg-white dark:bg-[#0B1220] rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+            <ServiceTablePagination
+              title={`Employees ${selectedRows.length} of ${employeedata.length} selected`}
+              columns={employeeTableColumns}
+              data={employeedata}
+              check={true}
+              selectValue="EMPCODE"
+              selectedRows={selectedRows}
+              setSelectedRows={handleSelectionChange}
+              height={260}
+              showTopSearch={true}
+              searchPlaceholder="Code, name, designation..."
+              showExcelExport={false}
+              containerClassName="w-full min-w-0 overflow-x-auto rounded-none border-0 shadow-none"
+            />
+          </div>
 
           {/* 3. Delivery & "Before You Send" Section (Screenshot 2) */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-stretch">
@@ -1535,18 +1520,16 @@ body h2 {
                   {/* WhatsApp Toggle */}
                   <div
                     onClick={() => setDeliveryWhatsApp((prev) => !prev)}
-                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${
-                      deliveryWhatsApp
+                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryWhatsApp
                         ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-3.5 h-3.5 rounded flex items-center justify-center ${
-                        deliveryWhatsApp
+                      className={`w-3.5 h-3.5 rounded flex items-center justify-center ${deliveryWhatsApp
                           ? "bg-[#4F46E5] text-white"
                           : "border border-slate-300"
-                      }`}
+                        }`}
                     >
                       {deliveryWhatsApp && (
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -1558,11 +1541,10 @@ body h2 {
                   {/* Email Toggle */}
                   <div
                     onClick={() => setDeliveryEmail((prev) => !prev)}
-                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${
-                      deliveryEmail
+                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryEmail
                         ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
                     <span>Email</span>
@@ -1571,11 +1553,10 @@ body h2 {
                   {/* Hard copy Toggle */}
                   <div
                     onClick={() => setDeliveryHardCopy((prev) => !prev)}
-                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${
-                      deliveryHardCopy
+                    className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all ${deliveryHardCopy
                         ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <Printer className="w-3.5 h-3.5 text-slate-400" />
                     <span>Hard copy</span>
@@ -1587,11 +1568,10 @@ body h2 {
               <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <div
                   onClick={() => setRouteForApproval((prev) => !prev)}
-                  className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all w-fit ${
-                    routeForApproval
+                  className={`h-9 px-3.5 rounded-xl border flex items-center gap-2 text-base font-semibold cursor-pointer select-none transition-all w-fit ${routeForApproval
                       ? "border-[#4F46E5] bg-indigo-50/60 dark:bg-indigo-950/40 text-[#4F46E5] dark:text-indigo-400 shadow-2xs ring-1 ring-[#4F46E5]/30"
                       : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-slate-600 dark:text-slate-300 hover:border-slate-300"
-                  }`}
+                    }`}
                 >
                   <ShieldCheck className="w-4 h-4 text-[#4F46E5] dark:text-indigo-400" />
                   <span>Route for approval first</span>
@@ -1660,7 +1640,7 @@ body h2 {
         </div>
 
         {/* ── RIGHT COLUMN (Merged Preview Panel) ────────────────────── */}
-<div className="w-full min-w-0 xl:col-span-5 bg-white dark:bg-[#0B1220] rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2.5 sm:p-4 shadow-2xs flex flex-col min-h-[400px] sm:min-h-[500px] xl:min-h-[680px]">
+        <div className="w-full min-w-0 xl:col-span-5 bg-white dark:bg-[#0B1220] rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2.5 sm:p-4 shadow-2xs flex flex-col min-h-[400px] sm:min-h-[500px] xl:min-h-[680px]">
           {/* Preview Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -1733,10 +1713,7 @@ body h2 {
           <div className="mt-2 flex-1 min-w-0 w-full bg-white border border-slate-200/90 rounded-xl p-3 sm:p-5 lg:p-7 shadow-xs text-slate-900 overflow-x-hidden overflow-y-auto max-h-[620px] custom-scrollbar">
             {/* Document Meta Row */}
             <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-4">
-              <span>
-                Ref: {getCompCode() || "AV"}/HR/{activeEmployee?.EMPCODE || "—"}
-                /{new Date().getFullYear()}
-              </span>
+
               <span>
                 {new Date().toLocaleDateString("en-GB", {
                   day: "2-digit",

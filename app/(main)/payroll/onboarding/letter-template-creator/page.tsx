@@ -627,7 +627,7 @@ export default function LetterCreatorPage() {
       CURRENT_CTC: SelectEmployeedata?.CURRENT_CTC
         ? `₹ ${Number(SelectEmployeedata.CURRENT_CTC).toLocaleString("en-IN")}`
         : SelectEmployeedata?.CTC || "",
-      PROBATION_PERIOD: SelectEmployeedata?.PROBATION_PERIOD || "6 Months",
+      PROBATION_PERIOD: SelectEmployeedata?.PROBATION_PERIOD ,
       PROBATION_:
         SelectEmployeedata?.PROBATION_ ||
         SelectEmployeedata?.PROBATION_PERIOD ||
@@ -1525,7 +1525,7 @@ export default function LetterCreatorPage() {
                     />
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    Click to append at the end of the letter
+                    Click to append at the end of the letter and Highlighted tokens have no data.
                   </p>
                 </div>
               </div>

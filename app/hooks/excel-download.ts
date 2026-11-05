@@ -11,9 +11,13 @@ function extractTextFromHtml(json) {
   if (typeof json === 'object' && json !== null) {
     // Check if json has a "children" property
     if (json.props && json.props.children) {
-      if (typeof json.props.children === 'string') {
-        return json.props.children; // If children is a string, return it
+      if (typeof json.props.children === 'string' || typeof json.props.children === 'number') {
+        return String(json.props.children);
       }
+
+
+
+
 
       // If children is an array, recursively extract text from each item
       if (Array.isArray(json.props.children)) {
@@ -48,7 +52,7 @@ const useExcelDownload = () => {
         columns.forEach(col => {
           const { accessor, Cell } = col;
           let value1;
-        
+
           if (accessor === "acnt_id") {
             // Directly take value from original object
             value1 = item[accessor];
@@ -67,7 +71,7 @@ const useExcelDownload = () => {
               }
             }
           }
-        
+
           if (typeof value1 === "string") {
             rowData[accessor] = value1;
           } else if (typeof value1 === "object" && value1 !== null) {
