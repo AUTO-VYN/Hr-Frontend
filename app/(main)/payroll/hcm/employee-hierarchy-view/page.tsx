@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
-import Image from "next/image";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import CustomSelectSearch from "@/components/atoms/Select";
@@ -17,12 +16,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MdOutlineRefresh } from "react-icons/md";
-import { FaArrowRightLong } from "react-icons/fa6";
 import {
   Users,
   Network,
-  // IdCard,
   User,
+  ArrowLeft,
+  GitFork,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +30,7 @@ const OrgChart = dynamic(() => import("@/components/atoms/OrgChart"), {
   ssr: false,
 });
 
-// Avatar color palettes for badges matching user design
+// Avatar color palettes for badges matching design
 const AVATAR_PALETTES = [
   {
     bg: "bg-[#EEF2FF] dark:bg-indigo-950/60",
@@ -473,39 +472,35 @@ const EmployeeHierarchyView = () => {
   // Chart data for Span of control
   const spanOfControlData = useMemo(() => {
     return [
-      { name: "Direct Reports", y: directReportsCount, color: "#6366f1" },
-      { name: "Total Under", y: totalUnderCount, color: "#0d9488" },
-      { name: "Same Dept", y: sameDeptCount, color: "#f59e0b" },
+      { name: "Direct", y: directReportsCount, color: "#4F46E5" },
+      { name: "Total", y: totalUnderCount, color: "#0D9488" },
+      { name: "Same Dept", y: sameDeptCount, color: "#F59E0B" },
     ];
   }, [directReportsCount, totalUnderCount, sameDeptCount]);
 
   return (
-    <div className="items-center grid grid-cols-12 p-3 sm:p-5">
-      {/* Top Header matching original HTML */}
-      <div className="col-span-12 rounded-t bg-white dark:bg-black px-6 py-2.5 border border-slate-200 dark:border-borderColor-dark shadow-xs">
-        <div className="flex justify-between items-center">
-          <h1 className="font-bold sm:text-sm md:text-base lg:text-lg text-slate-800 dark:text-[#37a9dd] flex items-center gap-x-3 uppercase">
-            <Image
-              src="/Payrollicon/Employee_Hierarchy_View.png"
-              alt="Autovyn"
-              width={25}
-              height={25}
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
-            />
-            Hierarchy Explorer
-          </h1>
+    <main className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] font-['Inter',system-ui,sans-serif] p-4 sm:p-6 space-y-4">
+      <div className="mx-auto max-w-[1700px] space-y-4">
+        {/* Header matching HTML prototype */}
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
+              Hierarchy explorer
+            </h1>
+            <p className="mt-1 text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+              Walk the reporting line up and down. Click any card to re-centre the tree on that person.
+            </p>
+          </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setViewMode("tree")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer",
+                  "px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition cursor-pointer select-none",
                   viewMode === "tree"
-                    ? "bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-white"
+                    ? "bg-white text-[#4F46E5] shadow-xs dark:bg-slate-900 dark:text-white"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                 )}
               >
@@ -515,9 +510,9 @@ const EmployeeHierarchyView = () => {
                 type="button"
                 onClick={() => setViewMode("orgchart")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer",
+                  "px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition cursor-pointer select-none",
                   viewMode === "orgchart"
-                    ? "bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-white"
+                    ? "bg-white text-[#4F46E5] shadow-xs dark:bg-slate-900 dark:text-white"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                 )}
               >
@@ -527,9 +522,9 @@ const EmployeeHierarchyView = () => {
                 type="button"
                 onClick={() => setViewMode("both")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer",
+                  "px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition cursor-pointer select-none",
                   viewMode === "both"
-                    ? "bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-white"
+                    ? "bg-white text-[#4F46E5] shadow-xs dark:bg-slate-900 dark:text-white"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                 )}
               >
@@ -538,109 +533,116 @@ const EmployeeHierarchyView = () => {
             </div>
 
             <Button
-              variant={"print"}
-              size={"md"}
-              className="text-sm font-medium h-10 px-5"
+              type="button"
+              variant={"outline"}
+              size={"sm"}
+              shape="rounded"
+              className="h-[36px] px-3.5 rounded-[10px] text-[12.5px] font-medium border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
               onClick={() => {
                 if (typeof window !== "undefined") {
                   window.history.back();
                 }
               }}
             >
+              <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
               Back
             </Button>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Main Container Card matching original HTML */}
-      <div className="col-span-12 mt-2 gap-3 rounded-b p-4 bg-white dark:bg-black border border-borderColor dark:border-borderColor-dark shadow">
-        {/* Top Controls Bar */}
-        <div className="mb-6">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[280px] max-w-md flex-1">
+        {/* Search & Actions Card */}
+        <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-3.5 sm:p-4 shadow-sm">
+          <div className="flex flex-wrap items-end gap-2.5 sm:gap-3">
+            <div className="w-full sm:min-w-[260px] sm:max-w-md sm:flex-1">
               <CustomSelectSearch
                 name="empcode"
-                title="Employee Code"
-                placeholder="Select Employee..."
+                title="Search Employee"
+                placeholder="Employee code or name..."
                 options={EMPLOYEE}
                 selectedValue={formData.empcode}
                 handleInputChange={handleChange}
               />
             </div>
-            <Button
-              onClick={fetchHeads}
-              variant={"save"}
-              size={"md"}
-              className="h-10 px-4 text-sm"
-              disabled={loadingFor}
-              title="Refresh / Fetch Details"
-            >
-              <MdOutlineRefresh className={cn("text-xl", loadingFor && "animate-spin")} />
-            </Button>
 
-            <Button
-              onClick={() => {
-                if (!formData.empcode) {
-                  showSideAlert("Please select an employee first.", "warning");
-                  return;
-                }
-                setIsModalOpen(true);
-              }}
-              variant={"save"}
-              size={"md"}
-              className="h-10 px-5 text-sm font-semibold"
-            >
-              + Add Relationship
-            </Button>
+            <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+              <Button
+                onClick={fetchHeads}
+                variant={"outline"}
+                size={"sm"}
+                shape="rounded"
+                className="h-[38px] flex-1 sm:flex-initial px-3.5 rounded-[10px] text-[12.5px] border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+                disabled={loadingFor}
+                title="Refresh / Fetch Details"
+              >
+                <MdOutlineRefresh className={cn("text-lg", loadingFor && "animate-spin")} />
+                <span className="ml-1.5 font-medium">Refresh</span>
+              </Button>
+
+              <Button
+                onClick={() => {
+                  if (!formData.empcode) {
+                    showSideAlert("Please select an employee first.", "warning");
+                    return;
+                  }
+                  setIsModalOpen(true);
+                }}
+                size={"sm"}
+                shape="rounded"
+                className="h-[38px] flex-1 sm:flex-initial px-4 rounded-[10px] text-[12.5px] font-semibold bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-sm active:scale-[0.98] whitespace-nowrap shrink-0"
+              >
+                + Add Relationship
+              </Button>
+            </div>
           </div>
-          <div>
-            <p className="pt-2 capitalize text-sm text-gray-700 dark:text-gray-300 font-medium">
-              Employee Name:-{" "}
-              {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.empcode)?.label?.toLowerCase() ||
-                formData.empcode ||
-                "None"}
-            </p>
-          </div>
+
+          {formData.empcode && (
+            <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[12px] text-[#64748B] dark:text-[#94A3B8]">
+              Selected:{" "}
+              <span className="font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
+                {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.empcode)?.label ||
+                  formData.empcode}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Main Grid Content (Reporting Line + Details) */}
+        {/* Main Grid: Left (Reporting Line) & Right (Details + Span of Control) */}
         {(viewMode === "tree" || viewMode === "both") && (
-          <div className="grid grid-cols-12 gap-5 items-start">
-            {/* Left Panel: Reporting Line (Main Tree Flow) */}
-            <div className="col-span-12 lg:col-span-8 rounded-lg border border-borderColor dark:border-borderColor-dark bg-white dark:bg-black p-4 sm:p-5 shadow">
-              {/* Header info */}
-              <div className="flex items-center justify-between pb-4 border-b border-borderColor dark:border-borderColor-dark">
-                <h2 className="text-base font-bold text-gray-900 dark:text-[#37a9dd] uppercase tracking-wide">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-3.5 items-start">
+            {/* Left Panel: Reporting line */}
+            <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-sm">
+              {/* Card Header */}
+              <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b border-[#E2E8F0] dark:border-[#1F2937]">
+                <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                   Reporting line
                 </h2>
-                <span className="text-xs font-medium text-gray-500">
+                <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
                   Level {activeLevel} of the org · {totalUnderCount} people under this line
                 </span>
               </div>
 
-              {/* Tree Flow Body */}
-              <div className="py-6 flex flex-col items-center">
+              {/* Tree Chain */}
+              <div className="flex flex-col items-center py-2">
                 {loadingFor ? (
-                  <div className="py-20 flex flex-col items-center justify-center gap-3 text-gray-400">
-                    <MdOutlineRefresh className="text-3xl animate-spin text-brand" />
-                    <p className="text-sm font-medium">Loading hierarchy chain...</p>
+                  <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#64748B]">
+                    <MdOutlineRefresh className="text-3xl animate-spin text-[#4F46E5]" />
+                    <p className="text-[13px] font-medium">Loading hierarchy chain...</p>
                   </div>
                 ) : !formData.empcode ? (
                   <div className="py-20 text-center max-w-sm">
-                    <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-slate-900 text-brand flex items-center justify-center mx-auto mb-3 border border-borderColor dark:border-borderColor-dark">
+                    <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#4F46E5] flex items-center justify-center mx-auto mb-3 border border-[#E2E8F0] dark:border-[#1F2937]">
                       <Network className="h-6 w-6" />
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-[14.5px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                       No Employee Selected
                     </h3>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-[12px] text-[#64748B] dark:text-[#94A3B8]">
                       Select an employee above and click Refresh to explore their reporting hierarchy.
                     </p>
                   </div>
                 ) : (
                   <div className="w-full flex flex-col items-center">
-                    {/* Upstream Heads (Manager chain above active person) */}
+                    {/* Upstream Managers Chain */}
                     {upstreamHeads.map((headItem: any, idx: number) => {
                       const avatarStyle = getAvatarStyle(
                         headItem.EmployeeName || headItem.empcode,
@@ -650,171 +652,156 @@ const EmployeeHierarchyView = () => {
                       const levelLabel = isTop ? "Top" : `L${idx + 1}`;
 
                       return (
-                        <React.Fragment key={headItem.empcode || idx}>
-                          <div
+                        <div key={headItem.empcode || idx} className="flex flex-col items-center w-full">
+                          <button
+                            type="button"
                             onClick={() => handleRecentre(headItem.empcode)}
-                            className="w-full max-w-md rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0B1220] p-3.5 shadow-2xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition flex items-center justify-between group"
+                            className="w-[300px] max-w-full flex items-center gap-[11px] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[11px] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] p-3 text-left shadow-2xs hover:border-[#4F46E5] transition cursor-pointer"
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                className={cn(
-                                  "h-10 w-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border",
-                                  avatarStyle.bg,
-                                  avatarStyle.text,
-                                  avatarStyle.border
-                                )}
-                              >
-                                {getInitials(headItem.EmployeeName)}
-                              </div>
-                              <div className="min-w-0">
-                                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand transition-colors">
-                                  {headItem.EmployeeName || `Employee ${headItem.empcode}`}
-                                </h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                  {getSubtitle(headItem)}
-                                </p>
-                              </div>
-                            </div>
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                            <span
+                              className={cn(
+                                "w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[11.5px] font-[650] border",
+                                avatarStyle.bg,
+                                avatarStyle.text,
+                                avatarStyle.border
+                              )}
+                            >
+                              {getInitials(headItem.EmployeeName)}
+                            </span>
+                            <span className="flex-1 min-w-0">
+                              <span className="block text-[13px] font-semibold truncate">
+                                {headItem.EmployeeName || `Employee ${headItem.empcode}`}
+                              </span>
+                              <span className="block text-[11.5px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 truncate">
+                                {getSubtitle(headItem)}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-[10.5px] font-bold text-[#64748B] dark:text-[#94A3B8] bg-[#F8FAFC] dark:bg-[#0E1524] px-2 py-0.5 rounded-full whitespace-nowrap border border-[#E2E8F0] dark:border-[#1F2937]">
                               {levelLabel}
                             </span>
-                          </div>
-
-                          {/* Vertical Connector Line */}
-                          <div className="w-[1.5px] h-6 bg-slate-200 dark:bg-slate-700" />
-                        </React.Fragment>
+                          </button>
+                          <span className="w-px h-5 bg-[#E2E8F0] dark:bg-[#1F2937]" />
+                        </div>
                       );
                     })}
 
-                    {/* Active / Currently Focused Employee Card (Click highlight - changes color on click) */}
-                    <div className="w-full max-w-md rounded-2xl border-2 border-indigo-600 dark:border-indigo-500 bg-[#EEF2FF]/70 dark:bg-indigo-950/30 p-5 shadow-xs">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="h-11 w-11 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                    {/* Active Focused Card (Highlighted Current Person) */}
+                    <div className="w-[340px] max-w-full border-2 border-[#4F46E5] dark:border-[#8B84FF] rounded-[12px] bg-[#EEF2FF] dark:bg-[#1E1B4B]/40 p-4 shadow-sm">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-[13px] font-[650] bg-[#4F46E5] text-white shadow-xs">
                           {getInitials(
                             activeNode?.EmployeeName ||
                               selectedEmployeeObj?.EmployeeName ||
                               selectedEmployeeObj?.label
                           )}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[14.5px] font-[650] text-[#1E293B] dark:text-[#E7ECF3] tracking-[-0.01em] truncate">
                             {activeNode?.EmployeeName ||
                               selectedEmployeeObj?.EmployeeName ||
                               selectedEmployeeObj?.label ||
                               formData.empcode}
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
-                            {getSubtitle(activeNode || selectedEmployeeObj) ||
-                              "Accounts Officer · Account"}
-                          </p>
+                          </div>
+                          <div className="text-[12px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 truncate">
+                            {getSubtitle(activeNode || selectedEmployeeObj) || "Employee"}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Stats divider line */}
-                      <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-indigo-900/50 grid grid-cols-3 gap-2 text-left">
+                      {/* 3 Stats: Direct, Total under, Grade */}
+                      <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-[#E2E8F0] dark:border-indigo-900/60 text-left">
                         <div>
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase">
                             DIRECT
-                          </span>
-                          <span className="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] mt-0.5 font-mono">
                             {directReportsCount}
-                          </span>
+                          </div>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase">
                             TOTAL UNDER
-                          </span>
-                          <span className="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] mt-0.5 font-mono">
                             {totalUnderCount}
-                          </span>
+                          </div>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase">
                             GRADE
-                          </span>
-                          <span className="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] mt-0.5 font-mono">
                             {selectedEmployeeObj?.Grade || selectedEmployeeObj?.grade || "L1"}
-                          </span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Below Active Card: Direct Reports or Empty State */}
+                    {/* Direct Reports Section or Empty State */}
                     {loading ? (
-                      <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
-                        <MdOutlineRefresh className="text-2xl animate-spin text-brand" />
-                        <span className="text-xs">Loading team members...</span>
+                      <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#64748B]">
+                        <MdOutlineRefresh className="text-2xl animate-spin text-[#4F46E5]" />
+                        <span className="text-[12px]">Loading team members...</span>
                       </div>
                     ) : successors.length > 0 ? (
-                      <div className="w-full flex flex-col items-center">
-                        {/* Connector Line & Reports Header Badge */}
-                        <div className="flex flex-col items-center my-3 relative w-full">
-                          <div className="w-[1.5px] h-8 bg-slate-200 dark:bg-slate-700" />
-                          <span className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#0B1220] border border-slate-200/90 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3.5 py-1 rounded-full shadow-2xs">
-                            {directReportsCount} Direct Reports
-                          </span>
-                        </div>
+                      <div className="flex flex-col items-center w-full">
+                        <span className="w-px h-5 bg-[#E2E8F0] dark:bg-[#1F2937]" />
+                        <span className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase mb-3">
+                          {directReportsCount} direct reports
+                        </span>
 
-                        {/* Direct Reports Grid */}
-                        <div className="w-full mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 w-full">
                           {successors.map((successor: any, sIdx: number) => {
                             const avatarStyle = getAvatarStyle(
                               successor.EmployeeName || successor.empcode,
                               sIdx + 2
                             );
+                            const count = Number(successor.total_under) || 0;
                             return (
-                              <div
+                              <button
                                 key={successor.empcode || sIdx}
+                                type="button"
                                 onClick={() => handleRecentre(successor.empcode)}
-                                className="p-3 bg-white dark:bg-[#0B1220] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition flex items-center justify-between group"
+                                className="flex items-center gap-2.5 border border-[#E2E8F0] dark:border-[#1F2937] rounded-[11px] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E7ECF3] p-2.5 sm:p-3 text-left min-w-0 shadow-2xs hover:border-[#4F46E5] hover:bg-[#F8FAFC] dark:hover:bg-[#0E1524] transition cursor-pointer"
                               >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div
-                                    className={cn(
-                                      "h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border",
-                                      avatarStyle.bg,
-                                      avatarStyle.text,
-                                      avatarStyle.border
-                                    )}
-                                  >
-                                    {getInitials(successor.EmployeeName)}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand transition-colors">
-                                      {successor.EmployeeName}
-                                    </h4>
-                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                      {getSubtitle(successor)}
-                                    </div>
-                                    <div className="text-[10px] text-slate-400">
-                                      Level: {successor.hierarchy_level || 1}
-                                    </div>
-                                  </div>
-                                </div>
-                                {successor.total_under && Number(successor.total_under) > 0 ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 shrink-0 border border-slate-200 dark:border-slate-700">
-                                    +{successor.total_under}
+                                <span
+                                  className={cn(
+                                    "w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10.5px] font-semibold border",
+                                    avatarStyle.bg,
+                                    avatarStyle.text,
+                                    avatarStyle.border
+                                  )}
+                                >
+                                  {getInitials(successor.EmployeeName)}
+                                </span>
+                                <span className="flex-1 min-w-0">
+                                  <span className="block text-[12.5px] font-[550] truncate">
+                                    {successor.EmployeeName}
                                   </span>
-                                ) : null}
-                              </div>
+                                  <span className="block text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 truncate">
+                                    {getSubtitle(successor)}
+                                  </span>
+                                </span>
+                                {count > 0 && (
+                                  <span className="shrink-0 text-[10.5px] font-semibold text-[#4F46E5] dark:text-[#8B84FF] bg-[#EEF2FF] dark:bg-[#1E1B4B] px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                    +{count}
+                                  </span>
+                                )}
+                              </button>
                             );
                           })}
                         </div>
                       </div>
                     ) : (
-                      <div className="w-full">
-                        {/* Horizontal dashed divider matching screenshot */}
-                        <div className="w-full my-6 border-t border-dashed border-slate-200 dark:border-slate-800" />
-                        <div className="py-4 flex flex-col items-center justify-center text-center">
-                          <div className="h-10 w-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-2.5">
-                            <Users className="h-5 w-5" />
-                          </div>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                            No team found
-                          </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            This employee has no direct reports.
-                          </p>
+                      <div className="w-full mt-5 p-7 border border-dashed border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] text-center">
+                        <span className="inline-grid place-items-center w-10 h-10 rounded-[11px] bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] mx-auto">
+                          <Users className="h-5 w-5" />
+                        </span>
+                        <div className="text-[13px] font-[550] text-[#1E293B] dark:text-[#E7ECF3] mt-3">
+                          No team found
+                        </div>
+                        <div className="text-[12px] text-[#64748B] dark:text-[#94A3B8] mt-1">
+                          This employee has no direct reports.
                         </div>
                       </div>
                     )}
@@ -823,167 +810,105 @@ const EmployeeHierarchyView = () => {
               </div>
             </div>
 
-            {/* Right Panel: Employee detail & Span of control */}
-            <div className="col-span-12 lg:col-span-4 space-y-5">
-              {/* Card 1: Employee Detail */}
-              <div className="rounded-lg border border-borderColor dark:border-borderColor-dark bg-white dark:bg-black p-4 sm:p-5 shadow">
-                <div className="flex items-center gap-2.5 pb-3 border-b border-borderColor dark:border-borderColor-dark">
-                  <div className="h-7 w-7 rounded bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand">
-                    {/* <IdCard className="h-4 w-4" /> */}
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-[#37a9dd] uppercase tracking-wide">
+            {/* Right Column: Employee detail & Span of control */}
+            <div className="space-y-3.5">
+              {/* Card 1: Employee detail */}
+              <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-4 sm:p-[18px] shadow-sm">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-[#E2E8F0] dark:border-[#1F2937]">
+                  <span className="w-6.5 h-6.5 rounded-lg flex items-center justify-center bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                    <User className="h-3.5 w-3.5" />
+                  </span>
+                  <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                     Employee detail
-                  </h3>
+                  </h2>
                 </div>
 
-                <div className="mt-4 space-y-2.5 text-xs sm:text-sm">
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400">Employee code</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right font-mono">
-                      {selectedEmployeeObj?.empcode ||
-                        selectedEmployeeObj?.value ||
-                        formData.empcode ||
-                        "—"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Name</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 capitalize text-right">
-                      {selectedEmployeeObj?.EmployeeName ||
-                        selectedEmployeeObj?.label ||
-                        "—"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Designation</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.Desg_Name ||
-                        selectedEmployeeObj?.designation ||
-                        "General Manager"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Department</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.Dept_Name ||
-                        selectedEmployeeObj?.department ||
-                        "Sales"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Branch</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.Loc_Name ||
-                        selectedEmployeeObj?.branch ||
-                        "Branch - 1"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Reports to</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.HeadName ||
-                        (upstreamHeads.length > 0
-                          ? upstreamHeads[upstreamHeads.length - 1]?.EmployeeName
-                          : "None")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Date of joining</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.DOJ ||
-                        selectedEmployeeObj?.Date_Of_Join ||
-                        "08 Jul 2026"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Mobile</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right font-mono">
-                      {selectedEmployeeObj?.Mobile_No ||
-                        selectedEmployeeObj?.mobile ||
-                        "9887312896"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-gray-600 dark:text-gray-400">Grade</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-right">
-                      {selectedEmployeeObj?.Grade || selectedEmployeeObj?.grade || "L1"}
-                    </span>
-                  </div>
+                <div className="mt-3.5 space-y-2 text-[12.5px]">
+                  {[
+                    ["Employee code", selectedEmployeeObj?.empcode || selectedEmployeeObj?.value || formData.empcode],
+                    ["Name", selectedEmployeeObj?.EmployeeName || selectedEmployeeObj?.label],
+                    ["Designation", selectedEmployeeObj?.Desg_Name || selectedEmployeeObj?.designation || "—"],
+                    ["Department", selectedEmployeeObj?.Dept_Name || selectedEmployeeObj?.department || "—"],
+                    ["Branch", selectedEmployeeObj?.Loc_Name || selectedEmployeeObj?.branch || "—"],
+                    ["Reports to", selectedEmployeeObj?.HeadName || (upstreamHeads.length > 0 ? upstreamHeads[upstreamHeads.length - 1]?.EmployeeName : "—")],
+                    ["Date of joining", selectedEmployeeObj?.DOJ || selectedEmployeeObj?.Date_Of_Join || "—"],
+                    ["Mobile", selectedEmployeeObj?.Mobile_No || selectedEmployeeObj?.mobile || "—"],
+                    ["Grade", selectedEmployeeObj?.Grade || selectedEmployeeObj?.grade || "L1"],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex gap-2.5 items-baseline py-1">
+                      <span className="flex-none w-[108px] text-[#64748B] dark:text-[#94A3B8]">
+                        {label}
+                      </span>
+                      <span className="flex-1 min-w-0 font-medium text-[#1E293B] dark:text-[#E7ECF3] text-right truncate">
+                        {val || "—"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Card 2: Span of Control */}
-              <div className="rounded-lg border border-borderColor dark:border-borderColor-dark bg-white dark:bg-black p-4 sm:p-5 shadow">
-                <div className="flex items-center gap-2.5 pb-3 border-b border-borderColor dark:border-borderColor-dark">
-                  <div className="h-7 w-7 rounded bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand">
-                    <Network className="h-4 w-4" />
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-[#37a9dd] uppercase tracking-wide">
+              {/* Card 2: Span of control (Matching HTML + Screenshot 2) */}
+              <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-4 sm:p-[18px] shadow-sm">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-[#E2E8F0] dark:border-[#1F2937]">
+                  <span className="w-6.5 h-6.5 rounded-lg flex items-center justify-center bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                    <GitFork className="h-3.5 w-3.5" />
+                  </span>
+                  <h2 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                     Span of control
-                  </h3>
+                  </h2>
                 </div>
 
-                {/* Progress bars */}
-                <div className="mt-4 space-y-3.5">
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      <span>Direct reports</span>
-                      <span className="text-gray-900 dark:text-white font-bold">
-                        {directReportsCount}
+                <div className="mt-3.5 space-y-2.5">
+                  {[
+                    {
+                      label: "Direct reports",
+                      value: directReportsCount,
+                      width: Math.min(100, directReportsCount * 20) + "%",
+                      tint: "#4F46E5",
+                    },
+                    {
+                      label: "Total under",
+                      value: totalUnderCount,
+                      width: Math.min(100, totalUnderCount * 12) + "%",
+                      tint: "#0D9488",
+                    },
+                    {
+                      label: "Same department",
+                      value: sameDeptCount,
+                      width: Math.min(100, sameDeptCount * 15) + "%",
+                      tint: "#F59E0B",
+                    },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      className="grid grid-cols-[120px_minmax(0,1fr)_44px] items-center gap-2.5 py-1"
+                    >
+                      <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] truncate">
+                        {s.label}
+                      </span>
+                      <span className="block h-[6px] rounded-full bg-[#F1F5F9] dark:bg-[#0E1524] relative overflow-hidden">
+                        <span
+                          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                          style={{
+                            width: s.width,
+                            backgroundColor: s.tint,
+                          }}
+                        />
+                      </span>
+                      <span className="text-[11.5px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] tabular-nums text-right font-mono">
+                        {s.value}
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(100, (directReportsCount / Math.max(totalUnderCount || 1, 6)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      <span>Total under</span>
-                      <span className="text-gray-900 dark:text-white font-bold">
-                        {totalUnderCount}
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-teal-600 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(100, (totalUnderCount / Math.max(totalUnderCount || 1, 6)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      <span>Same department</span>
-                      <span className="text-gray-900 dark:text-white font-bold">
-                        {sameDeptCount}
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(100, (sameDeptCount / Math.max(totalUnderCount || 1, 6)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Integrated Highcharts BarChart from @/components/atoms/chart */}
-                <div className="mt-4 pt-3 border-t border-borderColor dark:border-borderColor-dark">
+                {/* Highcharts BarChart underneath (as shown in Screenshot 2) */}
+                <div className="mt-4 pt-3.5 border-t border-[#E2E8F0] dark:border-[#1F2937]">
                   <BarChart
                     height={140}
                     categories={["Direct", "Total", "Same Dept"]}
                     data={spanOfControlData}
-                    colors={["#6366f1", "#0d9488", "#f59e0b"]}
+                    colors={["#4F46E5", "#0D9488", "#F59E0B"]}
                     showGridLines={false}
                     showLegend={false}
                     showDataLabels={true}
@@ -997,24 +922,28 @@ const EmployeeHierarchyView = () => {
 
         {/* Graphical Org Chart View (ApexTree OrgChart component) */}
         {(viewMode === "orgchart" || viewMode === "both") && (
-          <div className="mt-4 rounded-lg border border-borderColor dark:border-borderColor-dark bg-white dark:bg-black p-4 shadow">
-            <div className="flex items-center justify-between pb-3 border-b border-borderColor dark:border-borderColor-dark">
-              <div className="flex items-center gap-2">
-                <Network className="h-5 w-5 text-brand" />
-                <h3 className="text-base font-bold text-gray-900 dark:text-[#37a9dd] uppercase">
-                  Organizational Chart
+          <div className="rounded-[12px] border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] p-5 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#1F2937]">
+              <div className="flex items-center gap-2.5">
+                <span className="w-6.5 h-6.5 rounded-lg flex items-center justify-center bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
+                  <Network className="h-3.5 w-3.5" />
+                </span>
+                <h3 className="text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
+                  Organizational chart
                 </h3>
               </div>
-              <span className="text-xs text-gray-500">ApexTree View</span>
+              <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
+                ApexTree View
+              </span>
             </div>
 
             <div className="mt-4 overflow-x-auto min-h-[350px]">
               {TeamView && TeamView.length > 0 ? (
                 <OrgChart data={TeamView} key={JSON.stringify(TeamView)} />
               ) : (
-                <div className="py-16 text-center text-gray-400">
-                  <p className="text-sm font-medium">No graphical tree data to render.</p>
-                  <p className="text-xs mt-1">Please select an employee and fetch hierarchy data.</p>
+                <div className="py-16 text-center text-[#64748B]">
+                  <p className="text-[13px] font-medium">No graphical tree data to render.</p>
+                  <p className="text-[11.5px] mt-1">Please select an employee and fetch hierarchy data.</p>
                 </div>
               )}
             </div>
@@ -1024,40 +953,45 @@ const EmployeeHierarchyView = () => {
 
       {/* Dialog for Adding Employee Under current person */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-full max-w-screen-md bg-white dark:bg-black border border-borderColor dark:border-borderColor-dark !shadow-none p-6 rounded-lg">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] !shadow-none shadow-none p-4 sm:p-6 rounded-[12px] focus:outline-none">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900 dark:text-[#37a9dd] uppercase">
+            <DialogTitle className="text-[14px] sm:text-[15px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] leading-snug break-words">
               Add Employee Under{" "}
-              {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.empcode)?.label?.toLowerCase() ||
-                formData.empcode}
+              <span className="text-[#4F46E5] font-bold">
+                {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.empcode)?.label ||
+                  formData.empcode}
+              </span>
             </DialogTitle>
-            <hr className="bg-body-color my-2 border-borderColor dark:border-borderColor-dark" />
-            <DialogDescription className="space-y-3 pt-2">
-              <CustomSelectSearch
-                name="HeadUnder"
-                title="Select employee to add under"
-                placeholder="Search employee..."
-                options={EMPLOYEE}
-                selectedValue={formData.HeadUnder}
-                handleInputChange={handleChange}
-                usePortal={false}
-              />
+            <div className="my-2 border-b border-[#E2E8F0] dark:border-[#1F2937]" />
+            <DialogDescription className="space-y-3 pt-2 text-left">
+              <div className="w-full">
+                <CustomSelectSearch
+                  name="HeadUnder"
+                  title="Select employee to add under"
+                  placeholder="Search employee..."
+                  options={EMPLOYEE}
+                  selectedValue={formData.HeadUnder}
+                  handleInputChange={handleChange}
+                  usePortal={false}
+                />
+              </div>
 
               <div>
-                <p className="pt-2 capitalize text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  Employee Name:-{" "}
-                  {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.HeadUnder)?.label?.toLowerCase() ||
-                    formData.HeadUnder ||
-                    "None"}
+                <p className="pt-1 text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+                  Employee Name:{" "}
+                  <span className="font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
+                    {EMPLOYEE?.find((i: any) => (i.value ?? i.EmpCode) == formData.HeadUnder)?.label ||
+                      formData.HeadUnder ||
+                      "None"}
+                  </span>
                 </p>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex justify-end">
                 <Button
                   loading={isAddLoader}
-                  variant={"save"}
-                  size={"md"}
-                  className="h-10 rounded px-6 text-sm font-semibold"
+                  shape="rounded"
+                  className="h-[38px] px-6 rounded-[10px] text-[12.5px] font-semibold bg-[#4F46E5] hover:bg-[#4338CA] text-white !shadow-none active:scale-[0.98] cursor-pointer"
                   onClick={AddHeirarchy}
                 >
                   Add
@@ -1067,7 +1001,7 @@ const EmployeeHierarchyView = () => {
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 };
 

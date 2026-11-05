@@ -156,13 +156,13 @@ export default function EmployeeAssetPage() {
   // Asset list (combines issued and new rows to issue)
   const [services, setServices] = useState<any[]>([
     {
-      Asset_category: "IT",
+      Asset_category: "",
       It_category: "",
       Asset_Serial_no: "",
       Aset_Code: "",
       Aset_Name: "",
-      Asset_Type: "Fixed",
-      Issue_Date: new Date().toISOString().split("T")[0],
+      Asset_Type: "",
+      Issue_Date: "",
       Revoke_Date: "",
       Lost_Date: "",
       Revoke_Rem: "",
@@ -452,13 +452,13 @@ export default function EmployeeAssetPage() {
           }) || [];
 
         const emptyRow = {
-          Asset_category: "IT",
+          Asset_category: "",
           It_category: "",
           Asset_Serial_no: "",
           Aset_Code: "",
           Aset_Name: "",
-          Asset_Type: "Fixed",
-          Issue_Date: new Date().toISOString().split("T")[0],
+          Asset_Type: "",
+          Issue_Date: "",
           Revoke_Date: "",
           Lost_Date: "",
           Revoke_Rem: "",
@@ -473,13 +473,13 @@ export default function EmployeeAssetPage() {
       } catch (e: any) {
         console.error("Error loading employee asset details:", e);
         const fallbackRow = {
-          Asset_category: "IT",
+          Asset_category: "",
           It_category: "",
           Asset_Serial_no: "",
           Aset_Code: "",
           Aset_Name: "",
-          Asset_Type: "Fixed",
-          Issue_Date: new Date().toISOString().split("T")[0],
+          Asset_Type: "",
+          Issue_Date: "",
           Revoke_Date: "",
           Lost_Date: "",
           Revoke_Rem: "",
@@ -509,13 +509,13 @@ export default function EmployeeAssetPage() {
     setServices((prev) => [
       ...prev,
       {
-        Asset_category: "IT",
+        Asset_category: "",
         It_category: "",
         Asset_Serial_no: "",
         Aset_Code: "",
         Aset_Name: "",
-        Asset_Type: "Fixed",
-        Issue_Date: new Date().toISOString().split("T")[0],
+        Asset_Type: "",
+        Issue_Date: "",
         Revoke_Date: "",
         Lost_Date: "",
         Revoke_Rem: "",
@@ -1299,7 +1299,7 @@ export default function EmployeeAssetPage() {
                           handleInputChange={(name, value) =>
                             handleChangesubcategory(name, value, actualIndex)
                           }
-                          initialValue={service.Asset_Type || "Fixed"}
+                          initialValue={service.Asset_Type || ""}
                           placeholder="Select"
                           className="!h-10 !text-xs sm:!text-[13px] !bg-[#FFFDF7] dark:!bg-[#181E2B] !border-[#F59E0B]/70 dark:!border-[#F59E0B]/50 !rounded-xl shadow-2xs"
                         />

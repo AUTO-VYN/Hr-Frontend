@@ -145,7 +145,7 @@ export default function EmpLocTranshfr() {
   const user = useCurrentUser();
 
   const [expandedRows, setExpandedRows] = useState<(number | string)[]>([]);
-  const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [remark, setRemark] = useState("");
 
   const [dateFrom, setDateFrom] = useState(getCurrentDate(1));
@@ -615,20 +615,33 @@ export default function EmpLocTranshfr() {
           ? "/employee/approvechangeLoc"
           : "/employee/rejectchangeLoc";
 
-      const result = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}${endpoint}`,
-        {
-          tran_id: selectedRows,
-          Appr_Code: user.EMPCODE,
-          Remark: remark.trim(),
-        },
-        {
-          headers: {
-            compcode: user.Comp_Code,
-            name: user.name,
-          },
-        },
-      );
+    const formattedTranId = selectedRows.map((id: any) => {
+      const rowId =
+        typeof id === "object" && id !== null ? (id.id ?? id.UTD) : id;
+      const row =
+        typeof id === "object" && id?.rowData
+          ? id.rowData
+          : transferRequests.find((item) => item.UTD === rowId) || id;
+  return {
+    id: rowId,
+    rowData: row || {},
+  };
+});
+// 2. Payload me formattedTranId pass karein
+const result = await axios.post(
+  `${process.env.NEXT_PUBLIC_URL}${endpoint}`,
+  {
+    tran_id: formattedTranId,
+    Appr_Code: user.EMPCODE,
+    Remark: remark.trim() || null,
+  },
+  {
+    headers: {
+      compcode: user.Comp_Code,
+      name: user.name,
+    },
+  },
+);
 
       const response = result.data;
 
@@ -1151,9 +1164,15 @@ export default function EmpLocTranshfr() {
               <div className="min-w-0 w-full">
                 <ServiceTablePagination
                   title="Location Transfer Requests"
-                  columns={transferColumns}
+                  columns={transferColumns.filter(
+                    (col: any) => col.accessor !== "select",
+                  )}
                   data={filteredRequests}
                   initialPageSize={10}
+                  check={status === "Pending"}
+                  selectValue="UTD"
+                  selectedRows={selectedRows}
+                  setSelectedRows={setSelectedRows}
                   showPageSizeInFooter
                   containerClassName="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border border-[#E2E8F0] dark:border-[#1F2937]"
                 />
