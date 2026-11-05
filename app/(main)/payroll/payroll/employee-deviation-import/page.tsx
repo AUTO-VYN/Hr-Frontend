@@ -14,15 +14,12 @@ import {
   CalendarX2,
   Copy,
   X,
-  FileSpreadsheet,
 } from "lucide-react";
 
 import axios from "axios";
 import Swal from "sweetalert2";
 
-import Image from "next/image";
-
-import { Button } from "@/components/ui/button";
+import AButton from "@/components/atoms/Button";
 import DataTable from "@/components/Templates/reactTable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -50,12 +47,14 @@ type ImportSummary = {
   total: number;
   imported: number;
   rejected: number;
+  sentToApprover: number;
 };
 
 const EMPTY_SUMMARY: ImportSummary = {
   total: 0,
   imported: 0,
   rejected: 0,
+  sentToApprover: 0,
 };
 
 const REJECT_REASONS = [
@@ -112,28 +111,34 @@ const SummaryRow = ({
   valueStyle,
 }: {
   label: string;
-  value: number;
+  value: string | number;
   icon: React.ElementType;
   iconStyle: string;
   valueStyle: string;
-}) => (
-  <div className="flex items-center justify-between rounded-[13px] border border-[var(--border)] bg-[var(--card)] px-[12px] py-[11px]">
-    <div className="flex items-center gap-[12px]">
-      <span
-        className={`flex h-[30px] w-[30px] items-center justify-center rounded-[9px] ${iconStyle}`}
-      >
-        <Icon size={15} />
+}) => {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-[15px] border border-[#e2e8f0] bg-[#f8fafc] px-[16px] py-[14px] dark:border-slate-700 dark:bg-slate-800">
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={`flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[12px] ${iconStyle}`}
+        >
+          <Icon size={19} />
+        </div>
+
+        <span className="truncate text-[14px] font-medium text-slate-600 dark:text-slate-200">
+          {label}
+        </span>
+      </div>
+
+      <span className={`shrink-0 text-[20px] font-bold ${valueStyle}`}>
+        {value}
       </span>
-
-      <span className="text-[13px] text-[var(--muted)]">{label}</span>
     </div>
-
-    <span className={`text-[14px] font-[750] ${valueStyle}`}>{value}</span>
-  </div>
-);
+  );
+};
 
 /* =========================================================
-   STATUS BADGE
+   RESULT BADGE
 ========================================================= */
 
 const ResultBadge = ({ status }: { status?: string }) => {
@@ -271,13 +276,11 @@ export default function Approver2() {
 
       const formData = new FormData();
 
-      // Original API payload
       formData.append("excel", file, file.name);
       formData.append("user", user?.id);
       formData.append("branch", user?.branch);
       formData.append("CREATED_BY", user?.EMPCODE);
 
-      // Original API
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/ars/importEmpDevation`,
         formData,
@@ -411,12 +414,11 @@ export default function Approver2() {
         width: 140,
         Cell: ({ row, value }: any) => {
           const days = value ?? row.original.DeviationDays;
-
           const number = Number(days);
 
           return (
             <div
-              className={`text-right text-[13px] font-[750] ${
+              className={`w-full whitespace-nowrap text-center text-[13px] font-[750] ${
                 number >= 0 ? "text-emerald-600" : "text-rose-500"
               }`}
             >
@@ -456,12 +458,6 @@ export default function Approver2() {
       <div className="mb-[17px] flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="m-0 flex items-center gap-3 text-[22px] font-[750] leading-tight tracking-[-0.02em]">
-            <Image
-              src="/Payrollicon/Excel_Import.png"
-              alt="Autovyn"
-              width={28}
-              height={28}
-            />
             Employee Deviation Excel Import
           </h1>
 
@@ -472,13 +468,7 @@ export default function Approver2() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="save" onClick={showdata}>
-            Download Sample
-          </Button>
-
-          <Button variant="print" onClick={() => window.history.back()}>
-            Back
-          </Button>
+          <AButton onClick={showdata}>Download Sample</AButton>
         </div>
       </div>
 
@@ -512,11 +502,11 @@ export default function Approver2() {
                 onDrop={handleDrop}
                 className={`flex h-[46px] min-w-0 flex-1 cursor-pointer items-center gap-[12px] rounded-[10px] border border-dashed px-[14px] transition ${
                   isDragging
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-[var(--border)] bg-[var(--field)] hover:border-indigo-400"
+                    ? "border-slate-500 bg-slate-100"
+                    : "border-[var(--border)] bg-[var(--field)] hover:border-slate-400"
                 }`}
               >
-                <Paperclip size={16} className="shrink-0 text-[var(--muted)]" />
+                <Paperclip size={16} className="shrink-0 text-slate-600" />
 
                 <span className="min-w-0 flex-1 truncate text-[13px] font-[650] text-[var(--fg)]">
                   {file ? file.name : "Choose an Excel file (.xlsx / .xls)"}
@@ -549,15 +539,16 @@ export default function Approver2() {
                 />
               </div>
 
-              <Button
-                variant="save"
+              {/* IMPORT BUTTON */}
+
+              <AButton
                 onClick={handleImport}
                 disabled={!file || isLoading}
-                className="inline-flex h-[44px] items-center justify-center gap-2 rounded-[10px] px-[20px] disabled:cursor-not-allowed disabled:opacity-60"
+                className="!inline-flex !h-[38px] !items-center !justify-center !gap-[7px] !rounded-[10px] !bg-slate-600 !px-[16px] !text-[13px] !font-[650] !text-white hover:!bg-slate-600 focus:!bg-slate-600 active:!bg-slate-600 disabled:!cursor-not-allowed disabled:!opacity-60"
               >
-                <Upload size={15} />
+                <Upload size={15} className="text-white" />
                 Import
-              </Button>
+              </AButton>
             </div>
 
             <div className="mt-[16px] flex items-center gap-[10px] border-t border-[var(--border)] pt-[14px]">
@@ -574,11 +565,11 @@ export default function Approver2() {
 
           {!hasImported ? (
             <div className="flex min-h-[258px] flex-col items-center justify-center rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--card)] px-[20px] py-[40px] text-center">
-              <span className="flex h-[50px] w-[50px] items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--card)] text-[var(--muted)]">
-                <FileSpreadsheet size={22} />
-              </span>
+              <div className="mb-[10px] grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[14px] bg-slate-100 text-slate-600">
+                <UploadCloud size={22} strokeWidth={1.8} />
+              </div>
 
-              <h3 className="mb-0 mt-[16px] text-[14.5px] font-[700] text-[var(--fg)]">
+              <h3 className="mb-0 mt-[12px] text-[14.5px] font-[700] text-[var(--fg)]">
                 Nothing imported yet
               </h3>
 
@@ -647,39 +638,49 @@ export default function Approver2() {
         {/* RIGHT COLUMN */}
 
         <aside className="space-y-[14px]">
+          
+
           {/* IMPORT SUMMARY */}
 
-          <div className="rounded-[16px] border border-[var(--border)] bg-[var(--card)] p-[18px] shadow-[var(--shadow)]">
-            <p className="mb-[14px] mt-0 text-[11.5px] font-[700] tracking-[0.03em] text-[var(--muted)]">
-              IMPORT SUMMARY
-            </p>
+         <div className="rounded-[16px] border border-[#dce5f1] bg-white p-[20px] shadow-[0_2px_8px_rgba(15,23,42,0.05)] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
+  <p className="mb-[14px] mt-0 text-[13px] font-bold tracking-[0.02em] text-[#647895] dark:text-slate-400">
+    IMPORT SUMMARY
+  </p>
 
-            <div className="space-y-[10px]">
-              <SummaryRow
-                label="Rows in file"
-                value={summary.total}
-                icon={Rows3}
-                iconStyle="bg-indigo-50 text-indigo-600"
-                valueStyle="text-indigo-600"
-              />
+  <div className="space-y-[11px]">
+    <SummaryRow
+      label="Rows in file"
+      value={summary.total}
+      icon={Rows3}
+      iconStyle="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
+      valueStyle="text-indigo-600 dark:text-indigo-400"
+    />
 
-              <SummaryRow
-                label="Imported"
-                value={summary.imported}
-                icon={CheckCircle2}
-                iconStyle="bg-emerald-50 text-emerald-500"
-                valueStyle="text-emerald-600"
-              />
+    <SummaryRow
+      label="Imported"
+      value={summary.imported}
+      icon={CheckCircle2}
+      iconStyle="bg-emerald-100 text-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400"
+      valueStyle="text-emerald-500 dark:text-emerald-400"
+    />
 
-              <SummaryRow
-                label="Non-Imported"
-                value={summary.rejected}
-                icon={XCircle}
-                iconStyle="bg-rose-50 text-rose-500"
-                valueStyle="text-rose-600"
-              />
-            </div>
-          </div>
+    <SummaryRow
+      label="Rejected"
+      value={summary.rejected}
+      icon={XCircle}
+      iconStyle="bg-rose-100 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400"
+      valueStyle="text-rose-500 dark:text-rose-400"
+    />
+
+    <SummaryRow
+      label="Sent to approver"
+      value={summary.sentToApprover}
+      icon={Upload}
+      iconStyle="bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
+      valueStyle="text-violet-600 dark:text-violet-400"
+    />
+  </div>
+</div>
 
           {/* REJECTION REASONS */}
 

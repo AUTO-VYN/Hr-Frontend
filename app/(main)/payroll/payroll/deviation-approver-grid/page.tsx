@@ -1166,6 +1166,22 @@ export default function SalaryPaidDaysDeviationApprovals() {
           );
         },
       },
+      
+      {
+        Header: "FINAL DAYS",
+        id: "finalDays",
+        accessor: "APPR_DEV_DAYS",
+        width: 100,
+        Cell: ({ row }: any) => {
+          const item: DeviationRequest = row.original;
+
+          return (
+            <div className="text-center text-[12px] font-[750] text-[var(--fg)]">
+              {formatDays(getFinalDays(item, devDays))}
+            </div>
+          );
+        },
+      },
       {
         Header: "AMOUNT IMPACT",
         id: "amountImpact",
@@ -1200,21 +1216,6 @@ export default function SalaryPaidDaysDeviationApprovals() {
                     ? "Calculating..."
                     : "Salary unavailable"}
               </p>
-            </div>
-          );
-        },
-      },
-      {
-        Header: "FINAL DAYS",
-        id: "finalDays",
-        accessor: "APPR_DEV_DAYS",
-        width: 100,
-        Cell: ({ row }: any) => {
-          const item: DeviationRequest = row.original;
-
-          return (
-            <div className="text-center text-[12px] font-[750] text-[var(--fg)]">
-              {formatDays(getFinalDays(item, devDays))}
             </div>
           );
         },
@@ -1411,7 +1412,7 @@ export default function SalaryPaidDaysDeviationApprovals() {
           label="Pending with you"
           value={String(pendingRequests.length)}
           description="Pending deviation requests"
-          dotColor="bg-amber-500"
+          dotColor="bg-yellow-500"
         />
 
         <SummaryCard

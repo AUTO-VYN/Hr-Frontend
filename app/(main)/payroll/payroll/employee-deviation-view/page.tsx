@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -23,6 +24,7 @@ type DeviationRow = {
   EMPNAME?: string;
   EMPFIRSTNAME?: string;
   EMPLASTNAME?: string;
+  EMPMST?: any;
   EmpMst?: {
     EMPFIRSTNAME?: string;
     EMPLASTNAME?: string;
@@ -68,6 +70,7 @@ const currentYear = new Date().getFullYear();
 
 const YEAR_OPTIONS = Array.from({ length: 6 }, (_, index) => {
   const year = currentYear - 4 + index;
+
   return {
     label: String(year),
     value: String(year),
@@ -82,7 +85,6 @@ const getEmployeeName = (item: DeviationRow) => {
   if (item.EMPNAME) return item.EMPNAME;
 
   const first = item.EmpMst?.EMPFIRSTNAME || item.EMPFIRSTNAME || "";
-
   const last = item.EmpMst?.EMPLASTNAME || item.EMPLASTNAME || "";
 
   return `${first} ${last}`.trim() || item.EMPCODE || "-";
@@ -91,13 +93,8 @@ const getEmployeeName = (item: DeviationRow) => {
 const getStatus = (item: DeviationRow): StatusType => {
   const status = item.status_khud_ka;
 
-  if (status === 1 || status === "1") {
-    return "approved";
-  }
-
-  if (status === 0 || status === "0") {
-    return "rejected";
-  }
+  if (status === 1 || status === "1") return "approved";
+  if (status === 0 || status === "0") return "rejected";
 
   return "pending";
 };
@@ -146,7 +143,7 @@ const StatusBadge = ({ type }: { type: StatusType }) => {
 
   return (
     <span
-      className={`inline-flex whitespace-nowrap rounded-full px-[9px] py-[3px] text-[10.5px] font-[700] ${config.style}`}
+      className={`inline-flex whitespace-nowrap rounded-full px-[7px] py-[2px] text-[10px] font-[700] ${config.style}`}
     >
       {config.label}
     </span>
@@ -154,7 +151,7 @@ const StatusBadge = ({ type }: { type: StatusType }) => {
 };
 
 /* =========================================================
-   SUMMARY CARD
+   SUMMARY CARD - COMPACT
 ========================================================= */
 
 const SummaryCard = ({
@@ -168,20 +165,20 @@ const SummaryCard = ({
   description: string;
   dotColor: string;
 }) => (
-  <div className="min-w-0 rounded-[16px] border border-[var(--border)] bg-[var(--card)] px-[18px] py-[15px] shadow-[var(--shadow)]">
-    <div className="flex items-center gap-[8px]">
-      <span className={`h-[7px] w-[7px] rounded-full ${dotColor}`} />
+  <div className="min-w-0 rounded-[11px] border border-[var(--border)] bg-[var(--card)] px-[12px] py-[10px] shadow-[var(--shadow)]">
+    <div className="flex items-center gap-[7px]">
+      <span className={`h-[6px] w-[6px] rounded-full ${dotColor}`} />
 
-      <p className="m-0 text-[12.5px] font-[500] text-[var(--muted)]">
+      <p className="m-0 text-[11px] font-[500] text-[var(--muted)]">
         {label}
       </p>
     </div>
 
-    <h2 className="mb-0 mt-[8px] text-[26px] font-[750] leading-none text-[var(--fg)]">
+    <h2 className="mb-0 mt-[6px] text-[21px] font-[750] leading-none text-[var(--fg)]">
       {value}
     </h2>
 
-    <p className="mb-0 mt-[8px] text-[12px] text-[var(--muted)]">
+    <p className="mb-0 mt-[5px] text-[10px] text-[var(--muted)]">
       {description}
     </p>
   </div>
@@ -197,15 +194,10 @@ export default function EmployeeDeviationView() {
   const now = new Date();
 
   const [month, setMonth] = useState(String(now.getMonth() + 1));
-
   const [year, setYear] = useState(String(now.getFullYear()));
-
   const [search, setSearch] = useState("");
-
   const [rows, setRows] = useState<DeviationRow[]>([]);
-
   const [isLoading, setIsLoading] = useState(false);
-
   const [sortAscending, setSortAscending] = useState(true);
 
   const [loadedPeriod, setLoadedPeriod] = useState(
@@ -253,12 +245,10 @@ export default function EmployeeDeviationView() {
           filterData: {
             DATE_FROM: selectedMonth,
             DATE_TO: selectedYear,
-
             DedType: null,
             Region: null,
             Cluster: null,
             Channel: null,
-
             loc_code: user?.branch,
           },
         },
@@ -272,7 +262,8 @@ export default function EmployeeDeviationView() {
 
       console.log("Employee Deviation API Response:", response.data);
 
-      const responseData = response?.data?.result || response?.data?.data || [];
+      const responseData =
+        response?.data?.result || response?.data?.data || [];
 
       setRows(Array.isArray(responseData) ? responseData : []);
 
@@ -311,7 +302,6 @@ export default function EmployeeDeviationView() {
     const today = new Date();
 
     const resetMonth = String(today.getMonth() + 1);
-
     const resetYear = String(today.getFullYear());
 
     setMonth(resetMonth);
@@ -332,12 +322,8 @@ export default function EmployeeDeviationView() {
 
         return (
           getEmployeeName(item).toLowerCase().includes(text) ||
-          String(item.EMPCODE || "")
-            .toLowerCase()
-            .includes(text) ||
-          String(item.Created_By || "")
-            .toLowerCase()
-            .includes(text)
+          String(item.EMPCODE || "").toLowerCase().includes(text) ||
+          String(item.Created_By || "").toLowerCase().includes(text)
         );
       })
       .sort((a, b) => {
@@ -404,15 +390,12 @@ export default function EmployeeDeviationView() {
     });
 
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement("a");
 
     link.href = url;
-
     link.download = `employee-deviations-${loadedPeriod.replace(" ", "-")}.csv`;
 
     link.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -425,31 +408,35 @@ export default function EmployeeDeviationView() {
           <button
             type="button"
             onClick={() => setSortAscending((previous) => !previous)}
-            className="inline-flex items-center gap-[4px] whitespace-nowrap text-[10.5px] font-[750] tracking-[0.04em] text-indigo-600"
+            className="inline-flex items-center gap-[4px] whitespace-nowrap text-[10px] font-[750] tracking-[0.04em] text-indigo-600"
           >
             EMPLOYEE
-            {sortAscending ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+            {sortAscending ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
           </button>
         ),
 
         id: "employee",
         accessor: "EMPCODE",
-        width: 320,
+        width: 300,
 
         Cell: ({ row }: any) => {
           const item: DeviationRow = row.original;
 
-          const subtitle = [item.DEPT_NAME, item.BRANCH_NAME, item.EMPCODE]
+          const subtitle = [
+            item.DEPT_NAME,
+            item.BRANCH_NAME,
+            item.EMPCODE,
+          ]
             .filter(Boolean)
             .join(" · ");
 
           return (
-            <div className="min-w-[220px] py-[3px]">
-              <p className="m-0 whitespace-nowrap text-[13px] font-[700] text-[var(--fg)]">
+            <div className="min-w-[210px] py-[1px]">
+              <p className="m-0 whitespace-nowrap text-[11.5px] font-[700] leading-[16px] text-[var(--fg)]">
                 {getEmployeeName(item)}
               </p>
 
-              <p className="mb-0 mt-[3px] whitespace-nowrap text-[11.5px] text-[var(--muted)]">
+              <p className="mb-0 mt-[2px] whitespace-nowrap text-[10px] leading-[14px] text-[var(--muted)]">
                 {subtitle || "-"}
               </p>
             </div>
@@ -460,13 +447,14 @@ export default function EmployeeDeviationView() {
       {
         Header: "DEVIATION DAYS",
         accessor: "DEV_DAYS",
-        width: 150,
+        width: 140,
+
         Cell: ({ value }: any) => {
           const days = Number(value || 0);
 
           return (
             <div
-              className={`w-full text-center text-[13px] font-[750] ${
+              className={`w-full text-center text-[11.5px] font-[750] ${
                 days >= 0 ? "text-emerald-600" : "text-rose-500"
               }`}
             >
@@ -479,10 +467,10 @@ export default function EmployeeDeviationView() {
       {
         Header: "CREATED BY",
         accessor: "Created_By",
-        width: 170,
+        width: 160,
 
         Cell: ({ value }: any) => (
-          <span className="whitespace-nowrap text-[13px] text-[var(--fg)]">
+          <span className="whitespace-nowrap text-[11px] text-[var(--fg)]">
             {value || "-"}
           </span>
         ),
@@ -491,10 +479,10 @@ export default function EmployeeDeviationView() {
       {
         Header: "CREATED DATE",
         accessor: "Created_At",
-        width: 170,
+        width: 160,
 
         Cell: ({ value }: any) => (
-          <span className="whitespace-nowrap text-[13px] text-[var(--muted)]">
+          <span className="whitespace-nowrap text-[11px] text-[var(--muted)]">
             {formatDate(value)}
           </span>
         ),
@@ -504,9 +492,11 @@ export default function EmployeeDeviationView() {
         Header: "STATUS",
         id: "status",
         accessor: "status_khud_ka",
-        width: 130,
+        width: 120,
 
-        Cell: ({ row }: any) => <StatusBadge type="approved" />,
+        Cell: ({ row }: any) => (
+         <StatusBadge type="approved" />
+        ),
       },
     ],
     [sortAscending],
@@ -515,15 +505,15 @@ export default function EmployeeDeviationView() {
   /* ---------------- JSX ---------------- */
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-[14px] py-[18px] text-[var(--fg)]">
+    <main className="min-h-screen bg-[var(--bg)] px-[12px] py-[12px] text-[var(--fg)]">
       {/* HEADER */}
 
-      <div className="mb-[17px]">
-        <h1 className="m-0 text-[22px] font-[750] leading-tight tracking-[-0.02em]">
+      <div className="mb-[12px]">
+        <h1 className="m-0 text-[19px] font-[750] leading-tight tracking-[-0.02em]">
           Employee deviation view
         </h1>
 
-        <p className="mb-0 mt-[5px] text-[13px] text-[var(--muted)]">
+        <p className="mb-0 mt-[4px] text-[11.5px] text-[var(--muted)]">
           Every paid-days deviation raised for a salary month, with who raised
           it and where it stands in the approval chain.
         </p>
@@ -531,21 +521,23 @@ export default function EmployeeDeviationView() {
 
       {/* FILTER BAR */}
 
-      <div className="mb-[14px] rounded-[16px] border border-[var(--border)] bg-[var(--card)] p-[16px] shadow-[var(--shadow)]">
-        <div className="grid grid-cols-1 items-end gap-[13px] sm:grid-cols-2 xl:grid-cols-[160px_140px_minmax(200px,1fr)_100px_80px]">
+      <div className="mb-[11px] rounded-[11px] border border-[var(--border)] bg-[var(--card)] p-[11px] shadow-[var(--shadow)]">
+        <div className="grid grid-cols-1 items-end gap-[9px] sm:grid-cols-2 xl:grid-cols-[150px_130px_minmax(200px,1fr)_90px_75px]">
           <Eselect
-            title="MONTH *"
+            title="MONTH "
+            redlabel="*"
             name="month"
-            className="h-[40px] w-full"
+            className="h-[34px] w-full"
             option={MONTH_OPTIONS}
             initialValue={month}
             handleInputChange={(name: string, value: any) => setMonth(value)}
           />
 
           <Eselect
-            title="YEAR *"
+            title="YEAR "
+            redlabel="*"
             name="year"
-            className="h-[40px] w-full"
+            className="h-[34px] w-full"
             option={YEAR_OPTIONS}
             initialValue={year}
             handleInputChange={(name: string, value: any) => setYear(value)}
@@ -558,22 +550,22 @@ export default function EmployeeDeviationView() {
             value={search}
             handleInputChange={(name: string, value: any) => setSearch(value)}
             placeholder="Code, name or creator"
-            className="h-[40px] w-full"
+            className="h-[34px] w-full"
           />
 
           <AButton
             type="button"
             onClick={() => fetchData()}
-            className="inline-flex h-[40px] w-full items-center justify-center gap-[7px] rounded-[9px] bg-indigo-600 px-[15px] text-[12.5px] font-[650] text-white transition hover:bg-indigo-700"
+            className="inline-flex h-[34px] w-full items-center justify-center gap-[6px] rounded-[8px] bg-indigo-600 px-[12px] text-[11px] font-[650] text-white transition hover:bg-indigo-700"
           >
-            <Search size={14} />
+            <Search size={13} />
             Show
           </AButton>
 
           <AButton
             type="button"
             onClick={handleReset}
-            className="inline-flex h-[40px] w-full items-center justify-center rounded-[9px] border border-[var(--border)] bg-[var(--card)] px-[15px] text-[12.5px] font-[650] text-[var(--muted)] transition hover:bg-slate-50"
+            className="inline-flex h-[34px] w-full items-center justify-center rounded-[8px] border border-[var(--border)] bg-[var(--card)] px-[10px] text-[11px] font-[650] text-[var(--muted)] transition hover:bg-slate-50"
           >
             Reset
           </AButton>
@@ -582,7 +574,7 @@ export default function EmployeeDeviationView() {
 
       {/* SUMMARY CARDS */}
 
-      <div className="mb-[14px] grid grid-cols-1 gap-[12px] sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-[11px] grid grid-cols-1 gap-[9px] sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           label="Deviations"
           value={String(rows.length)}
@@ -598,10 +590,10 @@ export default function EmployeeDeviationView() {
         />
 
         <SummaryCard
-          label=" approval"
+          label="Pending approval"
           value={String(pendingCount)}
           description="Not in payroll yet"
-          dotColor="bg-emerald-500"
+          dotColor="bg-amber-500"
         />
 
         <SummaryCard
@@ -614,20 +606,20 @@ export default function EmployeeDeviationView() {
 
       {/* TABLE CARD */}
 
-      <div className="overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)]">
+      <div className="overflow-hidden rounded-[11px] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)]">
         {/* TABLE TOP BAR */}
 
-        <div className="flex min-h-[60px] flex-wrap items-center justify-between gap-[10px] border-b border-[var(--border)] px-[18px] py-[10px]">
-          <span className="text-[14px] font-[700] text-[var(--fg)]">
+        <div className="flex min-h-[40px] flex-wrap items-center justify-between gap-[8px] border-b border-[var(--border)] px-[12px] py-[6px]">
+          <span className="text-[12px] font-[700] text-[var(--fg)]">
             {visibleRows.length} deviations
           </span>
 
           <AButton
             type="button"
             onClick={handleExport}
-            className="inline-flex h-[36px] items-center justify-center gap-[8px] rounded-[9px] border border-[var(--border)] bg-[var(--card)] px-[14px] text-[12.5px] font-[650] text-[var(--fg)] transition hover:bg-slate-50"
+            className="inline-flex h-[30px] items-center justify-center gap-[6px] rounded-[7px] border border-[var(--border)] bg-[var(--card)] px-[11px] text-[11px] font-[650] text-[var(--fg)] transition hover:bg-slate-50"
           >
-            <Download size={14} />
+            <Download size={13} />
             Export to Excel
           </AButton>
         </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -5,7 +6,13 @@ import { useCurrentUser } from "@/app/hooks/use-current-user";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-import { Send, CheckCircle2, Clock3, XCircle, RotateCcw } from "lucide-react";
+import {
+  Send,
+  CheckCircle2,
+  Clock3,
+  XCircle,
+  RotateCcw,
+} from "lucide-react";
 
 import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
@@ -92,30 +99,12 @@ const YEAR_OPTIONS = [
 ];
 
 const REASON_OPTIONS = [
-  {
-    value: "Approved leave not applied",
-    label: "Approved leave not applied",
-  },
-  {
-    value: "Attendance correction",
-    label: "Attendance correction",
-  },
-  {
-    value: "Late joining not captured",
-    label: "Late joining not captured",
-  },
-  {
-    value: "System attendance issue",
-    label: "System attendance issue",
-  },
-  {
-    value: "Manual correction",
-    label: "Manual correction",
-  },
-  {
-    value: "Other",
-    label: "Other",
-  },
+  { value: "Approved leave not applied", label: "Approved leave not applied" },
+  { value: "Attendance correction", label: "Attendance correction" },
+  { value: "Late joining not captured", label: "Late joining not captured" },
+  { value: "System attendance issue", label: "System attendance issue" },
+  { value: "Manual correction", label: "Manual correction" },
+  { value: "Other", label: "Other" },
 ];
 
 const INITIAL_DEVIATIONS: Deviation[] = [];
@@ -178,7 +167,6 @@ export default function SalaryPaidDaysDeviation() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAttendance, setIsFetchingAttendance] = useState(false);
 
-  // Salary API state
   const [salaryData, setSalaryData] = useState<SalaryStructure | null>(null);
 
   const [isFetchingSalary, setIsFetchingSalary] = useState(false);
@@ -200,8 +188,9 @@ export default function SalaryPaidDaysDeviation() {
   )?.label;
 
   const employeeName =
-    employeeOptions.find((item) => String(item.value) === String(employeeCode))
-      ?.label || "";
+    employeeOptions.find(
+      (item) => String(item.value) === String(employeeCode),
+    )?.label || "";
 
   const attendancePaidDays = dates.attnPaidDays;
   const deviationDays = dates.devationDays;
@@ -224,7 +213,6 @@ export default function SalaryPaidDaysDeviation() {
       numericFinalDays < 0 ||
       numericFinalDays > totalMonthDays);
 
-  // Salary calculations
   const grossSalary = Number(salaryData?.Gross_Salary) || 0;
 
   const perDayRate =
@@ -252,14 +240,6 @@ export default function SalaryPaidDaysDeviation() {
       ? Number(deviationDays) * perDayRate
       : null;
 
-  const formatSignedCurrency = (value: number | null) => {
-    if (value === null || !Number.isFinite(value)) return "—";
-
-    const sign = value > 0 ? "+" : value < 0 ? "-" : "";
-
-    return `${sign}${formatCurrency(Math.abs(value))}`;
-  };
-
   const formatCurrency = (value: number | null) => {
     if (value === null || !Number.isFinite(value)) return "—";
 
@@ -267,6 +247,14 @@ export default function SalaryPaidDaysDeviation() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  };
+
+  const formatSignedCurrency = (value: number | null) => {
+    if (value === null || !Number.isFinite(value)) return "—";
+
+    const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+
+    return `${sign}${formatCurrency(Math.abs(value))}`;
   };
 
   const canSubmit = Boolean(reason) && !isLoading && !isFetchingAttendance;
@@ -300,9 +288,9 @@ export default function SalaryPaidDaysDeviation() {
 
     return [draftDeviation, ...deviations.filter((item) => item.id !== -1)];
   }, [employeeCode, employeeName, deviationDays, reason, deviations]);
+
   /* =======================================================
      FETCH EMPLOYEE LIST
-     API: /users/findAllEmployee
 ======================================================= */
 
   const fetchEmployees = async () => {
@@ -351,7 +339,6 @@ export default function SalaryPaidDaysDeviation() {
 
   /* =======================================================
      FETCH ATTENDANCE / DEVIATION DATA
-     API: /ars/getempdeveationData
 ======================================================= */
 
   const fetchEmpdata = async (filterData: FilterData) => {
@@ -425,7 +412,6 @@ export default function SalaryPaidDaysDeviation() {
 
   /* =======================================================
      FETCH EMPLOYEE SALARY STRUCTURE
-     API: /ars/getEmployeeSalaryStructure
 ======================================================= */
 
   const fetchEmployeeSalary = async (filterData: FilterData) => {
@@ -443,11 +429,9 @@ export default function SalaryPaidDaysDeviation() {
       setIsFetchingSalary(true);
       setSalaryData(null);
 
-      // DATE_FROM = Month, DATE_TO = Year
       const month = Number(filterData.DATE_FROM);
       const year = Number(filterData.DATE_TO);
 
-      // Convert into YYYY-MM-DD format
       const dateFrom = `${year}-${String(month).padStart(2, "0")}-01`;
 
       const lastDay = new Date(year, month, 0).getDate();
@@ -455,7 +439,7 @@ export default function SalaryPaidDaysDeviation() {
       const dateTo = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/ars/getEmployeeSalaryStructure`,
+        `${process.env.NEXT_PUBLIC_URL_local}/ars/getEmployeeSalaryStructure`,
         {
           EMPCODE: filterData.EMPCODE,
           DATE_FROM: dateFrom,
@@ -494,7 +478,7 @@ export default function SalaryPaidDaysDeviation() {
   };
 
   /* =======================================================
-     MONTH / YEAR / EMPLOYEE CHANGE
+     FILTER CHANGE
 ======================================================= */
 
   const handleFilterChange = (name: string, value: any) => {
@@ -538,7 +522,7 @@ export default function SalaryPaidDaysDeviation() {
   };
 
   /* =======================================================
-     DEVIATION DAYS CALCULATION
+     DEVIATION DAYS CHANGE
 ======================================================= */
 
   const handleDeviationChange = (name: string, value: any) => {
@@ -569,10 +553,6 @@ export default function SalaryPaidDaysDeviation() {
     }));
   };
 
-  /* =======================================================
-     REASON CHANGE
-======================================================= */
-
   const handleReasonChange = (name: string, value: any) => {
     setReason(value ?? "");
   };
@@ -595,7 +575,6 @@ export default function SalaryPaidDaysDeviation() {
 
   /* =======================================================
      SAVE EMPLOYEE DEVIATION
-     API: /ars/InsertEmpDevationData
 ======================================================= */
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -657,6 +636,7 @@ export default function SalaryPaidDaysDeviation() {
       showSideAlert("User information not available", "error");
       return;
     }
+
     const newDeviation: Deviation = {
       id: Date.now(),
       name: employeeName || `Employee ${dates.EMPCODE}`,
@@ -665,6 +645,7 @@ export default function SalaryPaidDaysDeviation() {
       reason: reason,
       status: "Pending",
     };
+
     try {
       setIsLoading(true);
 
@@ -672,7 +653,6 @@ export default function SalaryPaidDaysDeviation() {
         `${process.env.NEXT_PUBLIC_URL}/ars/InsertEmpDevationData`,
         {
           Created_by: user?.EMPCODE,
-
           filterData: {
             ...dates,
             branch: user?.branch,
@@ -689,7 +669,6 @@ export default function SalaryPaidDaysDeviation() {
       );
 
       if (response?.data?.success) {
-        // Add newly submitted deviation at the top
         setDeviations((previous) => [newDeviation, ...previous]);
 
         showSideAlert(
@@ -733,25 +712,25 @@ export default function SalaryPaidDaysDeviation() {
     switch (status) {
       case "Approved":
         return {
-          icon: <CheckCircle2 size={13} />,
+          icon: <CheckCircle2 size={12} />,
           className: "bg-emerald-50 text-emerald-600",
         };
 
       case "Pending":
         return {
-          icon: <Clock3 size={13} />,
+          icon: <Clock3 size={12} />,
           className: "bg-amber-50 text-amber-600",
         };
 
       case "Draft":
         return {
-          icon: <Clock3 size={13} />,
+          icon: <Clock3 size={12} />,
           className: "bg-indigo-50 text-indigo-600",
         };
 
       default:
         return {
-          icon: <XCircle size={13} />,
+          icon: <XCircle size={12} />,
           className: "bg-rose-50 text-rose-600",
         };
     }
@@ -762,15 +741,16 @@ export default function SalaryPaidDaysDeviation() {
 ======================================================= */
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-[14px] py-[18px] text-[var(--fg)]">
+    <main className="min-h-screen bg-[var(--bg)] px-[14px] py-[14px] text-[var(--fg)]">
+
       {/* PAGE HEADER */}
 
-      <div className="mb-[20px]">
-        <h1 className="m-0 text-[20px] font-[700] leading-tight tracking-[-0.02em] text-[var(--fg)]">
+      <div className="mb-[14px]">
+        <h1 className="m-0 text-[19px] font-[700] leading-tight tracking-[-0.02em] text-[var(--fg)]">
           Salary paid days deviation
         </h1>
 
-        <p className="mb-0 mt-[6px] max-w-[1100px] text-[13px] leading-[1.5] text-[var(--muted)]">
+        <p className="mb-0 mt-[4px] max-w-[1100px] text-[12px] leading-[1.5] text-[var(--muted)]">
           Override the paid days attendance calculated, for one employee and
           month. Every deviation goes through the approver chain before payroll
           picks it up.
@@ -779,24 +759,27 @@ export default function SalaryPaidDaysDeviation() {
 
       {/* MAIN GRID */}
 
-      <div className="grid grid-cols-1 items-start gap-[18px] xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.34fr)]">
+      <div className="grid grid-cols-1 items-start gap-[14px] xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.34fr)]">
+
         {/* LEFT FORM */}
 
         <form
           onSubmit={handleSubmit}
           className="
             min-w-0
-            rounded-[15px]
+            rounded-[13px]
             border border-[var(--border)]
             bg-[var(--card)]
-            p-[20px]
+            p-[15px]
             shadow-[var(--shadow)]
-            sm:p-[24px]
+            sm:p-[18px]
           "
         >
+
           {/* MONTH / YEAR / EMPLOYEE */}
 
-          <div className="grid grid-cols-1 items-start gap-x-[16px] gap-y-[18px] md:grid-cols-[minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,3.8fr)]">
+          <div className="grid grid-cols-1 items-start gap-x-[12px] gap-y-[12px] md:grid-cols-[minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,3.8fr)]">
+
             <div className="min-w-0">
               <Eselect
                 title="MONTH"
@@ -808,7 +791,7 @@ export default function SalaryPaidDaysDeviation() {
                 option={MONTH_OPTIONS}
                 initialValue={month}
                 handleInputChange={handleMonthChange}
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
             </div>
 
@@ -822,7 +805,7 @@ export default function SalaryPaidDaysDeviation() {
                 option={YEAR_OPTIONS}
                 initialValue={year}
                 handleInputChange={handleYearChange}
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
             </div>
 
@@ -836,37 +819,41 @@ export default function SalaryPaidDaysDeviation() {
                 option={employeeOptions}
                 initialValue={employeeCode}
                 handleInputChange={handleEmployeeChange}
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
             </div>
+
           </div>
 
           {/* EMPLOYEE DETAILS CARD */}
 
           {employeeCode && (
-            <div className="mt-[18px] flex flex-wrap items-center justify-between gap-3 rounded-[13px] border border-[var(--border)] bg-[var(--field)] px-[17px] py-[13px]">
-              <div className="flex min-w-0 items-center gap-[13px]">
-                <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[11px] bg-indigo-100 text-[13px] font-[700] text-indigo-600">
+            <div className="mt-[12px] flex flex-wrap items-center justify-between gap-3 rounded-[11px] border border-[var(--border)] bg-white px-[12px] py-[8px]">
+
+              <div className="flex min-w-0 items-center gap-[10px]">
+
+                <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-indigo-100 text-[12px] font-[700] text-indigo-600">
                   {employeeInitials}
                 </div>
 
                 <div className="min-w-0">
-                  <h4 className="m-0 truncate text-[14px] font-[700] text-[var(--fg)]">
+                  <h4 className="m-0 truncate text-[13px] font-[700] text-[var(--fg)]">
                     {employeeName || "Employee"}
                   </h4>
 
-                  <p className="m-0 mt-[3px] text-[12px] text-[var(--muted)]">
+                  <p className="m-0 mt-[2px] text-[11px] text-[var(--muted)]">
                     Branch: {user?.branch || "—"} · Code: {employeeCode}
                   </p>
                 </div>
+
               </div>
 
               <div className="text-right">
-                <p className="m-0 text-[12px] text-[var(--muted)]">
+                <p className="m-0 text-[11px] text-[var(--muted)]">
                   Gross / month
                 </p>
 
-                <p className="m-0 mt-[3px] text-[16px] font-[750] text-[var(--fg)]">
+                <p className="m-0 mt-[2px] text-[15px] font-[750] text-[var(--fg)]">
                   {isFetchingSalary
                     ? "Loading..."
                     : salaryData
@@ -874,12 +861,14 @@ export default function SalaryPaidDaysDeviation() {
                       : "—"}
                 </p>
               </div>
+
             </div>
           )}
 
           {/* ATTENDANCE / DEVIATION / FINAL DAYS */}
 
-          <div className="mt-[20px] grid grid-cols-1 items-start gap-x-[16px] gap-y-[16px] md:grid-cols-3">
+          <div className="mt-[14px] grid grid-cols-1 items-start gap-x-[12px] gap-y-[12px] md:grid-cols-3">
+
             {/* ATTENDANCE PAID DAYS */}
 
             <div className="min-w-0">
@@ -888,11 +877,11 @@ export default function SalaryPaidDaysDeviation() {
                 name="AttendancePaidDays"
                 type="text"
                 value={attendancePaidDays ?? "—"}
-                disabled
-                className="h-[40px] w-full"
+               
+                className="h-[34px] w-full"
               />
 
-              <p className="mt-[7px] text-[12px] leading-[1.5] text-[var(--muted)]">
+              <p className="mt-[4px] text-[11px] leading-[1.5] text-[var(--muted)]">
                 {isFetchingAttendance
                   ? "Loading attendance days..."
                   : `From attendance calculation · ${totalMonthDays} day month`}
@@ -910,10 +899,10 @@ export default function SalaryPaidDaysDeviation() {
                 value={deviationDays}
                 placeholder="e.g. 1.5 or -2"
                 handleInputChange={handleDeviationChange}
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
 
-              <p className="mt-[7px] text-[12px] leading-[1.5] text-[var(--muted)]">
+              <p className="mt-[4px] text-[11px] leading-[1.5] text-[var(--muted)]">
                 {deviationDays !== ""
                   ? `${Number(deviationDays) > 0 ? "Adding" : Number(deviationDays) < 0 ? "Removing" : "No change in"} ${Math.abs(Number(deviationDays))} paid day(s)`
                   : "Positive adds days, negative removes them"}
@@ -932,14 +921,14 @@ export default function SalaryPaidDaysDeviation() {
                     ? numericFinalDays.toFixed(2).replace(/\.?0+$/, "")
                     : "—"
                 }
-                disabled
-                className={`h-[40px] w-full ${
+               
+                className={`h-[34px] w-full ${
                   finalDaysInvalid ? "!border-rose-400 !text-rose-600" : ""
                 }`}
               />
 
               <p
-                className={`mt-[7px] text-[12px] leading-[1.5] ${
+                className={`mt-[4px] text-[11px] leading-[1.5] ${
                   finalDaysInvalid
                     ? "font-[600] text-rose-500"
                     : "text-[var(--muted)]"
@@ -950,12 +939,12 @@ export default function SalaryPaidDaysDeviation() {
                   : `Cannot exceed ${totalMonthDays} days in ${selectedMonth} ${year}`}
               </p>
             </div>
+
           </div>
 
           {/* REASON / REMARK */}
 
-          <div className="mt-[20px] grid grid-cols-1 items-start gap-x-[16px] gap-y-[16px] md:grid-cols-2">
-            {/* DEVIATION REASON */}
+          <div className="mt-[14px] grid grid-cols-1 items-start gap-x-[12px] gap-y-[12px] md:grid-cols-2">
 
             <div className="min-w-0">
               <Eselect
@@ -967,11 +956,9 @@ export default function SalaryPaidDaysDeviation() {
                 option={REASON_OPTIONS}
                 initialValue={reason}
                 handleInputChange={handleReasonChange}
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
             </div>
-
-            {/* REMARK */}
 
             <div className="min-w-0">
               <Einput
@@ -983,131 +970,117 @@ export default function SalaryPaidDaysDeviation() {
                 handleInputChange={(name: string, value: any) =>
                   setRemark(value ?? "")
                 }
-                className="h-[40px] w-full"
+                className="h-[34px] w-full"
               />
             </div>
+
           </div>
 
           {/* SALARY IMPACT */}
 
-          <div className="mt-[20px] overflow-hidden rounded-[13px] border border-[var(--border)]">
-            <div className="border-b border-[var(--border)] bg-[var(--field)] px-[16px] py-[11px]">
-              <h3 className="m-0 text-[12px] font-[750] tracking-[0.03em] text-[var(--muted)]">
-                SALARY IMPACT OF THIS DEVIATION
-              </h3>
-            </div>
+          <div className="mt-[14px] min-w-0 overflow-hidden rounded-[11px] border border-[var(--border)] bg-white dark:bg-slate-900">
 
-            <div className="grid grid-cols-1 divide-y divide-[var(--border)] sm:grid-cols-2 sm:divide-y-0 md:grid-cols-4">
-              {/* PER DAY RATE */}
+  {/* HEADER */}
+  <div className="border-b border-[var(--border)] bg-slate-100 px-[12px] py-[8px] dark:bg-slate-800">
+    <h3 className="m-0 text-[11px] font-[750] tracking-[0.03em] text-[var(--muted)]">
+      SALARY IMPACT OF THIS DEVIATION
+    </h3>
+  </div>
 
-              <div className="min-w-0 p-[15px]">
-                <p className="m-0 text-[12px] text-[var(--muted)]">
-                  Per-day rate
-                </p>
+  <div className="grid grid-cols-1 divide-y divide-[var(--border)] sm:grid-cols-2 sm:divide-y-0 md:grid-cols-4">
 
-                <h3 className="mb-0 mt-[5px] text-[20px] font-[750] text-[var(--fg)]">
-                  {isFetchingSalary
-                    ? "..."
-                    : formatCurrency(salaryData ? perDayRate : null)}
-                </h3>
+    {/* PER DAY RATE */}
+    <div className="min-w-0 p-[10px]">
+      <p className="m-0 text-[11px] text-[var(--muted)]">
+        Per-day rate
+      </p>
 
-                <p className="mb-0 mt-[3px] text-[11px] text-[var(--muted)]">
-                  Gross ÷ {totalMonthDays} days
-                </p>
-              </div>
+      <h3 className="mb-0 mt-[4px] text-[18px] font-[750] text-[var(--fg)]">
+        {isFetchingSalary
+          ? "..."
+          : formatCurrency(salaryData ? perDayRate : null)}
+      </h3>
 
-              {/* DEVIATION VALUE */}
+      <p className="mb-0 mt-[2px] text-[10px] text-[var(--muted)]">
+        Gross ÷ {totalMonthDays} days
+      </p>
+    </div>
 
-              {/* DEVIATION VALUE */}
+    {/* DEVIATION VALUE */}
+    <div className="min-w-0 border-[var(--border)] p-[10px] sm:border-l">
+      <p className="m-0 text-[11px] font-medium text-[var(--muted)]">
+        Deviation value
+      </p>
 
-              <div className="min-w-0 border-l border-[var(--border)] p-[15px]">
-                <p className="m-0 text-[12px] text-[var(--muted)]">
-                  Deviation value
-                </p>
+      <h3
+        className={`mb-0 mt-[3px] text-[19px] font-[750] leading-tight ${
+          Number(deviationDays) > 0
+            ? "text-emerald-500"
+            : Number(deviationDays) < 0
+              ? "text-rose-500"
+              : "text-[var(--fg)]"
+        }`}
+      >
+        {isFetchingSalary
+          ? "..."
+          : deviationDays !== ""
+            ? formatSignedCurrency(deviationAmount)
+            : "—"}
+      </h3>
 
-                <div className="mt-[5px] flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {/* Deviation Days */}
-                  <h3
-                    className={`m-0 text-[20px] font-[750] ${
-                      Number(deviationDays) > 0
-                        ? "text-emerald-500"
-                        : Number(deviationDays) < 0
-                          ? "text-rose-500"
-                          : "text-[var(--fg)]"
-                    }`}
-                  >
-                    {deviationDays !== ""
-                      ? `${Number(deviationDays) > 0 ? "+" : ""}${Number(deviationDays)} days`
-                      : "—"}
-                  </h3>
+      <p className="mb-0 mt-[2px] text-[11px] text-[var(--muted)]">
+        {deviationDays !== ""
+          ? `${Math.abs(Number(deviationDays))} days`
+          : "—"}
+      </p>
+    </div>
 
-                  {/* Salary Impact */}
-                  {deviationDays !== "" && (
-                    <h3
-                      className={`m-0 text-[18px] font-[750] ${
-                        Number(deviationDays) > 0
-                          ? "text-emerald-500"
-                          : Number(deviationDays) < 0
-                            ? "text-rose-500"
-                            : "text-[var(--fg)]"
-                      }`}
-                    >
-                      {isFetchingSalary
-                        ? "..."
-                        : formatSignedCurrency(deviationAmount)}
-                    </h3>
-                  )}
-                </div>
+    {/* PAYABLE BEFORE */}
+    <div className="min-w-0 border-[var(--border)] p-[10px] sm:border-l md:border-l">
+      <p className="m-0 text-[11px] text-[var(--muted)]">
+        Payable before
+      </p>
 
-                <p className="mb-0 mt-[3px] text-[11px] text-[var(--muted)]">
-                  Additional / deducted days · Salary impact
-                </p>
-              </div>
+      <h3 className="mb-0 mt-[4px] text-[18px] font-[750] text-[var(--muted)]">
+        {isFetchingSalary ? "..." : formatCurrency(payableBefore)}
+      </h3>
 
-              {/* PAYABLE BEFORE */}
+      <p className="mb-0 mt-[2px] text-[10px] text-[var(--muted)]">
+        {attendancePaidDays ?? "—"} paid days
+      </p>
+    </div>
 
-              <div className="min-w-0 border-l border-[var(--border)] p-[15px]">
-                <p className="m-0 text-[12px] text-[var(--muted)]">
-                  Payable before
-                </p>
+    {/* PAYABLE AFTER */}
+    <div className="min-w-0 border-[var(--border)] p-[10px] sm:border-l md:border-l">
+      <p className="m-0 text-[11px] text-[var(--muted)]">
+        Payable after
+      </p>
 
-                <h3 className="mb-0 mt-[5px] text-[20px] font-[750] text-[var(--muted)]">
-                  {isFetchingSalary ? "..." : formatCurrency(payableBefore)}
-                </h3>
+      <h3
+        className={`mb-0 mt-[4px] text-[18px] font-[750] ${
+          finalDaysInvalid
+            ? "text-rose-500"
+            : "text-indigo-600 dark:text-indigo-400"
+        }`}
+      >
+        {isFetchingSalary ? "..." : formatCurrency(payableAfter)}
+      </h3>
 
-                <p className="mb-0 mt-[3px] text-[11px] text-[var(--muted)]">
-                  {attendancePaidDays ?? "—"} paid days
-                </p>
-              </div>
+      <p className="mb-0 mt-[2px] text-[10px] text-[var(--muted)]">
+        {finalPaidDays ?? "—"} paid days
+      </p>
+    </div>
 
-              {/* PAYABLE AFTER */}
-
-              <div className="min-w-0 border-l border-[var(--border)] p-[15px]">
-                <p className="m-0 text-[12px] text-[var(--muted)]">
-                  Payable after
-                </p>
-
-                <h3
-                  className={`mb-0 mt-[5px] text-[20px] font-[750] ${
-                    finalDaysInvalid ? "text-rose-500" : "text-indigo-600"
-                  }`}
-                >
-                  {isFetchingSalary ? "..." : formatCurrency(payableAfter)}
-                </h3>
-
-                <p className="mb-0 mt-[3px] text-[11px] text-[var(--muted)]">
-                  {finalPaidDays ?? "—"} paid days
-                </p>
-              </div>
-            </div>
-          </div>
+  </div>
+</div>
 
           {/* FORM FOOTER */}
 
-          <div className="mt-[22px] flex flex-col justify-between gap-[14px] border-t border-[var(--border)] pt-[18px] sm:flex-row sm:items-center">
+          <div className="mt-[15px] flex flex-col justify-between gap-[10px] border-t border-[var(--border)] pt-[12px] sm:flex-row sm:items-center">
+
             <div className="min-w-0">
               <p
-                className={`m-0 text-[12px] ${
+                className={`m-0 text-[11px] ${
                   finalDaysInvalid
                     ? "font-[600] text-rose-500"
                     : "text-[var(--muted)]"
@@ -1123,45 +1096,44 @@ export default function SalaryPaidDaysDeviation() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-[12px]">
+            <div className="flex flex-wrap items-center justify-end gap-[9px]">
+
               <AButton
                 type="button"
                 onClick={handleClear}
                 className="
                   inline-flex
-                  h-[42px]
+                  h-[34px]
                   items-center
                   gap-2
-                  rounded-[10px]
+                  rounded-[9px]
                   border
                   border-[var(--border)]
                   bg-[var(--card)]
-                  px-[17px]
-                  text-[13px]
+                  px-[14px]
+                  text-[12px]
                   font-[600]
                   text-[var(--fg)]
                   transition
                   hover:bg-[var(--hover)]
                 "
               >
-                <RotateCcw size={14} />
+                <RotateCcw size={13} />
                 Clear
               </AButton>
-
-              {/* SAVE BUTTON */}
 
               <AButton
                 type="submit"
                 disabled={!canSubmit}
                 className={`
                   inline-flex
-                  h-[42px]
+                  h-[34px]
                   items-center
                   justify-center
                   gap-2
-                  rounded-[10px]
-                  px-[20px]
-                  text-[13px]
+                  rounded-[9px]
+                  px-[16px]
+                  text-[12px]
                   font-[650]
                   text-white
                   shadow-sm
@@ -1176,140 +1148,163 @@ export default function SalaryPaidDaysDeviation() {
                   disabled:opacity-60
                 `}
               >
-                <Send size={16} />
+                <Send size={14} />
                 Save & send to approver
               </AButton>
+
             </div>
           </div>
+
         </form>
 
         {/* RIGHT SIDEBAR */}
 
-        <div className="flex min-w-0 flex-col gap-[15px]">
+        <div className="flex min-w-0 flex-col gap-[12px]">
+
           {/* APPROVAL CHAIN */}
 
-          <div className="rounded-[15px] border border-[var(--border)] bg-[var(--card)] p-[20px] shadow-[var(--shadow)]">
-            <h3 className="mb-[17px] text-[12px] font-[700] tracking-[0.04em] text-[var(--muted)]">
+          <div className="rounded-[13px] border border-[var(--border)] bg-[var(--card)] p-[15px] shadow-[var(--shadow)]">
+
+            <h3 className="mb-[12px] text-[11px] font-[700] tracking-[0.04em] text-[var(--muted)]">
               APPROVAL CHAIN
             </h3>
 
-            <div className="relative flex flex-col gap-[18px]">
+            <div className="relative flex flex-col gap-[12px]">
+
               {/* STEP 1 */}
 
-              <div className="relative flex gap-[13px]">
-                <div className="relative z-[1] flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[13px] font-[700] text-indigo-600">
+              <div className="relative flex gap-[11px]">
+
+                <div className="relative z-[1] flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[12px] font-[700] text-indigo-600">
                   1
                 </div>
 
-                <div className="absolute left-[14px] top-[30px] h-[28px] border-l border-[#DCE3F0]" />
+                <div className="absolute left-[12px] top-[26px] h-[24px] border-l border-[#DCE3F0]" />
 
                 <div>
-                  <h4 className="m-0 text-[13px] font-[700] text-[var(--fg)]">
+                  <h4 className="m-0 text-[12px] font-[700] text-[var(--fg)]">
                     Branch HR — you
                   </h4>
 
-                  <p className="mb-0 mt-[4px] text-[12.5px] leading-[1.5] text-[var(--muted)]">
+                  <p className="mb-0 mt-[3px] text-[11.5px] leading-[1.5] text-[var(--muted)]">
                     Raises the deviation with reason and remark.
                   </p>
                 </div>
+
               </div>
 
               {/* STEP 2 */}
 
-              <div className="relative flex gap-[13px]">
-                <div className="relative z-[1] flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-sky-100 text-[13px] font-[700] text-sky-600">
+              <div className="relative flex gap-[11px]">
+
+                <div className="relative z-[1] flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-sky-100 text-[12px] font-[700] text-sky-600">
                   2
                 </div>
 
-                <div className="absolute left-[14px] top-[30px] h-[28px] border-l border-[#DCE3F0]" />
+                <div className="absolute left-[12px] top-[26px] h-[24px] border-l border-[#DCE3F0]" />
 
                 <div>
-                  <h4 className="m-0 text-[13px] font-[700] text-[var(--fg)]">
+                  <h4 className="m-0 text-[12px] font-[700] text-[var(--fg)]">
                     Approver 1 · Branch HOD
                   </h4>
 
-                  <p className="mb-0 mt-[4px] text-[12.5px] leading-[1.5] text-[var(--muted)]">
+                  <p className="mb-0 mt-[3px] text-[11.5px] leading-[1.5] text-[var(--muted)]">
                     Confirms the days actually worked at the branch.
                   </p>
                 </div>
+
               </div>
 
               {/* STEP 3 */}
 
-              <div className="flex gap-[13px]">
-                <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[13px] font-[700] text-emerald-600">
+              <div className="flex gap-[11px]">
+
+                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[12px] font-[700] text-emerald-600">
                   3
                 </div>
 
                 <div>
-                  <h4 className="m-0 text-[13px] font-[700] text-[var(--fg)]">
+                  <h4 className="m-0 text-[12px] font-[700] text-[var(--fg)]">
                     Approver 2 · Payroll head
                   </h4>
 
-                  <p className="mb-0 mt-[4px] text-[12.5px] leading-[1.5] text-[var(--muted)]">
+                  <p className="mb-0 mt-[3px] text-[11.5px] leading-[1.5] text-[var(--muted)]">
                     Final sign-off; the deviation then enters salary
                     calculation.
                   </p>
                 </div>
+
               </div>
+
             </div>
           </div>
 
           {/* MONTHLY DEVIATIONS */}
 
-          <div className="rounded-[15px] border border-[var(--border)] bg-[var(--card)] p-[20px] shadow-[var(--shadow)]">
-            <div className="mb-[15px] flex items-center justify-between gap-2">
-              <h3 className="m-0 text-[12px] font-[700] tracking-[0.04em] text-[var(--muted)]">
+          <div className="rounded-[13px] border border-[var(--border)] bg-[var(--card)] p-[15px] shadow-[var(--shadow)]">
+
+            <div className="mb-[10px] flex items-center justify-between gap-2">
+
+              <h3 className="m-0 text-[11px] font-[700] tracking-[0.04em] text-[var(--muted)]">
                 DEVIATIONS THIS MONTH
               </h3>
 
               <button
                 type="button"
                 onClick={() => setShowAll((previous) => !previous)}
-                className="shrink-0 text-[12px] font-[650] text-indigo-600 hover:text-indigo-800"
+                className="shrink-0 text-[11px] font-[650] text-indigo-600 hover:text-indigo-800"
               >
                 {showAll ? "Show less" : "View all"}
               </button>
+
             </div>
 
-            <div className="flex flex-col gap-[10px]">
+            <div className="flex flex-col gap-[7px]">
+
               {(showAll
                 ? displayDeviations
                 : displayDeviations.slice(0, 3)
               ).map((item) => {
+
                 const statusConfig = getStatusConfig(item.status);
 
                 return (
                   <div
                     key={item.id}
                     className="
-                      rounded-[12px]
+                      rounded-[10px]
                       border
                       border-[var(--border)]
                       bg-[var(--card)]
-                      px-[14px]
-                      py-[12px]
+                      px-[11px]
+                      py-[9px]
                       transition
                       hover:border-indigo-200
                     "
                   >
+
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className="m-0 min-w-0 truncate text-[12.5px] font-[700] text-[var(--fg)]">
+
+                      <h4 className="m-0 min-w-0 truncate text-[12px] font-[700] text-[var(--fg)]">
                         {item.name} · {item.empCode}
                       </h4>
 
                       <span
-                        className={`shrink-0 text-[13px] font-[750] ${
-                          item.days > 0 ? "text-emerald-500" : "text-rose-500"
+                        className={`shrink-0 text-[12px] font-[750] ${
+                          item.days > 0
+                            ? "text-emerald-500"
+                            : "text-rose-500"
                         }`}
                       >
                         {item.days > 0 ? "+" : ""}
                         {item.days.toFixed(1)}
                       </span>
+
                     </div>
 
-                    <div className="mt-[7px] flex items-center justify-between gap-2">
-                      <p className="m-0 min-w-0 truncate text-[11.5px] text-[var(--muted)]">
+                    <div className="mt-[5px] flex items-center justify-between gap-2">
+
+                      <p className="m-0 min-w-0 truncate text-[11px] text-[var(--muted)]">
                         {item.reason}
                       </p>
 
@@ -1320,9 +1315,9 @@ export default function SalaryPaidDaysDeviation() {
                           items-center
                           gap-1
                           rounded-full
-                          px-[9px]
-                          py-[3px]
-                          text-[10.5px]
+                          px-[8px]
+                          py-[2px]
+                          text-[10px]
                           font-[700]
                           ${statusConfig.className}
                         `}
@@ -1330,23 +1325,29 @@ export default function SalaryPaidDaysDeviation() {
                         {statusConfig.icon}
                         {item.status}
                       </span>
+
                     </div>
+
                   </div>
                 );
               })}
+
               {displayDeviations.length === 0 && (
-                <div className="py-[25px] text-center text-[12px] text-[var(--muted)]">
+                <div className="py-[18px] text-center text-[11px] text-[var(--muted)]">
                   No deviations found for this month.
                 </div>
               )}
+
             </div>
           </div>
+
         </div>
       </div>
 
       {/* LOADER */}
 
       <HashloaderComponent isLoading={isLoading} />
+
     </main>
   );
 }
