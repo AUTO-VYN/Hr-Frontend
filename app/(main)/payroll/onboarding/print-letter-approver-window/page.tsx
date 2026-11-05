@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import {
@@ -187,16 +187,24 @@ export default function PrintLetterApproverWindowPage() {
     }
   }, [getCompCode, user?.name, user?.EMPCODE, user?.branch, dates.branch, dates.status, dates.DATE_FROM, dates.DATE_TO, filterByStatus, toast]);
 
+  // Track initial API calls with useRef so APIs only trigger on page refresh/mount, NOT on tab switch
+  const hasFetchedBranchesRef = useRef(false);
+  const hasFetchedDataRef = useRef(false);
+
   // Initial load
   useEffect(() => {
-    fetchBranches();
-  }, [fetchBranches]);
+    if (!hasFetchedBranchesRef.current && getCompCode()) {
+      hasFetchedBranchesRef.current = true;
+      fetchBranches();
+    }
+  }, [fetchBranches, getCompCode]);
 
   useEffect(() => {
-    if (getCompCode()) {
+    if (!hasFetchedDataRef.current && getCompCode()) {
+      hasFetchedDataRef.current = true;
       showdata();
     }
-  }, [user, getCompCode]);
+  }, [getCompCode, showdata]);
 
   // Handle Input Changes
   const handleInputChange = (name: string, value: any) => {
@@ -259,7 +267,7 @@ export default function PrintLetterApproverWindowPage() {
     const confirmed = await Swal.fire({
       icon: "question",
       title: "Approve Letters?",
-      text: `Are you sure you want to approve ${selectedrowdata.length} selected letter(s)?`,
+      text: `Are you sure you want to approve ${selectedrowdata.length} selected letter?`,
       confirmButtonText: "Yes, Approve",
       confirmButtonColor: "#059669",
       cancelButtonText: "Cancel",
@@ -334,7 +342,7 @@ export default function PrintLetterApproverWindowPage() {
     const confirmed = await Swal.fire({
       icon: "warning",
       title: "Reject Letters?",
-      text: `This action will reject ${selectedrowdata.length} selected letter(s). Do you want to proceed?`,
+      text: `This action will reject ${selectedrowdata.length} selected letter. Do you want to proceed?`,
       confirmButtonText: "Yes, Reject",
       confirmButtonColor: "#DC2626",
       cancelButtonText: "Cancel",
