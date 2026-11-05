@@ -766,7 +766,20 @@ export default function DocumentManagementPage() {
             const utd = item.Utd ?? item.UTD ?? item.utd ?? tranId;
 
             const uploadDate =
-              item.CreatedAt ?? item.Upload_Date ?? item.UploadDate ?? "";
+              item.CreatedNewDate ??
+              item.createdNewDate ??
+              item.ModifyDate ??
+              item.ModifiedDate ??
+              item.UpdateDate ??
+              item.Updated_Date ??
+              item.Upload_Date ??
+              item.UploadDate ??
+              item.upload_date ??
+              item.CreatedAt ??
+              item.created_at ??
+              item.CREATED_AT ??
+              item.Created_Date ??
+              "";
 
             return {
               name: fileName,
@@ -784,9 +797,12 @@ export default function DocumentManagementPage() {
               uploadedAt: uploadDate
                 ? (() => {
                   const date = new Date(uploadDate);
-                  return Number.isNaN(date.getTime())
-                    ? String(uploadDate)
-                    : date.toLocaleString();
+                  if (Number.isNaN(date.getTime())) return String(uploadDate);
+                  const day = String(date.getDate()).padStart(2, "0");
+                  const month = String(date.getMonth() + 1).padStart(2, "0");
+                  const year = date.getFullYear();
+                  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                  return `${day}/${month}/${year}, ${time}`;
                 })()
                 : "",
 
@@ -840,6 +856,25 @@ export default function DocumentManagementPage() {
 
             if (seen.has(stableKey)) {
               continue;
+            }
+
+            const prevMatch = previousFiles.find((p) => {
+              const pKey = [
+                normalize(p.name).toLowerCase(),
+                normalize(p.RefId || p.refNo).toLowerCase(),
+                normalize(p.Doc_Type || p.DocumentType || p.refType).toLowerCase(),
+                normalize(p.Seq_No || p.SRNO),
+              ].join("|");
+              return pKey === stableKey;
+            });
+
+            if (prevMatch?.uploadedAt) {
+              const prevTime = new Date(prevMatch.uploadedAt).getTime();
+              const currTime = new Date(file.uploadedAt).getTime();
+              if (!isNaN(prevTime) && (isNaN(currTime) || prevTime > currTime)) {
+                file.uploadedAt = prevMatch.uploadedAt;
+                file.CreatedAt = prevMatch.CreatedAt || file.CreatedAt;
+              }
             }
 
             seen.add(stableKey);
@@ -1056,6 +1091,7 @@ export default function DocumentManagementPage() {
       // =========================================================
 
       const formData = new FormData();
+     
 
       // Attach files
       queue.forEach((queueFile) => {
@@ -1082,11 +1118,22 @@ export default function DocumentManagementPage() {
 
       formData.append("EmpCode", referenceNumber);
 
+      const nowUpload = new Date();
+      const todayISO = nowUpload.toISOString();
+      formData.append("Upload_Date", todayISO);
+      formData.append("upload_date", todayISO);
+      formData.append("UploadDate", todayISO);
+      formData.append("CreatedAt", todayISO);
+      formData.append("created_at", todayISO);
+      formData.append("CreatedNewDate", todayISO);
+      formData.append("Created_Date", todayISO);
+
       formData.append("doc_type", String(selectedMaster.value || docRef));
 
       formData.append("Field", String(selectedMaster.Field || ""));
       formData.append("From_Field", String(selectedMaster.From_Field || ""));
       formData.append("Table_Name", String(selectedMaster.Table_Name || ""));
+    
 
       formData.append(
         "Misc_Abbr",
@@ -1189,7 +1236,13 @@ export default function DocumentManagementPage() {
         file: queueFile.file,
 
         uploadedBy: user?.name || "",
-        uploadedAt: uploadedAt.toLocaleString(),
+        uploadedAt: (() => {
+          const day = String(uploadedAt.getDate()).padStart(2, "0");
+          const month = String(uploadedAt.getMonth() + 1).padStart(2, "0");
+          const year = uploadedAt.getFullYear();
+          const time = uploadedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          return `${day}/${month}/${year}, ${time}`;
+        })(),
         CreatedAt: uploadedAt.toISOString(),
 
         refType: documentTypeLabel,

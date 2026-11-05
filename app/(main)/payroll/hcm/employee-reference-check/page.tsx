@@ -931,45 +931,12 @@ export default function EmployeeReferenceCheckPage() {
     current: VerificationStatus,
     setter: (s: VerificationStatus) => void
   ) => {
-    const statuses: VerificationStatus[] = ["Verified clear", "In progress", "Discrepancy"];
-    return (
-      <div className="flex items-center gap-1.5 shrink-0">
-        {statuses.map((st) => {
-          const isSelected = current === st;
-          let activeStyles = "";
-          if (isSelected) {
-            if (st === "Verified clear") {
-              activeStyles = "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
-            } else if (st === "In progress") {
-              activeStyles = "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800";
-            } else {
-              activeStyles = "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800";
-            }
-          } else {
-            activeStyles = "border-slate-200 text-slate-500 bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
-          }
-
-          return (
-            <button
-              key={st}
-              type="button"
-              onClick={() => setter(st)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-[11.5px] font-medium transition cursor-pointer select-none",
-                activeStyles
-              )}
-            >
-              {st}
-            </button>
-          );
-        })}
-      </div>
-    );
+  
   };
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-28 font-['Inter',system-ui,sans-serif] text-[13px] text-[#1E293B] antialiased transition-colors dark:bg-[#0A0F1C] dark:text-[#E7ECF3]">
-      <div className="mx-auto max-w-[1700px] p-4 sm:p-6 space-y-4">
+    <main className="min-h-screen bg-[#F8FAFC] pb-36 sm:pb-28 font-['Inter',system-ui,sans-serif] text-[13px] text-[#1E293B] antialiased transition-colors dark:bg-[#0A0F1C] dark:text-[#E7ECF3]">
+      <div className="mx-auto max-w-[1700px] p-3 sm:p-6 space-y-4">
         {/* Page Header */}
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -986,7 +953,7 @@ export default function EmployeeReferenceCheckPage() {
             size="sm"
             onClick={() => window.history.back()}
             icon={<ArrowLeft className="h-3.5 w-3.5" />}
-            className="!h-[36px] px-3.5 !rounded-[9px] text-[12.5px] font-medium"
+            className="!h-[36px] px-3.5 !rounded-[9px] text-[12.5px] font-medium whitespace-nowrap shrink-0"
           >
             Back
           </AButton>
@@ -995,7 +962,7 @@ export default function EmployeeReferenceCheckPage() {
         {/* Top Card: Candidate Personal Information */}
         <section className={`${cardClass} p-4 sm:p-[18px]`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
               <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                 <UserRound className="h-4 w-4" />
               </span>
@@ -1283,7 +1250,7 @@ export default function EmployeeReferenceCheckPage() {
         {activeTab === 1 && (
           <section className={`${cardClass} p-4 sm:p-[18px]`}>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                   <Paperclip className="h-4 w-4" />
                 </span>
@@ -1353,7 +1320,7 @@ export default function EmployeeReferenceCheckPage() {
         {activeTab === 2 && (
           <section className={`${cardClass} p-4 sm:p-[18px] space-y-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                   <Building2 className="h-4 w-4" />
                 </span>
@@ -1604,7 +1571,7 @@ export default function EmployeeReferenceCheckPage() {
         {activeTab === 3 && (
           <section className={`${cardClass} p-4 sm:p-[18px] space-y-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                   <Home className="h-4 w-4" />
                 </span>
@@ -1767,7 +1734,7 @@ export default function EmployeeReferenceCheckPage() {
         {activeTab === 4 && (
           <section className={`${cardClass} p-4 sm:p-[18px] space-y-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                   <Building className="h-4 w-4" />
                 </span>
@@ -1864,7 +1831,7 @@ export default function EmployeeReferenceCheckPage() {
         {activeTab === 5 && (
           <section className={`${cardClass} p-4 sm:p-[18px] space-y-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
                   <ShieldCheck className="h-4 w-4" />
                 </span>
@@ -1943,9 +1910,9 @@ export default function EmployeeReferenceCheckPage() {
       </div>
 
       {/* Bottom Sticky Action Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-[#0B1220]/95 sm:px-6">
-        <div className="mx-auto flex max-w-[1700px] flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-[12px] text-[#64748B] dark:text-[#94A3B8] font-medium">
+      <footer className="fixed bottom-0 left-0 sm:left-[var(--sidebar-width,68px)] right-0 z-40 border-t border-slate-200/90 bg-white/95 px-3.5 py-2.5 sm:px-6 sm:py-3 backdrop-blur-md dark:border-slate-800 dark:bg-[#0B1220]/95 transition-[left] duration-150 ease-in-out">
+        <div className="mx-auto flex max-w-[1700px] flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11.5px] sm:text-[12px] text-[#64748B] dark:text-[#94A3B8] font-medium">
             <span>
               {UTD ? `Editing record #${UTD}` : "New candidate"}
             </span>
@@ -1955,14 +1922,14 @@ export default function EmployeeReferenceCheckPage() {
             <span>{attachedDocsCount}/6 documents</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <AButton
               type="button"
               variant="outline"
               size="sm"
               onClick={() => window.history.back()}
               icon={<ArrowLeft className="h-3.5 w-3.5" />}
-              className="!h-[36px] px-3.5 !rounded-[9px] text-[12.5px] font-medium"
+              className="!h-[36px] px-3.5 !rounded-[9px] text-[12.5px] font-medium whitespace-nowrap shrink-0"
             >
               Back
             </AButton>
@@ -1973,7 +1940,7 @@ export default function EmployeeReferenceCheckPage() {
               size="sm"
               onClick={handleRefresh}
               icon={<RotateCcw className="h-3.5 w-3.5" />}
-              className="!h-[36px] px-4 !rounded-[9px] text-[12.5px] font-medium"
+              className="!h-[36px] px-4 !rounded-[9px] text-[12.5px] font-medium whitespace-nowrap shrink-0"
             >
               Refresh
             </AButton>
@@ -1985,7 +1952,7 @@ export default function EmployeeReferenceCheckPage() {
               onClick={handleSave}
               disabled={isLoading}
               icon={<Save className="h-4 w-4" />}
-              className="!h-[36px] px-5 !rounded-[9px] text-[12.5px] font-semibold !bg-[#334155] hover:!bg-[#1E293B] dark:!bg-slate-700 dark:hover:!bg-slate-600 text-white shadow-sm active:scale-[0.98]"
+              className="!h-[36px] px-4 sm:px-5 !rounded-[9px] text-[12.5px] font-semibold !bg-[#334155] hover:!bg-[#1E293B] dark:!bg-slate-700 dark:hover:!bg-slate-600 text-white shadow-sm active:scale-[0.98] whitespace-nowrap shrink-0"
             >
               {UTD ? "Update reference check" : "Save reference check"}
             </AButton>

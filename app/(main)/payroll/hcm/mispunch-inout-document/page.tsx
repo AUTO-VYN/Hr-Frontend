@@ -300,7 +300,7 @@ export default function MispunchInOutDocumentPage() {
 
   return (
     <div
-      className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-[22px_24px_60px_24px]"
+      className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] p-3 sm:p-5 md:p-[22px_24px_60px_24px]"
       style={{
         fontFamily: "Inter, system-ui, sans-serif",
         fontFeatureSettings: "'tnum' 1",
@@ -308,16 +308,16 @@ export default function MispunchInOutDocumentPage() {
     >
       {/* Title & Subtitle */}
       <div className="mb-[18px]">
-        <h1 className="m-0 text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
+        <h1 className="m-0 text-[18px] sm:text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
           Mispunch in-out document
         </h1>
-        <p className="mt-[5px] mb-0 text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
+        <p className="mt-[5px] mb-0 text-[12px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
           Proof attached to a mispunch regularisation — gate register photo, approval mail or a manual entry slip.
         </p>
       </div>
 
       {/* Filter Section Card */}
-      <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-[14px_18px_16px_18px] mb-[14px]">
+      <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-3 sm:p-4 md:p-[14px_18px_16px_18px] mb-[14px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[180px_180px_minmax(0,1fr)_auto] gap-3 items-end">
           {/* DATE FROM */}
           <div className="w-full">
@@ -366,7 +366,7 @@ export default function MispunchInOutDocumentPage() {
           </div>
 
           {/* SHOW BUTTON */}
-          <div className="shrink-0">
+          <div className="w-full lg:w-auto shrink-0">
             <button
               type="button"
               onClick={fetchMispunchData}
@@ -381,28 +381,30 @@ export default function MispunchInOutDocumentPage() {
 
       {/* Documents Grid / Empty State */}
       {alternatingDocs.length > 0 ? (
-        <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-[16px_18px_18px_18px]">
+        <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-3.5 sm:p-[16px_18px_18px_18px]">
           {/* Header */}
-          <div className="flex items-center gap-[10px] mb-[14px]">
-            <h2 className="m-0 text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
-              Documents on file
-            </h2>
-            <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] font-normal tabular-nums">
-              {alternatingDocs.length} {selectedEmpName ? `for ${selectedEmpName}` : ""}
-            </span>
-            <div className="flex-1" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 mb-[14px]">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
+              <h2 className="m-0 text-[14px] font-semibold text-[#1E293B] dark:text-[#E7ECF3] whitespace-nowrap">
+                Documents on file
+              </h2>
+              <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] font-normal tabular-nums truncate">
+                {alternatingDocs.length} {selectedEmpName ? `for ${selectedEmpName}` : ""}
+              </span>
+            </div>
+
             <button
               type="button"
               onClick={handleDownloadAll}
-              className="flex items-center gap-[6px] border border-[#E2E8F0] dark:border-[#1F2937] bg-transparent hover:bg-[#F1F5F9] dark:hover:bg-[#182235] text-[#1E293B] dark:text-[#E7ECF3] text-[12px] font-[550] px-[11px] py-[6px] rounded-[8px] cursor-pointer transition-all"
+              className="self-start sm:self-auto shrink-0 whitespace-nowrap flex items-center gap-[6px] border border-[#E2E8F0] dark:border-[#1F2937] bg-transparent hover:bg-[#F1F5F9] dark:hover:bg-[#182235] text-[#1E293B] dark:text-[#E7ECF3] text-[12px] font-[550] px-[11px] py-[6px] rounded-[8px] cursor-pointer transition-all"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 shrink-0" />
               <span>Download all</span>
             </button>
           </div>
 
           {/* Cards Grid using DocViewerCard atom */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {alternatingDocs.map((item, index) => {
               const doc = item.data;
               const fileName = getFileName(doc, index);
@@ -426,7 +428,7 @@ export default function MispunchInOutDocumentPage() {
         </div>
       ) : (
         /* Empty State */
-        <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] py-[74px] px-6 grid place-items-center text-center">
+        <div className="bg-[#FFFFFF] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] py-10 sm:py-[74px] px-4 sm:px-6 grid place-items-center text-center">
           {/* Centered Circular Icon */}
           <span className="grid place-items-center w-[76px] h-[76px] rounded-full bg-[#EEF2FF] dark:bg-[#1E1B4B] text-[#4F46E5] dark:text-[#8B84FF]">
             <ImageOff className="w-6 h-6" />

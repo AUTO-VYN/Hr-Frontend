@@ -531,17 +531,17 @@ export default function CertificatesUpload({
         <div
           className={`rounded-xl border border-slate-200 bg-white p-4.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3.5 ${className}`}
         >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <div className="h-7 w-7 shrink-0 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 {headerIcon ?? <Paperclip className="h-4 w-4" />}
               </div>
-              <h3 className="text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+              <h3 className="min-w-0 text-sm sm:text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 tracking-tight break-words">
                 {headerTitle}
               </h3>
             </div>
             {showAttachedCount && (
-              <span className="text-[11.5px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+              <span className="shrink-0 whitespace-nowrap text-[11.5px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
                 {attachedCount} attached
               </span>
             )}
@@ -589,27 +589,27 @@ export default function CertificatesUpload({
       <div
         className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden dark:bg-[#0B1220] dark:border-slate-800 ${className}`}
       >
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200 dark:bg-[#0F1A2D] dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <span className="text-violet-600 dark:text-violet-400">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50 border-b border-slate-200 dark:bg-[#0F1A2D] dark:border-slate-800">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
+            <span className="shrink-0 text-violet-600 dark:text-violet-400">
               {headerIcon ?? <Award size={18} />}
             </span>
-            <div className="text-[14px] font-semibold tracking-[0.12em] text-slate-900 uppercase dark:text-slate-100">
+            <div className="min-w-0 text-[12.5px] sm:text-[14px] font-semibold tracking-[0.04em] sm:tracking-[0.12em] text-slate-900 uppercase dark:text-slate-100 break-words">
               {headerTitle}
             </div>
           </div>
 
           {showAttachedCount && (
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+            <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-slate-400 dark:text-slate-500">
               {attachedCount} attached
             </span>
           )}
         </div>
 
-        <div className="p-5">
+        <div className="p-3.5 sm:p-5">
           <div
             className={
-              gridClassName || "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"
+              gridClassName || "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4"
             }
           >
             {tiles.map((t) => (

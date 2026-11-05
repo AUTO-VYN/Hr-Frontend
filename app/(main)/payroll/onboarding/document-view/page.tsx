@@ -755,6 +755,14 @@ const mapDocumentData = useCallback((data: DocumentItem[]) => {
 
       item.UploadDate ??
 
+      item.Upload_Date ??
+
+      item.Created_Date ??
+
+      item.ModifyDate ??
+
+      item.Updated_Date ??
+
       "";
 
 

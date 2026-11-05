@@ -20,7 +20,7 @@ import { useDateRange } from "@/app/hooks/use-date-range";
 
 export default function WhatsappConfirmationReportPage() {
   const user = useCurrentUser();
-  const { DATE_FROM, DATE_TO } = useDateRange();
+  // Date range initialized to 1 month back to today
 
   // ── Helper: Date formatting ───────────────────────────────────────────────
   const getDefaultDate = (monthsBack = 0) => {
@@ -84,8 +84,8 @@ export default function WhatsappConfirmationReportPage() {
 
   // ── Filter States ──────────────────────────────────────────────────────────
   const [dates, setDates] = useState({
-    DATE_FROM: DATE_FROM || getDefaultDate(1),
-    DATE_TO: DATE_TO || getDefaultDate(0),
+    DATE_FROM: getDefaultDate(1),
+    DATE_TO: getDefaultDate(0),
     Template: "ALL",
     EmpCode: "ALL",
   });
