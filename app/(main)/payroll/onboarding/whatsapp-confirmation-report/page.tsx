@@ -753,7 +753,7 @@ export default function WhatsappConfirmationReportPage() {
             title="Letters sent"
             columns={columns}
             data={tableData}
-            check={true}
+            check={false}
             selectValue="row_id"
             showColumnFilters={true}
             showTopSearch={true}
