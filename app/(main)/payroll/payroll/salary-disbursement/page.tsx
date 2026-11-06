@@ -88,10 +88,8 @@ const YEARS = getYears();
 
 const EMPLOYEE_TYPES: Option[] = [
   { value: "all", label: "All types" },
-  { value: "On roll", label: "On roll" },
-  { value: "Off roll", label: "Off roll" },
-  { value: "Contract", label: "Contract" },
-  { value: "Trainee", label: "Trainee" },
+  { value: "regular", label: "Regular" },
+  { value: "casual", label: "Casual" },
 ];
 
 const money = (value: number) =>
@@ -425,6 +423,8 @@ export default function SalaryDisbursementPage() {
   }, [apiHeaders]);
 
   // 2. Get employee code options
+ 
+  // 2. Get employee code options
   const fetchEmployees = useCallback(async () => {
     try {
       const response = await axios.post(
@@ -435,29 +435,63 @@ export default function SalaryDisbursementPage() {
         }
       );
 
-      const data = response.data?.data || [];
+      console.log("EMPLOYEE ALL API RESPONSE:", response.data);
 
-      const options = mapOptions(
-        data,
-        ["EMPCODE", "EmpCode", "EMP_CODE", "Code"],
-        ["EmpName", "EMP_NAME", "EmployeeName", "name"],
-        "All employees"
+      // API response array extract
+      const responseData = response.data;
+
+      const data = Array.isArray(responseData)
+        ? responseData
+        : Array.isArray(responseData?.data)
+          ? responseData.data
+          : Array.isArray(responseData?.Result)
+            ? responseData.Result
+            : Array.isArray(responseData?.result)
+              ? responseData.result
+              : Array.isArray(responseData?.Data)
+                ? responseData.Data
+                : Array.isArray(responseData?.data?.Result)
+                  ? responseData.data.Result
+                  : [];
+
+      // API already returns { value, label }
+      const employeeMap: Option[] = data
+        .map((emp: any) => {
+          const value = String(emp?.value ?? "").trim();
+          const label = String(emp?.label ?? "").trim();
+
+          if (!value) return null;
+
+          return {
+            value,
+            label: label || value,
+          };
+        })
+        .filter((item: Option | null): item is Option => item !== null);
+
+      // Remove duplicate employee codes
+      const uniqueEmployees = employeeMap.filter(
+        (emp, index, array) =>
+          array.findIndex((item) => item.value === emp.value) === index
       );
 
-      const employeeDropdownOptions = options.map((option) => {
-        if (option.value === "all") return option;
+      setEmployeeOptions([
+        { value: "all", label: "All employees" },
+        ...uniqueEmployees,
+      ]);
 
-        return {
-          value: option.value,
-          label: `${option.value} - ${option.label}`,
-        };
-      });
+      console.log("TOTAL EMPLOYEES:", uniqueEmployees.length);
+      console.log("EMPLOYEE DROPDOWN OPTIONS:", uniqueEmployees);
 
-      setEmployeeOptions(employeeDropdownOptions);
     } catch (error) {
       console.error("Employee API error:", error);
+
+      setEmployeeOptions([
+        { value: "all", label: "All employees" },
+      ]);
     }
   }, [apiHeaders]);
+
 
   // 3. Get cluster, section and channel master data
   const fetchMasterData = useCallback(async () => {
@@ -609,14 +643,10 @@ export default function SalaryDisbursementPage() {
       setLoading(true);
 
       try {
-        const apiEmployeeType =
-          filters.employeeType === "all"
-            ? null
-            : filters.employeeType === "On roll"
-              ? "regular"
-              : filters.employeeType === "Off roll"
-                ? "casual"
-                : filters.employeeType.toLowerCase();
+   const apiEmployeeType =
+  filters.employeeType === "all"
+    ? null
+    : filters.employeeType;
 
         const payload = {
           month: String(filters.month).padStart(2, "0"),
@@ -791,14 +821,10 @@ export default function SalaryDisbursementPage() {
         appliedFilters.employeeCode === "all" ||
         employee.code === appliedFilters.employeeCode;
 
-      const matchesType =
-        appliedFilters.employeeType === "all" ||
-        employee.employeeType.toLowerCase() ===
-          appliedFilters.employeeType.toLowerCase() ||
-        (appliedFilters.employeeType === "On roll" &&
-          employee.employeeType.toLowerCase() === "regular") ||
-        (appliedFilters.employeeType === "Off roll" &&
-          employee.employeeType.toLowerCase() === "casual");
+    const matchesType =
+  appliedFilters.employeeType === "all" ||
+  employee.employeeType.trim().toLowerCase() ===
+    appliedFilters.employeeType.toLowerCase();
 
       const matchesMode =
         appliedFilters.paymentMode === "all" ||
@@ -1174,112 +1200,149 @@ export default function SalaryDisbursementPage() {
         </div>
 
         {/* FILTER PANEL */}
-        <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.20)] sm:p-4 lg:p-6">
-          <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[105px_100px_minmax(145px,1fr)_minmax(145px,1fr)_minmax(170px,1.2fr)_minmax(145px,1fr)_minmax(145px,1fr)_minmax(145px,1fr)_minmax(145px,1fr)_auto_auto] 2xl:items-end">
-            <Eselect
-              title="MONTH"
-              redlabel="*"
-              name="month"
-              option={MONTHS}
-              initialValue={month}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+       {/* FILTER PANEL */}
+<div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.20)] sm:p-4">
 
-            <Eselect
-              title="YEAR"
-              redlabel="*"
-              name="year"
-              option={YEARS}
-              initialValue={year}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+  <div className="grid min-w-0 grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
 
-            <Eselect
-              title="EMPLOYEE TYPE"
-              name="employeeType"
-              option={EMPLOYEE_TYPES}
-              initialValue={employeeType}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* MONTH */}
+    <div className="min-w-0">
+      <Eselect
+        title="MONTH"
+        redlabel="*"
+        name="month"
+        option={MONTHS}
+        initialValue={month}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="PAYMENT MODE"
-              name="paymentMode"
-              option={paymentModeOptions}
-              initialValue={paymentMode}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* YEAR */}
+    <div className="min-w-0">
+      <Eselect
+        title="YEAR"
+        redlabel="*"
+        name="year"
+        option={YEARS}
+        initialValue={year}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="EMPLOYEE CODE"
-              name="employeeCode"
-              option={employeeOptions}
-              initialValue={employeeCode}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* EMPLOYEE TYPE */}
+    <div className="min-w-0">
+      <Eselect
+        title="EMPLOYEE TYPE"
+        name="employeeType"
+        option={EMPLOYEE_TYPES}
+        initialValue={employeeType}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="CLUSTER"
-              name="cluster"
-              option={clusterOptions}
-              initialValue={cluster}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* PAYMENT MODE */}
+    <div className="min-w-0">
+      <Eselect
+        title="PAYMENT MODE"
+        name="paymentMode"
+        option={paymentModeOptions}
+        initialValue={paymentMode}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="CHANNEL"
-              name="channel"
-              option={channelOptions}
-              initialValue={channel}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* EMPLOYEE CODE */}
+    <div className="min-w-0">
+      <Eselect
+        title="EMPLOYEE CODE"
+        name="employeeCode"
+        option={employeeOptions}
+        initialValue={employeeCode}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="SECTION"
-              name="section"
-              option={sectionOptions}
-              initialValue={section}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* CLUSTER */}
+    <div className="min-w-0">
+      <Eselect
+        title="CLUSTER"
+        name="cluster"
+        option={clusterOptions}
+        initialValue={cluster}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <Eselect
-              title="BRANCH"
-              name="branch"
-              option={branchOptions}
-              initialValue={branch}
-              handleInputChange={handleInputChange}
-              className="h-[32px] w-full"
-            />
+    {/* CHANNEL */}
+    <div className="min-w-0">
+      <Eselect
+        title="CHANNEL"
+        name="channel"
+        option={channelOptions}
+        initialValue={channel}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <AButton
-              type="button"
-              onClick={showData}
-              disabled={loading}
-              className="inline-flex h-[32px] items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#5145e9] px-4 text-[11px] font-semibold text-white hover:bg-[#4035d5] disabled:opacity-50"
-            >
-              <Search size={13} />
-              Show
-            </AButton>
+    {/* SECTION */}
+    <div className="min-w-0">
+      <Eselect
+        title="SECTION"
+        name="section"
+        option={sectionOptions}
+        initialValue={section}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
 
-            <AButton
-              type="button"
-              onClick={resetFilters}
-              disabled={loading}
-              className="inline-flex h-[32px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3 text-[11px] font-medium text-[#475569] hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              <RotateCcw size={12} />
-              Reset
-            </AButton>
-          </div>
-        </div>
+    {/* BRANCH */}
+    <div className="min-w-0">
+      <Eselect
+        title="BRANCH"
+        name="branch"
+        option={branchOptions}
+        initialValue={branch}
+        handleInputChange={handleInputChange}
+        className="h-[36px] w-full"
+      />
+    </div>
+
+    {/* SHOW BUTTON */}
+    <div className="flex min-w-0 items-end">
+      <AButton
+        type="button"
+        onClick={showData}
+        disabled={loading}
+        className="inline-flex h-[36px] w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#5145e9] px-3 text-[11px] font-semibold text-white hover:bg-[#4035d5] disabled:opacity-50"
+      >
+        <Search size={13} />
+        Show
+      </AButton>
+    </div>
+
+    {/* RESET BUTTON */}
+    <div className="flex min-w-0 items-end">
+      <AButton
+        type="button"
+        onClick={resetFilters}
+        disabled={loading}
+        className="inline-flex h-[36px] w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3 text-[11px] font-medium text-[#475569] hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+      >
+        <RotateCcw size={12} />
+        Reset
+      </AButton>
+    </div>
+
+  </div>
+</div>
 
         {/* SUMMARY CARDS */}
         <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-2 2xl:grid-cols-5">

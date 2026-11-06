@@ -340,7 +340,7 @@ export default function AddDeduction() {
 
   const [employees, setEmployees] = useState<SelectOption[]>([]);
   const [deductionTypes, setDeductionTypes] = useState<SelectOption[]>([]);
-
+  const [showAllDeductionTypes, setShowAllDeductionTypes] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSalaryLoading, setIsSalaryLoading] = useState(false);
   const [isExistingLoading, setIsExistingLoading] = useState(false);
@@ -1011,6 +1011,7 @@ export default function AddDeduction() {
     setSalaryData(null);
     setExistingItems([]);
     setExistingLoaded(false);
+    setShowAllDeductionTypes(false);
   };
 
   /* =========================================================
@@ -1213,7 +1214,6 @@ export default function AddDeduction() {
 
         return;
       }
-
       if (response.data?.success === true) {
         await Swal.fire({
           icon: "success",
@@ -1221,6 +1221,7 @@ export default function AddDeduction() {
           text: "Employee deduction saved successfully.",
         });
 
+        setShowAllDeductionTypes(false);
         handleClear();
       } else {
         Swal.fire({
@@ -1436,31 +1437,81 @@ export default function AddDeduction() {
               </div>
             </div>
           </div>
+<div className="mt-[14px]">
+  <label className={labelClass}>
+    Deduction type <span className="text-rose-500">*</span>
+  </label>
 
-          <div className="mt-[14px]">
-            <label className={labelClass}>
-              Deduction type <span className="text-rose-500">*</span>
-            </label>
+  {deductionTypes.length === 0 ? (
+    <p className="m-0 text-[12px] text-[var(--muted)]">
+      Loading deduction types...
+    </p>
+  ) : (
+    <div
+      className="grid grid-cols-1 gap-[8px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
+      {(showAllDeductionTypes
+        ? deductionTypes
+        : deductionTypes.slice(0, 6)
+      ).map((item) => (
+        <TypeCard
+          key={item.value}
+          label={item.label}
+          active={
+            String(employeeData?.Ded_Type) === String(item.value)
+          }
+          onClick={() => handleInputChange("Ded_Type", item.value)}
+        />
+      ))}
 
-            {deductionTypes.length === 0 ? (
-              <p className="m-0 text-[12px] text-[var(--muted)]">
-                Loading deduction types...
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-[8px] lg:grid-cols-4">
-                {deductionTypes.map((item) => (
-                  <TypeCard
-                    key={item.value}
-                    label={item.label}
-                    active={
-                      String(employeeData?.Ded_Type) === String(item.value)
-                    }
-                    onClick={() => handleInputChange("Ded_Type", item.value)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+      {!showAllDeductionTypes && deductionTypes.length > 6 && (
+        <button
+          type="button"
+          onClick={() => setShowAllDeductionTypes(true)}
+          className="flex h-[58px] w-full min-w-0 flex-col justify-center rounded-[9px] border border-dashed border-indigo-300 bg-indigo-50/50 px-[10px] text-left transition-colors hover:border-indigo-500 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:hover:border-indigo-400 dark:hover:bg-indigo-500/20"
+        >
+          <span className="flex min-w-0 items-center gap-[8px]">
+            <CircleEllipsis
+              size={15}
+              className="shrink-0 text-indigo-500 dark:text-indigo-300"
+            />
+
+            <span className="truncate text-[13px] font-[700] text-indigo-600 dark:text-indigo-300">
+              Other
+            </span>
+          </span>
+
+          <span className="mt-[2px] pl-[23px] text-[11px] text-indigo-600/70 dark:text-indigo-300/70">
+            Show all deduction types
+          </span>
+        </button>
+      )}
+
+      {showAllDeductionTypes && deductionTypes.length > 6 && (
+        <button
+          type="button"
+          onClick={() => setShowAllDeductionTypes(false)}
+          className="flex h-[58px] w-full min-w-0 flex-col justify-center rounded-[9px] border border-dashed border-slate-300 bg-slate-100 px-[10px] text-left transition-colors hover:border-indigo-400 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-indigo-400 dark:hover:bg-slate-700"
+        >
+          <span className="flex min-w-0 items-center gap-[8px]">
+            <CircleEllipsis
+              size={15}
+              className="shrink-0 text-slate-500 dark:text-slate-300"
+            />
+
+            <span className="truncate text-[13px] font-[700] text-slate-700 dark:text-slate-200">
+              Show less
+            </span>
+          </span>
+
+          <span className="mt-[2px] pl-[23px] text-[11px] text-slate-600 dark:text-slate-400">
+            Back to 2 rows
+          </span>
+        </button>
+      )}
+    </div>
+  )}
+</div>
 
           <div className="mt-[14px] grid grid-cols-1 items-end gap-[10px] lg:grid-cols-[300px_155px_minmax(0,1fr)]">
             <div className="relative">
