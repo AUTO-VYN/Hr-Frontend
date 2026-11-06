@@ -38,6 +38,7 @@ interface Props {
   setsellectedrowdata?: (data: any[]) => void;
   setSelectedRows?: (data: any[]) => void;
   selectedRows?: any[];
+  isRowSelectable?: (row: any) => boolean;
 
   height?: number | string;
   size?: string;
@@ -115,6 +116,7 @@ export default function ServiceTablePagination({
   setsellectedrowdata,
   setSelectedRows,
   selectedRows,
+  isRowSelectable,
   height = 560,
   size,
   headerClassName,
@@ -312,7 +314,10 @@ export default function ServiceTablePagination({
   const handleSelectAll = (isChecked: boolean) => {
     if (onlyOnecheck) return; // Single selection mode has no select all
     if (isChecked) {
-      const allSelected = tableData.map((row) => ({
+      const targetData = isRowSelectable
+        ? tableData.filter((row) => isRowSelectable(row))
+        : tableData;
+      const allSelected = targetData.map((row) => ({
         id: row[selectValue] || row.id,
         rowData: row,
         ...row,
@@ -349,17 +354,32 @@ export default function ServiceTablePagination({
     setSelectedRows?.(nextSelected);
   };
 
+  const selectableRows = useMemo(() => {
+    if (!isRowSelectable) return tableData;
+    return tableData.filter((row) => isRowSelectable(row));
+  }, [tableData, isRowSelectable]);
+
   const isAllSelected = useMemo(() => {
-    if (!check || onlyOnecheck || tableData.length === 0) return false;
-    return currentSelected.length === tableData.length;
-  }, [check, onlyOnecheck, currentSelected.length, tableData.length]);
+    if (!check || onlyOnecheck || selectableRows.length === 0) return false;
+    return selectableRows.every((row) => {
+      const rowId = row[selectValue] || row.id;
+      return currentSelected.some(
+        (item: any) => item.id === rowId || item[selectValue] === rowId,
+      );
+    });
+  }, [check, onlyOnecheck, currentSelected, selectableRows, selectValue]);
 
   const isIndeterminate = useMemo(() => {
-    if (!check || onlyOnecheck || tableData.length === 0) return false;
+    if (!check || onlyOnecheck || selectableRows.length === 0) return false;
     return (
-      currentSelected.length > 0 && currentSelected.length < tableData.length
+      selectableRows.some((row) => {
+        const rowId = row[selectValue] || row.id;
+        return currentSelected.some(
+          (item: any) => item.id === rowId || item[selectValue] === rowId,
+        );
+      }) && !isAllSelected
     );
-  }, [check, onlyOnecheck, currentSelected.length, tableData.length]);
+  }, [check, onlyOnecheck, currentSelected, selectableRows, selectValue]);
 
   const tableColumns = useMemo(() => {
     if (!check) return columns;
@@ -368,7 +388,7 @@ export default function ServiceTablePagination({
       id: "_selection",
       disableSortBy: true,
       Header: () => {
-        if (onlyOnecheck) {
+        if (onlyOnecheck || selectableRows.length === 0) {
           return <div className="w-[18px] h-[18px]" />;
         }
         return (
@@ -401,6 +421,9 @@ export default function ServiceTablePagination({
         );
       },
       Cell: ({ row }: any) => {
+        if (isRowSelectable && !isRowSelectable(row.original)) {
+          return <div className="w-[18px] h-[18px]" />;
+        }
         const rowId = row.original[selectValue] || row.original.id;
         const isChecked = currentSelected.some(
           (item: any) => item.id === rowId || item[selectValue] === rowId,
@@ -441,6 +464,8 @@ export default function ServiceTablePagination({
     currentSelected,
     tableData,
     selectValue,
+    isRowSelectable,
+    selectableRows,
   ]);
 
   const defaultClientPageSize = initialPageSize || 10;

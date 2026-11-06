@@ -311,6 +311,25 @@ export default function ConfirmationStatusPage() {
     });
   }, [tableData, activeStatCard, dates.status, dates.department]);
 
+  const isRowSelectable = useCallback(
+    (row: any) => row.computedStatus !== "confirmed" && !row.isConfirmed,
+    [],
+  );
+
+  const hasSelectableRows = useMemo(() => {
+    if (activeStatCard === "confirmed" || dates.status === "confirmed") {
+      return false;
+    }
+    return filteredData.some((row) => isRowSelectable(row));
+  }, [filteredData, activeStatCard, dates.status, isRowSelectable]);
+
+
+  useEffect(() => {
+    if (!hasSelectableRows && selectedRows.length > 0) {
+      setSelectedRows([]);
+    }
+  }, [hasSelectableRows, selectedRows.length]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleDateChange = (name: string, value: any) => {
     setDates((prev) => ({
@@ -652,13 +671,7 @@ export default function ConfirmationStatusPage() {
           return (
             <div className="flex items-center gap-2.5 whitespace-nowrap min-w-[140px]">
               {badge}
-              <button
-                type="button"
-                title="View Letter"
-                className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 shadow-2xs hover:bg-slate-50 transition-colors shrink-0 cursor-pointer"
-              >
-                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </button>
+             
             </div>
           );
         },
@@ -830,7 +843,8 @@ export default function ConfirmationStatusPage() {
               <DataTable
                 columns={columns}
                 data={filteredData}
-                check={true}
+                check={hasSelectableRows}
+                isRowSelectable={isRowSelectable}
                 selectValue="row_id"
                 showColumnFilters={false}
                 showTopSearch={false}

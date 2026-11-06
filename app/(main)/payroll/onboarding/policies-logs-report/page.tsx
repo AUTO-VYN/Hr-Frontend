@@ -247,7 +247,7 @@ export default function Page() {
     }
 
     return {
-      srNo: item.SRNO ?? item.SrNo ?? item.Utd ?? item.id ?? index + 1,
+      srNo: index + 1,
 
       employeeName:
         item.Empname ??
@@ -526,7 +526,11 @@ export default function Page() {
     const size = pageSize === -1 ? rows.length || 1 : pageSize;
     const start = (currentPage - 1) * size;
 
-    const finalRows = pageSize === -1 ? rows : rows.slice(start, start + size);
+    const pagedRows = pageSize === -1 ? rows : rows.slice(start, start + size);
+    const finalRows = pagedRows.map((item, idx) => ({
+      ...item,
+      srNo: start + idx + 1,
+    }));
 
     setDisplayedData(finalRows);
   }, [
@@ -717,6 +721,7 @@ export default function Page() {
       {
         Header: "VIEW / DOWNLOAD",
         accessor: "fileName",
+        showInExcel: false,
         Cell: ({ row }: any) => {
           const filePath = row.original?.filePath;
 
@@ -881,7 +886,7 @@ export default function Page() {
           <div className="min-w-0">
             <Eselect
               className="h-[34px]"
-              title="EMPLOYEE CODE"
+              title="EMPLOYEE Name"
               name="EmpCode"
               placeholder={
                 optionsLoading ? "Loading employees..." : "Employee Code"
@@ -961,6 +966,9 @@ export default function Page() {
           <ServiceTablePagination
             title=""
             columns={columns}
+            onExportAll={() =>
+              tableData.map((item, idx) => ({ ...item, srNo: idx + 1 }))
+            }
             data={displayedData}
             height={430}
             serverMode={true}
