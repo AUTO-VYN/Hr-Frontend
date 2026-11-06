@@ -20,7 +20,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 import AButton from "@/components/atoms/Button";
-import DataTable from "@/components/Templates/reactTable";
+import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 

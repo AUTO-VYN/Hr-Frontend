@@ -103,6 +103,7 @@ export default function AttendanceByRegionPage() {
   const [search, setSearch] = useState("");
   const [month, setMonth] = useState<string>("");
   const [year, setYear] = useState<string>("2026");
+  const [hasAttemptedRun, setHasAttemptedRun] = useState<boolean>(false);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [runDone, setRunDone] = useState(false);
@@ -263,6 +264,7 @@ export default function AttendanceByRegionPage() {
     setYear("2026");
     setRunDone(false);
     setProgress(0);
+    setHasAttemptedRun(false);
   };
 
   const totalEmployeesSelected = useMemo(() => {
@@ -421,14 +423,32 @@ export default function AttendanceByRegionPage() {
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
               {/* MONTH */}
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-                  Month <span className="text-[#E11D48]">*</span>
-                </span>
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-[11px] font-[600] uppercase tracking-[0.03em] ${
+                      hasAttemptedRun && !month
+                        ? "text-[#E11D48]"
+                        : "text-[#64748B] dark:text-[#94A3B8]"
+                    }`}
+                  >
+                    Month <span className="text-[#E11D48]">*</span>
+                  </span>
+                  {hasAttemptedRun && !month && (
+                    <span className="flex items-center gap-1 text-[10.5px] font-semibold text-[#E11D48] animate-in fade-in">
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-[#E11D48]" />
+                      Required
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
                   <select
                     value={month}
                     onChange={(e) => setMonth(e.target.value)}
-                    className="h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border border-[#E2E8F0] bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
+                    className={`h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition dark:bg-[#0E1524] dark:text-[#E7ECF3] ${
+                      hasAttemptedRun && !month
+                        ? "border-[#E11D48] ring-1 ring-[#E11D48]/30 focus:border-[#E11D48]"
+                        : "border-[#E2E8F0] focus:border-[#4F46E5] dark:border-[#1F2937] dark:focus:border-[#8B84FF]"
+                    }`}
                   >
                     {MONTH_OPTIONS.map((m) => (
                       <option
@@ -497,6 +517,13 @@ export default function AttendanceByRegionPage() {
                     ? `${selected.length} of ${filtered.length} selected`
                     : `${filtered.length} available`}
                 </span>
+
+                {hasAttemptedRun && selected.length === 0 && (
+                  <span className="flex items-center gap-1 rounded-md bg-rose-50 px-1.5 py-0.5 text-[10.5px] font-semibold text-[#E11D48] dark:bg-rose-950/40 animate-in fade-in">
+                    <AlertTriangle className="h-3 w-3 shrink-0 text-[#E11D48]" />
+                    Select region
+                  </span>
+                )}
               </div>
 
               <div className="relative w-full sm:w-[220px]">
@@ -566,25 +593,46 @@ export default function AttendanceByRegionPage() {
             </div>
 
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 border-t border-[#E2E8F0] bg-[#F8FAFC] px-[15px] py-3 dark:border-[#1F2937] dark:bg-[#0E1524]">
-              <span
-                className={`text-[12px] ${
-                  isReadyToRun
-                    ? "text-[#64748B] dark:text-[#94A3B8]"
-                    : "text-[#E11D48] font-normal"
-                }`}
-              >
-                {statusLine}
-              </span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {!isReadyToRun ? (
+                  <>
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-[#E11D48]" />
+                    <span className="text-[12px] font-medium text-[#E11D48] truncate">
+                      {statusLine}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10B981]" />
+                    <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] truncate">
+                      {statusLine}
+                    </span>
+                  </>
+                )}
+              </div>
 
               <button
                 type="button"
-                disabled={!isReadyToRun}
-                onClick={handleRun}
+                disabled={running}
+                onClick={() => {
+                  if (!month) {
+                    setHasAttemptedRun(true);
+                    showSideAlert("Please select a month to calculate.", "warning");
+                    return;
+                  }
+                  if (selected.length === 0) {
+                    setHasAttemptedRun(true);
+                    showSideAlert("Please select at least one region to calculate.", "warning");
+                    return;
+                  }
+                  handleRun();
+                }}
                 className={`flex shrink-0 items-center gap-[7px] rounded-[9px] px-[17px] py-[9px] text-[12.5px] font-[600] text-white transition ${
                   isReadyToRun
                     ? "cursor-pointer bg-[#10B981] hover:brightness-105 active:scale-[0.99]"
-                    : "cursor-not-allowed bg-[#475569]"
+                    : "cursor-pointer bg-[#475569] hover:bg-[#334155]"
                 }`}
+                title={!isReadyToRun ? "Fill required fields to calculate" : "Run calculation"}
               >
                 {running ? (
                   <>
