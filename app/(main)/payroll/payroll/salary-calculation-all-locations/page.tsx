@@ -22,6 +22,7 @@ type LocationItem = {
   name: string;
   cluster: string;
   empCount: number;
+  activeCount: number;
   isReady: boolean;
   isBlocked: boolean;
 };
@@ -89,11 +90,11 @@ export default function SalaryCalculationByLocationPage() {
   const [loading, setLoading] = useState(false);
 
   const [month, setMonth] = useState(
-    String(new Date().getMonth() + 1),
+    String(new Date().getMonth() + 1)
   );
 
   const [year, setYear] = useState(
-    String(new Date().getFullYear()),
+    String(new Date().getFullYear())
   );
 
   const [search, setSearch] = useState("");
@@ -116,7 +117,7 @@ export default function SalaryCalculationByLocationPage() {
       compcode: user?.Comp_Code,
       name: user?.name,
     }),
-    [user?.Comp_Code, user?.name],
+    [user?.Comp_Code, user?.name]
   );
 
   // -----------------------------------------
@@ -141,67 +142,74 @@ export default function SalaryCalculationByLocationPage() {
   // LOCATION MAPPING
   // -----------------------------------------
 
-  const mapLocationData = useCallback(
-    (rows: any[]): LocationItem[] => {
-      return rows
-        .map((location: any) => {
-          const id = getText(
-            location.value,
-            location.Loc_Code,
-            location.LocCode,
-            location.location_id,
-            location.id,
-          );
 
-          const name = getText(
-            location.label,
-            location.loc_name,
-            location.Loc_Name,
-            location.LocationName,
-            location.Location,
-            location.name,
-          );
+const mapLocationData = useCallback(
+  (rows: any[]): LocationItem[] => {
+    return (Array.isArray(rows) ? rows : [])
+      .map((location: any) => {
+        const id = getText(
+          location.location_code,
+          location.location_id,
+          location.value,
+          location.Loc_Code,
+          location.LocCode,
+          location.id
+        );
 
-          const isBlocked =
-            Boolean(location.isBlocked) ||
-            Boolean(location.IsBlocked) ||
-            lockedLocationIds.includes(id);
+        const name = getText(
+          location.location_name,
+          location.label,
+          location.loc_name,
+          location.Loc_Name,
+          location.LocationName,
+          location.Location,
+          location.name
+        );
 
-          const readyValue =
-            location.isReady ??
-            location.IsReady ??
-            location.Ready ??
-            location.Status;
+        const isBlocked =
+          Boolean(location.isBlocked) ||
+          Boolean(location.IsBlocked) ||
+          lockedLocationIds.includes(String(id));
 
-          return {
-            id,
-            name: name || id,
-            cluster: getText(
-              location.cluster,
-              location.Cluster,
-              location.ClusterName,
-            ),
-            empCount: Number(
-              location.empCount ??
-                location.EmpCount ??
-                location.TotalEmp ??
-                location.total_emp ??
-                0,
-            ),
-            isReady:
-              readyValue === undefined
-                ? true
-                : readyValue === true ||
-                  readyValue === 1 ||
-                  readyValue === "1" ||
-                  readyValue === "Y",
-            isBlocked,
-          };
-        })
-        .filter((location) => location.id);
-    },
-    [lockedLocationIds],
-  );
+        const readyValue =
+          location.isReady ??
+          location.IsReady ??
+          location.Ready ??
+          location.Status;
+
+        return {
+          id: String(id),
+          name: name || String(id),
+
+          cluster: getText(
+            location.cluster,
+            location.Cluster,
+            location.ClusterName
+          ),
+
+          // Only active employees
+          empCount: Number(
+            location.active_emp ??
+            location.activeCount ??
+            location.active_count ??
+            0
+          ),
+
+          isReady:
+            readyValue === undefined
+              ? true
+              : readyValue === true ||
+                readyValue === 1 ||
+                readyValue === "1" ||
+                readyValue === "Y",
+
+          isBlocked,
+        };
+      })
+      .filter((location) => location.id);
+  },
+  [lockedLocationIds, getText]
+);
 
   // -----------------------------------------
   // FETCH CHANNEL / CLUSTER / REGION MASTERS
@@ -216,7 +224,7 @@ export default function SalaryCalculationByLocationPage() {
         {},
         {
           headers: apiHeaders,
-        },
+        }
       );
 
       const masters = response?.data?.data || {};
@@ -251,7 +259,7 @@ export default function SalaryCalculationByLocationPage() {
   }, [fetchMasterData]);
 
   // -----------------------------------------
-  // FETCH LOCATIONS
+  // FETCH LOCATIONS + EMPLOYEE COUNTS
   // -----------------------------------------
 
   const fetchLocationData = useCallback(async () => {
@@ -264,11 +272,17 @@ export default function SalaryCalculationByLocationPage() {
         ? String(user.branch)
             .split(",")
             .map((item: string) => Number(item.trim()))
-            .filter((item: number) => !Number.isNaN(item))
+            .filter((item: number) => Number.isFinite(item))
         : [];
 
+      if (locationsArray.length === 0) {
+        setLocations([]);
+        setSelectedLocations([]);
+        return;
+      }
+
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/ars/Emp_AtnrunGetLocation_1`,
+        `${process.env.NEXT_PUBLIC_URL_local}/ars/GetEmployeeCountByRegion`,
         {
           locations: locationsArray,
           Channel: channels,
@@ -277,7 +291,7 @@ export default function SalaryCalculationByLocationPage() {
         },
         {
           headers: apiHeaders,
-        },
+        }
       );
 
       const result = response?.data?.results || [];
@@ -338,14 +352,16 @@ export default function SalaryCalculationByLocationPage() {
         },
         {
           headers: apiHeaders,
-        },
+        }
       );
 
       const data = response?.data;
 
-      if (data?.Status && data?.modelVisible) {
-        const rows = Array.isArray(data?.result) ? data.result : [];
+      const rows = Array.isArray(data?.result)
+        ? data.result
+        : [];
 
+      if (data?.Status && data?.modelVisible) {
         const tableRows = rows
           .map(
             (row: any) => `
@@ -366,13 +382,13 @@ export default function SalaryCalculationByLocationPage() {
                   ${
                     row.Created_At
                       ? escapeHtml(
-                          new Date(row.Created_At).toLocaleString("en-IN"),
+                          new Date(row.Created_At).toLocaleString("en-IN")
                         )
                       : "—"
                   }
                 </td>
               </tr>
-            `,
+            `
           )
           .join("");
 
@@ -384,10 +400,10 @@ export default function SalaryCalculationByLocationPage() {
             <div style="text-align:left">
               <div style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:16px;font-size:13px">
                 <p><b>Total Pending Employees:</b> ${escapeHtml(
-                  data?.total_emp || 0,
+                  data?.total_emp || 0
                 )}</p>
                 <p><b>Estimated Waiting Time:</b> ${escapeHtml(
-                  data?.estimated_time || "0 minutes",
+                  data?.estimated_time || "0 minutes"
                 )}</p>
               </div>
 
@@ -434,7 +450,7 @@ export default function SalaryCalculationByLocationPage() {
     return locations.filter(
       (loc) =>
         loc.name.toLowerCase().includes(q) ||
-        loc.cluster.toLowerCase().includes(q),
+        loc.cluster.toLowerCase().includes(q)
     );
   }, [locations, search]);
 
@@ -449,11 +465,11 @@ export default function SalaryCalculationByLocationPage() {
 
     if (allSelected) {
       setSelectedLocations((prev) =>
-        prev.filter((id) => !availableIds.includes(id)),
+        prev.filter((id) => !availableIds.includes(id))
       );
     } else {
       setSelectedLocations((prev) =>
-        Array.from(new Set([...prev, ...availableIds])),
+        Array.from(new Set([...prev, ...availableIds]))
       );
     }
   };
@@ -474,13 +490,13 @@ export default function SalaryCalculationByLocationPage() {
     setSelectedLocations((prev) =>
       prev.includes(id)
         ? prev.filter((item) => item !== id)
-        : [...prev, id],
+        : [...prev, id]
     );
   };
 
   const blockedCount = useMemo(
     () => locations.filter((location) => location.isBlocked).length,
-    [locations],
+    [locations]
   );
 
   // -----------------------------------------
@@ -543,7 +559,7 @@ export default function SalaryCalculationByLocationPage() {
     }
 
     const blockedSelected = locations.filter(
-      (loc) => selectedLocations.includes(loc.id) && loc.isBlocked,
+      (loc) => selectedLocations.includes(loc.id) && loc.isBlocked
     );
 
     if (blockedSelected.length > 0) {
@@ -562,7 +578,7 @@ export default function SalaryCalculationByLocationPage() {
       html: `
         <div style="text-align:left;font-size:13px">
           <p><b>Month:</b> ${escapeHtml(
-            MONTHS.find((item) => item.value === month)?.label,
+            MONTHS.find((item) => item.value === month)?.label
           )} ${escapeHtml(year)}</p>
           <p><b>Total Locations:</b> ${selectedLocationNumbers.length}</p>
         </div>
@@ -588,7 +604,7 @@ export default function SalaryCalculationByLocationPage() {
         payload,
         {
           headers: apiHeaders,
-        },
+        }
       );
 
       const data = response?.data;
@@ -615,7 +631,7 @@ export default function SalaryCalculationByLocationPage() {
         throw new Error(
           data?.message ||
             data?.Message ||
-            "Failed to initiate salary calculation.",
+            "Failed to initiate salary calculation."
         );
       }
 
@@ -629,8 +645,8 @@ export default function SalaryCalculationByLocationPage() {
               loc.Loc_Code,
               loc.LocCode,
               loc.location_id,
-              loc.id,
-            ),
+              loc.id
+            )
           )
           .filter(Boolean);
 
@@ -640,7 +656,7 @@ export default function SalaryCalculationByLocationPage() {
           prev.map((loc) => ({
             ...loc,
             isBlocked: lockedIds.includes(loc.id) || loc.isBlocked,
-          })),
+          }))
         );
 
         if (lockedRows.length > 0) {
@@ -651,8 +667,8 @@ export default function SalaryCalculationByLocationPage() {
                 loc.loc_name,
                 loc.Loc_Name,
                 loc.name,
-                loc.value,
-              ),
+                loc.value
+              )
             )
             .filter(Boolean);
 
@@ -667,9 +683,7 @@ export default function SalaryCalculationByLocationPage() {
                       ? lockedNames
                           .map(
                             (name: string) =>
-                              `<li style="padding:4px">${escapeHtml(
-                                name,
-                              )}</li>`,
+                              `<li style="padding:4px">${escapeHtml(name)}</li>`
                           )
                           .join("")
                       : "<li>Some locations are already locked.</li>"
@@ -706,12 +720,18 @@ export default function SalaryCalculationByLocationPage() {
     }
   };
 
+  // -----------------------------------------
+  // UI
+  // -----------------------------------------
+
   return (
     <div className="min-h-screen min-w-0 bg-[#f5f8fc] p-3 transition-colors dark:bg-[#0b1220] sm:p-4 lg:p-6">
       <HashloaderComponent isLoading={loading} />
 
       <div className="mx-auto min-w-0 max-w-[1800px] space-y-4">
+
         {/* PAGE HEADER */}
+
         <div className="min-w-0">
           <h1 className="text-[20px] font-bold leading-tight text-[#152b4b] dark:text-slate-100 sm:text-[23px]">
             Salary calculation by location
@@ -723,9 +743,12 @@ export default function SalaryCalculationByLocationPage() {
         </div>
 
         {/* FILTER PANEL */}
+
         <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-5">
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+
             {/* CHANNEL */}
+
             <div className="min-w-0">
               <Eselect
                 title="CHANNEL"
@@ -741,6 +764,7 @@ export default function SalaryCalculationByLocationPage() {
             </div>
 
             {/* CLUSTER */}
+
             <div className="min-w-0">
               <Eselect
                 title="CLUSTER"
@@ -756,6 +780,7 @@ export default function SalaryCalculationByLocationPage() {
             </div>
 
             {/* REGION */}
+
             <div className="min-w-0">
               <Eselect
                 title="REGION"
@@ -771,6 +796,7 @@ export default function SalaryCalculationByLocationPage() {
             </div>
 
             {/* MONTH */}
+
             <div className="min-w-0">
               <Eselect
                 title="MONTH"
@@ -784,6 +810,7 @@ export default function SalaryCalculationByLocationPage() {
             </div>
 
             {/* YEAR */}
+
             <div className="min-w-0">
               <Eselect
                 title="YEAR"
@@ -794,13 +821,18 @@ export default function SalaryCalculationByLocationPage() {
                 className="h-[41px] w-full"
               />
             </div>
+
           </div>
         </div>
 
         {/* LOCATION LIST */}
+
         <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-800 dark:bg-slate-900">
+
           {/* LIST HEADER */}
+
           <div className="flex flex-col gap-3 border-b border-[#e8edf5] px-4 py-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+
             <div className="flex flex-wrap items-center gap-3">
               <input
                 type="checkbox"
@@ -843,10 +875,13 @@ export default function SalaryCalculationByLocationPage() {
                 className="h-[36px] w-full rounded-lg border border-[#dce5f1] bg-white pl-8 pr-3 text-[12px] text-[#152b4b] outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
+
           </div>
 
           {/* LOCATION ROWS */}
+
           <div className="divide-y divide-[#e8edf5] dark:divide-slate-800">
+
             {filteredLocations.map((loc) => {
               const isChecked = selectedLocations.includes(loc.id);
 
@@ -858,6 +893,7 @@ export default function SalaryCalculationByLocationPage() {
                     isChecked ? "bg-slate-50/70 dark:bg-slate-800/40" : ""
                   }`}
                 >
+
                   <div className="flex min-w-0 items-center gap-3">
                     <input
                       type="checkbox"
@@ -872,12 +908,20 @@ export default function SalaryCalculationByLocationPage() {
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 pl-7 sm:pl-0">
+                  <div className="flex flex-wrap items-center gap-2 pl-7 sm:pl-0">
+
                     <span className="text-[11px] text-[#64748b] dark:text-slate-400">
-                      {loc.cluster || "—"} · {loc.empCount} emp
+                      {loc.cluster || "—"}
                     </span>
 
-                    {loc.isBlocked ? (
+                    {/* TOTAL EMPLOYEES ONLY */}
+<span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+  Active Employees: {loc.empCount}
+</span>
+
+                    {/* INACTIVE EMPLOYEE COUNT REMOVED */}
+
+                    {/* {loc.isBlocked ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                         <Lock size={13} />
                         Locked
@@ -891,7 +935,8 @@ export default function SalaryCalculationByLocationPage() {
                       <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                         Not Ready
                       </span>
-                    )}
+                    )} */}
+
                   </div>
                 </div>
               );
@@ -902,10 +947,13 @@ export default function SalaryCalculationByLocationPage() {
                 No locations found.
               </div>
             )}
+
           </div>
 
           {/* FOOTER / ACTION */}
+
           <div className="flex flex-col gap-3 border-t border-[#e8edf5] p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+
             <div>
               {selectedLocations.length === 0 ? (
                 <p className="text-[12px] font-medium text-rose-500">
@@ -927,6 +975,7 @@ export default function SalaryCalculationByLocationPage() {
               <Calculator size={16} />
               Run salary calculation
             </AButton>
+
           </div>
         </div>
       </div>

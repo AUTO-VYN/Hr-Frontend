@@ -57,11 +57,6 @@ const PAYMENT_MODES: Option[] = [
   { value: "NATS/NAPS", label: "NATS/NAPS" },
 ];
 
-const ALL_OPTION: Option = {
-  value: "all",
-  label: "All",
-};
-
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -178,8 +173,12 @@ export default function BankTransferSheetPage() {
   const [year, setYear] = useState(String(today.getFullYear()));
   const [month, setMonth] = useState(String(today.getMonth() + 1));
   const [paymentMode, setPaymentMode] = useState("all");
-  const [bank, setBank] = useState("all");
-  const [cluster, setCluster] = useState("all");
+
+  // BANK AND CLUSTER BLANK BY DEFAULT
+  // Blank means all banks / all clusters.
+  const [bank, setBank] = useState("");
+  const [cluster, setCluster] = useState("");
+
   const [search, setSearch] = useState("");
 
   // MASTER DATA
@@ -190,8 +189,7 @@ export default function BankTransferSheetPage() {
 
   // TABLE DATA
   const [rows, setRows] = useState<AnyRecord[]>([]);
-  const [showAllBanks, setShowAllBanks] = useState(false);
-  // TABLE FILTER
+
   const [activeTab, setActiveTab] = useState<"all" | "bank" | "incomplete">(
     "all",
   );
@@ -241,10 +239,10 @@ export default function BankTransferSheetPage() {
         .map((item: string) => Number(item.trim()))
         .filter((item: number) => !Number.isNaN(item));
 
-      const selectedClusters =
-        cluster === "all"
-          ? clusterOptions.map((item) => item.value)
-          : [cluster];
+      // No cluster selected = all available clusters.
+      const selectedClusters = cluster
+        ? [cluster]
+        : clusterOptions.map((item) => item.value);
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/ars/Emp_AtnrunGetLocation_1`,
@@ -295,7 +293,8 @@ export default function BankTransferSheetPage() {
         const clusters = normalizeOptions(masterData.CLUSTER || []);
         const regions = normalizeOptions(masterData.Region || []);
 
-        setClusterOptions([ALL_OPTION, ...clusters]);
+        // No All option in cluster dropdown.
+        setClusterOptions(clusters);
         setRegionOptions(regions);
 
         // BANK MASTER
@@ -314,7 +313,8 @@ export default function BankTransferSheetPage() {
 
         const banks = normalizeOptions(bankResponse?.data?.Financer || []);
 
-        setBankOptions([ALL_OPTION, ...banks]);
+        // No All option in bank dropdown.
+        setBankOptions(banks);
       } catch (error) {
         console.error("Error fetching masters:", error);
       } finally {
@@ -397,11 +397,12 @@ export default function BankTransferSheetPage() {
         paymentMode === "all" ||
         rowMode.toLowerCase() === paymentMode.toLowerCase();
 
-      const matchesBank =
-        bank === "all" || rowBank.toLowerCase() === bank.toLowerCase();
+      // Blank bank means all banks.
+      const matchesBank = !bank || rowBank.toLowerCase() === bank.toLowerCase();
 
+      // Blank cluster means all clusters.
       const matchesCluster =
-        cluster === "all" || rowCluster.toLowerCase() === cluster.toLowerCase();
+        !cluster || rowCluster.toLowerCase() === cluster.toLowerCase();
 
       const matchesTab =
         activeTab === "all" ||
@@ -683,29 +684,14 @@ export default function BankTransferSheetPage() {
           </span>
         ),
       },
-      // {
-      //   Header: "STATUS",
-      //   accessor: "_status",
-      //   width: 120,
-      //   Cell: ({ value }: any) => (
-      //     <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-      //       {value}
-      //     </span>
-      //   ),
-      // },
     ],
     [],
   );
 
   // SHOW DATA API
   const ShowData = async () => {
-    if (!user?.Comp_Code) {
-      return;
-    }
-
-    if (!month || !year) {
-      return;
-    }
+    if (!user?.Comp_Code) return;
+    if (!month || !year) return;
 
     setLoading(true);
 
@@ -714,12 +700,10 @@ export default function BankTransferSheetPage() {
 
       const selectedRegions = regionOptions.map((item) => item.value);
 
-      const selectedClusters =
-        cluster === "all"
-          ? clusterOptions
-              .filter((item) => item.value !== "all")
-              .map((item) => item.value)
-          : [cluster];
+      // Blank cluster means all clusters.
+      const selectedClusters = cluster
+        ? [cluster]
+        : clusterOptions.map((item) => item.value);
 
       const payload = {
         location: selectedLocations,
@@ -727,7 +711,10 @@ export default function BankTransferSheetPage() {
         salyear: Number(year),
         SalMnth: Number(month),
         PAYMENTMODES: paymentMode === "all" ? "" : paymentMode,
-        BANKNAME: bank === "all" ? "" : bank,
+
+        // Blank bank means all banks.
+        BANKNAME: bank || "",
+
         Cluster: selectedClusters,
       };
 
@@ -750,13 +737,8 @@ export default function BankTransferSheetPage() {
       const resultRows = Array.isArray(responseData) ? responseData : [];
 
       setRows(resultRows);
-
-      if (resultRows.length === 0) {
-        setRows([]);
-      }
     } catch (error: any) {
       console.error("BankTransferSheet API Error:", error);
-
       setRows([]);
     } finally {
       setLoading(false);
@@ -768,8 +750,11 @@ export default function BankTransferSheetPage() {
     setYear(String(today.getFullYear()));
     setMonth(String(today.getMonth() + 1));
     setPaymentMode("all");
-    setBank("all");
-    setCluster("all");
+
+    // Reset to blank = all banks and clusters.
+    setBank("");
+    setCluster("");
+
     setSearch("");
     setActiveTab("all");
     setRows([]);
@@ -894,7 +879,7 @@ export default function BankTransferSheetPage() {
                   initialValue={bank}
                   handleInputChange={handleInputChange}
                   className="h-[34px] w-full"
-                  placeholder="Select bank"
+                  placeholder="All banks"
                 />
               </div>
 
@@ -906,7 +891,7 @@ export default function BankTransferSheetPage() {
                   initialValue={cluster}
                   handleInputChange={handleInputChange}
                   className="h-[34px] w-full"
-                  placeholder="Select cluster"
+                  placeholder="All clusters"
                 />
               </div>
 
@@ -919,7 +904,6 @@ export default function BankTransferSheetPage() {
                 Reset filters
               </AButton>
 
-              {/* SHOW DATA */}
               <AButton
                 type="button"
                 onClick={ShowData}
@@ -930,72 +914,59 @@ export default function BankTransferSheetPage() {
             </div>
 
             {/* PAYABLE BY BANK */}
-            {/* PAYABLE BY BANK */}
             <div className="rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-[#151f30] dark:shadow-none">
               <h3 className="mb-3 text-[10px] font-bold tracking-wide text-[#536987] dark:text-slate-400">
                 PAYABLE BY BANK
               </h3>
 
               {bankSummary.length > 0 ? (
-                <>
-                  <div className="space-y-2">
-                    {(showAllBanks ? bankSummary : bankSummary.slice(0, 3)).map(
-                      ([bankName, details]) => (
-                        <div
-                          key={bankName}
-                          className="rounded-lg border border-[#dce5f1] bg-[#f8fafd] px-3 py-2.5 dark:border-slate-700 dark:bg-[#202c3e]"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2 text-[11px] font-medium text-[#647894] dark:text-slate-300">
-                              <Building2 size={15} className="shrink-0" />
-                              <span className="truncate">{bankName}</span>
-                            </div>
-
-                            <strong className="whitespace-nowrap text-[11px] text-[#14213d] dark:text-slate-100">
-                              {formatCurrency(details.amount)}
-                            </strong>
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between gap-2">
-                            <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[#e7eaf2] dark:bg-slate-700">
-                              <div
-                                className="h-full rounded-full bg-[#5145e9]"
-                                style={{
-                                  width: `${
-                                    bankSummary[0][1].amount > 0
-                                      ? Math.min(
-                                          (details.amount /
-                                            bankSummary[0][1].amount) *
-                                            100,
-                                          100,
-                                        )
-                                      : 0
-                                  }%`,
-                                }}
-                              />
-                            </div>
-
-                            <span className="whitespace-nowrap text-[10px] text-[#71819c] dark:text-slate-400">
-                              {details.count} employees
-                            </span>
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
-
-                  {bankSummary.length > 3 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllBanks((prev) => !prev)}
-                      className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-[#dce5f1] bg-white py-2 text-[11px] font-semibold text-[#5145e9] transition hover:bg-[#f5f4ff] dark:border-slate-600 dark:bg-[#202c3e] dark:text-indigo-300 dark:hover:bg-slate-700"
+                <div
+                  className={`bank-summary-scroll space-y-2 overflow-x-hidden overflow-y-auto pr-2 ${
+                    !bank && bankSummary.length > 3 ? "h-[220px]" : ""
+                  }`}
+                >
+                  {bankSummary.map(([bankName, details]) => (
+                    <div
+                      key={bankName}
+                      className="rounded-lg border border-[#dce5f1] bg-[#f8fafd] px-3 py-2.5 dark:border-slate-700 dark:bg-[#202c3e]"
                     >
-                      {showAllBanks
-                        ? "Show less"
-                        : `See all banks (${bankSummary.length})`}
-                    </button>
-                  )}
-                </>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2 text-[11px] font-medium text-[#647894] dark:text-slate-300">
+                          <Building2 size={15} className="shrink-0" />
+                          <span className="truncate">{bankName}</span>
+                        </div>
+
+                        <strong className="whitespace-nowrap text-[11px] text-[#14213d] dark:text-slate-100">
+                          {formatCurrency(details.amount)}
+                        </strong>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[#e7eaf2] dark:bg-slate-700">
+                          <div
+                            className="h-full rounded-full bg-[#5145e9]"
+                            style={{
+                              width: `${
+                                bankSummary[0][1].amount > 0
+                                  ? Math.min(
+                                      (details.amount /
+                                        bankSummary[0][1].amount) *
+                                        100,
+                                      100,
+                                    )
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+
+                        <span className="whitespace-nowrap text-[10px] text-[#71819c] dark:text-slate-400">
+                          {details.count} employees
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="py-2 text-center text-[11px] text-[#71819c] dark:text-slate-400">
                   No bank payable data found
@@ -1275,6 +1246,37 @@ export default function BankTransferSheetPage() {
           white-space: nowrap;
         }
 
+        /* PAYABLE BY BANK SCROLLBAR */
+        .bank-transfer-page .bank-summary-scroll {
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #edf2f7;
+          padding-right: 6px;
+        }
+
+        .bank-transfer-page .bank-summary-scroll::-webkit-scrollbar {
+          width: 7px;
+          display: block;
+        }
+
+        .bank-transfer-page .bank-summary-scroll::-webkit-scrollbar-track {
+          background: #edf2f7;
+          border-radius: 10px;
+        }
+
+        .bank-transfer-page .bank-summary-scroll::-webkit-scrollbar-thumb {
+          background: #94a3b8;
+          border-radius: 10px;
+          border: 1px solid #edf2f7;
+        }
+
+        .bank-transfer-page
+          .bank-summary-scroll::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+
+        /* DARK MODE */
         .dark .bank-transfer-page label {
           color: #cbd5e1;
         }
@@ -1315,6 +1317,30 @@ export default function BankTransferSheetPage() {
 
         .dark .bank-transfer-page .bank-transfer-table tbody tr:hover td {
           background-color: #202c3e !important;
+        }
+
+        /* DARK MODE SCROLLBAR */
+        .dark .bank-transfer-page .bank-summary-scroll {
+          scrollbar-color: #64748b #263449;
+        }
+
+        .dark
+          .bank-transfer-page
+          .bank-summary-scroll::-webkit-scrollbar-track {
+          background: #263449;
+        }
+
+        .dark
+          .bank-transfer-page
+          .bank-summary-scroll::-webkit-scrollbar-thumb {
+          background: #64748b;
+          border-color: #263449;
+        }
+
+        .dark
+          .bank-transfer-page
+          .bank-summary-scroll::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
 
         @media (max-width: 640px) {

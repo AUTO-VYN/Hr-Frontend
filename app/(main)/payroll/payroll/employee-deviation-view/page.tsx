@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -169,9 +168,7 @@ const SummaryCard = ({
     <div className="flex items-center gap-[7px]">
       <span className={`h-[6px] w-[6px] rounded-full ${dotColor}`} />
 
-      <p className="m-0 text-[11px] font-[500] text-[var(--muted)]">
-        {label}
-      </p>
+      <p className="m-0 text-[11px] font-[500] text-[var(--muted)]">{label}</p>
     </div>
 
     <h2 className="mb-0 mt-[6px] text-[21px] font-[750] leading-none text-[var(--fg)]">
@@ -262,8 +259,7 @@ export default function EmployeeDeviationView() {
 
       console.log("Employee Deviation API Response:", response.data);
 
-      const responseData =
-        response?.data?.result || response?.data?.data || [];
+      const responseData = response?.data?.result || response?.data?.data || [];
 
       setRows(Array.isArray(responseData) ? responseData : []);
 
@@ -322,8 +318,12 @@ export default function EmployeeDeviationView() {
 
         return (
           getEmployeeName(item).toLowerCase().includes(text) ||
-          String(item.EMPCODE || "").toLowerCase().includes(text) ||
-          String(item.Created_By || "").toLowerCase().includes(text)
+          String(item.EMPCODE || "")
+            .toLowerCase()
+            .includes(text) ||
+          String(item.Created_By || "")
+            .toLowerCase()
+            .includes(text)
         );
       })
       .sort((a, b) => {
@@ -422,11 +422,7 @@ export default function EmployeeDeviationView() {
         Cell: ({ row }: any) => {
           const item: DeviationRow = row.original;
 
-          const subtitle = [
-            item.DEPT_NAME,
-            item.BRANCH_NAME,
-            item.EMPCODE,
-          ]
+          const subtitle = [item.DEPT_NAME, item.BRANCH_NAME, item.EMPCODE]
             .filter(Boolean)
             .join(" · ");
 
@@ -454,7 +450,7 @@ export default function EmployeeDeviationView() {
 
           return (
             <div
-              className={`w-full text-center text-[11.5px] font-[750] ${
+              className={`flex w-full items-center justify-center text-center text-[11.5px] font-[750] tabular-nums ${
                 days >= 0 ? "text-emerald-600" : "text-rose-500"
               }`}
             >
@@ -494,9 +490,7 @@ export default function EmployeeDeviationView() {
         accessor: "status_khud_ka",
         width: 120,
 
-        Cell: ({ row }: any) => (
-         <StatusBadge type="approved" />
-        ),
+        Cell: ({ row }: any) => <StatusBadge type="approved" />,
       },
     ],
     [sortAscending],

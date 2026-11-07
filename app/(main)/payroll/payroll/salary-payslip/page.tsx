@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, {
@@ -7,6 +6,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -15,7 +15,6 @@ import {
   Search,
   Eye,
   Mail,
-  Download,
 } from "lucide-react";
 
 import AButton from "@/components/atoms/Button";
@@ -490,6 +489,7 @@ function FilterCard({
 
 export default function EmployeeSalarySlipsPage() {
   const user = useCurrentUser();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [masterLoading, setMasterLoading] = useState(false);
@@ -528,40 +528,31 @@ export default function EmployeeSalarySlipsPage() {
   const [selectedSlips, setSelectedSlips] = useState<string[]>([]);
   const [salaryDetails, setSalaryDetails] = useState<Record<string, any>>({});
   const [hasSearched, setHasSearched] = useState(false);
-const [designations, setDesignations] = useState<Option[]>([]);
-const [selectedDesignations, setSelectedDesignations] = useState<string[]>([]);
-const [designationSearch, setDesignationSearch] = useState("");
+  const [designations, setDesignations] = useState<Option[]>([]);
+  const [selectedDesignations, setSelectedDesignations] = useState<string[]>([]);
+  const [designationSearch, setDesignationSearch] = useState("");
 
+  const postApi = useCallback(
+    async (path: string, payload: any) => {
+      const compcode = user?.Comp_Code;
 
-  const apiHeaders = useMemo(
-    () => ({
-      compcode: user?.Comp_Code,
-      name: user?.name,
-    }),
+      if (!compcode) {
+        throw new Error("Company code is not ready.");
+      }
+
+      if (!API_URL) {
+        throw new Error("NEXT_PUBLIC_URL is not configured.");
+      }
+
+      return axios.post(`${API_URL}${path}`, payload, {
+        headers: {
+          compcode,
+          name: user?.name || "",
+        },
+      });
+    },
     [user?.Comp_Code, user?.name]
   );
-
- const postApi = useCallback(
-  async (path: string, payload: any) => {
-    const compcode = user?.Comp_Code;
-
-    if (!compcode) {
-      throw new Error("Company code is not ready.");
-    }
-
-    if (!API_URL) {
-      throw new Error("NEXT_PUBLIC_URL is not configured.");
-    }
-
-    return axios.post(`${API_URL}${path}`, payload, {
-      headers: {
-        compcode,
-        name: user?.name || "",
-      },
-    });
-  },
-  [user?.Comp_Code, user?.name]
-);
 
   // Employee Code dropdown options.
   // API format: { value: "TMPL227", label: "TMPL227 - RUPAK SAHA" }
@@ -649,194 +640,171 @@ const [designationSearch, setDesignationSearch] = useState("");
   };
 
   // Load filter masters.
+  const fetchMasters = useCallback(async () => {
+    if (!user?.Comp_Code || !user?.branch) return;
 
-const fetchMasters = useCallback(async () => {
-  if (!user?.Comp_Code || !user?.branch) return;
+    try {
+      setMasterLoading(true);
 
-  try {
-    setMasterLoading(true);
+      const response = await postApi("/hrmsreport/findMasters", {
+        multiloc: user?.branch,
+        Month: month,
+        Year: year,
+      });
 
-    const response = await postApi("/hrmsreport/findMasters", {
-      multiloc: user?.branch,
-      Month: month,
-      Year: year,
-    });
+      const data = response?.data?.data;
 
-    const data = response?.data?.data;
+      if (!data) {
+        console.warn("findMasters: response.data.data is empty");
+        return;
+      }
 
-    console.log("Find Masters Response:", data);
+      const locationData = Array.isArray(data?.Location?.[0])
+        ? data.Location[0]
+        : Array.isArray(data?.Location)
+          ? data.Location
+          : [];
 
-    if (!data) {
-      console.warn("findMasters: response.data.data is empty");
-      return;
+      setLocations(
+        makeOptions(
+          locationData,
+          ["Loc_code", "LOC_CODE", "LocationCode", "Code", "value"],
+          ["Loc_name", "LocationName", "LOC_NAME", "Name", "label"]
+        )
+      );
+
+      setRegions(
+        makeOptions(
+          getArray(data?.Region),
+          ["Region_Code", "RegionCode", "REGION_CODE", "Code", "value"],
+          ["Region_Name", "RegionName", "REGION_NAME", "Name", "label"]
+        )
+      );
+
+      setChannels(
+        makeOptions(
+          getArray(data?.CHANNEL),
+          ["Channel_Code", "ChannelCode", "CHANNEL_CODE", "Code", "value"],
+          ["Channel_Name", "ChannelName", "CHANNEL_NAME", "Name", "label"]
+        )
+      );
+
+      setClusters(
+        makeOptions(
+          getArray(data?.CLUSTER),
+          ["Cluster_Code", "ClusterCode", "CLUSTER_CODE", "Code", "value"],
+          ["Cluster_Name", "ClusterName", "Name", "label"]
+        )
+      );
+
+      setSections(
+        makeOptions(
+          getArray(data?.SECTION),
+          ["Section_Code", "SectionCode", "SECTION_CODE", "Code", "value"],
+          ["Section_Name", "SectionName", "Name", "label"]
+        )
+      );
+
+      setDepartments(
+        makeOptions(
+          getArray(data?.DIVISION),
+          ["Division_Code", "DivisionCode", "DIVISION_CODE", "Code", "value"],
+          ["Division_Name", "DivisionName", "Name", "label"]
+        )
+      );
+
+      setDesignations(
+        makeOptions(
+          getArray(data?.DESIGNATION),
+          [
+            "Designation_Code",
+            "DesignationCode",
+            "Desig_Code",
+            "DESIGNATION_CODE",
+            "Code",
+            "value",
+          ],
+          [
+            "Designation_Name",
+            "DesignationName",
+            "Desig_Name",
+            "DESIGNATION_NAME",
+            "Name",
+            "label",
+          ]
+        )
+      );
+    } catch (error) {
+      console.error("findMasters error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Unable to load filters",
+        text: getApiError(error),
+      });
+    } finally {
+      setMasterLoading(false);
     }
+  }, [user?.Comp_Code, user?.branch, month, year, postApi]);
 
-    const locationData = Array.isArray(data?.Location?.[0])
-      ? data.Location[0]
-      : Array.isArray(data?.Location)
-        ? data.Location
-        : [];
+  useEffect(() => {
+    if (!user?.Comp_Code || !user?.branch) return;
 
-    setLocations(
-      makeOptions(
-        locationData,
-        ["Loc_code", "LOC_CODE", "LocationCode", "Code", "value"],
-        ["Loc_name", "LocationName", "LOC_NAME", "Name", "label"]
-      )
-    );
-
-    setRegions(
-      makeOptions(
-        getArray(data?.Region),
-        ["Region_Code", "RegionCode", "REGION_CODE", "Code", "value"],
-        ["Region_Name", "RegionName", "REGION_NAME", "Name", "label"]
-      )
-    );
-
-    setChannels(
-      makeOptions(
-        getArray(data?.CHANNEL),
-        ["Channel_Code", "ChannelCode", "CHANNEL_CODE", "Code", "value"],
-        ["Channel_Name", "ChannelName", "CHANNEL_NAME", "Name", "label"]
-      )
-    );
-
-    setClusters(
-      makeOptions(
-        getArray(data?.CLUSTER),
-        ["Cluster_Code", "ClusterCode", "CLUSTER_CODE", "Code", "value"],
-        ["Cluster_Name", "ClusterName", "Name", "label"]
-      )
-    );
-
-    setSections(
-      makeOptions(
-        getArray(data?.SECTION),
-        ["Section_Code", "SectionCode", "SECTION_CODE", "Code", "value"],
-        ["Section_Name", "SectionName", "Name", "label"]
-      )
-    );
-
-    setDepartments(
-      makeOptions(
-        getArray(data?.DIVISION),
-        ["Division_Code", "DivisionCode", "DIVISION_CODE", "Code", "value"],
-        ["Division_Name", "DivisionName", "Name", "label"]
-      )
-    );
-
-    // Designation
-    setDesignations(
-      makeOptions(
-        getArray(data?.DESIGNATION),
-        [
-          "Designation_Code",
-          "DesignationCode",
-          "Desig_Code",
-          "DESIGNATION_CODE",
-          "Code",
-          "value",
-        ],
-        [
-          "Designation_Name",
-          "DesignationName",
-          "Desig_Name",
-          "DESIGNATION_NAME",
-          "Name",
-          "label",
-        ]
-      )
-    );
-
-    console.log("Locations:", locationData);
-    console.log("Regions:", data?.Region);
-    console.log("Departments:", data?.DIVISION);
-    console.log("Channels:", data?.CHANNEL);
-    console.log("Clusters:", data?.CLUSTER);
-    console.log("Sections:", data?.SECTION);
-    console.log("Designations:", data?.DESIGNATION);
-
-  } catch (error) {
-    console.error("findMasters error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Unable to load filters",
-      text: getApiError(error),
-    });
-  } finally {
-    setMasterLoading(false);
-  }
-}, [
-  user?.Comp_Code,
-  user?.branch,
-  month,
-  year,
-  postApi,
-]);
-
-
- useEffect(() => {
-  if (!user?.Comp_Code || !user?.branch) return;
-
-  fetchMasters();
-}, [fetchMasters, user?.Comp_Code, user?.branch]);
+    fetchMasters();
+  }, [fetchMasters, user?.Comp_Code, user?.branch]);
 
   // Existing API payload retained: only Loc_code is sent.
-const fetchEmployees = useCallback(async () => {
-  if (!user?.Comp_Code) return [];
+  const fetchEmployees = useCallback(async () => {
+    if (!user?.Comp_Code) return [];
 
-  const response = await postApi(
-    "/employee/findAllForSalary",
-    {
-      Loc_code: selectedLocations.map(getCode).join(","),
-    }
-  );
+    const response = await postApi(
+      "/employee/findAllForSalary",
+      {
+        Loc_code: selectedLocations.map(getCode).join(","),
+      }
+    );
 
-  const rows = getResponseRows(response);
-
-  console.log("Employee API Rows:", rows);
-
-  return rows;
-}, [postApi, selectedLocations, user?.Comp_Code]);
+    return getResponseRows(response);
+  }, [postApi, selectedLocations, user?.Comp_Code]);
 
   // Load employee master for Employee Code dropdown.
- const loadEmployeeMaster = useCallback(async () => {
-  if (!user?.Comp_Code) return;
+  const loadEmployeeMaster = useCallback(async () => {
+    if (!user?.Comp_Code) return;
 
-  try {
-    setEmployeeLoading(true);
+    try {
+      setEmployeeLoading(true);
 
-    const rows = await fetchEmployees();
-    setEmployeeMaster(rows);
+      const rows = await fetchEmployees();
+      setEmployeeMaster(rows);
 
-    if (
-      employeeCode !== "all" &&
-      !rows.some((item: any) =>
-        getText(
-          item?.value,
-          item?.EMPCODE,
-          item?.EmpCode,
-          item?.EmployeeCode
-        ) === employeeCode
-      )
-    ) {
-      setEmployeeCode("all");
+      if (
+        employeeCode !== "all" &&
+        !rows.some(
+          (item: any) =>
+            getText(
+              item?.value,
+              item?.EMPCODE,
+              item?.EmpCode,
+              item?.EmployeeCode
+            ) === employeeCode
+        )
+      ) {
+        setEmployeeCode("all");
+      }
+    } catch (error) {
+      console.error("Employee dropdown error:", error);
+
+      setEmployeeMaster([]);
+
+      Swal.fire({
+        icon: "error",
+        title: "Unable to load employees",
+        text: getApiError(error),
+      });
+    } finally {
+      setEmployeeLoading(false);
     }
-  } catch (error) {
-    console.error("Employee dropdown error:", error);
-
-    setEmployeeMaster([]);
-
-    Swal.fire({
-      icon: "error",
-      title: "Unable to load employees",
-      text: getApiError(error),
-    });
-  } finally {
-    setEmployeeLoading(false);
-  }
-}, [fetchEmployees, employeeCode, user?.Comp_Code]);
+  }, [fetchEmployees, employeeCode, user?.Comp_Code]);
 
   // Automatically refresh Employee Code dropdown when location changes.
   useEffect(() => {
@@ -886,13 +854,7 @@ const fetchEmployees = useCallback(async () => {
         {}
       );
     },
-    [
-      year,
-      month,
-      employeeType,
-      selectedDepartments,
-      postApi,
-    ]
+    [year, month, employeeType, selectedDepartments, postApi]
   );
 
   // Show salary slip results.
@@ -1013,6 +975,7 @@ const fetchEmployees = useCallback(async () => {
     setSelectedChannels([]);
     setSelectedClusters([]);
     setSelectedSections([]);
+    setSelectedDesignations([]);
 
     setEmployeeType("Regular");
     setEmployeeCode("all");
@@ -1023,6 +986,7 @@ const fetchEmployees = useCallback(async () => {
     setChannelSearch("");
     setClusterSearch("");
     setSectionSearch("");
+    setDesignationSearch("");
 
     setSelectedSlips([]);
     setSlipRows([]);
@@ -1041,1102 +1005,28 @@ const fetchEmployees = useCallback(async () => {
       selectedSlips.includes(item.id)
     );
 
-  const escapeHtml = (value: any) =>
-    String(value ?? "—")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-  // Build salary slip HTML.
-
-
-const buildSlipHtml = (employee: SlipRow) => {
-  const details = salaryDetails[employee.empCode] || {};
-  const raw = details?.data || details?.Result || details?.result || details;
-
-  const period = `${
-    MONTHS.find((item) => String(item.value) === String(month))?.label || month
-  } ${year}`;
-
-  const monthOptions = MONTHS.map(
-    (item) => `
-      <option
-        value="${escapeHtml(item.value)}"
-        ${String(item.value) === String(month) ? "selected" : ""}
-      >
-        ${escapeHtml(item.label)}
-      </option>
-    `
-  ).join("");
-
-  const currentYear = new Date().getFullYear();
-
-  const availableYears = Array.from(
-    { length: 11 },
-    (_, index) => currentYear - 5 + index
+  // Eye icon -> selected employee ka salary slip page
+const handleViewSlip = (employee: SlipRow) => {
+  const location = getText(
+    employee.raw?.Loc_code,
+    employee.raw?.LocationCode,
+    employee.raw?.LOC_CODE,
+    employee.branch !== "—" ? getCode(employee.branch) : ""
   );
 
-  if (!availableYears.includes(Number(year))) {
-    availableYears.push(Number(year));
-  }
-
-  availableYears.sort((a, b) => b - a);
-
-  const yearOptions = availableYears
-    .map(
-      (item) => `
-        <option
-          value="${item}"
-          ${String(item) === String(year) ? "selected" : ""}
-        >
-          ${item}
-        </option>
-      `
-    )
-    .join("");
-
-  const read = (...keys: string[]): any => {
-    const normalizedKeys = keys.map((key) =>
-      key.toLowerCase().replace(/[^a-z0-9]/g, "")
-    );
-
-    const foundKey = Object.keys(raw || {}).find((key) =>
-      normalizedKeys.includes(
-        key.toLowerCase().replace(/[^a-z0-9]/g, "")
-      )
-    );
-
-    return foundKey ? raw[foundKey] : "";
-  };
-
-  const value = (val: any) =>
-    val !== null && val !== undefined && String(val).trim() !== ""
-      ? String(val)
-      : "—";
-
-  const money = (val: any) => {
-    if (val === null || val === undefined || val === "") return "—";
-
-    const amount = Number(String(val).replace(/[₹,\s]/g, ""));
-
-    if (Number.isNaN(amount)) return String(val);
-
-    return `₹${amount.toLocaleString("en-IN", {
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
-  const compactMoney = (amount: number) => {
-    if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
-    if (amount >= 1000) return `₹${Math.round(amount / 1000)}k`;
-    return `₹${amount}`;
-  };
-
-  const companyName =
-    getText(
-      user?.Comp_Name,
-      user?.CompanyName,
-      user?.companyName,
-      raw?.CompanyName,
-      raw?.Comp_Name
-    ) || "Company";
-
-  const paymentDate = read(
-    "PaidOn",
-    "PaymentDate",
-    "PaidDate",
-    "CreditDate",
-    "SalaryPaidDate"
-  );
-
-  const employeeDetails = [
-    ["Employee code", employee.empCode],
-    ["Employee name", employee.employeeName],
-    ["Father's name", read("FatherName", "Father_Name", "FName")],
-    ["Designation", employee.designation],
-    ["Location", employee.branch],
-    ["Department", read("Department", "DepartmentName", "DIVISION")],
-    ["Bank", read("BankName", "Bank")],
-    ["A/c no.", read("AccountNo", "AccountNumber", "AcNo", "BankAccount")],
-    ["IFSC", read("IFSC", "IFSCCode")],
-    ["Date of joining", read("DOJ", "DateOfJoining", "JoiningDate")],
-    ["PF no.", read("PFNo", "PFNumber", "PFAccountNo")],
-    ["ESI no.", read("ESINo", "ESINumber", "ESICNo")],
-    ["UAN", read("UAN", "UANNo", "UANNumber")],
-  ];
-
-  const days = [
-    ["Present", read("Present", "PresentDays", "TotalPresent")],
-    ["Week off", read("WeekOff", "WeekOffDays", "WO")],
-    ["Holiday", read("Holiday", "HolidayDays")],
-    ["Leave", read("Leave", "LeaveDays", "TotalLeave")],
-    ["Absent", read("Absent", "AbsentDays")],
-  ];
-
-  const paidDays = getText(
-    read("PaidDays", "Paid_Days", "TotalPaidDays"),
-    employee.paidDays
-  );
-
-  const makeRows = (source: any): [string, any][] => {
-    if (Array.isArray(source)) {
-      return source.map((item: any) => [
-        getText(
-          item?.Particular,
-          item?.Component,
-          item?.Name,
-          item?.Head,
-          item?.label
-        ) || "Salary component",
-        item?.Amount ?? item?.Value ?? item?.amount ?? 0,
-      ]);
-    }
-
-    if (source && typeof source === "object") {
-      return Object.entries(source).map(([key, val]) => [key, val]);
-    }
-
-    return [];
-  };
-
-  const earningsSource = read(
-    "Earnings",
-    "Earning",
-    "SalaryEarnings",
-    "EarningDetails"
-  );
-
-  const deductionsSource = read(
-    "Deductions",
-    "Deduction",
-    "SalaryDeductions",
-    "DeductionDetails"
-  );
-
-  const excluded = [
-    "employee",
-    "empcode",
-    "employeecode",
-    "employeename",
-    "designation",
-    "department",
-    "location",
-    "branch",
-    "paiddays",
-    "presentdays",
-    "weekoff",
-    "holiday",
-    "leave",
-    "absent",
-    "grosssalary",
-    "gross",
-    "netsalary",
-    "netpay",
-    "netpaid",
-    "netamount",
-    "totalearning",
-    "totaldeduction",
-    "paymentdate",
-    "paidon",
-    "companyname",
-    "bankname",
-    "accountno",
-    "ifsc",
-    "uan",
-    "pfno",
-    "esino",
-    "doj",
-    "fathername",
-  ];
-
-  const scalarRows = Object.entries(raw || {}).filter(
-    ([key, val]) =>
-      !excluded.some((item) =>
-        key.toLowerCase().replace(/[^a-z0-9]/g, "").includes(item)
-      ) &&
-      (typeof val === "string" || typeof val === "number") &&
-      val !== ""
-  );
-
-  let earningRows = makeRows(earningsSource);
-  let deductionRows = makeRows(deductionsSource);
-
-  if (!earningRows.length && !deductionRows.length) {
-    scalarRows.forEach(([key, val]) => {
-      const normalizedKey = key.toLowerCase();
-
-      if (
-        /pf|provident|esi|esic|tax|tds|deduction|advance|loan|professional tax/.test(
-          normalizedKey
-        )
-      ) {
-        deductionRows.push([key, val]);
-      } else if (
-        /basic|hra|allowance|conveyance|bonus|incentive|earning|salary|overtime/.test(
-          normalizedKey
-        )
-      ) {
-        earningRows.push([key, val]);
-      }
-    });
-  }
-
-  const gross =
-    read("GrossSalary", "Gross", "GROSS", "TotalEarning", "GrossEarnings") ||
-    employee.raw?.GrossSalary;
-
-  const totalDeduction = read(
-    "TotalDeduction",
-    "TotalDeductions",
-    "DeductionTotal"
-  );
-
-  const netPay =
-    read("NetPaid", "NetSalary", "NET_PAY", "NetPay", "NetAmount") ||
-    employee.netPaid;
-
-  const pfAmount = read("PF", "PFContribution", "ProvidentFund");
-  const tdsAmount = read("TDS", "TDSAmount");
-  const esiAmount = read("ESIC", "ESI", "ESIAmount");
-
-  const historySource = read(
-    "LastSixMonths",
-    "SalaryHistory",
-    "NetPayHistory",
-    "MonthlySalaryHistory"
-  );
-
-  const historyRows = Array.isArray(historySource)
-    ? historySource.slice(-6).map((item: any) => ({
-        month: getText(
-          item?.MonthName,
-          item?.Month,
-          item?.month,
-          item?.Period
-        ),
-        amount: Number(
-          item?.NetPay ??
-          item?.NetPaid ??
-          item?.NetSalary ??
-          item?.Amount ??
-          item?.Value ??
-          0
-        ),
-      }))
-    : [];
-
-  const maxHistoryAmount = Math.max(
-    ...historyRows.map((item) => item.amount),
-    1
-  );
-
-  const historyChart = historyRows.length
-    ? historyRows
-        .map((item, index) => {
-          const height =
-            item.amount > 0
-              ? Math.max(8, (item.amount / maxHistoryAmount) * 65)
-              : 0;
-
-          return `
-            <div class="chart-column">
-              <span class="chart-month">
-                ${escapeHtml(item.month)}
-              </span>
-
-              <div class="chart-bar-wrap">
-                <div
-                  class="chart-bar ${index === historyRows.length - 1 ? "active" : ""}"
-                  style="height:${height}px"
-                ></div>
-              </div>
-
-              <span class="chart-value">
-                ${escapeHtml(compactMoney(item.amount))}
-              </span>
-            </div>
-          `;
-        })
-        .join("")
-    : `<div class="chart-empty">Salary history not available</div>`;
-
-  const ytdGross = read("YTDGross", "YTDGrossEarned", "YearToDateGross");
-  const ytdNet = read("YTDNet", "YTDNetReceived", "YearToDateNet");
-  const ytdPF = read("YTDPF", "YTDPFContribution", "YearToDatePF");
-  const ytdTDS = read("YTDTDS", "YTDTDSDeducted", "YearToDateTDS");
-
-  const formatRows = (rows: [string, any][]) =>
-    rows.length
-      ? rows
-          .map(
-            ([label, amount]) => `
-              <div class="amount-row">
-                <span>${escapeHtml(label)}</span>
-                <strong>${escapeHtml(money(amount))}</strong>
-              </div>
-            `
-          )
-          .join("")
-      : `<div class="empty-row">No details available</div>`;
-
-  const renderDetails = employeeDetails
-    .map(
-      ([label, val]) => `
-        <div class="detail-row">
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(value(val))}</strong>
-        </div>
-      `
-    )
-    .join("");
-
-  const renderDays = days
-    .map(
-      ([label, val]) => `
-        <div class="day-row">
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(value(val))}</strong>
-        </div>
-      `
-    )
-    .join("");
-
-  const safeAccount = getText(
-    read("AccountNo", "AccountNumber", "AcNo", "BankAccount")
-  );
-
-  const maskedAccount =
-    safeAccount.length > 4
-      ? `XXXX${safeAccount.slice(-4)}`
-      : safeAccount || "—";
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Salary Slip - ${escapeHtml(employee.empCode)}</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 18px;
-      background: #f5f8fc;
-      color: #152b4b;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 12px;
-    }
-
-    .page {
-      width: 100%;
-      max-width: 1800px;
-      margin: auto;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-
-    .page-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin: 0 0 5px;
-    }
-
-    .subtitle {
-      color: #71819b;
-      font-size: 12px;
-    }
-
-    .period {
-      display: flex;
-      gap: 10px;
-    }
-
-    .period-box {
-      min-width: 130px;
-      padding: 7px 10px;
-      background: white;
-      border: 1px solid #dce5f1;
-      border-radius: 9px;
-    }
-
-    .period-box span {
-      display: block;
-      color: #71819b;
-      font-size: 10px;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
-
-    .period-select {
-      width: 100%;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #152b4b;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 298px;
-      gap: 14px;
-      align-items: start;
-    }
-
-    .slip-card,
-    .side-card {
-      background: #fff;
-      border: 1px solid #dce5f1;
-      border-radius: 12px;
-      box-shadow: 0 3px 12px rgba(15, 23, 42, .04);
-      overflow: hidden;
-    }
-
-    .company-header {
-      min-height: 69px;
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid #dce5f1;
-    }
-
-    .company-info {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      min-width: 0;
-    }
-
-    .logo {
-      width: 36px;
-      height: 36px;
-      flex-shrink: 0;
-      border-radius: 10px;
-      background: #5045ed;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    .company-name { font-size: 13px; font-weight: 700; }
-    .company-period { color: #71819b; font-size: 11px; margin-top: 3px; }
-
-    .paid-badge {
-      color: #08a77b;
-      background: #dff8ef;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .upper-section {
-      display: grid;
-      grid-template-columns: 1.25fr 1fr;
-    }
-
-    .employee-section,
-    .days-section,
-    .earning-section,
-    .deduction-section {
-      padding: 21px;
-      min-width: 0;
-    }
-
-    .days-section,
-    .deduction-section {
-      border-left: 1px solid #dce5f1;
-    }
-
-    .section-title {
-      margin: 0 0 13px;
-      color: #657995;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .45px;
-      text-transform: uppercase;
-    }
-
-    .detail-row {
-      display: grid;
-      grid-template-columns: 115px minmax(0, 1fr);
-      gap: 4px;
-      padding: 5px 0;
-      line-height: 1.35;
-    }
-
-    .detail-row span,
-    .day-row span,
-    .amount-row span { color: #657995; }
-
-    .detail-row strong,
-    .day-row strong {
-      color: #152b4b;
-      font-weight: 600;
-      overflow-wrap: anywhere;
-    }
-
-    .day-row,
-    .amount-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .day-row strong,
-    .amount-row strong {
-      text-align: right;
-      font-weight: 600;
-    }
-
-    .paid-days {
-      display: flex;
-      justify-content: space-between;
-      padding-top: 10px;
-      font-weight: 700;
-    }
-
-    .paid-days strong { color: #5045ed; }
-
-    .salary-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border-top: 1px solid #dce5f1;
-    }
-
-    .deduction-section .total-row { color: #e11d48; }
-
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding-top: 11px;
-      margin-top: 4px;
-      border-top: 1px solid #dce5f1;
-      font-weight: 700;
-    }
-
-    .empty-row { padding: 12px 0; color: #94a3b8; }
-
-    .net-pay {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      padding: 17px 21px;
-      background: #f8fafc;
-      border-top: 1px solid #dce5f1;
-    }
-
-    .net-title {
-      color: #657995;
-      font-size: 10px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .net-words { color: #71819b; font-size: 11px; }
-
-    .net-value {
-      color: #10b981;
-      font-size: 23px;
-      font-weight: 700;
-      text-align: right;
-    }
-
-    .bank-credit {
-      margin-top: 4px;
-      color: #71819b;
-      font-size: 10px;
-      text-align: right;
-    }
-
-    .slip-footer {
-      padding: 12px;
-      border-top: 1px solid #dce5f1;
-      color: #71819b;
-      font-size: 10px;
-      text-align: center;
-    }
-
-    .sidebar {
-      display: grid;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .side-card { padding: 16px; }
-
-    .side-title {
-      color: #71819b;
-      font-size: 10px;
-      font-weight: 700;
-      margin: 0 0 14px;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-    }
-
-    .history-chart {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 7px;
-      align-items: end;
-      min-height: 105px;
-    }
-
-    .chart-column {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chart-month { color: #71819b; font-size: 9px; white-space: nowrap; }
-
-    .chart-bar-wrap {
-      width: 100%;
-      height: 65px;
-      display: flex;
-      align-items: flex-end;
-    }
-
-    .chart-bar {
-      width: 100%;
-      min-height: 0;
-      border-radius: 5px 5px 0 0;
-      background: #d0ccfa;
-      transition: height .2s ease;
-    }
-
-    .chart-bar.active { background: #5045ed; }
-
-    .chart-value {
-      color: #64748b;
-      font-size: 9px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .chart-empty {
-      grid-column: 1 / -1;
-      padding: 25px 5px;
-      color: #94a3b8;
-      text-align: center;
-      font-size: 11px;
-    }
-
-    .ytd-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px;
-      margin-top: 8px;
-      border: 1px solid #dce5f1;
-      border-radius: 9px;
-      background: #f8fafc;
-    }
-
-    .ytd-left {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-width: 0;
-    }
-
-    .ytd-icon {
-      width: 25px;
-      height: 25px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 7px;
-      background: #e0f2fe;
-      color: #0ea5e9;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .ytd-row:nth-of-type(2) .ytd-icon { background: #d1fae5; color: #10b981; }
-    .ytd-row:nth-of-type(3) .ytd-icon { background: #ede9fe; color: #8b5cf6; }
-    .ytd-row:nth-of-type(4) .ytd-icon { background: #ffe4e6; color: #e11d48; }
-
-    .ytd-label { color: #71819b; font-size: 11px; }
-    .ytd-row strong { color: #24334c; font-size: 12px; white-space: nowrap; }
-
-    .help-text { color: #71819b; line-height: 1.6; font-size: 11px; }
-
-    .help-link {
-      display: inline-block;
-      margin-top: 12px;
-      color: #5045ed;
-      font-weight: 600;
-      font-size: 12px;
-    }
-
-    @media(max-width: 1100px) {
-      .layout { grid-template-columns: minmax(0, 1fr) 260px; }
-      .employee-section,
-      .days-section,
-      .earning-section,
-      .deduction-section { padding: 16px; }
-      .history-chart { gap: 5px; }
-      .chart-value { font-size: 8px; }
-    }
-
-    @media(max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      .sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media(max-width: 600px) {
-      body { padding: 10px; }
-
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .period { width: 100%; }
-      .period-box { flex: 1; min-width: 0; }
-
-      .company-header { align-items: flex-start; }
-
-      .upper-section,
-      .salary-section { grid-template-columns: 1fr; }
-
-      .days-section,
-      .deduction-section {
-        border-left: 0;
-        border-top: 1px solid #dce5f1;
-      }
-
-      .employee-section,
-      .days-section,
-      .earning-section,
-      .deduction-section { padding: 16px; }
-
-      .detail-row { grid-template-columns: 105px minmax(0, 1fr); }
-      .sidebar { grid-template-columns: 1fr; }
-
-      .net-pay {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .net-value,
-      .bank-credit { text-align: left; }
-
-      .history-chart { gap: 8px; }
-      .chart-value { font-size: 9px; }
-    }
-
-    @media print {
-      @page { size: A4 landscape; margin: 8mm; }
-
-      body {
-        padding: 0;
-        background: white;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .page { max-width: 100%; }
-      .layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 10px; }
-
-      .slip-card,
-      .side-card {
-        box-shadow: none;
-        break-inside: avoid;
-      }
-
-      .sidebar { gap: 8px; }
-      .side-card { padding: 12px; }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="page">
-
-    <div class="topbar">
-      <div>
-        <h1 class="page-title">My salary slip</h1>
-        <div class="subtitle">
-          Your own register for the month, exactly as payroll issued it.
-        </div>
-      </div>
-
-      <div class="period">
-        <div class="period-box">
-          <span>MONTH</span>
-          <select id="slipMonth" class="period-select">
-            ${monthOptions}
-          </select>
-        </div>
-
-        <div class="period-box">
-          <span>YEAR</span>
-          <select id="slipYear" class="period-select">
-            ${yearOptions}
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="layout">
-
-      <main class="slip-card">
-
-        <div class="company-header">
-          <div class="company-info">
-            <div class="logo">AV</div>
-            <div>
-              <div class="company-name">${escapeHtml(companyName)}</div>
-              <div class="company-period">
-                Salary register for ${escapeHtml(period)}
-              </div>
-            </div>
-          </div>
-
-          ${
-            paymentDate
-              ? `<span class="paid-badge">Paid on ${escapeHtml(paymentDate)}</span>`
-              : `<span class="paid-badge">Salary statement</span>`
-          }
-        </div>
-
-        <div class="upper-section">
-          <section class="employee-section">
-            <h3 class="section-title">Employee particulars</h3>
-            ${renderDetails}
-          </section>
-
-          <section class="days-section">
-            <h3 class="section-title">Days</h3>
-            ${renderDays}
-
-            <div class="paid-days">
-              <span>Paid days</span>
-              <strong>${escapeHtml(paidDays)}</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="salary-section">
-          <section class="earning-section">
-            <h3 class="section-title">Earnings</h3>
-            ${formatRows(earningRows)}
-
-            <div class="total-row">
-              <span>Gross earnings</span>
-              <strong>${escapeHtml(money(gross))}</strong>
-            </div>
-          </section>
-
-          <section class="deduction-section">
-            <h3 class="section-title">Deductions</h3>
-            ${formatRows(deductionRows)}
-
-            <div class="total-row">
-              <span>Total deductions</span>
-              <strong>${escapeHtml(money(totalDeduction))}</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="net-pay">
-          <div>
-            <div class="net-title">NET PAY</div>
-            <div class="net-words">
-              ${escapeHtml(
-                read("NetPayWords", "AmountInWords", "NetAmountWords") ||
-                "Salary credited for the selected month"
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div class="net-value">${escapeHtml(money(netPay))}</div>
-            <div class="bank-credit">
-              Credited to ${escapeHtml(read("BankName", "Bank") || "Bank")}
-              ${escapeHtml(maskedAccount)}
-            </div>
-          </div>
-        </div>
-
-        <div class="slip-footer">
-          This is a computer generated statement, hence no signature required.
-        </div>
-      </main>
-
-      <aside class="sidebar">
-
-        <div class="side-card">
-          <h3 class="side-title">Net pay · Last 6 months</h3>
-          <div class="history-chart">${historyChart}</div>
-        </div>
-
-        <div class="side-card">
-          <h3 class="side-title">Year to date</h3>
-
-          <div class="ytd-row">
-            <div class="ytd-left">
-              <div class="ytd-icon">↗</div>
-              <span class="ytd-label">Gross earned</span>
-            </div>
-            <strong>${escapeHtml(money(ytdGross))}</strong>
-          </div>
-
-          <div class="ytd-row">
-            <div class="ytd-left">
-              <div class="ytd-icon">▣</div>
-              <span class="ytd-label">Net received</span>
-            </div>
-            <strong>${escapeHtml(money(ytdNet))}</strong>
-          </div>
-
-          <div class="ytd-row">
-            <div class="ytd-left">
-              <div class="ytd-icon">▥</div>
-              <span class="ytd-label">PF contributed</span>
-            </div>
-            <strong>${escapeHtml(money(ytdPF))}</strong>
-          </div>
-
-          <div class="ytd-row">
-            <div class="ytd-left">
-              <div class="ytd-icon">₹</div>
-              <span class="ytd-label">TDS deducted</span>
-            </div>
-            <strong>${escapeHtml(money(ytdTDS))}</strong>
-          </div>
-        </div>
-
-        <div class="side-card">
-          <h3 class="side-title">Something wrong?</h3>
-          <div class="help-text">
-            If the paid days look wrong, raise it with your branch HR —
-            they can raise a paid-days deviation for the month.
-          </div>
-          <div class="help-link">Raise with HR &nbsp; →</div>
-        </div>
-
-      </aside>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      const monthSelect = document.getElementById("slipMonth");
-      const yearSelect = document.getElementById("slipYear");
-
-      function notifyPeriodChange() {
-        if (!monthSelect || !yearSelect) return;
-
-        const payload = {
-          type: "SALARY_SLIP_PERIOD_CHANGE",
-          empCode: ${JSON.stringify(employee.empCode)},
-          month: monthSelect.value,
-          year: yearSelect.value
-        };
-
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage(payload, window.location.origin);
-        }
-      }
-
-      monthSelect?.addEventListener("change", notifyPeriodChange);
-      yearSelect?.addEventListener("change", notifyPeriodChange);
-    })();
-  </script>
-</body>
-</html>
-`;
+  const params = new URLSearchParams({
+    empcode: employee.empCode,
+    name: employee.employeeName,
+    month: MONTHS.find((item) => item.value === month)?.label || "",
+    year,
+    type: employeeType,
+  });
+
+  // Sirf asli location code bhejo, placeholder nahi
+  if (location) params.set("location", location);
+
+  router.push(`/payroll/payroll/self-salary-slip?${params.toString()}`);
 };
-
-
-  const openSlip = (
-    employee: SlipRow,
-    shouldPrint = false
-  ) => {
-    const popup = window.open("", "_blank");
-
-    if (!popup) {
-      Swal.fire({
-        icon: "warning",
-        title: "Popup blocked",
-        text: "Please allow popups to view or download the salary slip.",
-      });
-
-      return;
-    }
-
-    popup.document.open();
-    popup.document.write(buildSlipHtml(employee));
-    popup.document.close();
-
-    if (shouldPrint) {
-      popup.onload = () => {
-        popup.focus();
-        popup.print();
-      };
-    }
-  };
-
-  const handleViewSlip = (employee: SlipRow) => {
-    openSlip(employee, false);
-  };
-
-  const handleDownloadSlip = (employee: SlipRow) => {
-    openSlip(employee, true);
-  };
-
-  const handleDownloadSelected = () => {
-    const selected = getSelectedRows();
-
-    if (!selected.length) {
-      Swal.fire({
-        icon: "warning",
-        title: "Select employees",
-        text: "Please select at least one salary slip.",
-      });
-
-      return;
-    }
-
-    selected.forEach((employee, index) => {
-      window.setTimeout(
-        () => openSlip(employee, true),
-        index * 500
-      );
-    });
-  };
-
   const handleEmailSelected = async () => {
     const selected = getSelectedRows();
 
@@ -2164,7 +1054,7 @@ const buildSlipHtml = (employee: SlipRow) => {
     Swal.fire({
       icon: "info",
       title: "Email PDF required",
-      text: "The sendEmailSalary API requires a generated PDF file. This page currently opens printable salary slips; connect the PDF-generation output to the API's file field to send actual PDF attachments.",
+      text: "The sendEmailSalary API requires a generated PDF file. Connect the PDF-generation output to the API's file field to send actual PDF attachments.",
     });
   };
 
@@ -2291,7 +1181,7 @@ const buildSlipHtml = (employee: SlipRow) => {
       {
         Header: "SLIP",
         accessor: "actions",
-        width: 140,
+        width: 110,
         Cell: ({ row }: any) => {
           const employee = row.original;
 
@@ -2326,21 +1216,13 @@ const buildSlipHtml = (employee: SlipRow) => {
               >
                 <Mail size={14} />
               </button>
-
-              <button
-                type="button"
-                title="Download slip"
-                onClick={() => handleDownloadSlip(employee)}
-                className="flex h-7 w-7 items-center justify-center rounded border border-[#dce5f1] bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              >
-                <Download size={14} />
-              </button>
             </div>
           );
         },
       },
     ],
-    [selectedSlips, slipRows]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedSlips, slipRows, month, year, employeeType]
   );
 
   const periodLabel = `${
@@ -2354,7 +1236,6 @@ const buildSlipHtml = (employee: SlipRow) => {
       />
 
       <div className="mx-auto min-w-0 max-w-[1800px] space-y-4">
-
         {/* PAGE HEADER */}
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -2363,87 +1244,81 @@ const buildSlipHtml = (employee: SlipRow) => {
             </h1>
 
             <p className="mt-1 text-[12px] text-[#64748b] dark:text-slate-400 sm:text-[13px]">
-              Narrow the population, check the list, then download one payslip per employee or a single one-pager for the whole selection.
+              Narrow the population, check the list, then view or email the payslips for the selection.
             </p>
           </div>
         </div>
 
         {/* TOP FILTER BAR */}
-       
-<div className="rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
+        <div className="rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
+            <div className="min-w-0">
+              <Eselect
+                title="MONTH"
+                redlabel="*"
+                name="month"
+                option={MONTHS}
+                initialValue={month}
+                handleInputChange={handleInputChange}
+                className="h-[41px] w-full"
+              />
+            </div>
 
-    <div className="min-w-0">
-      <Eselect
-        title="MONTH"
-        redlabel="*"
-        name="month"
-        option={MONTHS}
-        initialValue={month}
-        handleInputChange={handleInputChange}
-        className="h-[41px] w-full"
-      />
-    </div>
+            <div className="min-w-0">
+              <Eselect
+                title="YEAR"
+                name="year"
+                option={YEARS}
+                initialValue={year}
+                handleInputChange={handleInputChange}
+                className="h-[41px] w-full"
+              />
+            </div>
 
-    <div className="min-w-0">
-      <Eselect
-        title="YEAR"
-        name="year"
-        option={YEARS}
-        initialValue={year}
-        handleInputChange={handleInputChange}
-        className="h-[41px] w-full"
-      />
-    </div>
+            <div className="min-w-0">
+              <Eselect
+                title="EMPLOYEE TYPE"
+                name="employeeType"
+                option={EMPLOYEE_TYPES}
+                initialValue={employeeType}
+                handleInputChange={handleInputChange}
+                className="h-[41px] w-full"
+              />
+            </div>
 
-    <div className="min-w-0">
-      <Eselect
-        title="EMPLOYEE TYPE"
-        name="employeeType"
-        option={EMPLOYEE_TYPES}
-        initialValue={employeeType}
-        handleInputChange={handleInputChange}
-        className="h-[41px] w-full"
-      />
-    </div>
+            <div className="min-w-0">
+              <Eselect
+                title="EMPLOYEE CODE"
+                redlabel="*"
+                name="employeeCode"
+                option={employeeCodeOptions}
+                initialValue={employeeCode}
+                handleInputChange={handleInputChange}
+                className="h-[41px] w-full"
+              />
+            </div>
 
-    <div className="min-w-0">
-      <Eselect
-        title="EMPLOYEE CODE"
-        redlabel="*"
-        name="employeeCode"
-        option={employeeCodeOptions}
-        initialValue={employeeCode}
-        handleInputChange={handleInputChange}
-        className="h-[41px] w-full"
-      />
-    </div>
+            <div className="flex min-w-0 items-end gap-2 sm:col-span-2 lg:col-span-2">
+              <AButton
+                type="button"
+                onClick={handleShowResults}
+                disabled={loading || masterLoading || employeeLoading}
+                className="inline-flex h-[41px] shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 text-[12px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                <Search size={15} />
+                Show results
+              </AButton>
 
-    <div className="flex min-w-0 items-end gap-2 sm:col-span-2 lg:col-span-2">
-      <AButton
-        type="button"
-        onClick={handleShowResults}
-        disabled={loading || masterLoading || employeeLoading}
-        className="inline-flex h-[41px] shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 text-[12px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-      >
-        <Search size={15} />
-        Show results
-      </AButton>
-
-      <button
-        type="button"
-        onClick={handleClearFilters}
-        className="inline-flex h-[41px] shrink-0 items-center justify-center rounded-lg border border-[#dce5f1] bg-white px-4 text-[12px] font-semibold text-[#64748b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-      >
-        Clear filters
-      </button>
-    </div>
-
-  </div>
-
-
-</div>
-
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex h-[41px] shrink-0 items-center justify-center rounded-lg border border-[#dce5f1] bg-white px-4 text-[12px] font-semibold text-[#64748b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* FILTER BOXES */}
         <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -2530,21 +1405,22 @@ const buildSlipHtml = (employee: SlipRow) => {
               setSelectedSections(sections.map((item) => item.value))
             }
           />
+
           <FilterCard
-  title="Designation"
-  options={designations}
-  selected={selectedDesignations}
-  onChange={(value) =>
-    toggleCheckboxItem(value, setSelectedDesignations)
-  }
-  search={designationSearch}
-  onSearch={setDesignationSearch}
-  onAll={() =>
-    setSelectedDesignations(
-      designations.map((item) => item.value)
-    )
-  }
-/>
+            title="Designation"
+            options={designations}
+            selected={selectedDesignations}
+            onChange={(value) =>
+              toggleCheckboxItem(value, setSelectedDesignations)
+            }
+            search={designationSearch}
+            onSearch={setDesignationSearch}
+            onAll={() =>
+              setSelectedDesignations(
+                designations.map((item) => item.value)
+              )
+            }
+          />
         </div>
 
         {/* RESULTS TABLE */}
@@ -2556,7 +1432,7 @@ const buildSlipHtml = (employee: SlipRow) => {
               </span>
 
               <span className="text-[12px] text-[#64748b] dark:text-slate-400">
-                Select the slips you want to send or download
+                Select the slips you want to send
               </span>
             </div>
 
@@ -2594,16 +1470,6 @@ const buildSlipHtml = (employee: SlipRow) => {
               >
                 <Mail size={15} />
                 Email selected
-              </AButton>
-
-              <AButton
-                type="button"
-                onClick={handleDownloadSelected}
-                disabled={!selectedSlips.length || loading}
-                className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg bg-[#475569] px-4 text-[12px] font-semibold text-white transition hover:bg-[#334155] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Download size={15} />
-                Download
               </AButton>
             </div>
           </div>
