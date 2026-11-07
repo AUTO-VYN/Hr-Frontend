@@ -439,7 +439,7 @@ export default function SalaryPaidDaysDeviation() {
       const dateTo = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_local}/ars/getEmployeeSalaryStructure`,
+        `${process.env.NEXT_PUBLIC_URL}/ars/getEmployeeSalaryStructure`,
         {
           EMPCODE: filterData.EMPCODE,
           DATE_FROM: dateFrom,
