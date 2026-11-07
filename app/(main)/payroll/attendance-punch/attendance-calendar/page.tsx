@@ -486,34 +486,13 @@ export default function AttendanceCalendarPage() {
 
   return (
     <div
-      style={
-        {
-          "--bg": "#F8FAFC",
-          "--card": "#FFFFFF",
-          "--fg": "#1E293B",
-          "--muted": "#64748B",
-          "--border": "#E2E8F0",
-          "--brand": "#4F46E5",
-          "--brand-soft": "#EEF2FF",
-          "--hover": "#F1F5F9",
-          "--sub": "#F8FAFC",
-          "--field": "#FFFFFF",
-          "--shadow":
-            "0 1px 2px rgba(15,23,42,.04), 0 10px 26px -14px rgba(15,23,42,.14)",
-          fontFamily: "Inter, system-ui, sans-serif",
-          fontFeatureSettings: "'tnum' 1",
-        } as React.CSSProperties
-      }
-      className="w-full min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col dark:[--bg:#0A0F1C] dark:[--card:#111827] dark:[--fg:#E7ECF3] dark:[--muted:#94A3B8] dark:[--border:#1F2937] dark:[--brand:#8B84FF] dark:[--brand-soft:#1E1B4B] dark:[--hover:#182235] dark:[--sub:#0E1524] dark:[--field:#0E1524] dark:[--shadow:0_1px_2px_rgba(0,0,0,.4),0_10px_26px_-14px_rgba(0,0,0,.6)]"
+      className="w-full min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] flex flex-col font-['Inter',system-ui,sans-serif]"
     >
-      {/* Top Sticky Header matching HTML prototype */}
-
-
-      {/* Main Content: 2-Column Responsive Grid matching prototype */}
-      <main className="flex-1 p-[22px_24px_60px_24px]">
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-[14px] items-start">
+      {/* Main Content: 2-Column Responsive Grid */}
+      <main className="flex-1 p-2.5 sm:p-4 lg:p-[22px_24px_60px_24px] max-w-full overflow-x-hidden">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-[14px] items-start w-full min-w-0">
           {/* Left Column: Calendar Card */}
-          <div className="min-w-0">
+          <div className="min-w-0 w-full">
             <CustomCalendar
               startDate={startDate}
               endDate={endDate}
@@ -528,14 +507,14 @@ export default function AttendanceCalendarPage() {
           </div>
 
           {/* Right Column: 340px Sticky Sidebar Cards */}
-          <div className="sticky top-[82px] flex flex-col gap-3">
+          <div className="xl:sticky xl:top-[82px] flex flex-col gap-3 w-full min-w-0">
             {/* Card 1: Attendance Stats Card */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-[12px] shadow-[var(--shadow)] overflow-hidden">
-              <div className="p-[14px_18px] border-b border-[var(--border)]">
-                <h2 className="m-0 text-[14px] font-[600] text-[var(--fg)]">
+            <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] overflow-hidden">
+              <div className="p-[14px_18px] border-b border-[#E2E8F0] dark:border-[#1F2937]">
+                <h2 className="m-0 text-[14px] font-[600] text-[#1E293B] dark:text-[#F8FAFC]">
                   Attendance stats
                 </h2>
-                <p className="m-[4px_0_0_0] text-[11.5px] text-[var(--muted)]">
+                <p className="m-[4px_0_0_0] text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
                   {(attendanceRecords?.[0]?.EmpName || user?.name || "Employee") + " · " + currentMonthTitle}
                 </p>
               </div>
@@ -545,19 +524,19 @@ export default function AttendanceCalendarPage() {
                 {statItems.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-[11px] p-[10px_18px] border-b border-[var(--border)] hover:bg-[var(--sub)] transition-colors"
+                    className="flex items-center gap-[11px] p-[10px_18px] border-b border-[#E2E8F0] dark:border-[#1F2937] hover:bg-[#F8FAFC] dark:hover:bg-[#161F30] transition-colors"
                   >
                     <span
                       className="w-[10px] h-[10px] rounded-[3px] shrink-0"
                       style={{ backgroundColor: s.tint }}
                     />
-                    <span className="flex-1 min-w-0 text-[12.5px] font-[500] text-[var(--fg)]">
+                    <span className="flex-1 min-w-0 text-[12.5px] font-[500] text-[#1E293B] dark:text-[#E7ECF3]">
                       {s.label}
                     </span>
                     <span
                       className="shrink-0 text-[13.5px] font-[650] tabular-nums"
                       style={{
-                        color: s.value === 0 ? "var(--muted)" : "var(--fg)",
+                        color: s.value === 0 ? "#94A3B8" : undefined,
                       }}
                     >
                       {s.value}
@@ -567,8 +546,8 @@ export default function AttendanceCalendarPage() {
               </div>
 
               {/* Paid days Footer row */}
-              <div className="flex items-center gap-[11px] p-[13px_18px] bg-[var(--sub)]">
-                <span className="flex-1 min-w-0 text-[12.5px] font-[600] text-[var(--fg)]">
+              <div className="flex items-center gap-[11px] p-[13px_18px] bg-[#F8FAFC] dark:bg-[#0E1524]">
+                <span className="flex-1 min-w-0 text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
                   Paid days
                 </span>
                 <span
@@ -583,7 +562,7 @@ export default function AttendanceCalendarPage() {
             {/* Card 2: Selected Day Details Card */}
             {selectedDay ? (
               // Active State: Day details & Mis-punch action
-              <div className="bg-[var(--card)] border border-[var(--border)] rounded-[12px] shadow-[var(--shadow)] p-[15px_18px_17px_18px]">
+              <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-[15px_18px_17px_18px]">
                 <div className="flex items-center gap-[9px] mb-3">
                   <span
                     className="w-[26px] h-[26px] rounded-[8px] grid place-items-center shrink-0"
@@ -594,7 +573,7 @@ export default function AttendanceCalendarPage() {
                   >
                     <CalendarDays size={15} />
                   </span>
-                  <h2 className="m-0 text-[14px] font-[600] text-[var(--fg)] truncate">
+                  <h2 className="m-0 text-[14px] font-[600] text-[#1E293B] dark:text-[#F8FAFC] truncate">
                     {selectedDateFormatted}
                   </h2>
                   <div className="flex-1" />
@@ -611,42 +590,32 @@ export default function AttendanceCalendarPage() {
 
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-[10px] items-baseline text-[12.5px]">
-                    <span className="shrink-0 w-[104px] text-[var(--muted)]">
+                    <span className="shrink-0 w-[104px] text-[#64748B] dark:text-[#94A3B8]">
                       In time
                     </span>
                     <span
-                      className="flex-1 min-w-0 font-[500]"
-                      style={{
-                        color: selectedRecord?.In1
-                          ? "var(--fg)"
-                          : "var(--muted)",
-                      }}
+                      className="flex-1 min-w-0 font-[500] text-[#1E293B] dark:text-[#E7ECF3]"
                     >
                       {selectedRecord?.In1 || "Not punched"}
                     </span>
                   </div>
 
                   <div className="flex gap-[10px] items-baseline text-[12.5px]">
-                    <span className="shrink-0 w-[104px] text-[var(--muted)]">
+                    <span className="shrink-0 w-[104px] text-[#64748B] dark:text-[#94A3B8]">
                       Out time
                     </span>
                     <span
-                      className="flex-1 min-w-0 font-[500]"
-                      style={{
-                        color: selectedRecord?.Out1
-                          ? "var(--fg)"
-                          : "var(--muted)",
-                      }}
+                      className="flex-1 min-w-0 font-[500] text-[#1E293B] dark:text-[#E7ECF3]"
                     >
                       {selectedRecord?.Out1 || "Not punched"}
                     </span>
                   </div>
 
                   <div className="flex gap-[10px] items-baseline text-[12.5px]">
-                    <span className="shrink-0 w-[104px] text-[var(--muted)]">
+                    <span className="shrink-0 w-[104px] text-[#64748B] dark:text-[#94A3B8]">
                       Shift
                     </span>
-                    <span className="flex-1 min-w-0 font-[500] text-[var(--fg)]">
+                    <span className="flex-1 min-w-0 font-[500] text-[#1E293B] dark:text-[#E7ECF3]">
                       {selectedRecord?.Shift ||
                         selectedRecord?.ShiftName ||
                         "09:00 – 18:00"}
@@ -654,7 +623,7 @@ export default function AttendanceCalendarPage() {
                   </div>
 
                   <div className="flex gap-[10px] items-baseline text-[12.5px]">
-                    <span className="shrink-0 w-[104px] text-[var(--muted)]">
+                    <span className="shrink-0 w-[104px] text-[#64748B] dark:text-[#94A3B8]">
                       Worked
                     </span>
                     <span
@@ -662,7 +631,7 @@ export default function AttendanceCalendarPage() {
                       style={{
                         color:
                           selectedRecord?.In1 && selectedRecord?.Out1
-                            ? "var(--fg)"
+                            ? "inherit"
                             : "#E11D48",
                       }}
                     >
@@ -673,16 +642,16 @@ export default function AttendanceCalendarPage() {
                   </div>
 
                   <div className="flex gap-[10px] items-baseline text-[12.5px]">
-                    <span className="shrink-0 w-[104px] text-[var(--muted)]">
+                    <span className="shrink-0 w-[104px] text-[#64748B] dark:text-[#94A3B8]">
                       Reason
                     </span>
-                    <span className="flex-1 min-w-0 font-[500] text-[var(--fg)]">
+                    <span className="flex-1 min-w-0 font-[500] text-[#1E293B] dark:text-[#E7ECF3]">
                       {selectedRecord?.Reason ||
                         selectedRecord?.Remarks ||
                         (selectedStatus
                           ? REASONS[selectedStatus.code]
                           : "Regular attendance") ||
-                        "—"}
+                          "—"}
                     </span>
                   </div>
                 </div>
@@ -691,7 +660,7 @@ export default function AttendanceCalendarPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleRaiseMispunch}
-                  className="w-full mt-[13px] flex items-center justify-center gap-[7px] border border-[var(--border)] bg-transparent text-[var(--brand)] text-[12.5px] font-[600] p-[9px_12px] rounded-[9px] cursor-pointer hover:bg-[var(--brand-soft)] hover:text-[var(--brand)] transition-colors h-auto shadow-none"
+                  className="w-full mt-[13px] flex items-center justify-center gap-[7px] border border-[#E2E8F0] dark:border-[#1F2937] bg-transparent text-[#4F46E5] dark:text-[#8B84FF] text-[12.5px] font-[600] p-[9px_12px] rounded-[9px] cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1E1B4B] transition-colors h-auto shadow-none"
                 >
                   <Clock size={15} />
                   Raise mis-punch for this day
@@ -699,14 +668,14 @@ export default function AttendanceCalendarPage() {
               </div>
             ) : (
               // Empty State matching prototype & Screenshot 2
-              <div className="bg-[var(--card)] border border-dashed border-[var(--border)] rounded-[12px] p-[26px_18px] text-center">
-                <span className="inline-grid place-items-center w-[38px] h-[38px] rounded-[11px] bg-[var(--sub)] text-[var(--muted)] mx-auto mb-0">
+              <div className="bg-white dark:bg-[#111827] border border-dashed border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] p-[26px_18px] text-center">
+                <span className="inline-grid place-items-center w-[38px] h-[38px] rounded-[11px] bg-[#F8FAFC] dark:bg-[#0E1524] text-[#64748B] dark:text-[#94A3B8] mx-auto mb-0">
                   <MousePointerClick size={18} />
                 </span>
-                <div className="text-[12.5px] font-[550] mt-[11px] text-[var(--fg)]">
+                <div className="text-[12.5px] font-[550] mt-[11px] text-[#1E293B] dark:text-[#F8FAFC]">
                   Click any day
                 </div>
-                <div className="text-[11.5px] text-[var(--muted)] mt-1 leading-[1.5]">
+                <div className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8] mt-1 leading-[1.5]">
                   Punch times, shift and the reason for the marking appear here.
                 </div>
               </div>
@@ -717,7 +686,7 @@ export default function AttendanceCalendarPage() {
 
       {/* Toast Notification matching prototype */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-[var(--card)] border border-[var(--border)] rounded-[11px] shadow-[0_20px_50px_-20px_rgba(2,6,16,.5)] px-4 py-[11px] flex items-center gap-[10px] text-[13px] whitespace-nowrap text-[var(--fg)] animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[11px] shadow-[0_20px_50px_-20px_rgba(2,6,16,.5)] px-4 py-[11px] flex items-center gap-[10px] text-[13px] whitespace-nowrap text-[#1E293B] dark:text-[#E7ECF3] animate-in fade-in slide-in-from-bottom-2">
           <span className="grid place-items-center text-[#10B981]">
             <CheckCircle2 size={16} />
           </span>
