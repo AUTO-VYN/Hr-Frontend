@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Button from "@/components/atoms/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -12,11 +11,96 @@ export const KIND: Record<string, { label: string; color: string; code: string }
   P: { label: "Present", color: "#10B981", code: "P" },
   A: { label: "Absent", color: "#E11D48", code: "A" },
   HLF: { label: "Half day", color: "#EAB308", code: "HLF" },
-  H: { label: "Holiday", color: "#7C3AED", code: "H" },
-  WO: { label: "Week off", color: "#22D3EE", code: "WO" },
+  H: { label: "Holiday", color: "#7C3AED", code: "HO" },
+  WO: { label: "Week off", color: "#06B6D4", code: "WO" },
   R: { label: "Relaxation", color: "#2563EB", code: "R" },
-  UM: { label: "Unapproved mis-punch", color: "#D946EF", code: "UM" },
+  UM: { label: "Unapproved missed punch", color: "#C026D3", code: "UM" },
   L: { label: "Leave", color: "#F59E0B", code: "L" },
+};
+
+// Styling dictionary for calendar day cards matching screenshot design
+const STATUS_STYLES: Record<string, { bg: string; border: string; dot: string }> = {
+  P: {
+    bg: "bg-[#ECFDF5] dark:bg-[rgba(16,185,129,0.12)]",
+    border: "border-[#A7F3D0] dark:border-[rgba(16,185,129,0.3)]",
+    dot: "#10B981",
+  },
+  A: {
+    bg: "bg-[#FFF1F2] dark:bg-[rgba(225,29,72,0.1)]",
+    border: "border-[#FECDD3] dark:border-[rgba(225,29,72,0.28)]",
+    dot: "#E11D48",
+  },
+  WO: {
+    bg: "bg-[#ECFEFF] dark:bg-[rgba(34,211,238,0.12)]",
+    border: "border-[#A5F3FC] dark:border-[rgba(34,211,238,0.3)]",
+    dot: "#06B6D4",
+  },
+  UM: {
+    bg: "bg-[#FDF4FF] dark:bg-[rgba(217,70,239,0.1)]",
+    border: "border-[#F5D0FE] dark:border-[rgba(217,70,239,0.28)]",
+    dot: "#C026D3",
+  },
+  HO: {
+    bg: "bg-[#F5F3FF] dark:bg-[rgba(124,58,237,0.1)]",
+    border: "border-[#DDD6FE] dark:border-[rgba(124,58,237,0.28)]",
+    dot: "#7C3AED",
+  },
+  H: {
+    bg: "bg-[#F5F3FF] dark:bg-[rgba(124,58,237,0.1)]",
+    border: "border-[#DDD6FE] dark:border-[rgba(124,58,237,0.28)]",
+    dot: "#7C3AED",
+  },
+  L: {
+    bg: "bg-[#FFFBEB] dark:bg-[rgba(245,158,11,0.1)]",
+    border: "border-[#FDE68A] dark:border-[rgba(245,158,11,0.28)]",
+    dot: "#F59E0B",
+  },
+  HLF: {
+    bg: "bg-[#FEFCE8] dark:bg-[rgba(234,179,8,0.12)]",
+    border: "border-[#FEF08A] dark:border-[rgba(234,179,8,0.3)]",
+    dot: "#EAB308",
+  },
+  HD: {
+    bg: "bg-[#FEFCE8] dark:bg-[rgba(234,179,8,0.12)]",
+    border: "border-[#FEF08A] dark:border-[rgba(234,179,8,0.3)]",
+    dot: "#EAB308",
+  },
+  R: {
+    bg: "bg-[#EFF6FF] dark:bg-[rgba(37,99,235,0.1)]",
+    border: "border-[#BFDBFE] dark:border-[rgba(37,99,235,0.28)]",
+    dot: "#2563EB",
+  },
+};
+
+const getCardStyle = (code?: string, colorCode?: string) => {
+  if (code && STATUS_STYLES[code]) {
+    return STATUS_STYLES[code];
+  }
+  if (colorCode) {
+    return {
+      bg: "",
+      border: "",
+      dot: colorCode,
+      customBg: `${colorCode}14`,
+      customBorder: `${colorCode}38`,
+    };
+  }
+  return {
+    bg: "bg-white dark:bg-[#111827]",
+    border: "border-[#E2E8F0] dark:border-[#1F2937]",
+    dot: "transparent",
+  };
+};
+
+const formatPunchTime = (val?: any): string => {
+  if (!val) return "";
+  const s = String(val).trim();
+  if (!s || s === "null" || s === "undefined" || s === "--:--" || s === "-") return "";
+  const match = s.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return `${match[1].padStart(2, "0")}:${match[2]}`;
+  }
+  return s;
 };
 
 export const getStatusInfo = (colorCode?: string, statusText?: string) => {
@@ -40,7 +124,7 @@ export const getStatusInfo = (colorCode?: string, statusText?: string) => {
     return {
       label: "Holiday",
       color: "#7C3AED",
-      code: s === "HO" ? "HO" : "H",
+      code: s === "H" ? "H" : "HO",
     };
   }
   // Week Off
@@ -52,7 +136,7 @@ export const getStatusInfo = (colorCode?: string, statusText?: string) => {
     return KIND.R;
   }
   // Unapproved Mis-punch
-  if (s === "UM" || s.includes("MIS") || s.includes("UNAPR") || c === "#d50fe0" || c === "#d946ef") {
+  if (s === "UM" || s.includes("MIS") || s.includes("UNAPR") || c === "#d50fe0" || c === "#d946ef" || c === "#c026d3") {
     return KIND.UM;
   }
   // Leave
@@ -337,148 +421,167 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   return (
     <div
       className={cn(
-        "bg-[var(--card)] border border-[var(--border)] rounded-[12px] shadow-[var(--shadow)] overflow-hidden",
+        "bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[16px] shadow-[0_1px_3px_rgba(15,23,42,0.05),0_10px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden w-full",
         className
       )}
     >
-      {/* Top Header bar with navigation matching prototype */}
-      <div className="flex items-center gap-3 p-[14px_18px] border-b border-[var(--border)]">
+      {/* Top Header bar with navigation matching screenshot */}
+      <div className="flex items-center gap-2 sm:gap-3 p-3.5 sm:p-5 border-b border-[#F1F5F9] dark:border-[#1F2937]">
         {/* Previous Month Arrow Button */}
-        <Button
-          variant="outline"
-          size="icon"
+        <button
+          type="button"
           onClick={goToPreviousMonth}
-          className="w-8 h-8 grid place-items-center border border-[var(--border)] bg-transparent text-[var(--fg)] rounded-[9px] cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--fg)] shadow-none p-0 shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E2E8F0] rounded-[10px] cursor-pointer hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition-colors p-0 shrink-0 shadow-xs"
           title="Previous Month"
         >
           <ChevronLeft size={16} />
-        </Button>
+        </button>
 
         {/* Current Month Title */}
-        <h1 className="m-0 text-[16px] font-[650] tracking-[-0.01em] flex-1 text-center text-[var(--fg)] select-none">
+        <h1 className="m-0 text-[15px] sm:text-[17px] font-[700] tracking-tight flex-1 text-center text-[#0F172A] dark:text-[#F8FAFC] select-none truncate">
           {endMonthTitle}
         </h1>
 
         {/* Today Button */}
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={goToToday}
-          className="h-8 border border-[var(--border)] bg-transparent text-[var(--brand)] font-sans text-[12px] font-[600] px-3 py-[7px] rounded-[9px] cursor-pointer hover:bg-[var(--brand-soft)] hover:text-[var(--brand)] shadow-none shrink-0"
+          className="h-8 sm:h-9 border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#4F46E5] dark:text-[#8B84FF] font-sans text-[12px] sm:text-[13px] font-[600] px-3 sm:px-4 rounded-[10px] cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1E1B4B] transition-colors shrink-0 shadow-xs"
         >
           Today
-        </Button>
+        </button>
 
         {/* Next Month Arrow Button */}
-        <Button
-          variant="outline"
-          size="icon"
+        <button
+          type="button"
           onClick={goToNextMonth}
-          className="w-8 h-8 grid place-items-center border border-[var(--border)] bg-transparent text-[var(--fg)] rounded-[9px] cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--fg)] shadow-none p-0 shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] text-[#1E293B] dark:text-[#E2E8F0] rounded-[10px] cursor-pointer hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition-colors p-0 shrink-0 shadow-xs"
           title="Next Month"
         >
           <ChevronRight size={16} />
-        </Button>
+        </button>
       </div>
 
-      {/* Weekdays Header Row */}
-      <div className="grid grid-cols-7 bg-[var(--sub)] border-b border-[var(--border)]">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <span
-            key={day}
-            className="py-[9px] text-[10.5px] font-[700] tracking-[0.05em] uppercase text-[var(--muted)] text-center select-none"
-          >
-            {day}
-          </span>
-        ))}
-      </div>
-
-      {/* Days Grid (7 columns) */}
-      <div className="grid grid-cols-7 gap-[6px] p-[12px_14px_16px_14px]">
-        {calendarCells.map((cell, idx) => {
-          if (!cell) {
-            // Empty placeholder slot
-            return (
-              <div
-                key={`empty-${idx}`}
-                className="aspect-square rounded-[10px] border border-[var(--border)]/35 bg-transparent"
-              />
-            );
-          }
-
-          const isSelected = selectedDay === cell.date;
-          const k = cell.status;
-          const bg = isSelected
-            ? "var(--brand-soft)"
-            : k
-            ? `${k.color}14`
-            : "transparent";
-          const border = isSelected
-            ? "var(--brand)"
-            : k
-            ? `${k.color}44`
-            : "var(--border)";
-          const weight = isSelected ? "700" : "550";
-
-          return (
-            <button
-              key={`day-${cell.date}`}
-              type="button"
-              onClick={() => onSelectDay?.(cell.date, cell.record)}
-              title={
-                k
-                  ? `${cell.date} ${endMonthTitle} — ${k.label}`
-                  : String(cell.date)
-              }
-              style={{
-                backgroundColor: bg,
-                borderColor: border,
-              }}
-              className={cn(
-                "aspect-square flex flex-col items-start justify-between border rounded-[10px] text-[var(--fg)] p-[8px_9px] cursor-pointer text-left transition-all font-sans select-none",
-                "hover:border-[var(--brand)]",
-                isSelected && "ring-1 ring-[var(--brand)]"
-              )}
-            >
-              {/* Day number at top-left */}
+      {/* Horizontally scrollable calendar grid on small viewports */}
+      <div className="overflow-x-auto w-full">
+        <div className="min-w-[600px] sm:min-w-0">
+          {/* Weekdays Header Row */}
+          <div className="grid grid-cols-7 border-b border-[#F1F5F9] dark:border-[#1F2937] py-2.5 sm:py-3 bg-white dark:bg-[#111827]">
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
               <span
-                style={{ fontWeight: weight }}
-                className="text-[12.5px] tabular-nums"
+                key={day}
+                className="text-[10.5px] sm:text-[11px] font-[700] tracking-[0.06em] uppercase text-[#64748B] dark:text-[#94A3B8] text-center select-none"
               >
-                {cell.date}
+                {day}
               </span>
+            ))}
+          </div>
 
-              {/* Status dot + code at bottom-left */}
-              {k ? (
-                <span className="flex items-center gap-[5px] w-full min-w-0">
-                  <span
-                    className="w-[6px] h-[6px] rounded-full shrink-0"
-                    style={{ backgroundColor: k.color }}
+          {/* Days Grid (7 columns) */}
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2.5 p-2.5 sm:p-4 bg-white dark:bg-[#111827]">
+            {calendarCells.map((cell, idx) => {
+              if (!cell) {
+                // Empty placeholder slot without border (matching screenshot)
+                return (
+                  <div
+                    key={`empty-${idx}`}
+                    className="min-h-[76px] sm:min-h-[92px]"
                   />
-                  <span
-                    className="text-[10px] font-[700] tracking-[0.04em] overflow-hidden text-ellipsis whitespace-nowrap"
-                    style={{ color: k.color }}
-                  >
-                    {k.code}
+                );
+              }
+
+              const isSelected = selectedDay === cell.date;
+              const k = cell.status;
+              const cardStyle = getCardStyle(k?.code, cell.colorCode);
+
+              const raw = cell.record;
+              const inTime = formatPunchTime(
+                raw?.In1 || raw?.InTime || raw?.inTime || raw?.IN1 || raw?.in || raw?.IN_TIME
+              );
+              const outTime = formatPunchTime(
+                raw?.Out1 || raw?.OutTime || raw?.outTime || raw?.OUT1 || raw?.out || raw?.OUT_TIME
+              );
+              const hasPunch = Boolean(inTime || outTime);
+
+              return (
+                <button
+                  key={`day-${cell.date}`}
+                  type="button"
+                  onClick={() => onSelectDay?.(cell.date, cell.record)}
+                  title={
+                    k
+                      ? `${cell.date} ${endMonthTitle} — ${k.label}`
+                      : String(cell.date)
+                  }
+                  style={
+                    cardStyle.customBg
+                      ? {
+                          backgroundColor: cardStyle.customBg,
+                          borderColor: cardStyle.customBorder,
+                        }
+                      : undefined
+                  }
+                  className={cn(
+                    "min-h-[76px] sm:min-h-[92px] p-1 sm:p-2 rounded-[11px] sm:rounded-[14px] flex flex-col items-center justify-center text-center transition-all duration-150 select-none cursor-pointer border",
+                    cardStyle.bg,
+                    cardStyle.border,
+                    isSelected && "ring-2 ring-[#4F46E5] ring-offset-1 dark:ring-offset-[#111827]",
+                    "hover:shadow-xs hover:brightness-[0.98] dark:hover:brightness-110"
+                  )}
+                >
+                  {/* Day Number */}
+                  <span className="text-[13px] sm:text-[15px] font-[750] text-[#0F172A] dark:text-[#F8FAFC] leading-none">
+                    {cell.date}
                   </span>
-                </span>
-              ) : (
-                <span className="h-[6px]" />
-              )}
-            </button>
-          );
-        })}
+
+                  {/* Status with colored dot */}
+                  {k ? (
+                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-1 sm:mt-1.5 shrink-0 whitespace-nowrap">
+                      <span
+                        className="w-[5px] h-[5px] sm:w-[6px] sm:h-[6px] rounded-full shrink-0"
+                        style={{ backgroundColor: cardStyle.dot || k.color }}
+                      />
+                      <span className="text-[10px] sm:text-[11.5px] font-[700] text-[#0F172A] dark:text-[#E2E8F0] tracking-tight">
+                        {k.code}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="h-[5px] sm:h-[6px] mt-1" />
+                  )}
+
+                  {/* In / Out punch times */}
+                  {hasPunch && (
+                    <div className="flex flex-col items-center justify-center mt-0.5 sm:mt-1.5 leading-tight text-[8.5px] sm:text-[10px] whitespace-nowrap">
+                      <span className="text-[#64748B] dark:text-[#94A3B8]">
+                        In{" "}
+                        <span className="font-[600] text-[#334155] dark:text-[#CBD5E1]">
+                          {inTime || "--:--"}
+                        </span>
+                      </span>
+                      <span className="text-[#64748B] dark:text-[#94A3B8]">
+                        Out{" "}
+                        <span className="font-[600] text-[#334155] dark:text-[#CBD5E1]">
+                          {outTime || "--:--"}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Bottom Legend Bar matching prototype */}
-      <div className="flex items-center gap-[14px] flex-wrap p-[12px_18px] border-t border-[var(--border)] bg-[var(--sub)]">
+      {/* Bottom Legend Bar matching screenshot */}
+      <div className="flex items-center gap-3 sm:gap-5 flex-wrap p-3 sm:p-4 border-t border-[#F1F5F9] dark:border-[#1F2937] bg-white dark:bg-[#111827]">
         {Object.values(KIND).map((l) => (
           <span
             key={l.code}
-            className="flex items-center gap-[6px] text-[11.5px] text-[var(--muted)] select-none"
+            className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-[500] text-[#475569] dark:text-[#94A3B8] select-none"
           >
             <span
-              className="w-[9px] h-[9px] rounded-[3px] shrink-0"
+              className="w-[7px] h-[7px] sm:w-[8px] sm:h-[8px] rounded-full shrink-0"
               style={{ backgroundColor: l.color }}
             />
             {l.label}
@@ -487,6 +590,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
       </div>
     </div>
   );
+  
 };
 
 export default CustomCalendar;

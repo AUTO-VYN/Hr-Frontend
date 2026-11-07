@@ -259,10 +259,10 @@ function EmployeeIdCardContent() {
   ];
 
   return (
-    <div className="min-h-screen dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] font-sans antialiased">
+    <div className="min-h-screen dark:bg-[#0A0F1C] text-[#1E293B] dark:text-[#E7ECF3] font-sans antialiased overflow-x-hidden">
       {/* Top Header bar */}
-      <header className="z-30 dark:border-[#1F2937] px-6 py-3 flex items-center gap-4">
-        <div className="flex-1" />
+      <header className="z-30 dark:border-[#1F2937] px-4 sm:px-6 py-3 flex items-center justify-between sm:justify-end gap-4">
+        <div className="flex-1 hidden sm:block" />
 
         <Button
           variant="primary"
@@ -271,28 +271,28 @@ function EmployeeIdCardContent() {
           loadingText="Downloading..."
           icon={<Download size={14} />}
           onClick={handleDownload}
-          className="h-8 text-[12.5px] font-[600] px-[14px] rounded-[10px] border border-transparent bg-[#4F46E5] dark:bg-[#8B84FF] text-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] hover:brightness-105"
+          className="h-8 text-[12.5px] font-[600] px-[14px] rounded-[10px] border border-transparent bg-[#4F46E5] dark:bg-[#8B84FF] text-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] hover:brightness-105 ml-auto"
         >
           Download PDF
         </Button>
       </header>
 
       {/* Main Container */}
-      <main className="p-6 pb-[60px]">
+      <main className="p-3 sm:p-6 pb-[60px] w-full max-w-full">
         {/* Title Area */}
         <div className="mb-[18px]">
-          <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3] m-0">
+          <h1 className="text-[19px] sm:text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3] m-0">
             Employee ID card
           </h1>
-          <p className="text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-[5px] m-0">
+          <p className="text-[12px] sm:text-[12.5px] text-[#64748B] dark:text-[#94A3B8] mt-[5px] m-0">
             Front and back of the printed card. Flip to check the emergency details before sending it to print.
           </p>
         </div>
 
         {/* 2-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-4 items-start w-full">
           {/* LEFT COLUMN: Controls & Checklist */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 w-full">
             {/* Box 1: Card Configuration */}
             <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-[16px_17px_18px_17px]">
               <span className="text-[11px] font-[600] text-[#64748B] dark:text-[#94A3B8] tracking-[0.03em] uppercase block">
@@ -447,39 +447,39 @@ function EmployeeIdCardContent() {
           </div>
 
           {/* RIGHT COLUMN: The Preview Card Canvas */}
-          <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-[30px] grid place-items-center min-h-[560px]">
+          <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-[12px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] p-3 sm:p-6 lg:p-[30px] flex justify-center items-center min-h-[460px] sm:min-h-[560px] w-full max-w-full overflow-hidden">
             <div
               ref={cardRef}
-              className="flex gap-[26px] items-start flex-wrap justify-center bg-transparent"
+              className="flex gap-4 sm:gap-[26px] items-start flex-wrap justify-center bg-transparent w-full max-w-full"
             >
-              {/* ================= FRONT CARD (326px) ================= */}
+              {/* ================= FRONT CARD (326px max) ================= */}
               <div
-                className="w-[326px] rounded-[16px] overflow-hidden shadow-[0_22px_52px_-22px_rgba(2,6,16,0.45)] bg-[#0B1220] text-white relative select-none"
+                className="w-full max-w-[326px] rounded-[16px] overflow-hidden shadow-[0_22px_52px_-22px_rgba(2,6,16,0.45)] bg-[#0B1220] text-white relative select-none"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
               >
                 {/* Left ribbon */}
-                <div className="absolute inset-y-0 left-0 w-[34px] bg-[linear-gradient(180deg,#1E1B4B,#0B1220)] grid place-items-center z-10">
+                <div className="absolute inset-y-0 left-0 w-[30px] sm:w-[34px] bg-[linear-gradient(180deg,#1E1B4B,#0B1220)] grid place-items-center z-10">
                   <span
                     style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-                    className="text-[8.5px] tracking-[0.32em] text-white/50 uppercase font-mono"
+                    className="text-[8px] sm:text-[8.5px] tracking-[0.25em] sm:tracking-[0.32em] text-white/50 uppercase font-mono"
                   >
                     Autovyn · verified · autovyn
                   </span>
                 </div>
 
                 {/* Main Card Content */}
-                <div className="ml-[34px] bg-white text-[#0F172A]">
+                <div className="ml-[30px] sm:ml-[34px] bg-white text-[#0F172A]">
                   {/* Top Header */}
-                  <div className="bg-[#0B1220] text-white p-[13px_15px] flex items-center gap-[9px]">
+                  <div className="bg-[#0B1220] text-white p-[11px_13px] sm:p-[13px_15px] flex items-center gap-[9px]">
                     {compLogo ? (
                       <img
                         src={compLogo}
                         crossOrigin="anonymous"
                         alt="logo"
-                        className="w-[22px] h-[22px] rounded-[6px] bg-white object-contain p-0.5"
+                        className="w-[22px] h-[22px] rounded-[6px] bg-white object-contain p-0.5 shrink-0"
                       />
                     ) : (
-                      <span className="w-[22px] h-[22px] rounded-[6px] bg-[#4F46E5] grid place-items-center text-[9px] font-[700] text-white">
+                      <span className="w-[22px] h-[22px] rounded-[6px] bg-[#4F46E5] grid place-items-center text-[9px] font-[700] text-white shrink-0">
                         HS
                       </span>
                     )}
@@ -491,20 +491,20 @@ function EmployeeIdCardContent() {
                         {empLoc || "BRANCH - 1"}
                       </span>
                     </span>
-                    <span className="text-[8.5px] tracking-[0.16em] text-white/55 font-mono">
+                    <span className="text-[8.5px] tracking-[0.16em] text-white/55 font-mono shrink-0">
                       EMP ID
                     </span>
                   </div>
 
                   {/* Body */}
-                  <div className="p-[18px_18px_20px_18px] text-center">
+                  <div className="p-3 sm:p-[18px_18px_20px_18px] text-center">
                     {/* Circle Avatar */}
                     {showPhotoPlaceholder || !empPhoto ? (
-                      <div className="w-[76px] h-[76px] mx-auto rounded-full border-[3px] border-[#F59E0B] bg-[#FEF3C7] grid place-items-center text-[22px] font-[700] text-[#92400E]">
+                      <div className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] mx-auto rounded-full border-[3px] border-[#F59E0B] bg-[#FEF3C7] grid place-items-center text-[20px] sm:text-[22px] font-[700] text-[#92400E]">
                         {getInitials(empName)}
                       </div>
                     ) : (
-                      <div className="w-[76px] h-[76px] mx-auto rounded-full border-[3px] border-[#F59E0B] overflow-hidden bg-slate-100">
+                      <div className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] mx-auto rounded-full border-[3px] border-[#F59E0B] overflow-hidden bg-slate-100">
                         <img
                           src={empPhoto}
                           crossOrigin="anonymous"
@@ -515,42 +515,42 @@ function EmployeeIdCardContent() {
                     )}
 
                     {/* Employee Name */}
-                    <div className="text-[17px] font-[700] tracking-[-0.01em] mt-[12px] uppercase text-[#0F172A] truncate">
+                    <div className="text-[15px] sm:text-[17px] font-[700] tracking-[-0.01em] mt-[10px] sm:mt-[12px] uppercase text-[#0F172A] truncate">
                       {empName || "—"}
                     </div>
 
                     {/* Designation Pill */}
-                    <div className="inline-block mt-[7px] text-[9.5px] font-[700] tracking-[0.1em] uppercase border border-[#CBD5E1] rounded-full px-3 py-[3px] text-[#0F172A]">
+                    <div className="inline-block mt-[6px] sm:mt-[7px] text-[9px] sm:text-[9.5px] font-[700] tracking-[0.1em] uppercase border border-[#CBD5E1] rounded-full px-2.5 sm:px-3 py-[2px] sm:py-[3px] text-[#0F172A] max-w-full truncate">
                       {empDesig || "—"}
                     </div>
 
                     {/* Details rows */}
-                    <div className="flex flex-col gap-2 mt-4 text-left">
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                    <div className="flex flex-col gap-2 mt-3 sm:mt-4 text-left">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <Building2 size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Department</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Department</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {empDept || "—"}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <Hash size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Emp code</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Emp code</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {empCode || "—"}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <Mail size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Email</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Email</span>
                         <span
                           className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]"
                           title={empEmail}
@@ -559,41 +559,41 @@ function EmployeeIdCardContent() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <MapPin size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Location</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Location</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {empLoc || "—"}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <Droplet size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Blood group</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Blood group</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {showBloodGroup ? empBlood || "—" : "—"}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <CalendarDays size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">DOB</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">DOB</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {formatDate(empDob)}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-[9px] text-[10.5px]">
-                        <span className="w-[13px] grid place-items-center text-[#94A3B8]">
+                      <div className="flex items-center gap-2 sm:gap-[9px] text-[10px] sm:text-[10.5px]">
+                        <span className="w-[13px] grid place-items-center text-[#94A3B8] shrink-0">
                           <CalendarDays size={13} />
                         </span>
-                        <span className="w-[84px] shrink-0 text-[#64748B]">Joined</span>
+                        <span className="w-[76px] sm:w-[84px] shrink-0 text-[#64748B]">Joined</span>
                         <span className="flex-1 min-w-0 font-[600] truncate text-right text-[#0F172A]">
                           {formatDate(empDoj)}
                         </span>
@@ -601,33 +601,33 @@ function EmployeeIdCardContent() {
                     </div>
 
                     {/* Perforation Seam & EMPCODE */}
-                    <div className="mt-4 pt-[11px] border-t border-dashed border-[#CBD5E1] text-[12px] font-[700] text-[#E11D48] tracking-[0.06em] text-right font-mono tabular-nums">
+                    <div className="mt-3 sm:mt-4 pt-[11px] border-t border-dashed border-[#CBD5E1] text-[11px] sm:text-[12px] font-[700] text-[#E11D48] tracking-[0.06em] text-right font-mono tabular-nums">
                       {empCode || "—"}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* ================= BACK CARD (326px) ================= */}
+              {/* ================= BACK CARD (326px max) ================= */}
               {viewSide === "both" && (
                 <div
-                  className="w-[326px] rounded-[16px] overflow-hidden shadow-[0_22px_52px_-22px_rgba(2,6,16,0.45)] bg-white text-[#0F172A] border border-[#E2E8F0] dark:border-[#1F2937] select-none"
+                  className="w-full max-w-[326px] rounded-[16px] overflow-hidden shadow-[0_22px_52px_-22px_rgba(2,6,16,0.45)] bg-white text-[#0F172A] border border-[#E2E8F0] dark:border-[#1F2937] select-none"
                   style={{ fontFamily: "Inter, system-ui, sans-serif" }}
                 >
                   {/* Top Header */}
-                  <div className="bg-[#0B1220] text-white p-[13px_15px] flex items-center gap-[9px]">
-                    <ShieldCheck size={15} />
-                    <span className="text-[11px] font-[700] tracking-[0.02em]">
+                  <div className="bg-[#0B1220] text-white p-[11px_13px] sm:p-[13px_15px] flex items-center gap-[9px]">
+                    <ShieldCheck size={15} className="shrink-0" />
+                    <span className="text-[10.5px] sm:text-[11px] font-[700] tracking-[0.02em] truncate">
                       IF FOUND, PLEASE RETURN
                     </span>
                   </div>
 
                   {/* Body */}
-                  <div className="p-[18px]">
+                  <div className="p-3 sm:p-[18px]">
                     {showVerificationQR && (
-                      <div className="grid place-items-center mb-4">
+                      <div className="grid place-items-center mb-3 sm:mb-4">
                         <div
-                          className="w-[118px] h-[118px] p-2 border border-[#E2E8F0] rounded-[10px] bg-white flex items-center justify-center cursor-pointer transition-transform hover:scale-105 shadow-xs"
+                          className="w-[110px] h-[110px] sm:w-[118px] sm:h-[118px] p-2 border border-[#E2E8F0] rounded-[10px] bg-white flex items-center justify-center cursor-pointer transition-transform hover:scale-105 shadow-xs"
                           title="Click or Scan to view Front Card"
                           onClick={() => setViewSide("front")}
                         >
@@ -640,7 +640,7 @@ function EmployeeIdCardContent() {
                                   : ""
                               }/payroll/attendance-punch/employee-id-card?empcode=${empCode}&view=front`
                             }
-                            size={102}
+                            size={98}
                             bordered={false}
                             type="svg"
                           />
@@ -656,52 +656,52 @@ function EmployeeIdCardContent() {
                     )}
 
                     {/* Details Rows */}
-                    <div className="flex flex-col gap-[9px]">
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">Mobile</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                    <div className="flex flex-col gap-2 sm:gap-[9px]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">Mobile</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {empMobile || "—"}
                         </span>
                       </div>
 
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">Emergency</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">Emergency</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {empEmergency || "—"}
                         </span>
                       </div>
 
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">Blood group</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">Blood group</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {showBloodGroup ? empBlood || "—" : "Not printed"}
                         </span>
                       </div>
 
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">DOB</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">DOB</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {formatDate(empDob)}
                         </span>
                       </div>
 
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">Date of joining</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">Date of joining</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {formatDate(empDoj)}
                         </span>
                       </div>
 
-                      <div className="flex gap-[10px] items-baseline text-[10.5px]">
-                        <span className="w-[96px] shrink-0 text-[#64748B]">Address</span>
-                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A]">
+                      <div className="flex gap-2 sm:gap-[10px] items-baseline text-[10px] sm:text-[10.5px]">
+                        <span className="w-[84px] sm:w-[96px] shrink-0 text-[#64748B]">Address</span>
+                        <span className="flex-1 min-w-0 font-[600] leading-[1.45] text-[#0F172A] break-words">
                           {empAddress || "—"}
                         </span>
                       </div>
                     </div>
 
                     {/* Disclaimer Footer */}
-                    <div className="mt-4 pt-3 border-t border-dashed border-[#CBD5E1] text-[9.5px] text-[#64748B] leading-[1.5]">
+                    <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-dashed border-[#CBD5E1] text-[9px] sm:text-[9.5px] text-[#64748B] leading-[1.5]">
                       This card is the property of Autovyn Motors Pvt. Ltd. and must be surrendered on separation. Misuse will attract disciplinary action.
                     </div>
                   </div>
@@ -711,6 +711,8 @@ function EmployeeIdCardContent() {
           </div>
         </div>
       </main>
+      
+     
 
       {/* Loading overlay */}
       <HashloaderComponent isLoading={isLoading} />

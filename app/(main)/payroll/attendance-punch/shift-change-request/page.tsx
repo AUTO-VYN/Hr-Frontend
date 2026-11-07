@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import {
@@ -164,8 +164,15 @@ export default function ShiftChangeRequestPage() {
   }, [dates.DATE_FROM, dates.DATE_TO]);
 
   // ── Fetch Current Shift & Available Options ────────────────────────────────
-  const fetchData = useCallback(async () => {
+  const hasFetchedInitial = useRef(false);
+
+  const fetchData = async () => {
     if (!user?.EMPCODE || !user?.Comp_Code) return;
+
+    if (!dates.DATE_FROM || !dates.DATE_TO) {
+      showSideAlert("Please select both Date From and Date To", "warning");
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -248,13 +255,15 @@ export default function ShiftChangeRequestPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.EMPCODE, user?.Comp_Code, user?.name, dates.DATE_FROM, dates.DATE_TO]);
+  };
 
+  // Initial load only on mount when user is authenticated; date filter only triggers on "Show roster" button click
   useEffect(() => {
-    if (user?.EMPCODE) {
+    if (user?.EMPCODE && user?.Comp_Code && !hasFetchedInitial.current) {
+      hasFetchedInitial.current = true;
       fetchData();
     }
-  }, [fetchData, user?.EMPCODE]);
+  }, [user?.EMPCODE, user?.Comp_Code]);
 
   // ── Selected New Shift Object ──────────────────────────────────────────────
   const selectedNewShift = useMemo(() => {
@@ -342,6 +351,21 @@ export default function ShiftChangeRequestPage() {
       return;
     }
 
+    // Backdate validation: Past dates not allowed for shift change
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedFrom = new Date(dates.DATE_FROM);
+    selectedFrom.setHours(0, 0, 0, 0);
+
+    if (selectedFrom < today) {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Date",
+        text: "You cannot request a shift change for a backdate. Please select a valid date.",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       const response = await axios.post(
@@ -364,10 +388,25 @@ export default function ShiftChangeRequestPage() {
       );
 
       console.log("Apply Shift Response:", response);
+
+      // Check if backend returned Status: false with validation message
+      if (response.data?.Status === false || response.data?.status === false) {
+        const errorMsg =
+          response.data?.Message ||
+          response.data?.message ||
+          "You cannot request a shift change for a backdate. Please select a valid date.";
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: errorMsg,
+        });
+        return;
+      }
+
       Swal.fire({
         icon: "success",
         title: "Success!",
-        text: `Shift change raised for ${daysAffected} day(s) — sent to approver 1`,
+        text: `Shift change raised for ${daysAffected} day — sent to approver 1`,
       });
 
       // Reset
@@ -379,10 +418,15 @@ export default function ShiftChangeRequestPage() {
     } catch (error: any) {
       console.error("Error saving shift change:", error);
       const errMessage =
+        error?.response?.data?.Message ||
         error?.response?.data?.message ||
         error?.message ||
         "Something went wrong while saving Shift_Change_Request";
-      showSideAlert(errMessage, "error");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -433,7 +477,7 @@ export default function ShiftChangeRequestPage() {
     {
       label:
         daysAffected > 0
-          ? `${daysAffected} day(s) selected`
+          ? `${daysAffected} day selected`
           : "Pick a valid date range",
       ok: daysAffected > 0,
     },
@@ -564,7 +608,7 @@ export default function ShiftChangeRequestPage() {
                   }}
                 >
                   {daysAffected > 0
-                    ? `${daysAffected} day(s) affected`
+                    ? `${daysAffected} day affected`
                     : "Pick a valid period"}
                 </span>
               </div>
@@ -828,20 +872,8 @@ export default function ShiftChangeRequestPage() {
               </div>
 
               {/* Timeline Legend */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginTop: "12px",
-                  fontSize: "11.5px",
-                  color: "var(--muted)",
-                }}
-                className="max-[640px]:flex-wrap"
-              >
-                <span
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
+              <div className="flex items-center gap-3 sm:gap-4 flex-wrap mt-3 text-[11px] sm:text-[11.5px] text-[var(--muted)]">
+                <span className="flex items-center gap-1.5 shrink-0">
                   <span
                     style={{
                       width: "9px",
@@ -853,9 +885,7 @@ export default function ShiftChangeRequestPage() {
                   Current working hours
                 </span>
 
-                <span
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
+                <span className="flex items-center gap-1.5 shrink-0">
                   <span
                     style={{
                       width: "9px",
@@ -867,9 +897,7 @@ export default function ShiftChangeRequestPage() {
                   New working hours
                 </span>
 
-                <span
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
+                <span className="flex items-center gap-1.5 shrink-0">
                   <span
                     style={{
                       width: "9px",
@@ -882,8 +910,8 @@ export default function ShiftChangeRequestPage() {
                   Off hours
                 </span>
 
-                <div style={{ flex: 1 }} />
-                <span>00:00 to 23:00</span>
+                <div className="flex-1 hidden sm:block" />
+                <span className="text-[10.5px] sm:text-[11.5px] text-[var(--muted)] shrink-0">00:00 to 23:00</span>
               </div>
 
               {/* Reason Field */}
@@ -930,65 +958,46 @@ export default function ShiftChangeRequestPage() {
               </label>
 
               {/* Bottom Actions Bar */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  marginTop: "15px",
-                }}
-                className="max-[640px]:flex-wrap"
-              >
-                <span
-                  style={{
-                    flex: "1 1 0%",
-                    minWidth: 0,
-                    fontSize: "12px",
-                    color: "var(--muted)",
-                  }}
-                >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 pt-3 border-t border-[var(--border)]">
+                <span className="text-[12px] text-[var(--muted)] min-w-0 leading-normal">
                   {isReady
                     ? `${daysAffected} day(s) · ${dates.Current_SHIFT} → ${newShiftRange}`
                     : "Complete the required fields to apply"}
                 </span>
 
-                <AButton
-                  type="button"
-                  variant="outline"
-                  onClick={handleClear}
-                  className="!border-[var(--border)] !bg-[var(--card)] !text-[var(--muted)] !text-[12.5px] !font-[550] !px-[14px] !py-[9px] !rounded-[9px] hover:!bg-[var(--hover)] hover:!text-[var(--fg)] shadow-none"
-                >
-                  Clear
-                </AButton>
+                <div className="flex items-center gap-2.5 sm:shrink-0 justify-end">
+                  <AButton
+                    type="button"
+                    variant="outline"
+                    onClick={handleClear}
+                    className="!border-[var(--border)] !bg-[var(--card)] !text-[var(--muted)] !text-[12.5px] !font-[550] !px-[14px] !py-[9px] !rounded-[9px] hover:!bg-[var(--hover)] hover:!text-[var(--fg)] shadow-none"
+                  >
+                    Clear
+                  </AButton>
 
-                <AButton
-                  type="button"
-                  variant="primary"
-                  onClick={handleApplyShiftChange}
-                  loading={isLoading}
-                  disabled={!isReady}
-                  icon={<Send className="w-3.5 h-3.5" />}
-                  className="!text-[12.5px] !font-[600] !px-[17px] !py-[9px] !rounded-[9px] !shadow-[var(--shadow)] !border-none"
-                  style={{
-                    background: isReady ? "var(--brand)" : "var(--muted)",
-                    cursor: isReady ? "pointer" : "not-allowed",
-                  }}
-                >
-                  Apply shift change
-                </AButton>
+                  <AButton
+                    type="button"
+                    variant="primary"
+                    onClick={handleApplyShiftChange}
+                    loading={isLoading}
+                    disabled={!isReady}
+                    icon={<Send className="w-3.5 h-3.5" />}
+                    className="!text-[12.5px] !font-[600] !px-[17px] !py-[9px] !rounded-[9px] !shadow-[var(--shadow)] !border-none"
+                    style={{
+                      background: isReady ? "var(--brand)" : "var(--muted)",
+                      cursor: isReady ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    Apply shift change
+                  </AButton>
+                </div>
               </div>
             </div>
           </div>
 
           {/* ── RIGHT COLUMN (STICKY SIDEBAR) ──────────────────────────────── */}
           <div
-            style={{
-              position: "sticky",
-              top: "82px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
+            className="min-[1180px]:sticky min-[1180px]:top-[82px] flex flex-col gap-3 w-full min-w-0"
           >
             {/* 3. APPROVAL ROUTE CARD */}
             <div

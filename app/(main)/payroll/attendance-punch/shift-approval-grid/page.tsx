@@ -70,6 +70,7 @@ export default function ShiftApprovalGridPage() {
         newVlaue = null;
       }
       setFiltereddata(filterByStatus(tabledata, newVlaue));
+      setsellectedrowdata([]);
     }
     setDates((prev) => ({
       ...prev,
@@ -543,12 +544,50 @@ export default function ShiftApprovalGridPage() {
       ...prev,
       status: statusVal,
     }));
+    setsellectedrowdata([]);
     let targetStatus: any = statusVal;
     if (statusVal == 2 || statusVal === "2") {
       targetStatus = null;
     }
     setFiltereddata(filterByStatus(tabledata, targetStatus));
   };
+
+  // ── Row Selectable Condition: Only Pending records can have a checkbox ─────
+  const isRowPending = useCallback((row: any) => {
+    if (!row) return false;
+
+    // If final status is already Approved or Rejected, no checkbox
+    if (
+      row.Fin_Appr == 1 ||
+      row.Fin_Appr === "1" ||
+      row.Fin_Appr == 0 ||
+      row.Fin_Appr === "0"
+    ) {
+      return false;
+    }
+
+    // If already approved or rejected by the logged-in user, no checkbox
+    if (
+      row.status_khud_ka == 1 ||
+      row.status_khud_ka === "1" ||
+      row.status_khud_ka == 0 ||
+      row.status_khud_ka === "0"
+    ) {
+      return false;
+    }
+
+    // Pending records (awaiting approval) get the checkbox
+    return (
+      row.status_khud_ka == null ||
+      row.status_khud_ka === "null" ||
+      row.status_khud_ka == 2 ||
+      row.status_khud_ka === "2" ||
+      row.Fin_Appr == null ||
+      row.Fin_Appr === "null" ||
+      row.Fin_Appr == 2 ||
+      row.Fin_Appr === "2"
+    );
+  }, []);
 
   // ── Format Date Helper ─────────────────────────────────────────────────────
   const formatAttnDate = (value: any) => {
@@ -567,6 +606,31 @@ export default function ShiftApprovalGridPage() {
     const isFutureDate = dateObj >= futureDate;
 
     return { formattedDate, isFutureDate };
+  };
+
+  // ── Check if an approver is defined for the row ───────────────────────────
+  const isApproverDefined = (name: any, ...codes: any[]) => {
+    const isValid = (val: any) => {
+      if (val === null || val === undefined) return false;
+      const s = String(val).trim();
+      if (
+        !s ||
+        s.toLowerCase() === "null" ||
+        s.toLowerCase() === "undefined" ||
+        s === "0" ||
+        s === "-" ||
+        s === "—"
+      ) {
+        return false;
+      }
+      return true;
+    };
+
+    if (isValid(name)) return true;
+    for (const c of codes) {
+      if (isValid(c)) return true;
+    }
+    return false;
   };
 
   // ── Table Columns ──────────────────────────────────────────────────────────
@@ -662,6 +726,21 @@ export default function ShiftApprovalGridPage() {
         Cell: ({ row }: any) => {
           const stat = row.original?.Appr_1_Stat;
           const name = row.original?.apr1_name;
+          const isDefined = isApproverDefined(
+            name,
+            row.original?.Appr_1_Code,
+            row.original?.Appr_1,
+            row.original?.apr1_code,
+          );
+
+          if (!isDefined && stat != 1 && stat !== "1") {
+            return (
+              <span className="text-slate-400 dark:text-slate-500 font-medium">
+                —
+              </span>
+            );
+          }
+
           if (stat == 1 || stat === "1") {
             return (
               <span
@@ -710,6 +789,21 @@ export default function ShiftApprovalGridPage() {
         Cell: ({ row }: any) => {
           const stat = row.original?.Appr_2_Stat;
           const name = row.original?.apr2_name;
+          const isDefined = isApproverDefined(
+            name,
+            row.original?.Appr_2_Code,
+            row.original?.Appr_2,
+            row.original?.apr2_code,
+          );
+
+          if (!isDefined && stat != 1 && stat !== "1") {
+            return (
+              <span className="text-slate-400 dark:text-slate-500 font-medium">
+                —
+              </span>
+            );
+          }
+
           if (stat == 1 || stat === "1") {
             return (
               <span
@@ -958,7 +1052,8 @@ export default function ShiftApprovalGridPage() {
             title={`Shift changes awaiting approval  ${filtereddata.length} of ${tabledata.length} rows`}
             columns={columns}
             data={filtereddata}
-            check={true}
+            check={dates.status == 2 || dates.status === "2" || dates.status === "ALL"}
+            isRowSelectable={isRowPending}
             selectValue="Tran_id"
             selectedRows={selectedrowdata}
             setSelectedRows={setsellectedrowdata}
