@@ -75,12 +75,15 @@ const getText = (...values: any[]): string => {
       value !== undefined &&
       String(value).trim()
     ) {
-      return String(value);
+      return String(value).trim();
     }
   }
 
   return "";
 };
+
+const normalizeKey = (value: any): string =>
+  String(value ?? "").trim().toLowerCase();
 
 const escapeHtml = (value: any): string => {
   return String(value ?? "")
@@ -94,6 +97,7 @@ const escapeHtml = (value: any): string => {
 const getApiError = (error: any) =>
   error?.response?.data?.message ||
   error?.response?.data?.Message ||
+  error?.response?.data?.error ||
   error?.message ||
   "Something went wrong. Please try again.";
 
@@ -151,6 +155,7 @@ export default function SalaryCalculationByRegionPage() {
     () => ({
       compcode: user?.Comp_Code,
       name: user?.name,
+      "Content-Type": "application/json",
     }),
     [user?.Comp_Code, user?.name]
   );
@@ -197,39 +202,88 @@ export default function SalaryCalculationByRegionPage() {
   };
 
   // --------------------------------------------------
-  // FETCH REGION API
-  // GET /ars/getRegion
+  // FETCH REGION MASTER + EMPLOYEE COUNT
   // --------------------------------------------------
 
+  const fetchRegions = useCallback(async () => {
+    if (!user?.Comp_Code) return;
 
-const fetchRegions = useCallback(async () => {
-  if (!user?.Comp_Code || !user?.EMPCODE) return;
-
-  try {
     setLoading(true);
 
-    // Step 1: Fetch region master
-    const regionResponse = await axios.get(
-      `${process.env.NEXT_PUBLIC_URL}/ars/getRegion`,
-      {
-        headers: apiHeaders,
+    try {
+      // 1. Fetch region master independently
+      const regionResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_URL}/ars/getRegion`,
+        {
+          headers: apiHeaders,
+        }
+      );
+
+      const regionData = Array.isArray(
+        regionResponse?.data?.Region_Data
+      )
+        ? regionResponse.data.Region_Data
+        : [];
+
+      // 2. Format region master first.
+      // This ensures region list is available even if count API fails.
+      const formattedRegions: RegionItem[] = regionData
+        .map((loc: any) => {
+          const regionId = getText(
+            loc?.value,
+            loc?.id,
+            loc?.Region_Code,
+            loc?.Region_ID,
+            loc?.SERVER_ID,
+            loc?.UTD
+          );
+
+          const regionName = getText(
+            loc?.label,
+            loc?.name,
+            loc?.Region_Name,
+            loc?.region_name,
+            loc?.Region
+          );
+
+          if (!regionId || !regionName) return null;
+
+          return {
+            id: regionId,
+            name: regionName,
+            empCount: 0,
+            originalData: loc,
+          };
+        })
+        .filter(Boolean) as RegionItem[];
+
+      setRegions(formattedRegions);
+      setSelectedRegions([]);
+
+      // 3. Get user's assigned branch/location IDs
+      const locationIds = String(user?.branch || "")
+        .split(",")
+        .map((item) => Number(item.trim()))
+        .filter(
+          (item) => Number.isInteger(item) && item > 0
+        );
+
+      if (locationIds.length === 0) {
+        console.warn(
+          "No valid location IDs found in user.branch:",
+          user?.branch
+        );
+
+        showSideAlert(
+          "No locations are assigned to your account.",
+          "warning"
+        );
+
+        return;
       }
-    );
 
-    const regionData = Array.isArray(regionResponse?.data?.Region_Data)
-      ? regionResponse.data.Region_Data
-      : [];
-
-    // Step 2: Get user's branch/location codes
-    const locationIds = String(user?.branch || "")
-      .split(",")
-      .map((item) => Number(item.trim()))
-      .filter((item) => Number.isInteger(item) && item > 0);
-
-    // Step 3: Fetch employee counts location-wise and region-wise
-    let regionSummary: any[] = [];
-
-    if (locationIds.length > 0) {
+      // 4. Fetch employee count separately.
+      // If this API fails, the region master remains visible.
       try {
         const countResponse = await axios.post(
           `${process.env.NEXT_PUBLIC_URL_local}/ars/GetEmployeeCountByRegion`,
@@ -241,86 +295,125 @@ const fetchRegions = useCallback(async () => {
           }
         );
 
-        regionSummary = Array.isArray(countResponse?.data?.regionSummary)
-          ? countResponse.data.regionSummary
+        const responseData = countResponse?.data;
+
+        console.log(
+          "Employee Count API Response:",
+          responseData
+        );
+
+        if (
+          responseData?.Status === false ||
+          responseData?.success === false
+        ) {
+          throw new Error(
+            getText(
+              responseData?.Message,
+              responseData?.message,
+              "Unable to fetch employee count."
+            )
+          );
+        }
+
+        const employeeCountData = Array.isArray(
+          responseData?.data
+        )
+          ? responseData.data
           : [];
 
-        console.log("Employee Count API Response:", countResponse.data);
-      } catch (countError) {
-        console.error("Employee Count API Error:", countError);
+        // 5. Create region-wise employee count map
+        const employeeCountMap = new Map<string, number>();
+
+        employeeCountData.forEach((item: any) => {
+          const regionCode = getText(
+            item?.REGION,
+            item?.region,
+            item?.Region_Code,
+            item?.region_code,
+            item?.Sal_Region,
+            item?.sal_region
+          );
+
+          if (!regionCode) return;
+
+          const countValue =
+            item?.TOTAL_EMPLOYEES ??
+            item?.total_employees ??
+            item?.total_emp ??
+            item?.Total_Employees ??
+            0;
+
+          const count = Number(countValue) || 0;
+
+          const mapKey = normalizeKey(regionCode);
+
+          employeeCountMap.set(
+            mapKey,
+            (employeeCountMap.get(mapKey) || 0) + count
+          );
+        });
+
+        console.log(
+          "Region Wise Employee Count Map:",
+          Array.from(employeeCountMap.entries())
+        );
+
+        // 6. Match count with region master.
+        // Matching is case-insensitive and ignores extra spaces.
+        const updatedRegions = formattedRegions.map((reg) => {
+          const countById = employeeCountMap.get(
+            normalizeKey(reg.id)
+          );
+
+          const countByName = employeeCountMap.get(
+            normalizeKey(reg.name)
+          );
+
+          return {
+            ...reg,
+            empCount: countById ?? countByName ?? 0,
+          };
+        });
+
+        console.log(
+          "Final Region Data With Employee Count:",
+          updatedRegions
+        );
+
+        setRegions(updatedRegions);
+      } catch (countError: any) {
+        console.error(
+          "Employee Count API Error:",
+          countError?.response?.data || countError
+        );
+
+        // Keep region master visible with zero counts.
+        setRegions(formattedRegions);
 
         showSideAlert(
-          getApiError(countError),
-          "error"
+          `Regions loaded, but employee count could not be fetched: ${getApiError(
+            countError
+          )}`,
+          "warning"
         );
       }
+    } catch (error) {
+      console.error(
+        "Fetch Region Master API Error:",
+        error
+      );
+
+      showSideAlert(getApiError(error), "error");
+      setRegions([]);
+    } finally {
+      setLoading(false);
     }
-
-    // Step 4: Create region-wise employee count lookup
-    const employeeCountMap = new Map(
-      regionSummary.map((item: any) => [
-        String(item.region_code),
-        Number(item.total_emp || 0),
-      ])
-    );
-
-    // Step 5: Combine region master and employee count
-    const formattedRegions: RegionItem[] = regionData
-      .map((loc: any) => {
-        const regionId = getText(
-          loc?.value,
-          loc?.id,
-          loc?.Region_Code,
-          loc?.Region_ID,
-          loc?.SERVER_ID,
-          loc?.UTD
-        );
-
-        const regionName = getText(
-          loc?.label,
-          loc?.name,
-          loc?.Region_Name,
-          loc?.region_name,
-          loc?.Region
-        );
-
-        if (!regionId || !regionName) return null;
-
-        const employeeCount = employeeCountMap.get(String(regionId)) ?? 0;
-
-        return {
-          id: String(regionId),
-          name: regionName,
-          empCount: employeeCount,
-          originalData: loc,
-        };
-      })
-      .filter(Boolean) as RegionItem[];
-
-    console.log("Formatted Region Data:", formattedRegions);
-
-    setRegions(formattedRegions);
-    setSelectedRegions([]);
-  } catch (error) {
-    console.error("Fetch Region API Error:", error);
-
-    showSideAlert(
-      getApiError(error) || "Error fetching regions",
-      "error"
-    );
-
-    setRegions([]);
-  } finally {
-    setLoading(false);
-  }
-}, [
-  user?.Comp_Code,
-  user?.EMPCODE,
-  user?.branch,
-  apiHeaders,
-  showSideAlert,
-]);
-
+  }, [
+    user?.Comp_Code,
+    user?.branch,
+    apiHeaders,
+    showSideAlert,
+  ]);
 
   useEffect(() => {
     fetchRegions();
@@ -371,7 +464,9 @@ const fetchRegions = useCallback(async () => {
                   ${
                     row.Created_At
                       ? escapeHtml(
-                          new Date(row.Created_At).toLocaleString("en-IN")
+                          new Date(
+                            row.Created_At
+                          ).toLocaleString("en-IN")
                         )
                       : "—"
                   }
@@ -425,7 +520,10 @@ const fetchRegions = useCallback(async () => {
         });
       }
     } catch (error) {
-      console.error("Already Process API error:", error);
+      console.error(
+        "Already Process API error:",
+        error
+      );
     }
   }, [apiHeaders, user?.Comp_Code, user?.branch]);
 
@@ -445,10 +543,17 @@ const fetchRegions = useCallback(async () => {
     );
   }, [regions, search]);
 
+  // --------------------------------------------------
+  // TOTAL SELECTED REGION EMPLOYEE COUNT
+  // --------------------------------------------------
+
   const totalSelectedEmpCount = useMemo(() => {
     return regions
       .filter((reg) => selectedRegions.includes(reg.id))
-      .reduce((acc, curr) => acc + (curr.empCount || 0), 0);
+      .reduce(
+        (acc, curr) => acc + (curr.empCount || 0),
+        0
+      );
   }, [regions, selectedRegions]);
 
   // --------------------------------------------------
@@ -456,11 +561,15 @@ const fetchRegions = useCallback(async () => {
   // --------------------------------------------------
 
   const toggleSelectAll = () => {
-    const filteredIds = filteredRegions.map((reg) => reg.id);
+    const filteredIds = filteredRegions.map(
+      (reg) => reg.id
+    );
 
     const allSelected =
       filteredIds.length > 0 &&
-      filteredIds.every((id) => selectedRegions.includes(id));
+      filteredIds.every((id) =>
+        selectedRegions.includes(id)
+      );
 
     if (allSelected) {
       setSelectedRegions((prev) =>
@@ -493,7 +602,6 @@ const fetchRegions = useCallback(async () => {
 
   // --------------------------------------------------
   // RUN SALARY CALCULATION
-  // POST /SalaryLock/emp_slryrun_byRegion
   // --------------------------------------------------
 
   const handleRunSalaryCalculation = async () => {
@@ -545,6 +653,11 @@ const fetchRegions = useCallback(async () => {
         user_code: user.id,
       };
 
+      console.log(
+        "Salary Calculation Payload:",
+        payload
+      );
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/SalaryLock/emp_slryrun_byRegion`,
         payload,
@@ -554,6 +667,19 @@ const fetchRegions = useCallback(async () => {
       );
 
       const data = response?.data;
+
+      if (
+        data?.Status === false ||
+        data?.success === false
+      ) {
+        throw new Error(
+          getText(
+            data?.Message,
+            data?.message,
+            "Salary calculation request failed."
+          )
+        );
+      }
 
       if (data?.lockedLocations) {
         setLockedLocations(
@@ -590,7 +716,9 @@ const fetchRegions = useCallback(async () => {
           ? data.lockedLocations.length > 0
           : true)
       ) {
-        const lockedText = Array.isArray(data.lockedLocations)
+        const lockedText = Array.isArray(
+          data.lockedLocations
+        )
           ? data.lockedLocations
               .map((item: any) =>
                 typeof item === "object"
@@ -634,7 +762,10 @@ const fetchRegions = useCallback(async () => {
         });
       }
     } catch (error) {
-      console.error("Salary Calculation API Error:", error);
+      console.error(
+        "Salary Calculation API Error:",
+        error
+      );
 
       Swal.fire({
         icon: "error",
@@ -733,7 +864,9 @@ const fetchRegions = useCallback(async () => {
                     type="text"
                     placeholder="Search regions"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) =>
+                      setSearch(e.target.value)
+                    }
                     className="h-[34px] w-full rounded-lg border border-[#dce5f1] bg-white pl-8 pr-3 text-[12px] text-[#152b4b] outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </div>
@@ -743,12 +876,15 @@ const fetchRegions = useCallback(async () => {
               <div className="divide-y divide-[#e8edf5] dark:divide-slate-800">
                 {filteredRegions.length > 0 ? (
                   filteredRegions.map((reg) => {
-                    const isChecked = selectedRegions.includes(reg.id);
+                    const isChecked =
+                      selectedRegions.includes(reg.id);
 
                     return (
                       <div
                         key={reg.id}
-                        onClick={() => toggleSelectRegion(reg.id)}
+                        onClick={() =>
+                          toggleSelectRegion(reg.id)
+                        }
                         className={`flex cursor-pointer items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
                           isChecked
                             ? "bg-indigo-50/40 dark:bg-slate-800/40"
@@ -759,8 +895,12 @@ const fetchRegions = useCallback(async () => {
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => toggleSelectRegion(reg.id)}
-                            onClick={(e) => e.stopPropagation()}
+                            onChange={() =>
+                              toggleSelectRegion(reg.id)
+                            }
+                            onClick={(e) =>
+                              e.stopPropagation()
+                            }
                             className="h-4 w-4 shrink-0 rounded border-[#dce5f1] text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
                           />
 
@@ -776,8 +916,8 @@ const fetchRegions = useCallback(async () => {
                             </span>
                           )}
 
-                          {reg.statusText && (
-                            reg.statusType === "ready" ? (
+                          {reg.statusText &&
+                            (reg.statusType === "ready" ? (
                               <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
                                 <Check size={13} />
                                 {reg.statusText}
@@ -790,8 +930,7 @@ const fetchRegions = useCallback(async () => {
                                 />
                                 {reg.statusText}
                               </span>
-                            )
-                          )}
+                            ))}
                         </div>
                       </div>
                     );
@@ -799,7 +938,10 @@ const fetchRegions = useCallback(async () => {
                 ) : (
                   <div className="flex min-h-[150px] flex-col items-center justify-center px-4 py-8 text-center">
                     <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                      <Search size={18} className="text-slate-400" />
+                      <Search
+                        size={18}
+                        className="text-slate-400"
+                      />
                     </div>
 
                     <p className="text-[13px] font-semibold text-[#152b4b] dark:text-slate-200">
@@ -822,15 +964,19 @@ const fetchRegions = useCallback(async () => {
                 <div>
                   <p className="text-[12px] font-medium text-[#152b4b] dark:text-slate-200">
                     {selectedRegions.length} region
-                    {selectedRegions.length !== 1 ? "s" : ""} ·{" "}
-                    {totalSelectedEmpCount} employees
+                    {selectedRegions.length !== 1
+                      ? "s"
+                      : ""}{" "}
+                    · {totalSelectedEmpCount} employees
                   </p>
                 </div>
 
                 <AButton
                   type="button"
                   onClick={handleRunSalaryCalculation}
-                  disabled={loading || selectedRegions.length === 0}
+                  disabled={
+                    loading || selectedRegions.length === 0
+                  }
                   className="inline-flex h-[40px] items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 text-[12px] font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Calculator size={16} />

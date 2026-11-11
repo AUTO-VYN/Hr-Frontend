@@ -1,7 +1,12 @@
 
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -22,7 +27,8 @@ type LocationItem = {
   name: string;
   cluster: string;
   empCount: number;
-  activeCount: number;
+  totalEmployees: number;
+  activeEmployees: number;
   isReady: boolean;
   isBlocked: boolean;
 };
@@ -42,14 +48,13 @@ const MONTHS: Option[] = [
   { value: "12", label: "Dec" },
 ];
 
-const YEAR_OPTIONS: Option[] = Array.from({ length: 10 }, (_, i) => {
-  const value = String(new Date().getFullYear() - i);
-
-  return {
-    value,
-    label: value,
-  };
-});
+const YEAR_OPTIONS: Option[] = Array.from(
+  { length: 10 },
+  (_, i) => {
+    const value = String(new Date().getFullYear() - i);
+    return { value, label: value };
+  }
+);
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
@@ -58,7 +63,7 @@ const getText = (...values: any[]): string => {
       value !== undefined &&
       String(value).trim() !== ""
     ) {
-      return String(value);
+      return String(value).trim();
     }
   }
 
@@ -140,31 +145,53 @@ export default function SalaryCalculationByLocationPage() {
 
   // -----------------------------------------
   // LOCATION MAPPING
+  // Aggregate records using Location only.
+  // Region is intentionally ignored here.
   // -----------------------------------------
 
+  const mapLocationData = useCallback(
+    (rows: any[]): LocationItem[] => {
+      const locationMap = new Map<string, LocationItem>();
 
-const mapLocationData = useCallback(
-  (rows: any[]): LocationItem[] => {
-    return (Array.isArray(rows) ? rows : [])
-      .map((location: any) => {
+      (Array.isArray(rows) ? rows : []).forEach((location: any) => {
         const id = getText(
+          location.Location,
+          location.location,
           location.location_code,
           location.location_id,
-          location.value,
           location.Loc_Code,
           location.LocCode,
           location.id
         );
 
-        const name = getText(
-          location.location_name,
-          location.label,
-          location.loc_name,
-          location.Loc_Name,
-          location.LocationName,
-          location.Location,
-          location.name
+        if (!id) return;
+
+        const totalEmployees = Number(
+          location.TOTAL_EMPLOYEES ??
+            location.totalEmployees ??
+            location.total_employees ??
+            0
         );
+
+        const activeEmployees = Number(
+          location.ACTIVE_EMPLOYEES ??
+            location.activeEmployees ??
+            location.active_employees ??
+            location.LASTWORKING_NULL_COUNT ??
+            location.lastWorkingNullCount ??
+            0
+        );
+
+        const existing = locationMap.get(id);
+
+        // Same Location can have multiple REGION records.
+        // Add all region counts into one Location.
+        if (existing) {
+          existing.totalEmployees += totalEmployees;
+          existing.activeEmployees += activeEmployees;
+          existing.empCount = existing.totalEmployees;
+          return;
+        }
 
         const isBlocked =
           Boolean(location.isBlocked) ||
@@ -177,9 +204,18 @@ const mapLocationData = useCallback(
           location.Ready ??
           location.Status;
 
-        return {
+        locationMap.set(id, {
           id: String(id),
-          name: name || String(id),
+
+          name:
+            getText(
+              location.location_name,
+              location.label,
+              location.loc_name,
+              location.Loc_Name,
+              location.LocationName,
+              location.name
+            ) || `LOCATION - ${id}`,
 
           cluster: getText(
             location.cluster,
@@ -187,13 +223,9 @@ const mapLocationData = useCallback(
             location.ClusterName
           ),
 
-          // Only active employees
-          empCount: Number(
-            location.active_emp ??
-            location.activeCount ??
-            location.active_count ??
-            0
-          ),
+          empCount: totalEmployees,
+          totalEmployees,
+          activeEmployees,
 
           isReady:
             readyValue === undefined
@@ -204,12 +236,13 @@ const mapLocationData = useCallback(
                 readyValue === "Y",
 
           isBlocked,
-        };
-      })
-      .filter((location) => location.id);
-  },
-  [lockedLocationIds, getText]
-);
+        });
+      });
+
+      return Array.from(locationMap.values());
+    },
+    [lockedLocationIds]
+  );
 
   // -----------------------------------------
   // FETCH CHANNEL / CLUSTER / REGION MASTERS
@@ -240,9 +273,17 @@ const mapLocationData = useCallback(
           .filter((item: Option) => item.value && item.label);
       };
 
-      setChannelOptions(convertValuesToString(masters.CHANNEL1));
-      setClusterOptions(convertValuesToString(masters.CLUSTER1));
-      setRegionOptions(convertValuesToString(masters.Sal_Region));
+      setChannelOptions(
+        convertValuesToString(masters.CHANNEL1)
+      );
+
+      setClusterOptions(
+        convertValuesToString(masters.CLUSTER1)
+      );
+
+      setRegionOptions(
+        convertValuesToString(masters.Sal_Region)
+      );
     } catch (error) {
       console.error("Master API error:", error);
 
@@ -271,8 +312,8 @@ const mapLocationData = useCallback(
       const locationsArray = user?.branch
         ? String(user.branch)
             .split(",")
-            .map((item: string) => Number(item.trim()))
-            .filter((item: number) => Number.isFinite(item))
+            .map((item: string) => item.trim())
+            .filter(Boolean)
         : [];
 
       if (locationsArray.length === 0) {
@@ -282,27 +323,51 @@ const mapLocationData = useCallback(
       }
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_local}/ars/GetEmployeeCountByRegion`,
-        {
-          locations: locationsArray,
-          Channel: channels,
-          Cluster: clusters,
-          Region: region || null,
-        },
+        `${process.env.NEXT_PUBLIC_URL_local}/ars/getEmployeeCountByBranchRegion`,
+        {},
         {
           headers: apiHeaders,
+          params: {
+            region: region || undefined,
+          },
         }
       );
 
-      const result = response?.data?.results || [];
+      const result = response?.data?.data || [];
 
-      if (!Array.isArray(result)) {
+      if (
+        response?.data?.success !== true ||
+        !Array.isArray(result)
+      ) {
         setLocations([]);
         setSelectedLocations([]);
         return;
       }
 
-      setLocations(mapLocationData(result));
+      // Only locations assigned to the logged-in user.
+      const allowedLocations = new Set(
+        locationsArray.map((item) => String(item))
+      );
+
+      const filteredResult = result.filter((item: any) => {
+        const locationCode = getText(
+          item.Location,
+          item.location,
+          item.location_code,
+          item.Loc_Code,
+          item.LocCode
+        );
+
+        return (
+          locationCode &&
+          allowedLocations.has(String(locationCode))
+        );
+      });
+
+      // Aggregate same Location irrespective of REGION.
+      const mappedLocations = mapLocationData(filteredResult);
+
+      setLocations(mappedLocations);
       setSelectedLocations([]);
     } catch (error) {
       console.error("Location API error:", error);
@@ -320,8 +385,6 @@ const mapLocationData = useCallback(
     user?.Comp_Code,
     user?.branch,
     apiHeaders,
-    channels,
-    clusters,
     region,
     mapLocationData,
   ]);
@@ -450,18 +513,26 @@ const mapLocationData = useCallback(
     return locations.filter(
       (loc) =>
         loc.name.toLowerCase().includes(q) ||
-        loc.cluster.toLowerCase().includes(q)
+        loc.cluster.toLowerCase().includes(q) ||
+        loc.id.toLowerCase().includes(q)
     );
   }, [locations, search]);
 
+  const availableLocations = useMemo(
+    () => filteredLocations.filter((loc) => !loc.isBlocked),
+    [filteredLocations]
+  );
+
   const toggleSelectAll = () => {
-    const availableIds = filteredLocations
-      .filter((loc) => !loc.isBlocked)
-      .map((loc) => loc.id);
+    const availableIds = availableLocations.map(
+      (loc) => loc.id
+    );
 
     const allSelected =
       availableIds.length > 0 &&
-      availableIds.every((id) => selectedLocations.includes(id));
+      availableIds.every((id) =>
+        selectedLocations.includes(id)
+      );
 
     if (allSelected) {
       setSelectedLocations((prev) =>
@@ -548,7 +619,9 @@ const mapLocationData = useCallback(
       .map((id) => Number(id))
       .filter((id) => Number.isFinite(id));
 
-    if (selectedLocationNumbers.length !== selectedLocations.length) {
+    if (
+      selectedLocationNumbers.length !== selectedLocations.length
+    ) {
       Swal.fire({
         icon: "error",
         title: "Invalid location",
@@ -559,7 +632,8 @@ const mapLocationData = useCallback(
     }
 
     const blockedSelected = locations.filter(
-      (loc) => selectedLocations.includes(loc.id) && loc.isBlocked
+      (loc) =>
+        selectedLocations.includes(loc.id) && loc.isBlocked
     );
 
     if (blockedSelected.length > 0) {
@@ -581,6 +655,10 @@ const mapLocationData = useCallback(
             MONTHS.find((item) => item.value === month)?.label
           )} ${escapeHtml(year)}</p>
           <p><b>Total Locations:</b> ${selectedLocationNumbers.length}</p>
+          <p><b>Total Employees:</b> ${locations
+            .filter((loc) => selectedLocations.includes(loc.id))
+            .reduce((sum, loc) => sum + loc.totalEmployees, 0)
+            .toLocaleString("en-IN")}</p>
         </div>
       `,
       showCancelButton: true,
@@ -642,6 +720,7 @@ const mapLocationData = useCallback(
           .map((loc: any) =>
             getText(
               loc.value,
+              loc.Location,
               loc.Loc_Code,
               loc.LocCode,
               loc.location_id,
@@ -655,7 +734,8 @@ const mapLocationData = useCallback(
         setLocations((prev) =>
           prev.map((loc) => ({
             ...loc,
-            isBlocked: lockedIds.includes(loc.id) || loc.isBlocked,
+            isBlocked:
+              lockedIds.includes(loc.id) || loc.isBlocked,
           }))
         );
 
@@ -667,6 +747,7 @@ const mapLocationData = useCallback(
                 loc.loc_name,
                 loc.Loc_Name,
                 loc.name,
+                loc.Location,
                 loc.value
               )
             )
@@ -747,8 +828,6 @@ const mapLocationData = useCallback(
         <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-5">
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
-            {/* CHANNEL */}
-
             <div className="min-w-0">
               <Eselect
                 title="CHANNEL"
@@ -762,8 +841,6 @@ const mapLocationData = useCallback(
                 className="h-[41px] w-full"
               />
             </div>
-
-            {/* CLUSTER */}
 
             <div className="min-w-0">
               <Eselect
@@ -779,8 +856,6 @@ const mapLocationData = useCallback(
               />
             </div>
 
-            {/* REGION */}
-
             <div className="min-w-0">
               <Eselect
                 title="REGION"
@@ -795,8 +870,6 @@ const mapLocationData = useCallback(
               />
             </div>
 
-            {/* MONTH */}
-
             <div className="min-w-0">
               <Eselect
                 title="MONTH"
@@ -808,8 +881,6 @@ const mapLocationData = useCallback(
                 className="h-[41px] w-full"
               />
             </div>
-
-            {/* YEAR */}
 
             <div className="min-w-0">
               <Eselect
@@ -829,18 +900,16 @@ const mapLocationData = useCallback(
 
         <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:border-slate-800 dark:bg-slate-900">
 
-          {/* LIST HEADER */}
-
           <div className="flex flex-col gap-3 border-b border-[#e8edf5] px-4 py-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
 
             <div className="flex flex-wrap items-center gap-3">
               <input
                 type="checkbox"
                 checked={
-                  filteredLocations.filter((loc) => !loc.isBlocked).length > 0 &&
-                  filteredLocations
-                    .filter((loc) => !loc.isBlocked)
-                    .every((loc) => selectedLocations.includes(loc.id))
+                  availableLocations.length > 0 &&
+                  availableLocations.every((loc) =>
+                    selectedLocations.includes(loc.id)
+                  )
                 }
                 onChange={toggleSelectAll}
                 className="h-4 w-4 rounded border-[#dce5f1] text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
@@ -890,7 +959,9 @@ const mapLocationData = useCallback(
                   key={loc.id}
                   onClick={() => toggleSelectLocation(loc.id)}
                   className={`flex flex-col gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between ${
-                    isChecked ? "bg-slate-50/70 dark:bg-slate-800/40" : ""
+                    isChecked
+                      ? "bg-slate-50/70 dark:bg-slate-800/40"
+                      : ""
                   }`}
                 >
 
@@ -914,14 +985,14 @@ const mapLocationData = useCallback(
                       {loc.cluster || "—"}
                     </span>
 
-                    {/* TOTAL EMPLOYEES ONLY */}
-<span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
-  Active Employees: {loc.empCount}
-</span>
+                    {/* TOTAL EMPLOYEES - LOCATION WISE */}
 
-                    {/* INACTIVE EMPLOYEE COUNT REMOVED */}
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                      Total Employees:{" "}
+                      {loc.totalEmployees.toLocaleString("en-IN")}
+                    </span>
 
-                    {/* {loc.isBlocked ? (
+                    {loc.isBlocked ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                         <Lock size={13} />
                         Locked
@@ -935,7 +1006,7 @@ const mapLocationData = useCallback(
                       <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
                         Not Ready
                       </span>
-                    )} */}
+                    )}
 
                   </div>
                 </div>
@@ -969,7 +1040,9 @@ const mapLocationData = useCallback(
             <AButton
               type="button"
               onClick={handleRunSalaryCalculation}
-              disabled={loading || selectedLocations.length === 0}
+              disabled={
+                loading || selectedLocations.length === 0
+              }
               className="inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-[#475569] px-5 text-[12px] font-semibold text-white transition hover:bg-[#334155] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <Calculator size={16} />
