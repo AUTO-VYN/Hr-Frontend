@@ -1,24 +1,16 @@
 "use client";
 
-import React, {
-  useMemo,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
-import {
-  Search,
-  Eye,
-  Mail,
-} from "lucide-react";
+import { Search, Eye, Mail } from "lucide-react";
 
 import AButton from "@/components/atoms/Button";
 import Eselect from "@/components/atoms/Eselect";
+import FilterCard from "@/components/atoms/FilterCard";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 
@@ -63,17 +55,14 @@ const MONTHS: Option[] = [
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-const YEARS: Option[] = Array.from(
-  { length: 15 },
-  (_, index) => {
-    const year = CURRENT_YEAR - index;
+const YEARS: Option[] = Array.from({ length: 15 }, (_, index) => {
+  const year = CURRENT_YEAR - index;
 
-    return {
-      value: String(year),
-      label: String(year),
-    };
-  }
-);
+  return {
+    value: String(year),
+    label: String(year),
+  };
+});
 
 const EMPLOYEE_TYPES: Option[] = [
   { value: "Regular", label: "Regular" },
@@ -84,11 +73,7 @@ const API_URL = process.env.NEXT_PUBLIC_URL;
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    ) {
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
       return String(value).trim();
     }
   }
@@ -157,6 +142,52 @@ const getCode = (value: any) => {
   return String(value).split(" - ")[0].trim();
 };
 
+const getEmployeeLocationCode = (
+  employee: SlipRow,
+  selectedLocations: string[] = [],
+  userBranch?: string,
+): string => {
+  const raw = employee?.raw || {};
+
+  const rawLocation = getText(
+    raw?.Loc_code,
+    raw?.LOC_CODE,
+    raw?.LocationCode,
+    raw?.LOCATION_CODE,
+    raw?.locationCode,
+    raw?.location_code,
+    raw?.BranchCode,
+    raw?.BRANCH_CODE,
+    raw?.branchCode,
+    raw?.Branch_Code,
+    raw?.branch_code,
+    raw?.Location,
+    raw?.location,
+  );
+
+  // Raw employee location code is the first preference.
+  if (rawLocation && rawLocation !== "—" && rawLocation !== "-") {
+    return getCode(rawLocation);
+  }
+
+  // If exactly one location is selected, use that location.
+  if (selectedLocations.length === 1) {
+    return getCode(selectedLocations[0]);
+  }
+
+  // Use user branch only when it contains a single code.
+  const branches = String(userBranch || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (branches.length === 1 && branches[0] !== "—") {
+    return getCode(branches[0]);
+  }
+
+  return "";
+};
+
 const getLabel = (item: any, keys: string[]): string => {
   if (typeof item === "string" || typeof item === "number") {
     return String(item);
@@ -174,7 +205,7 @@ const getLabel = (item: any, keys: string[]): string => {
 const makeOptions = (
   data: any[],
   codeKeys: string[],
-  nameKeys: string[]
+  nameKeys: string[],
 ): FilterOption[] => {
   const result = data
     .map((item) => {
@@ -186,9 +217,7 @@ const makeOptions = (
       const value = code || name;
 
       const label =
-        code && name && code !== name
-          ? `${code} - ${name}`
-          : name || code;
+        code && name && code !== name ? `${code} - ${name}` : name || code;
 
       return {
         value: String(value),
@@ -197,9 +226,7 @@ const makeOptions = (
     })
     .filter(Boolean) as FilterOption[];
 
-  return Array.from(
-    new Map(result.map((item) => [item.value, item])).values()
-  );
+  return Array.from(new Map(result.map((item) => [item.value, item])).values());
 };
 
 const formatAmount = (value: any): string => {
@@ -207,9 +234,7 @@ const formatAmount = (value: any): string => {
     return "—";
   }
 
-  const amount = Number(
-    String(value).replace(/[₹,\s]/g, "")
-  );
+  const amount = Number(String(value).replace(/[₹,\s]/g, ""));
 
   if (Number.isNaN(amount)) return String(value);
 
@@ -218,12 +243,13 @@ const formatAmount = (value: any): string => {
   })}`;
 };
 
+// Calendar month: 1st date se last date
 const getMonthDates = (year: string, month: string) => {
   const y = Number(year);
   const m = Number(month);
 
-  const firstDate = new Date(y, m - 1, 1);
-  const lastDate = new Date(y, m, 0);
+  const startDate = new Date(y, m - 1, 1);
+  const endDate = new Date(y, m, 0);
 
   const format = (date: Date) => {
     const yyyy = date.getFullYear();
@@ -234,16 +260,13 @@ const getMonthDates = (year: string, month: string) => {
   };
 
   return {
-    dateFrom: format(firstDate),
-    dateto: format(lastDate),
+    dateFrom: format(startDate),
+    dateto: format(endDate),
   };
 };
 
 // Supports both normal employee objects and { value, label } API options.
-const normalizeEmployee = (
-  item: any,
-  index: number
-): SlipRow => {
+const normalizeEmployee = (item: any, index: number): SlipRow => {
   const empCode = getText(
     item?.value,
     item?.EMPCODE,
@@ -251,7 +274,7 @@ const normalizeEmployee = (
     item?.EmployeeCode,
     item?.["Employee Code"],
     item?.empcode,
-    item?.Code
+    item?.Code,
   );
 
   const employeeName = getText(
@@ -260,7 +283,7 @@ const normalizeEmployee = (
     item?.EMP_NAME,
     item?.Name,
     item?.["Employee Name"],
-    item?.label?.split(" - ").slice(1).join(" - ")
+    item?.label?.split(" - ").slice(1).join(" - "),
   );
 
   return {
@@ -273,7 +296,7 @@ const normalizeEmployee = (
         item?.DESIGNATION,
         item?.Designation,
         item?.DesigName,
-        item?.designation
+        item?.designation,
       ) || "—",
 
     empCode,
@@ -283,7 +306,7 @@ const normalizeEmployee = (
         item?.EmployeeType,
         item?.EmpType,
         item?.EMP_TYPE,
-        item?.employeeType
+        item?.employeeType,
       ) || "—",
 
     branch:
@@ -293,7 +316,7 @@ const normalizeEmployee = (
         item?.LOC_NAME,
         item?.Location,
         item?.Branch,
-        item?.Loc_code
+        item?.Loc_code,
       ) || "—",
 
     paidDays:
@@ -301,14 +324,11 @@ const normalizeEmployee = (
         item?.PaidDays,
         item?.Paid_Days,
         item?.TotalPaidDays,
-        item?.paidDays
+        item?.paidDays,
       ) || "—",
 
     gross: formatAmount(
-      item?.GrossSalary ??
-        item?.Gross ??
-        item?.GROSS ??
-        item?.gross
+      item?.GrossSalary ?? item?.Gross ?? item?.GROSS ?? item?.gross,
     ),
 
     netPaid: formatAmount(
@@ -316,176 +336,119 @@ const normalizeEmployee = (
         item?.NetSalary ??
         item?.NET_PAY ??
         item?.NetPay ??
-        item?.netPaid
+        item?.netPaid,
     ),
 
     hrStatus:
-      getText(
-        item?.HRStatus,
-        item?.HrStatus,
-        item?.Status
-      ) || "Pending HR",
+      getText(item?.HRStatus, item?.HrStatus, item?.Status) || "Pending HR",
 
     raw: item,
   };
 };
 
-const normalizeSalaryData = (
-  item: any,
-  employee: SlipRow
-): SlipRow => {
+const normalizeSalaryData = (item: any, employee: SlipRow): SlipRow => {
   const source = item || {};
+
+  const read = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = source?.[key];
+
+      if (
+        value !== undefined &&
+        value !== null &&
+        String(value).trim() !== ""
+      ) {
+        return value;
+      }
+    }
+
+    return undefined;
+  };
+
+  const approvalValue = getText(
+    read("HR_Aprvl", "HRApproval", "HR_Status", "HRStatus"),
+  );
 
   return {
     ...employee,
 
     employeeName: getText(
-      source?.EmployeeName,
-      source?.EmpName,
-      source?.EMP_NAME,
-      source?.Name,
-      employee.employeeName
+      read("Employee Name", "EmployeeName", "EmpName", "EMP_NAME"),
+      employee.employeeName,
+    ),
+
+    empCode: getText(
+      read("Employee Code", "EMPCODE", "EmpCode", "EmployeeCode"),
+      employee.empCode,
     ),
 
     designation: getText(
-      source?.Designation,
-      source?.DESIGNATION,
-      source?.DesigName,
-      employee.designation
+      read("Designation", "DESIGNATION", "DesigName"),
+      employee.designation,
     ),
 
     branch: getText(
-      source?.LocationName,
-      source?.BranchName,
-      source?.Location,
-      source?.Branch,
-      employee.branch
+      read(
+        "LocationName",
+        "BranchName",
+        "Location",
+        "Branch",
+        "Loc_code",
+        "Loc_Code",
+      ),
+      employee.branch,
     ),
 
-    paidDays: getText(
-      source?.PaidDays,
-      source?.Paid_Days,
-      source?.TotalPaidDays,
-      employee.paidDays
-    ),
+    paidDays:
+      getText(
+        read(
+          "Days Paid",
+          "PaidDays",
+          "Paid_Days",
+          "TotalPaidDays",
+          "Present_days",
+        ),
+        employee.paidDays,
+      ) || "—",
 
     gross: formatAmount(
-      source?.GrossSalary ??
-        source?.Gross ??
-        source?.GROSS ??
-        source?.gross ??
-        employee.raw?.GrossSalary
+      read(
+        "total Wages",
+        "Total Wages",
+        "Total wages",
+        "GrossSalary",
+        "Gross",
+        "GROSS",
+        "gross",
+      ),
     ),
 
     netPaid: formatAmount(
-      source?.NetPaid ??
-        source?.NetSalary ??
-        source?.NET_PAY ??
-        source?.NetPay ??
-        employee.raw?.NetPaid
+      read(
+        "Net Salary",
+        "NetSalary",
+        "NetPaid",
+        "NET_PAY",
+        "NetPay",
+        "netPaid",
+      ),
     ),
 
-    hrStatus: getText(
-      source?.HRStatus,
-      source?.HrStatus,
-      source?.Status,
-      employee.hrStatus
-    ),
+    hrStatus:
+      approvalValue === "1"
+        ? "Approved"
+        : approvalValue === "0"
+          ? "Rejected"
+          : getText(
+              read("HRStatus", "HrStatus", "HR_Status"),
+              employee.hrStatus,
+            ) || "Pending HR",
 
     raw: source,
   };
 };
 
-function FilterCard({
-  title,
-  options,
-  selected,
-  onChange,
-  search,
-  onSearch,
-  onAll,
-}: {
-  title: string;
-  options: FilterOption[];
-  selected: string[];
-  onChange: (value: string) => void;
-  search: string;
-  onSearch: (value: string) => void;
-  onAll: () => void;
-}) {
-  const filteredOptions = useMemo(() => {
-    const term = search.trim().toLowerCase();
 
-    if (!term) return options;
-
-    return options.filter((item) =>
-      item.label.toLowerCase().includes(term)
-    );
-  }, [options, search]);
-
-  return (
-    <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between border-b border-[#e8edf5] pb-2.5 dark:border-slate-800">
-        <span className="text-[12px] font-semibold text-[#152b4b] dark:text-slate-100">
-          {title}
-        </span>
-
-        <button
-          type="button"
-          onClick={onAll}
-          className="text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          All
-        </button>
-      </div>
-
-      <div className="relative mb-2 mt-2.5">
-        <Search
-          size={13}
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          className="h-[32px] w-full rounded-lg border border-[#dce5f1] bg-[#f8fafc] pl-7 pr-3 text-[11px] text-[#152b4b] outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        />
-      </div>
-
-      <div className="max-h-[125px] space-y-1.5 overflow-y-auto pr-1">
-        {filteredOptions.length ? (
-          filteredOptions.map((item) => (
-            <label
-              key={item.value}
-              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(item.value)}
-                onChange={() => onChange(item.value)}
-                className="h-3.5 w-3.5 rounded border-[#dce5f1] text-indigo-600 dark:border-slate-700 dark:bg-slate-800"
-              />
-
-              <span className="min-w-0 break-words text-[11px] text-[#52627c] dark:text-slate-300">
-                {item.label}
-              </span>
-            </label>
-          ))
-        ) : (
-          <p className="px-1.5 py-2 text-[11px] text-slate-400">
-            No options found
-          </p>
-        )}
-      </div>
-
-      <div className="mt-2 border-t border-slate-100 pt-2 text-[10px] text-slate-400 dark:border-slate-800">
-        {selected.length} selected
-      </div>
-    </div>
-  );
-}
 
 export default function EmployeeSalarySlipsPage() {
   const user = useCurrentUser();
@@ -529,7 +492,9 @@ export default function EmployeeSalarySlipsPage() {
   const [salaryDetails, setSalaryDetails] = useState<Record<string, any>>({});
   const [hasSearched, setHasSearched] = useState(false);
   const [designations, setDesignations] = useState<Option[]>([]);
-  const [selectedDesignations, setSelectedDesignations] = useState<string[]>([]);
+  const [selectedDesignations, setSelectedDesignations] = useState<string[]>(
+    [],
+  );
   const [designationSearch, setDesignationSearch] = useState("");
 
   const postApi = useCallback(
@@ -551,15 +516,13 @@ export default function EmployeeSalarySlipsPage() {
         },
       });
     },
-    [user?.Comp_Code, user?.name]
+    [user?.Comp_Code, user?.name],
   );
 
   // Employee Code dropdown options.
   // API format: { value: "TMPL227", label: "TMPL227 - RUPAK SAHA" }
   const employeeCodeOptions = useMemo(() => {
-    const rows = Array.isArray(employeeMaster)
-      ? employeeMaster
-      : [];
+    const rows = Array.isArray(employeeMaster) ? employeeMaster : [];
 
     const options = rows
       .map((item: any) => {
@@ -570,7 +533,7 @@ export default function EmployeeSalarySlipsPage() {
           item?.EmployeeCode,
           item?.["Employee Code"],
           item?.empcode,
-          item?.Code
+          item?.Code,
         );
 
         const label = getText(
@@ -579,7 +542,7 @@ export default function EmployeeSalarySlipsPage() {
           item?.EmpName,
           item?.EMP_NAME,
           item?.Name,
-          item?.["Employee Name"]
+          item?.["Employee Name"],
         );
 
         if (!value) return null;
@@ -592,22 +555,14 @@ export default function EmployeeSalarySlipsPage() {
       .filter(Boolean) as FilterOption[];
 
     const uniqueOptions = Array.from(
-      new Map(
-        options.map((item) => [item.value, item])
-      ).values()
+      new Map(options.map((item) => [item.value, item])).values(),
     );
 
-    return [
-      { value: "all", label: "All Employees" },
-      ...uniqueOptions,
-    ];
+    return [{ value: "all", label: "All Employees" }, ...uniqueOptions];
   }, [employeeMaster]);
 
   // Common select handler.
-  const handleInputChange = (
-    name: string,
-    value: any
-  ) => {
+  const handleInputChange = (name: string, value: any) => {
     const selectedValue = String(value ?? "");
 
     if (name === "month") {
@@ -630,12 +585,12 @@ export default function EmployeeSalarySlipsPage() {
 
   const toggleCheckboxItem = (
     item: string,
-    setList: React.Dispatch<React.SetStateAction<string[]>>
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
   ) => {
     setList((prev) =>
       prev.includes(item)
         ? prev.filter((value) => value !== item)
-        : [...prev, item]
+        : [...prev, item],
     );
   };
 
@@ -669,48 +624,48 @@ export default function EmployeeSalarySlipsPage() {
         makeOptions(
           locationData,
           ["Loc_code", "LOC_CODE", "LocationCode", "Code", "value"],
-          ["Loc_name", "LocationName", "LOC_NAME", "Name", "label"]
-        )
+          ["Loc_name", "LocationName", "LOC_NAME", "Name", "label"],
+        ),
       );
 
       setRegions(
         makeOptions(
           getArray(data?.Region),
           ["Region_Code", "RegionCode", "REGION_CODE", "Code", "value"],
-          ["Region_Name", "RegionName", "REGION_NAME", "Name", "label"]
-        )
+          ["Region_Name", "RegionName", "REGION_NAME", "Name", "label"],
+        ),
       );
 
       setChannels(
         makeOptions(
           getArray(data?.CHANNEL),
           ["Channel_Code", "ChannelCode", "CHANNEL_CODE", "Code", "value"],
-          ["Channel_Name", "ChannelName", "CHANNEL_NAME", "Name", "label"]
-        )
+          ["Channel_Name", "ChannelName", "CHANNEL_NAME", "Name", "label"],
+        ),
       );
 
       setClusters(
         makeOptions(
           getArray(data?.CLUSTER),
           ["Cluster_Code", "ClusterCode", "CLUSTER_CODE", "Code", "value"],
-          ["Cluster_Name", "ClusterName", "Name", "label"]
-        )
+          ["Cluster_Name", "ClusterName", "Name", "label"],
+        ),
       );
 
       setSections(
         makeOptions(
           getArray(data?.SECTION),
           ["Section_Code", "SectionCode", "SECTION_CODE", "Code", "value"],
-          ["Section_Name", "SectionName", "Name", "label"]
-        )
+          ["Section_Name", "SectionName", "Name", "label"],
+        ),
       );
 
       setDepartments(
         makeOptions(
           getArray(data?.DIVISION),
           ["Division_Code", "DivisionCode", "DIVISION_CODE", "Code", "value"],
-          ["Division_Name", "DivisionName", "Name", "label"]
-        )
+          ["Division_Name", "DivisionName", "Name", "label"],
+        ),
       );
 
       setDesignations(
@@ -731,8 +686,8 @@ export default function EmployeeSalarySlipsPage() {
             "DESIGNATION_NAME",
             "Name",
             "label",
-          ]
-        )
+          ],
+        ),
       );
     } catch (error) {
       console.error("findMasters error:", error);
@@ -757,15 +712,20 @@ export default function EmployeeSalarySlipsPage() {
   const fetchEmployees = useCallback(async () => {
     if (!user?.Comp_Code) return [];
 
-    const response = await postApi(
-      "/employee/findAllForSalary",
-      {
-        Loc_code: selectedLocations.map(getCode).join(","),
-      }
-    );
+    const selectedLocationCodes = selectedLocations
+      .map(getCode)
+      .filter(Boolean);
+
+    const locationCodes = selectedLocationCodes.length
+      ? selectedLocationCodes.join(",")
+      : getText(user?.branch);
+
+    const response = await postApi("/employee/findAllForSalary", {
+      Loc_code: locationCodes,
+    });
 
     return getResponseRows(response);
-  }, [postApi, selectedLocations, user?.Comp_Code]);
+  }, [postApi, selectedLocations, user?.Comp_Code, user?.branch]);
 
   // Load employee master for Employee Code dropdown.
   const loadEmployeeMaster = useCallback(async () => {
@@ -785,8 +745,8 @@ export default function EmployeeSalarySlipsPage() {
               item?.value,
               item?.EMPCODE,
               item?.EmpCode,
-              item?.EmployeeCode
-            ) === employeeCode
+              item?.EmployeeCode,
+            ) === employeeCode,
         )
       ) {
         setEmployeeCode("all");
@@ -816,45 +776,36 @@ export default function EmployeeSalarySlipsPage() {
     async (employee: SlipRow) => {
       const dates = getMonthDates(year, month);
 
+      const location = getText(
+        employee.raw?.Loc_code,
+        employee.raw?.LocationCode,
+        employee.raw?.LOC_CODE,
+        employee.raw?.location,
+        employee.raw?.LocationCode,
+      );
+
       const payload = {
-        location: getText(
-          employee.raw?.Loc_code,
-          employee.raw?.LocationCode,
-          employee.raw?.LOC_CODE,
-          getCode(employee.branch)
-        ),
-
-        department: getText(
-          employee.raw?.DIVISION,
-          employee.raw?.DivisionCode,
-          employee.raw?.DepartmentCode,
-          selectedDepartments.map(getCode).join(",")
-        ),
-
-        empcode: employee.empCode,
+        location,
+        department: "",
+        empcode: [employee.empCode],
         dateFrom: dates.dateFrom,
         dateto: dates.dateto,
-        employeeType,
-        EmpType: employeeType,
+        employeeType: "",
+        EmpType: "",
         web: 1,
       };
 
-      const response = await postApi(
-        "/mobile/PaySlipDataWeb",
-        payload
-      );
+      console.log("PaySlipDataWeb Request:", payload);
+
+      const response = await postApi("/mobile/PaySlipDataWeb", payload);
+
+      console.log("PaySlipDataWeb Response:", response?.data);
 
       const rows = getResponseRows(response);
 
-      return (
-        rows[0] ??
-        response?.data?.data ??
-        response?.data?.Result ??
-        response?.data ??
-        {}
-      );
+      return rows[0] || {};
     },
-    [year, month, employeeType, selectedDepartments, postApi]
+    [year, month, postApi],
   );
 
   // Show salary slip results.
@@ -882,9 +833,7 @@ export default function EmployeeSalarySlipsPage() {
         .filter((item) => item.empCode);
 
       if (employeeCode !== "all") {
-        normalized = normalized.filter(
-          (item) => item.empCode === employeeCode
-        );
+        normalized = normalized.filter((item) => item.empCode === employeeCode);
       }
 
       setSlipRows(normalized);
@@ -905,27 +854,33 @@ export default function EmployeeSalarySlipsPage() {
         normalized.map(async (employee) => ({
           empCode: employee.empCode,
           data: await getSalaryForEmployee(employee),
-        }))
+        })),
       );
 
       const details: Record<string, any> = {};
       const updatedRows = [...normalized];
 
-      detailEntries.forEach((result) => {
-        if (result.status !== "fulfilled") return;
+      detailEntries.forEach((result, index) => {
+        if (result.status === "rejected") {
+          console.error(
+            `Salary API failed for ${normalized[index]?.empCode}:`,
+            result.reason,
+          );
+          return;
+        }
 
         const { empCode, data } = result.value;
 
         details[empCode] = data;
 
-        const index = updatedRows.findIndex(
-          (item) => item.empCode === empCode
+        const rowIndex = updatedRows.findIndex(
+          (item) => item.empCode === empCode,
         );
 
-        if (index !== -1) {
-          updatedRows[index] = normalizeSalaryData(
+        if (rowIndex !== -1) {
+          updatedRows[rowIndex] = normalizeSalaryData(
             data,
-            updatedRows[index]
+            updatedRows[rowIndex],
           );
         }
       });
@@ -934,7 +889,7 @@ export default function EmployeeSalarySlipsPage() {
       setSlipRows(updatedRows);
 
       const failedCount = detailEntries.filter(
-        (item) => item.status === "rejected"
+        (item) => item.status === "rejected",
       ).length;
 
       if (failedCount) {
@@ -995,38 +950,35 @@ export default function EmployeeSalarySlipsPage() {
   };
 
   const handleSelectAllSlips = (checked: boolean) => {
-    setSelectedSlips(
-      checked ? slipRows.map((item) => item.id) : []
-    );
+    setSelectedSlips(checked ? slipRows.map((item) => item.id) : []);
   };
 
   const getSelectedRows = () =>
-    slipRows.filter((item) =>
-      selectedSlips.includes(item.id)
-    );
+    slipRows.filter((item) => selectedSlips.includes(item.id));
 
   // Eye icon -> selected employee ka salary slip page
-const handleViewSlip = (employee: SlipRow) => {
-  const location = getText(
-    employee.raw?.Loc_code,
-    employee.raw?.LocationCode,
-    employee.raw?.LOC_CODE,
-    employee.branch !== "—" ? getCode(employee.branch) : ""
-  );
+  const handleViewSlip = (employee: SlipRow) => {
+    const location = getText(
+      employee.raw?.Loc_code,
+      employee.raw?.LocationCode,
+      employee.raw?.LOC_CODE,
+    );
 
-  const params = new URLSearchParams({
-    empcode: employee.empCode,
-    name: employee.employeeName,
-    month: MONTHS.find((item) => item.value === month)?.label || "",
-    year,
-    type: employeeType,
-  });
+    const params = new URLSearchParams({
+      empcode: employee.empCode,
+      name: employee.employeeName,
+      month: MONTHS.find((item) => item.value === month)?.label || "",
+      year,
+      type: "",
+    });
 
-  // Sirf asli location code bhejo, placeholder nahi
-  if (location) params.set("location", location);
+    if (location) {
+      params.set("location", location);
+    }
 
-  router.push(`/payroll/payroll/self-salary-slip?${params.toString()}`);
-};
+    router.push(`/payroll/payroll/self-salary-slip?${params.toString()}`);
+  };
+
   const handleEmailSelected = async () => {
     const selected = getSelectedRows();
 
@@ -1066,12 +1018,9 @@ const handleViewSlip = (employee: SlipRow) => {
           <input
             type="checkbox"
             checked={
-              slipRows.length > 0 &&
-              selectedSlips.length === slipRows.length
+              slipRows.length > 0 && selectedSlips.length === slipRows.length
             }
-            onChange={(e) =>
-              handleSelectAllSlips(e.target.checked)
-            }
+            onChange={(e) => handleSelectAllSlips(e.target.checked)}
             className="h-4 w-4 rounded border-[#dce5f1] text-indigo-600"
           />
         ),
@@ -1089,7 +1038,7 @@ const handleViewSlip = (employee: SlipRow) => {
                 setSelectedSlips((prev) =>
                   prev.includes(item.id)
                     ? prev.filter((id) => id !== item.id)
-                    : [...prev, item.id]
+                    : [...prev, item.id],
                 )
               }
               className="h-4 w-4 rounded border-[#dce5f1] text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
@@ -1162,8 +1111,7 @@ const handleViewSlip = (employee: SlipRow) => {
         accessor: "hrStatus",
         width: 140,
         Cell: ({ value }: any) => {
-          const isApproved =
-            String(value).toLowerCase() === "approved";
+          const isApproved = String(value).toLowerCase() === "approved";
 
           return (
             <span
@@ -1201,9 +1149,7 @@ const handleViewSlip = (employee: SlipRow) => {
                 title="Email slip"
                 onClick={() => {
                   setSelectedSlips((prev) =>
-                    prev.includes(employee.id)
-                      ? prev
-                      : [...prev, employee.id]
+                    prev.includes(employee.id) ? prev : [...prev, employee.id],
                   );
 
                   Swal.fire({
@@ -1222,7 +1168,7 @@ const handleViewSlip = (employee: SlipRow) => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedSlips, slipRows, month, year, employeeType]
+    [selectedSlips, slipRows, month, year, employeeType],
   );
 
   const periodLabel = `${
@@ -1244,7 +1190,8 @@ const handleViewSlip = (employee: SlipRow) => {
             </h1>
 
             <p className="mt-1 text-[12px] text-[#64748b] dark:text-slate-400 sm:text-[13px]">
-              Narrow the population, check the list, then view or email the payslips for the selection.
+              Narrow the population, check the list, then view or email the
+              payslips for the selection.
             </p>
           </div>
         </div>
@@ -1340,14 +1287,10 @@ const handleViewSlip = (employee: SlipRow) => {
             title="Regions"
             options={regions}
             selected={selectedRegions}
-            onChange={(value) =>
-              toggleCheckboxItem(value, setSelectedRegions)
-            }
+            onChange={(value) => toggleCheckboxItem(value, setSelectedRegions)}
             search={regionSearch}
             onSearch={setRegionSearch}
-            onAll={() =>
-              setSelectedRegions(regions.map((item) => item.value))
-            }
+            onAll={() => setSelectedRegions(regions.map((item) => item.value))}
           />
 
           <FilterCard
@@ -1368,9 +1311,7 @@ const handleViewSlip = (employee: SlipRow) => {
             title="Channel"
             options={channels}
             selected={selectedChannels}
-            onChange={(value) =>
-              toggleCheckboxItem(value, setSelectedChannels)
-            }
+            onChange={(value) => toggleCheckboxItem(value, setSelectedChannels)}
             search={channelSearch}
             onSearch={setChannelSearch}
             onAll={() =>
@@ -1382,9 +1323,7 @@ const handleViewSlip = (employee: SlipRow) => {
             title="Cluster"
             options={clusters}
             selected={selectedClusters}
-            onChange={(value) =>
-              toggleCheckboxItem(value, setSelectedClusters)
-            }
+            onChange={(value) => toggleCheckboxItem(value, setSelectedClusters)}
             search={clusterSearch}
             onSearch={setClusterSearch}
             onAll={() =>
@@ -1396,9 +1335,7 @@ const handleViewSlip = (employee: SlipRow) => {
             title="Sections"
             options={sections}
             selected={selectedSections}
-            onChange={(value) =>
-              toggleCheckboxItem(value, setSelectedSections)
-            }
+            onChange={(value) => toggleCheckboxItem(value, setSelectedSections)}
             search={sectionSearch}
             onSearch={setSectionSearch}
             onAll={() =>
@@ -1416,9 +1353,7 @@ const handleViewSlip = (employee: SlipRow) => {
             search={designationSearch}
             onSearch={setDesignationSearch}
             onAll={() =>
-              setSelectedDesignations(
-                designations.map((item) => item.value)
-              )
+              setSelectedDesignations(designations.map((item) => item.value))
             }
           />
         </div>

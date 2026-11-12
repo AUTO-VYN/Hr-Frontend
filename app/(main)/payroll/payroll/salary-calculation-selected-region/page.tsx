@@ -205,215 +205,196 @@ export default function SalaryCalculationByRegionPage() {
   // FETCH REGION MASTER + EMPLOYEE COUNT
   // --------------------------------------------------
 
-  const fetchRegions = useCallback(async () => {
-    if (!user?.Comp_Code) return;
 
-    setLoading(true);
+const fetchRegions = useCallback(async () => {
+  if (!user?.Comp_Code) return;
 
-    try {
-      // 1. Fetch region master independently
-      const regionResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_URL}/ars/getRegion`,
-        {
-          headers: apiHeaders,
-        }
-      );
+  setLoading(true);
 
-      const regionData = Array.isArray(
-        regionResponse?.data?.Region_Data
-      )
-        ? regionResponse.data.Region_Data
-        : [];
+  try {
+    // -----------------------------------------
+    // 1. FETCH REGION MASTER
+    // -----------------------------------------
 
-      // 2. Format region master first.
-      // This ensures region list is available even if count API fails.
-      const formattedRegions: RegionItem[] = regionData
-        .map((loc: any) => {
-          const regionId = getText(
-            loc?.value,
-            loc?.id,
-            loc?.Region_Code,
-            loc?.Region_ID,
-            loc?.SERVER_ID,
-            loc?.UTD
-          );
+    const regionResponse = await axios.get(
+      `${process.env.NEXT_PUBLIC_URL}/ars/getRegion`,
+      {
+        headers: apiHeaders,
+      }
+    );
 
-          const regionName = getText(
-            loc?.label,
-            loc?.name,
-            loc?.Region_Name,
-            loc?.region_name,
-            loc?.Region
-          );
+    const regionData = Array.isArray(
+      regionResponse?.data?.Region_Data
+    )
+      ? regionResponse.data.Region_Data
+      : [];
 
-          if (!regionId || !regionName) return null;
+    const formattedRegions: RegionItem[] = regionData
+      .map((loc: any) => {
+        const regionId = getText(
+          loc?.value,
+          loc?.id,
+          loc?.Region_Code,
+          loc?.Region_ID,
+          loc?.SERVER_ID,
+          loc?.UTD
+        );
 
-          return {
-            id: regionId,
-            name: regionName,
-            empCount: 0,
-            originalData: loc,
-          };
-        })
-        .filter(Boolean) as RegionItem[];
+        const regionName = getText(
+          loc?.label,
+          loc?.name,
+          loc?.Region_Name,
+          loc?.region_name,
+          loc?.Region
+        );
 
+        if (!regionId || !regionName) return null;
+
+        return {
+          id: regionId,
+          name: regionName,
+          empCount: 0,
+          originalData: loc,
+        };
+      })
+      .filter(Boolean) as RegionItem[];
+
+    setRegions(formattedRegions);
+
+    // -----------------------------------------
+    // 2. GET ASSIGNED LOCATIONS
+    // -----------------------------------------
+
+    const locationIds = String(user?.branch || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (locationIds.length === 0) {
       setRegions(formattedRegions);
       setSelectedRegions([]);
 
-      // 3. Get user's assigned branch/location IDs
-      const locationIds = String(user?.branch || "")
-        .split(",")
-        .map((item) => Number(item.trim()))
-        .filter(
-          (item) => Number.isInteger(item) && item > 0
-        );
-
-      if (locationIds.length === 0) {
-        console.warn(
-          "No valid location IDs found in user.branch:",
-          user?.branch
-        );
-
-        showSideAlert(
-          "No locations are assigned to your account.",
-          "warning"
-        );
-
-        return;
-      }
-
-      // 4. Fetch employee count separately.
-      // If this API fails, the region master remains visible.
-      try {
-        const countResponse = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL_local}/ars/GetEmployeeCountByRegion`,
-          {
-            locations: locationIds,
-          },
-          {
-            headers: apiHeaders,
-          }
-        );
-
-        const responseData = countResponse?.data;
-
-        console.log(
-          "Employee Count API Response:",
-          responseData
-        );
-
-        if (
-          responseData?.Status === false ||
-          responseData?.success === false
-        ) {
-          throw new Error(
-            getText(
-              responseData?.Message,
-              responseData?.message,
-              "Unable to fetch employee count."
-            )
-          );
-        }
-
-        const employeeCountData = Array.isArray(
-          responseData?.data
-        )
-          ? responseData.data
-          : [];
-
-        // 5. Create region-wise employee count map
-        const employeeCountMap = new Map<string, number>();
-
-        employeeCountData.forEach((item: any) => {
-          const regionCode = getText(
-            item?.REGION,
-            item?.region,
-            item?.Region_Code,
-            item?.region_code,
-            item?.Sal_Region,
-            item?.sal_region
-          );
-
-          if (!regionCode) return;
-
-          const countValue =
-            item?.TOTAL_EMPLOYEES ??
-            item?.total_employees ??
-            item?.total_emp ??
-            item?.Total_Employees ??
-            0;
-
-          const count = Number(countValue) || 0;
-
-          const mapKey = normalizeKey(regionCode);
-
-          employeeCountMap.set(
-            mapKey,
-            (employeeCountMap.get(mapKey) || 0) + count
-          );
-        });
-
-        console.log(
-          "Region Wise Employee Count Map:",
-          Array.from(employeeCountMap.entries())
-        );
-
-        // 6. Match count with region master.
-        // Matching is case-insensitive and ignores extra spaces.
-        const updatedRegions = formattedRegions.map((reg) => {
-          const countById = employeeCountMap.get(
-            normalizeKey(reg.id)
-          );
-
-          const countByName = employeeCountMap.get(
-            normalizeKey(reg.name)
-          );
-
-          return {
-            ...reg,
-            empCount: countById ?? countByName ?? 0,
-          };
-        });
-
-        console.log(
-          "Final Region Data With Employee Count:",
-          updatedRegions
-        );
-
-        setRegions(updatedRegions);
-      } catch (countError: any) {
-        console.error(
-          "Employee Count API Error:",
-          countError?.response?.data || countError
-        );
-
-        // Keep region master visible with zero counts.
-        setRegions(formattedRegions);
-
-        showSideAlert(
-          `Regions loaded, but employee count could not be fetched: ${getApiError(
-            countError
-          )}`,
-          "warning"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Fetch Region Master API Error:",
-        error
+      showSideAlert(
+        "No locations are assigned to your account.",
+        "warning"
       );
 
-      showSideAlert(getApiError(error), "error");
-      setRegions([]);
-    } finally {
-      setLoading(false);
+      return;
     }
-  }, [
-    user?.Comp_Code,
-    user?.branch,
-    apiHeaders,
-    showSideAlert,
-  ]);
+
+    // -----------------------------------------
+    // 3. FETCH REGION WISE EMPLOYEE COUNT
+    // -----------------------------------------
+
+    const countResponse = await axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/ars/getEmployeeCountByBranchRegion`,
+      {},
+      {
+        headers: apiHeaders,
+        params: {
+          groupBy: "REGION",
+          branch: locationIds.join(","),
+        },
+      }
+    );
+
+    const responseData = countResponse?.data;
+
+    console.log("Region Employee Count API:", responseData);
+
+    if (
+      responseData?.success !== true ||
+      !Array.isArray(responseData?.data)
+    ) {
+      throw new Error(
+        getText(
+          responseData?.message,
+          responseData?.Message,
+          "Unable to fetch region-wise employee count."
+        )
+      );
+    }
+
+    // -----------------------------------------
+    // 4. CREATE REGION COUNT MAP
+    // -----------------------------------------
+
+    const employeeCountMap = new Map<string, number>();
+
+    responseData.data.forEach((item: any) => {
+      const regionCode = getText(
+        item?.REGION,
+        item?.region,
+        item?.Sal_Region,
+        item?.sal_region,
+        item?.Region_Code,
+        item?.region_code
+      );
+
+      if (!regionCode) return;
+
+      const count = Number(
+        item?.TOTAL_EMPLOYEES ??
+        item?.total_employees ??
+        item?.total_emp ??
+        0
+      ) || 0;
+
+      const key = normalizeKey(regionCode);
+
+      employeeCountMap.set(
+        key,
+        (employeeCountMap.get(key) || 0) + count
+      );
+    });
+
+    console.log(
+      "Region Employee Count Map:",
+      Array.from(employeeCountMap.entries())
+    );
+
+    // -----------------------------------------
+    // 5. MATCH REGION MASTER WITH EMPLOYEE COUNT
+    // -----------------------------------------
+
+    const updatedRegions = formattedRegions.map((reg) => {
+      const countById = employeeCountMap.get(
+        normalizeKey(reg.id)
+      );
+
+      const countByName = employeeCountMap.get(
+        normalizeKey(reg.name)
+      );
+
+      return {
+        ...reg,
+        empCount: countById ?? countByName ?? 0,
+      };
+    });
+
+    console.log("Final Region Data:", updatedRegions);
+
+    setRegions(updatedRegions);
+    setSelectedRegions([]);
+
+  } catch (error: any) {
+    console.error(
+      "Fetch Region Data Error:",
+      error?.response?.data || error
+    );
+
+    showSideAlert(getApiError(error), "error");
+
+  } finally {
+    setLoading(false);
+  }
+}, [
+  user?.Comp_Code,
+  user?.branch,
+  apiHeaders,
+  showSideAlert,
+]);
+
 
   useEffect(() => {
     fetchRegions();
