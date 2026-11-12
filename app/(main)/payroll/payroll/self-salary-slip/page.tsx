@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, {
@@ -10,7 +11,6 @@ import React, {
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
-import AButton from "@/components/atoms/Button";
 import Eselect from "@/components/atoms/Eselect";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import {
@@ -51,48 +51,92 @@ type YtdSummary = {
   tds: number;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_URL;
+
 const monthOptions = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-].map((month) => ({ label: month, value: month }));
+].map((month) => ({
+  label: month,
+  value: month,
+}));
 
 const monthNumbers: Record<string, number> = {
-  Jan: 1, Feb: 2, Mar: 3, Apr: 4,
-  May: 5, Jun: 6, Jul: 7, Aug: 8,
-  Sep: 9, Oct: 10, Nov: 11, Dec: 12,
+  Jan: 1,
+  Feb: 2,
+  Mar: 3,
+  Apr: 4,
+  May: 5,
+  Jun: 6,
+  Jul: 7,
+  Aug: 8,
+  Sep: 9,
+  Oct: 10,
+  Nov: 11,
+  Dec: 12,
+};
+
+const getText = (...values: any[]): string => {
+  for (const value of values) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ""
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  return "";
+};
+
+const getNumber = (value: any): number => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const parsed = Number(
+    String(value ?? "0").replace(/[₹,\s]/g, "")
+  );
+
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getValue = (...values: any[]) => {
+  for (const value of values) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      return value;
+    }
+  }
+
+  return "—";
 };
 
 const formatMoney = (value?: string | number | null) => {
-  if (value === undefined || value === null || value === "") return "—";
+  if (value === undefined || value === null || value === "") {
+    return "—";
+  }
 
-  const amount = Number(value);
+  const amount = getNumber(value);
 
-  if (!Number.isFinite(amount)) return "—";
-
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `₹${amount.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+  })}`;
 };
 
-// 48500 -> ₹49k
 const formatThousands = (value: number) =>
   value >= 1000
     ? `₹${Math.round(value / 1000)}k`
     : formatMoney(value);
 
-// 342000 -> ₹3.42 L, smaller values stay in full
 const formatLakh = (value: number) =>
   value >= 100000
     ? `₹${(value / 100000).toFixed(2)} L`
     : formatMoney(value);
-
-const getNumber = (value: any): number => {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const getValue = (...values: any[]) =>
-  values.find(
-    (value) => value !== undefined && value !== null && value !== "",
-  ) ?? "—";
 
 const maskAccount = (account: any) => {
   const value = String(account ?? "").trim();
@@ -100,67 +144,9 @@ const maskAccount = (account: any) => {
   if (!value) return "—";
   if (value.length <= 9) return value;
 
-  return `${value.slice(0, 5)}${"X".repeat(value.length - 9)}${value.slice(-4)}`;
-};
-
-const normalizeSalaryResponse = (payload: any, depth = 0): any[] => {
-  if (!payload || depth > 5) return [];
-
-  if (Array.isArray(payload)) {
-    return payload.filter((item) => item && typeof item === "object");
-  }
-
-  if (typeof payload !== "object") return [];
-
-  const salaryKeys = [
-    "Employee Code",
-    "Employee Name",
-    "Net Salary",
-    "total Wages",
-    "Total Wages",
-    "GrossSalary",
-    "earnings",
-    "salary",
-    "EMPCODE",
-    "Emp_Name",
-  ];
-
-  if (salaryKeys.some((key) => payload[key] !== undefined)) {
-    return [payload];
-  }
-
-  const wrapperKeys = [
-    "data",
-    "Data",
-    "Result",
-    "result",
-    "recordset",
-    "recordsets",
-    "Table",
-    "Table1",
-    "rows",
-    "Rows",
-    "response",
-    "Response",
-  ];
-
-  for (const key of wrapperKeys) {
-    if (payload[key] !== undefined && payload[key] !== null) {
-      const records = normalizeSalaryResponse(payload[key], depth + 1);
-
-      if (records.length) return records;
-    }
-  }
-
-  for (const value of Object.values(payload)) {
-    if (Array.isArray(value)) {
-      const records = normalizeSalaryResponse(value, depth + 1);
-
-      if (records.length) return records;
-    }
-  }
-
-  return [];
+  return `${value.slice(0, 5)}${"X".repeat(
+    value.length - 9
+  )}${value.slice(-4)}`;
 };
 
 const formatDate = (value: any) => {
@@ -179,14 +165,39 @@ const formatDate = (value: any) => {
 
 function convertAmountToWords(amount: number): string {
   const ones = [
-    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight",
-    "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
-    "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
   ];
 
   const tens = [
-    "", "", "Twenty", "Thirty", "Forty", "Fifty",
-    "Sixty", "Seventy", "Eighty", "Ninety",
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
   ];
 
   const words = (num: number): string => {
@@ -195,7 +206,10 @@ function convertAmountToWords(amount: number): string {
     if (num < 20) return ones[num];
 
     if (num < 100) {
-      return tens[Math.floor(num / 10)] + (num % 10 ? " " + ones[num % 10] : "");
+      return (
+        tens[Math.floor(num / 10)] +
+        (num % 10 ? " " + ones[num % 10] : "")
+      );
     }
 
     if (num < 1000) {
@@ -242,61 +256,242 @@ function convertAmountToWords(amount: number): string {
   return result ? `(${result} Only)` : "";
 }
 
-const getEarningsList = (record: any): any[] =>
-  Array.isArray(record?.earnings)
-    ? record.earnings
-    : Array.isArray(record?.salary)
-      ? record.salary
-      : [];
+/* -------------------------------------------------------
+   RESPONSE NORMALIZER
 
-const getDeductionsList = (record: any): any[] =>
-  Array.isArray(record?.deductions) ? record.deductions : [];
+   Supports:
+   - Array response
+   - data[]
+   - Data[]
+   - Result[]
+   - recordset[]
+   - recordsets[]
+   - Table[]
+   - nested response objects
+------------------------------------------------------- */
 
-const sumDeductionsByHead = (record: any, pattern: RegExp) =>
+const normalizeSalaryResponse = (
+  payload: any,
+  depth = 0
+): any[] => {
+  if (
+    payload === null ||
+    payload === undefined ||
+    depth > 8
+  ) {
+    return [];
+  }
+
+  if (Array.isArray(payload)) {
+    const result: any[] = [];
+
+    for (const item of payload) {
+      if (Array.isArray(item)) {
+        result.push(
+          ...normalizeSalaryResponse(item, depth + 1)
+        );
+      } else if (item && typeof item === "object") {
+        result.push(item);
+      }
+    }
+
+    return result;
+  }
+
+  if (typeof payload !== "object") {
+    return [];
+  }
+
+  const keys = Object.keys(payload).map((key) =>
+    key.toLowerCase().trim()
+  );
+
+  const salaryKeys = [
+    "employee code",
+    "employee name",
+    "net salary",
+    "total wages",
+    "total wages",
+    "grosssalary",
+    "earnings",
+    "salary",
+    "empcode",
+    "emp_name",
+    "days paid",
+  ];
+
+  // Object itself is a salary record.
+  if (salaryKeys.some((key) => keys.includes(key))) {
+    return [payload];
+  }
+
+  const wrapperKeys = [
+    "data",
+    "Data",
+    "Result",
+    "result",
+    "recordset",
+    "recordsets",
+    "Table",
+    "Table1",
+    "rows",
+    "Rows",
+    "response",
+    "Response",
+  ];
+
+  for (const key of wrapperKeys) {
+    const value = payload[key];
+
+    if (value !== undefined && value !== null) {
+      const records = normalizeSalaryResponse(
+        value,
+        depth + 1
+      );
+
+      if (records.length) return records;
+    }
+  }
+
+  for (const value of Object.values(payload)) {
+    if (value && typeof value === "object") {
+      const records = normalizeSalaryResponse(
+        value,
+        depth + 1
+      );
+
+      if (records.length) return records;
+    }
+  }
+
+  return [];
+};
+
+/* -------------------------------------------------------
+   FIELD HELPERS
+------------------------------------------------------- */
+
+const getRecordValue = (
+  record: any,
+  ...possibleKeys: string[]
+): any => {
+  if (!record || typeof record !== "object") return undefined;
+
+  const recordKeys = Object.keys(record);
+
+  for (const possibleKey of possibleKeys) {
+    if (
+      record[possibleKey] !== undefined &&
+      record[possibleKey] !== null &&
+      record[possibleKey] !== ""
+    ) {
+      return record[possibleKey];
+    }
+
+    const matchingKey = recordKeys.find(
+      (key) =>
+        key.toLowerCase().trim() ===
+        possibleKey.toLowerCase().trim()
+    );
+
+    if (
+      matchingKey &&
+      record[matchingKey] !== undefined &&
+      record[matchingKey] !== null &&
+      record[matchingKey] !== ""
+    ) {
+      return record[matchingKey];
+    }
+  }
+
+  return undefined;
+};
+
+const getEarningsList = (record: any): any[] => {
+  const value = getRecordValue(
+    record,
+    "earnings",
+    "salary",
+    "Earnings",
+    "Salary"
+  );
+
+  return Array.isArray(value) ? value : [];
+};
+
+const getDeductionsList = (record: any): any[] => {
+  const value = getRecordValue(
+    record,
+    "deductions",
+    "Deductions"
+  );
+
+  return Array.isArray(value) ? value : [];
+};
+
+const sumDeductionsByHead = (
+  record: any,
+  pattern: RegExp
+) =>
   getDeductionsList(record).reduce(
     (sum: number, item: any) =>
-      pattern.test(String(item?.head ?? ""))
-        ? sum + getNumber(item?.amount)
+      pattern.test(String(item?.head ?? item?.Head ?? "")) 
+        ? sum + getNumber(item?.amount ?? item?.Amount)
         : sum,
-    0,
+    0
   );
 
 const summarizeRecord = (record: any) => {
   const gross = getNumber(
-    getValue(
-      record?.["total Wages"],
-      record?.["Total Wages"],
-      record?.GrossSalary,
-      0,
-    ),
+    getRecordValue(
+      record,
+      "total Wages",
+      "Total Wages",
+      "GrossSalary",
+      "Gross"
+    )
   );
 
-  const net = getNumber(getValue(record?.["Net Salary"], 0));
+  const net = getNumber(
+    getRecordValue(record, "Net Salary", "NetSalary")
+  );
 
   return {
     gross,
     net,
-    pf: sumDeductionsByHead(record, /provident|\bpf\b/i),
-    tds: sumDeductionsByHead(record, /\btds\b|income\s*tax/i),
+    pf: sumDeductionsByHead(
+      record,
+      /provident|\bpf\b/i
+    ),
+    tds: sumDeductionsByHead(
+      record,
+      /\btds\b|income\s*tax/i
+    ),
   };
 };
 
-// Payroll window used by the existing API: 2nd of month -> 1st of next month
+/* -------------------------------------------------------
+   PAYROLL DATE RANGE
+   2nd of selected month to 1st of next month
+------------------------------------------------------- */
+
 const calculateDates = (year: string, monthNumber: number) => {
-  const monthIndex = monthNumber - 1;
+  const startDate = new Date(Number(year), monthNumber - 1, 1);
+  const endDate = new Date(Number(year), monthNumber, 0);
 
-  const startDate = new Date(Number(year), monthIndex, 2);
-  const endDate = new Date(Number(year), monthIndex + 1, 1);
+  const formatDate = (date: Date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
 
-  const localDate = (date: Date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   return {
-    start: localDate(startDate),
-    end: localDate(endDate),
+    start: formatDate(startDate),
+    end: formatDate(endDate),
   };
 };
-
 const sectionHeadingClass =
   "mb-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400";
 
@@ -312,16 +507,24 @@ function MySalarySlipContent() {
 
   const searchParams = useSearchParams();
 
-  // List page se aaya hua employee (eye icon). Na ho to logged-in user.
   const targetEmpCode = searchParams.get("empcode") || "";
   const targetName = searchParams.get("name") || "";
   const targetLocation = searchParams.get("location") || "";
   const targetType = searchParams.get("type") || "";
 
-  const empCode = targetEmpCode || user?.EMPCODE;
-  const slipLocation = targetLocation || user?.branch;
-  const slipName = targetName || user?.name;
-  const isViewingOther = !!targetEmpCode && targetEmpCode !== user?.EMPCODE;
+  const empCode = String(
+    targetEmpCode || user?.EMPCODE || ""
+  );
+
+  const slipLocation = String(
+    targetLocation || user?.branch || ""
+  );
+
+  const slipName = targetName || user?.name || "";
+
+  const isViewingOther =
+    !!targetEmpCode &&
+    targetEmpCode !== String(user?.EMPCODE || "");
 
   const paramMonth = searchParams.get("month") || "";
   const paramYear = searchParams.get("year") || "";
@@ -329,11 +532,13 @@ function MySalarySlipContent() {
   const [month, setMonth] = useState(
     monthNumbers[paramMonth]
       ? paramMonth
-      : monthOptions[new Date().getMonth()].value,
+      : monthOptions[new Date().getMonth()].value
   );
 
   const [year, setYear] = useState(
-    /^\d{4}$/.test(paramYear) ? paramYear : String(new Date().getFullYear()),
+    /^\d{4}$/.test(paramYear)
+      ? paramYear
+      : String(new Date().getFullYear())
   );
 
   const [loading, setLoading] = useState(false);
@@ -352,6 +557,7 @@ function MySalarySlipContent() {
 
   const [paidDays, setPaidDays] = useState<string | number>("—");
   const [periodDays, setPeriodDays] = useState<number | null>(null);
+
   const [bankName, setBankName] = useState("—");
   const [accountLast4, setAccountLast4] = useState("");
   const [netPayInWords, setNetPayInWords] = useState("");
@@ -367,25 +573,46 @@ function MySalarySlipContent() {
 
   const currentYear = new Date().getFullYear();
 
-  const yearOptions = Array.from({ length: 6 }, (_, index) => {
-    const value = String(currentYear - index);
-    return { label: value, value };
-  });
+  const yearOptions = Array.from(
+    { length: 6 },
+    (_, index) => {
+      const value = String(currentYear - index);
+
+      return {
+        label: value,
+        value,
+      };
+    }
+  );
 
   const emptyDays = (): DayItem[] => [
     { label: "Present", value: "—" },
     { label: "Week off", value: "—" },
     { label: "Holiday", value: "—" },
     { label: "Leave", value: "—" },
-    { label: "Absent", value: "—", isHighlight: true },
+    {
+      label: "Absent",
+      value: "—",
+      isHighlight: true,
+    },
   ];
+
+  /* -------------------------------------------------------
+     RESET DATA
+  ------------------------------------------------------- */
 
   const resetSalaryData = useCallback(() => {
     setHasSalaryRecord(false);
 
     setEmployeeData([
-      { label: "Employee code", value: empCode || "—" },
-      { label: "Employee name", value: slipName || "—" },
+      {
+        label: "Employee code",
+        value: empCode || "—",
+      },
+      {
+        label: "Employee name",
+        value: slipName || "—",
+      },
       { label: "Father's name", value: "—" },
       { label: "Designation", value: "—" },
       { label: "Location", value: slipLocation || "—" },
@@ -410,6 +637,7 @@ function MySalarySlipContent() {
 
     setPaidDays("—");
     setPeriodDays(null);
+
     setBankName("—");
     setAccountLast4("");
     setNetPayInWords("");
@@ -420,232 +648,565 @@ function MySalarySlipContent() {
     setYtd(null);
   }, [empCode, slipName, slipLocation]);
 
+  /* -------------------------------------------------------
+     MAP SALARY RECORD
+  ------------------------------------------------------- */
+
   const mapSalaryData = useCallback(
-    (record: any, selectedYear: string, selectedMonthNumber: number) => {
+    (
+      record: any,
+      selectedYear: string,
+      selectedMonthNumber: number
+    ) => {
+      console.log("MAPPING SALARY RECORD:", record);
+
       setHasSalaryRecord(true);
 
-      const company = getValue(
-        record?.comp_name,
-        record?.Comp_Name,
-        record?.CompanyName,
+      const company = getRecordValue(
+        record,
+        "comp_name",
+        "Comp_Name",
+        "CompanyName",
+        "Company"
       );
 
-      setCompanyName(company === "—" ? "—" : String(company));
+      setCompanyName(
+        company === undefined ? "—" : String(company)
+      );
+
+      const employeeCode = getRecordValue(
+        record,
+        "Employee Code",
+        "EMPCODE",
+        "EmpCode",
+        "EmployeeCode"
+      );
+
+      const employeeName = getRecordValue(
+        record,
+        "Employee Name",
+        "Emp_Name",
+        "EmployeeName",
+        "Name"
+      );
 
       setEmployeeData([
         {
           label: "Employee code",
-          value: getValue(record?.["Employee Code"], record?.EMPCODE),
+          value: getValue(employeeCode, empCode),
         },
         {
           label: "Employee name",
-          value: getValue(record?.["Employee Name"], record?.Emp_Name),
+          value: getValue(employeeName, slipName),
         },
-        { label: "Father's name", value: getValue(record?.FATHERNAME) },
-        { label: "Designation", value: getValue(record?.Designation) },
-        { label: "Location", value: getValue(record?.Branch) },
-        { label: "Department", value: getValue(record?.Department) },
-        { label: "Bank", value: getValue(record?.["Bank Name"]) },
-        { label: "A/c no.", value: maskAccount(record?.["Account No"]) },
-        { label: "IFSC", value: getValue(record?.["IFSC Code"]) },
+        {
+          label: "Father's name",
+          value: getValue(
+            getRecordValue(
+              record,
+              "FATHERNAME",
+              "FatherName",
+              "Father_Name"
+            )
+          ),
+        },
+        {
+          label: "Designation",
+          value: getValue(
+            getRecordValue(
+              record,
+              "Designation",
+              "DESIGNATION",
+              "DesigName"
+            )
+          ),
+        },
+        {
+          label: "Location",
+          value: getValue(
+            getRecordValue(
+              record,
+              "Branch",
+              "Location",
+              "Loc_code",
+              "LOC_CODE",
+              "LocationCode"
+            ),
+            slipLocation
+          ),
+        },
+        {
+          label: "Department",
+          value: getValue(
+            getRecordValue(
+              record,
+              "Department",
+              "DEPARTMENT",
+              "DeptName"
+            )
+          ),
+        },
+        {
+          label: "Bank",
+          value: getValue(
+            getRecordValue(
+              record,
+              "Bank Name",
+              "BankName",
+              "BANK_NAME"
+            )
+          ),
+        },
+        {
+          label: "A/c no.",
+          value: maskAccount(
+            getRecordValue(
+              record,
+              "Account No",
+              "AccountNo",
+              "ACCOUNT_NO"
+            )
+          ),
+        },
+        {
+          label: "IFSC",
+          value: getValue(
+            getRecordValue(
+              record,
+              "IFSC Code",
+              "IFSC",
+              "IFSC_CODE"
+            )
+          ),
+        },
         {
           label: "Date of joining",
-          value: formatDate(record?.["Joining Date"]),
+          value: formatDate(
+            getRecordValue(
+              record,
+              "Joining Date",
+              "DOJ",
+              "DateOfJoining"
+            )
+          ),
         },
-        { label: "PF no.", value: getValue(record?.pfnumber) },
-        { label: "ESI no.", value: getValue(record?.esinumber) },
-        { label: "UAN", value: getValue(record?.UAN_NO) },
+        {
+          label: "PF no.",
+          value: getValue(
+            getRecordValue(
+              record,
+              "pfnumber",
+              "PFNumber",
+              "PF_NO"
+            )
+          ),
+        },
+        {
+          label: "ESI no.",
+          value: getValue(
+            getRecordValue(
+              record,
+              "esinumber",
+              "ESINumber",
+              "ESI_NO"
+            )
+          ),
+        },
+        {
+          label: "UAN",
+          value: getValue(
+            getRecordValue(
+              record,
+              "UAN_NO",
+              "UAN",
+              "UANNumber"
+            )
+          ),
+        },
       ]);
 
       setDaysData([
-        { label: "Present", value: getValue(record?.Present_days, "0") },
-        { label: "Week off", value: getValue(record?.off_days, "0") },
-        { label: "Holiday", value: getValue(record?.Holiday_Leaves, "0") },
-        { label: "Leave", value: getValue(record?.LEAVEVALUE, "0") },
+        {
+          label: "Present",
+          value: getValue(
+            getRecordValue(record, "Present_days", "PresentDays"),
+            "0"
+          ),
+        },
+        {
+          label: "Week off",
+          value: getValue(
+            getRecordValue(record, "off_days", "WeekOff", "WeekOffDays"),
+            "0"
+          ),
+        },
+        {
+          label: "Holiday",
+          value: getValue(
+            getRecordValue(
+              record,
+              "Holiday_Leaves",
+              "Holiday",
+              "HolidayDays"
+            ),
+            "0"
+          ),
+        },
+        {
+          label: "Leave",
+          value: getValue(
+            getRecordValue(
+              record,
+              "LEAVEVALUE",
+              "Leave",
+              "LeaveDays"
+            ),
+            "0"
+          ),
+        },
         {
           label: "Absent",
-          value: getValue(record?.ABSENTVALUE, "0"),
+          value: getValue(
+            getRecordValue(
+              record,
+              "ABSENTVALUE",
+              "Absent",
+              "AbsentDays"
+            ),
+            "0"
+          ),
           isHighlight: true,
         },
       ]);
 
-      setEarningsData(
-        getEarningsList(record)
-          .filter((item: any) => getNumber(item?.amount) > 0)
-          .map((item: any) => ({
-            label: String(item?.head ?? "Other"),
-            amount: getNumber(item?.amount),
-          })),
+      const earnings = getEarningsList(record)
+        .filter((item: any) =>
+          getNumber(item?.amount ?? item?.Amount) > 0
+        )
+        .map((item: any) => ({
+          label: String(
+            item?.head ?? item?.Head ?? item?.name ?? "Other"
+          ),
+          amount: getNumber(
+            item?.amount ?? item?.Amount
+          ),
+        }));
+
+      const deductions = getDeductionsList(record).map(
+        (item: any) => ({
+          label: String(
+            item?.head ?? item?.Head ?? item?.name ?? "Other"
+          ),
+          amount: getNumber(
+            item?.amount ?? item?.Amount
+          ),
+        })
       );
 
-      // Keep zero deductions too (shown as "—") so the full structure is visible
-      setDeductionsData(
-        getDeductionsList(record).map((item: any) => ({
-          label: String(item?.head ?? "Other"),
-          amount: getNumber(item?.amount),
-        })),
+      setEarningsData(earnings);
+      setDeductionsData(deductions);
+
+      const grossRaw = getRecordValue(
+        record,
+        "total Wages",
+        "Total Wages",
+        "GrossSalary",
+        "Gross",
+        "GROSS"
       );
 
-      const grossRaw = getValue(
-        record?.["total Wages"],
-        record?.["Total Wages"],
-        record?.GrossSalary,
+      const deductionRaw = getRecordValue(
+        record,
+        "Total Deductions",
+        "TotalDeduction",
+        "Total_Deductions"
       );
 
-      const deductionRaw = getValue(record?.["Total Deductions"]);
-      const netRaw = getValue(record?.["Net Salary"]);
+      const netRaw = getRecordValue(
+        record,
+        "Net Salary",
+        "NetSalary",
+        "NetPay",
+        "NET_PAY"
+      );
 
-      setGrossSalary(grossRaw === "—" ? null : getNumber(grossRaw));
-      setTotalDeduction(deductionRaw === "—" ? null : getNumber(deductionRaw));
-      setNetPay(netRaw === "—" ? null : getNumber(netRaw));
+      setGrossSalary(
+        grossRaw === undefined ? null : getNumber(grossRaw)
+      );
 
-      setPaidDays(getValue(record?.["Days Paid"], record?.Present_days));
-      setPeriodDays(new Date(Number(selectedYear), selectedMonthNumber, 0).getDate());
+      setTotalDeduction(
+        deductionRaw === undefined
+          ? null
+          : getNumber(deductionRaw)
+      );
 
-      setBankName(String(getValue(record?.["Bank Name"])));
+      setNetPay(
+        netRaw === undefined ? null : getNumber(netRaw)
+      );
 
-      const account = String(record?.["Account No"] ?? "").trim();
-      setAccountLast4(account ? account.slice(-4) : "");
+      setPaidDays(
+        getValue(
+          getRecordValue(
+            record,
+            "Days Paid",
+            "PaidDays",
+            "Paid_Days"
+          ),
+          "—"
+        )
+      );
 
-      const netAmount = netRaw === "—" ? 0 : getNumber(netRaw);
+      setPeriodDays(
+        new Date(
+          Number(selectedYear),
+          selectedMonthNumber,
+          0
+        ).getDate()
+      );
 
-      setNetPayInWords(netAmount > 0 ? convertAmountToWords(netAmount) : "");
+      const bank = getRecordValue(
+        record,
+        "Bank Name",
+        "BankName",
+        "BANK_NAME"
+      );
+
+      setBankName(
+        bank === undefined ? "—" : String(bank)
+      );
+
+      const account = String(
+        getRecordValue(
+          record,
+          "Account No",
+          "AccountNo",
+          "ACCOUNT_NO"
+        ) ?? ""
+      ).trim();
+
+      setAccountLast4(
+        account ? account.slice(-4) : ""
+      );
+
+      const netAmount =
+        netRaw === undefined ? 0 : getNumber(netRaw);
+
+      setNetPayInWords(
+        netAmount > 0
+          ? convertAmountToWords(netAmount)
+          : ""
+      );
+
+      const paymentDate = getRecordValue(
+        record,
+        "PaidDate",
+        "Payment Date",
+        "PaymentDate"
+      );
 
       setPaidDate(
-        record?.PaidDate
-          ? formatDate(record.PaidDate)
-          : record?.["Payment Date"]
-            ? formatDate(record["Payment Date"])
-            : "",
+        paymentDate ? formatDate(paymentDate) : ""
       );
     },
-    [],
+    [empCode, slipName, slipLocation]
   );
 
-  const requestSlip = useCallback(
-    async (selectedYear: string, selectedMonthNumber: number) => {
-      const { start, end } = calculateDates(selectedYear, selectedMonthNumber);
+  /* -------------------------------------------------------
+     MAIN API REQUEST
+  ------------------------------------------------------- */
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/mobile/PaySlipDataWeb`,
-        {
-          location: slipLocation,
-          empcode: [empCode],
-          dateFrom: start,
-          dateto: end,
-          ...(targetType
-            ? { employeeType: targetType, EmpType: targetType }
-            : {}),
-          web: 1,
-        },
-        {
-          headers: {
-            compcode: user?.Comp_Code,
-            name: user?.name,
-          },
-        },
-      );
+ const requestSlip = useCallback(
+  async (selectedYear: string, selectedMonthNumber: number) => {
+    if (!API_URL) {
+      throw new Error("API URL is missing.");
+    }
 
-      const records = normalizeSalaryResponse(response.data);
+    if (!user?.Comp_Code) {
+      throw new Error("Company code is missing.");
+    }
 
-      const rejected =
-        response.data?.rejected ??
-        response.data?.Rejected ??
-        response.data?.data?.rejected ??
-        [];
+    if (!empCode) {
+      throw new Error("Employee code is missing.");
+    }
 
-      return {
-        record: records[0] ?? null,
-        hasRejected: Array.isArray(rejected) && rejected.length > 0,
-      };
-    },
-    [empCode, slipLocation, targetType, user?.Comp_Code, user?.name],
-  );
+    const { start, end } = calculateDates(
+      selectedYear,
+      selectedMonthNumber
+    );
 
-  // Builds "last 6 months" and "year to date" from the same payslip API
+    const payload = {
+      location: "",
+      department: "",
+      empcode: [String(empCode)],
+      dateFrom: start,
+      dateto: end,
+      employeeType: targetType || "",
+      EmpType: targetType || "",
+      web: 1,
+    };
+
+    console.log("SELF SALARY SLIP REQUEST:", payload);
+
+    const url = `${API_URL}/mobile/PaySlipDataWeb`;
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        compcode: user.Comp_Code,
+        name: user?.name || "",
+      },
+    });
+
+    console.log("SELF SALARY SLIP RESPONSE:", response.data);
+
+    const records = normalizeSalaryResponse(response.data);
+
+    console.log("SELF SALARY SLIP NORMALIZED DATA:", records);
+
+    return {
+      record: records[0] || null,
+      records,
+      hasRejected: Boolean(
+        response.data?.rejected?.length
+      ),
+    };
+  },
+  [
+    empCode,
+    targetType,
+    user?.Comp_Code,
+    user?.name,
+  ]
+);
+  /* -------------------------------------------------------
+     SALARY HISTORY AND YTD
+  ------------------------------------------------------- */
+
   const loadInsights = useCallback(
     async (
       selectedYear: number,
       selectedMonthNumber: number,
       currentRecord: any,
-      requestId: number,
+      requestId: number
     ) => {
-      const cacheKey = (y: number, m: number) => `${empCode}-${y}-${m}`;
+      const cacheKey = (y: number, m: number) =>
+        `${empCode}-${y}-${m}`;
 
       slipCache.current.set(
         cacheKey(selectedYear, selectedMonthNumber),
-        currentRecord,
+        currentRecord
       );
 
-      // Last 6 months ending with the selected month
-      const historyMonths: { y: number; m: number }[] = [];
+      const historyMonths: {
+        y: number;
+        m: number;
+      }[] = [];
 
       for (let i = 5; i >= 0; i--) {
-        const d = new Date(selectedYear, selectedMonthNumber - 1 - i, 1);
-        historyMonths.push({ y: d.getFullYear(), m: d.getMonth() + 1 });
+        const date = new Date(
+          selectedYear,
+          selectedMonthNumber - 1 - i,
+          1
+        );
+
+        historyMonths.push({
+          y: date.getFullYear(),
+          m: date.getMonth() + 1,
+        });
       }
 
-      // Indian financial year: April -> selected month
+      // Indian financial year April to March.
       const fyStartYear =
-        selectedMonthNumber >= 4 ? selectedYear : selectedYear - 1;
+        selectedMonthNumber >= 4
+          ? selectedYear
+          : selectedYear - 1;
 
-      const fyMonths: { y: number; m: number }[] = [];
+      const fyMonths: {
+        y: number;
+        m: number;
+      }[] = [];
 
-      {
-        let y = fyStartYear;
-        let m = 4;
+      let y = fyStartYear;
+      let m = 4;
 
-        while (
-          y < selectedYear ||
-          (y === selectedYear && m <= selectedMonthNumber)
-        ) {
-          fyMonths.push({ y, m });
-          m += 1;
-          if (m > 12) {
-            m = 1;
-            y += 1;
-          }
+      while (
+        y < selectedYear ||
+        (y === selectedYear && m <= selectedMonthNumber)
+      ) {
+        fyMonths.push({ y, m });
+
+        m += 1;
+
+        if (m > 12) {
+          m = 1;
+          y += 1;
         }
       }
 
-      const unique = new Map<string, { y: number; m: number }>();
+      const unique = new Map<
+        string,
+        { y: number; m: number }
+      >();
 
-      [...historyMonths, ...fyMonths].forEach((item) =>
-        unique.set(cacheKey(item.y, item.m), item),
-      );
+      [...historyMonths, ...fyMonths].forEach((item) => {
+        unique.set(
+          cacheKey(item.y, item.m),
+          item
+        );
+      });
 
       setInsightsLoading(true);
 
       await Promise.all(
-        Array.from(unique.entries()).map(async ([key, { y, m }]) => {
-          if (slipCache.current.has(key)) return;
+        Array.from(unique.entries()).map(
+          async ([key, item]) => {
+            if (slipCache.current.has(key)) return;
 
-          try {
-            const { record } = await requestSlip(String(y), m);
-            if (record) slipCache.current.set(key, record);
-          } catch {
-            // ignore — month simply shows as unavailable
+            try {
+              const result = await requestSlip(
+                String(item.y),
+                item.m
+              );
+
+              if (result.record) {
+                slipCache.current.set(
+                  key,
+                  result.record
+                );
+              }
+            } catch (error) {
+              console.warn(
+                `History not available for ${item.m}/${item.y}`,
+                error
+              );
+            }
           }
-        }),
+        )
       );
 
       if (requestId !== requestIdRef.current) return;
 
       setHistory(
         historyMonths.map(({ y, m }, index) => {
-          const record = slipCache.current.get(cacheKey(y, m));
+          const record = slipCache.current.get(
+            cacheKey(y, m)
+          );
 
           return {
             label: monthOptions[m - 1].label,
-            value: record ? summarizeRecord(record).net : null,
-            isCurrent: index === historyMonths.length - 1,
+            value: record
+              ? summarizeRecord(record).net
+              : null,
+            isCurrent:
+              index === historyMonths.length - 1,
           };
-        }),
+        })
       );
 
       const totals = fyMonths.reduce(
-        (acc, { y, m }) => {
-          const record = slipCache.current.get(cacheKey(y, m));
+        (acc, item) => {
+          const record = slipCache.current.get(
+            cacheKey(item.y, item.m)
+          );
 
           if (!record) return acc;
 
@@ -658,73 +1219,117 @@ function MySalarySlipContent() {
             tds: acc.tds + summary.tds,
           };
         },
-        { gross: 0, net: 0, pf: 0, tds: 0 },
+        {
+          gross: 0,
+          net: 0,
+          pf: 0,
+          tds: 0,
+        }
       );
 
       setYtd(totals);
       setInsightsLoading(false);
     },
-    [empCode, requestSlip],
+    [empCode, requestSlip]
   );
 
+  /* -------------------------------------------------------
+     FETCH SELECTED MONTH SALARY
+  ------------------------------------------------------- */
+
   const fetchSalarySlip = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
     if (!empCode || !user?.Comp_Code) {
       resetSalaryData();
 
-      setError("Employee login details are not available. Please login again.");
+      setError(
+        "Employee login details are not available. Please login again."
+      );
 
       return;
     }
 
-    if (!month || !year || !monthNumbers[month]) {
+    if (!monthNumbers[month] || !/^\d{4}$/.test(year)) {
       setError("Please select a valid month and year.");
       return;
     }
 
-    const requestId = ++requestIdRef.current;
-
     try {
       setLoading(true);
       setError("");
+      setInsightsLoading(false);
 
       resetSalaryData();
 
       const monthNumber = monthNumbers[month];
 
-      const { record, hasRejected } = await requestSlip(year, monthNumber);
+      const result = await requestSlip(
+        year,
+        monthNumber
+      );
 
       if (requestId !== requestIdRef.current) return;
 
-      if (!record) {
+      if (!result.record) {
+        console.error("NO SALARY RECORD FOUND", {
+          empCode,
+          slipLocation,
+          month,
+          year,
+          targetType,
+          responseRecords: result.records,
+        });
+
         setError(
-          hasRejected
+          result.hasRejected
             ? "Salary slip is pending HR approval."
-            : `No salary slip record found for ${month} ${year}.`,
+            : `No salary slip record returned by the API for employee ${empCode}, location ${slipLocation}, ${month} ${year}.`
         );
 
         return;
       }
 
-      mapSalaryData(record, year, monthNumber);
+      mapSalaryData(
+        result.record,
+        year,
+        monthNumber
+      );
+
       setError("");
 
-      // Sidebar data loads in the background, without blocking the slip
-      loadInsights(Number(year), monthNumber, record, requestId);
+      // History loads in the background.
+      loadInsights(
+        Number(year),
+        monthNumber,
+        result.record,
+        requestId
+      );
     } catch (err: any) {
       if (requestId !== requestIdRef.current) return;
+
+      console.error(
+        "SELF SALARY SLIP API ERROR:",
+        err?.response?.data || err
+      );
 
       setError(
         err?.response?.data?.message ||
           err?.response?.data?.Message ||
-          "Failed to fetch salary slip. Please try again.",
+          err?.message ||
+          "Failed to fetch salary slip. Please try again."
       );
 
       resetSalaryData();
     } finally {
-      if (requestId === requestIdRef.current) setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [
     empCode,
+    slipLocation,
+    targetType,
     user?.Comp_Code,
     month,
     year,
@@ -734,7 +1339,6 @@ function MySalarySlipContent() {
     loadInsights,
   ]);
 
-  // Clear cached months when the viewed employee changes
   useEffect(() => {
     slipCache.current.clear();
   }, [empCode]);
@@ -745,12 +1349,33 @@ function MySalarySlipContent() {
     } else {
       resetSalaryData();
     }
-  }, [empCode, user?.Comp_Code, fetchSalarySlip, resetSalaryData]);
 
-  const handleSalaryFilterChange = useCallback((name: string, value: any) => {
-    if (name === "month") setMonth(String(value ?? ""));
-    if (name === "year") setYear(String(value ?? ""));
-  }, []);
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [
+    fetchSalarySlip,
+    resetSalaryData,
+    empCode,
+    user?.Comp_Code,
+  ]);
+
+  const handleSalaryFilterChange = useCallback(
+    (name: string, value: any) => {
+      if (name === "month") {
+        setMonth(String(value ?? ""));
+      }
+
+      if (name === "year") {
+        setYear(String(value ?? ""));
+      }
+    },
+    []
+  );
+
+  /* -------------------------------------------------------
+     UI VALUES
+  ------------------------------------------------------- */
 
   const companyInitials =
     companyName === "—"
@@ -765,14 +1390,15 @@ function MySalarySlipContent() {
 
   const maxHistory = Math.max(
     ...history.map((item) => item.value ?? 0),
-    0,
+    0
   );
 
   const ytdCards = [
     {
       label: "Gross earned",
       icon: TrendingUp,
-      color: "bg-sky-50 text-sky-500 dark:bg-sky-950 dark:text-sky-400",
+      color:
+        "bg-sky-50 text-sky-500 dark:bg-sky-950 dark:text-sky-400",
       value: ytd ? formatLakh(ytd.gross) : "—",
     },
     {
@@ -792,16 +1418,19 @@ function MySalarySlipContent() {
     {
       label: "TDS deducted",
       icon: IndianRupee,
-      color: "bg-rose-50 text-rose-500 dark:bg-rose-950 dark:text-rose-400",
+      color:
+        "bg-rose-50 text-rose-500 dark:bg-rose-950 dark:text-rose-400",
       value: ytd ? formatLakh(ytd.tds) : "—",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-6 font-sans text-slate-700 dark:bg-slate-950 dark:text-slate-200">
-      {loading && <HashloaderComponent loading={loading} />}
+    <div className="min-h-screen bg-[#f8fafc] p-6 font-sans text-xl text-slate-700 dark:bg-slate-950 dark:text-slate-200">
+      {loading && (
+        <HashloaderComponent loading={loading} />
+      )}
 
-      {/* Header */}
+      {/* HEADER */}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -854,7 +1483,7 @@ function MySalarySlipContent() {
         </div>
       </div>
 
-      {/* API Warning */}
+      {/* ERROR MESSAGE */}
       {error && !loading && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/40">
           <AlertCircle
@@ -874,11 +1503,11 @@ function MySalarySlipContent() {
         </div>
       )}
 
-      {/* Layout Grid */}
+      {/* MAIN GRID */}
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-        {/* Main Salary Slip */}
+        {/* MAIN SALARY SLIP */}
         <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          {/* Company banner */}
+          {/* COMPANY BANNER */}
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-[11px] font-bold text-white">
@@ -901,15 +1530,16 @@ function MySalarySlipContent() {
             </div>
           </div>
 
-          {/* Employee Particulars & Days */}
+          {/* EMPLOYEE PARTICULARS AND DAYS */}
           <div className="grid grid-cols-1 border-b border-slate-100 dark:border-slate-800 md:grid-cols-12">
-            {/* Employee Particulars */}
             <div className="p-6 md:col-span-7 md:border-r md:border-slate-100 dark:md:border-slate-800">
-              <h3 className={sectionHeadingClass}>EMPLOYEE PARTICULARS</h3>
+              <h3 className={sectionHeadingClass}>
+                EMPLOYEE PARTICULARS
+              </h3>
 
               <div className="grid grid-cols-[120px_1fr] gap-x-2 gap-y-[9px] text-[11px]">
-                {employeeData.map((item, idx) => (
-                  <React.Fragment key={idx}>
+                {employeeData.map((item, index) => (
+                  <React.Fragment key={index}>
                     <span className="text-slate-500 dark:text-slate-400">
                       {item.label}
                     </span>
@@ -922,13 +1552,14 @@ function MySalarySlipContent() {
               </div>
             </div>
 
-            {/* Days */}
             <div className="p-6 md:col-span-5">
-              <h3 className={sectionHeadingClass}>DAYS</h3>
+              <h3 className={sectionHeadingClass}>
+                DAYS
+              </h3>
 
               <div className="text-[11px]">
-                {daysData.map((item, idx) => (
-                  <div key={idx} className={rowClass}>
+                {daysData.map((item, index) => (
+                  <div key={index} className={rowClass}>
                     <span className="font-semibold text-slate-600 dark:text-slate-400">
                       {item.label}
                     </span>
@@ -960,11 +1591,12 @@ function MySalarySlipContent() {
             </div>
           </div>
 
-          {/* Earnings and Deductions */}
+          {/* EARNINGS AND DEDUCTIONS */}
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Earnings */}
             <div className="p-6 md:border-r md:border-slate-100 dark:md:border-slate-800">
-              <h3 className={sectionHeadingClass}>EARNINGS</h3>
+              <h3 className={sectionHeadingClass}>
+                EARNINGS
+              </h3>
 
               <div className="text-[11px]">
                 {earningsData.length > 0 ? (
@@ -994,9 +1626,10 @@ function MySalarySlipContent() {
               </div>
             </div>
 
-            {/* Deductions */}
             <div className="p-6">
-              <h3 className={sectionHeadingClass}>DEDUCTIONS</h3>
+              <h3 className={sectionHeadingClass}>
+                DEDUCTIONS
+              </h3>
 
               <div className="text-[11px]">
                 {deductionsData.length > 0 ? (
@@ -1007,7 +1640,9 @@ function MySalarySlipContent() {
                       </span>
 
                       <span className="font-semibold text-rose-500 dark:text-rose-400">
-                        {item.amount > 0 ? `-${formatMoney(item.amount)}` : "—"}
+                        {item.amount > 0
+                          ? `-${formatMoney(item.amount)}`
+                          : "—"}
                       </span>
                     </div>
                   ))
@@ -1032,7 +1667,7 @@ function MySalarySlipContent() {
             </div>
           </div>
 
-          {/* Net Pay */}
+          {/* NET PAY */}
           <div className="flex flex-col justify-between gap-4 border-t border-slate-100 bg-slate-50/70 px-6 py-5 dark:border-slate-800 dark:bg-slate-800/30 md:flex-row md:items-center">
             <div>
               <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1056,24 +1691,31 @@ function MySalarySlipContent() {
             </div>
           </div>
 
-          {/* Footer */}
+          {/* FOOTER */}
           <div className="border-t border-slate-100 py-3 text-center text-[10px] text-slate-500 dark:border-slate-800 dark:text-slate-500">
             This is a computer generated statement, hence no signature required.
           </div>
         </div>
 
-        {/* Right Sidebar */}
+        {/* RIGHT SIDEBAR */}
         <div className="space-y-5">
-          {/* Salary History */}
+          {/* SALARY HISTORY */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h3 className={sectionHeadingClass}>NET PAY · LAST 6 MONTHS</h3>
+            <h3 className={sectionHeadingClass}>
+              NET PAY · LAST 6 MONTHS
+            </h3>
 
             {history.length > 0 ? (
               <div className="flex items-end justify-between gap-2">
                 {history.map((item, index) => {
                   const barHeight =
                     item.value !== null && maxHistory > 0
-                      ? Math.max(14, Math.round((item.value / maxHistory) * 56))
+                      ? Math.max(
+                          14,
+                          Math.round(
+                            (item.value / maxHistory) * 56
+                          )
+                        )
                       : 8;
 
                   return (
@@ -1097,7 +1739,9 @@ function MySalarySlipContent() {
                       />
 
                       <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300">
-                        {item.value === null ? "—" : formatThousands(item.value)}
+                        {item.value === null
+                          ? "—"
+                          : formatThousands(item.value)}
                       </span>
                     </div>
                   );
@@ -1119,9 +1763,11 @@ function MySalarySlipContent() {
             )}
           </div>
 
-          {/* Year to Date */}
+          {/* YEAR TO DATE */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h3 className={sectionHeadingClass}>YEAR TO DATE</h3>
+            <h3 className={sectionHeadingClass}>
+              YEAR TO DATE
+            </h3>
 
             <div className="space-y-3">
               {ytdCards.map((item) => {
@@ -1151,24 +1797,24 @@ function MySalarySlipContent() {
             </div>
           </div>
 
-          {/* Support */}
+          {/* SUPPORT */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               SOMETHING WRONG?
             </h3>
 
             <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-              If the paid days look wrong, raise it with your branch HR — they
-              can raise a paid-days deviation for the month.
+              If the paid days look wrong, raise it with your branch HR —
+              they can raise a paid-days deviation for the month.
             </p>
 
-            <AButton
-              variant="link"
-              className="mt-3 flex items-center gap-1.5 p-0 text-[11px] font-bold text-indigo-600 dark:text-indigo-400"
+            <button
+              type="button"
+              className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400"
             >
               <span>Raise with HR</span>
               <ArrowRight size={12} />
-            </AButton>
+            </button>
           </div>
         </div>
       </div>
@@ -1176,7 +1822,10 @@ function MySalarySlipContent() {
   );
 }
 
-// useSearchParams ke liye Suspense zaroori hai (Next.js build)
+/* -------------------------------------------------------
+   NEXT.JS SUSPENSE WRAPPER
+------------------------------------------------------- */
+
 export default function MySalarySlipPage() {
   return (
     <Suspense fallback={null}>

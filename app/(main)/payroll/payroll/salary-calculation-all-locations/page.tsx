@@ -149,100 +149,104 @@ export default function SalaryCalculationByLocationPage() {
   // Region is intentionally ignored here.
   // -----------------------------------------
 
-  const mapLocationData = useCallback(
-    (rows: any[]): LocationItem[] => {
-      const locationMap = new Map<string, LocationItem>();
+ 
+const mapLocationData = useCallback(
+  (rows: any[]): LocationItem[] => {
+    const locationMap = new Map<string, LocationItem>();
 
-      (Array.isArray(rows) ? rows : []).forEach((location: any) => {
-        const id = getText(
-          location.Location,
-          location.location,
-          location.location_code,
-          location.location_id,
-          location.Loc_Code,
-          location.LocCode,
-          location.id
-        );
+    (Array.isArray(rows) ? rows : []).forEach((location: any) => {
 
-        if (!id) return;
+      // API response uppercase LOCATION support
+      const id = getText(
+        location.LOCATION,
+        location.Location,
+        location.location,
+        location.location_code,
+        location.location_id,
+        location.Loc_Code,
+        location.LocCode,
+        location.id
+      );
 
-        const totalEmployees = Number(
-          location.TOTAL_EMPLOYEES ??
-            location.totalEmployees ??
-            location.total_employees ??
-            0
-        );
+      if (!id) return;
 
-        const activeEmployees = Number(
-          location.ACTIVE_EMPLOYEES ??
-            location.activeEmployees ??
-            location.active_employees ??
-            location.LASTWORKING_NULL_COUNT ??
-            location.lastWorkingNullCount ??
-            0
-        );
+      const totalEmployees = Number(
+        location.TOTAL_EMPLOYEES ??
+        location.totalEmployees ??
+        location.total_employees ??
+        0
+      );
 
-        const existing = locationMap.get(id);
+      const activeEmployees = Number(
+        location.ACTIVE_EMPLOYEES ??
+        location.activeEmployees ??
+        location.active_employees ??
+        location.LASTWORKING_NULL_COUNT ??
+        location.lastWorkingNullCount ??
+        totalEmployees
+      );
 
-        // Same Location can have multiple REGION records.
-        // Add all region counts into one Location.
-        if (existing) {
-          existing.totalEmployees += totalEmployees;
-          existing.activeEmployees += activeEmployees;
-          existing.empCount = existing.totalEmployees;
-          return;
-        }
+      const existing = locationMap.get(id);
 
-        const isBlocked =
-          Boolean(location.isBlocked) ||
-          Boolean(location.IsBlocked) ||
-          lockedLocationIds.includes(String(id));
+      if (existing) {
+        existing.totalEmployees += totalEmployees;
+        existing.activeEmployees += activeEmployees;
+        existing.empCount = existing.totalEmployees;
+        return;
+      }
 
-        const readyValue =
-          location.isReady ??
-          location.IsReady ??
-          location.Ready ??
-          location.Status;
+      const isBlocked =
+        Boolean(location.isBlocked) ||
+        Boolean(location.IsBlocked) ||
+        lockedLocationIds.includes(String(id));
 
-        locationMap.set(id, {
-          id: String(id),
+      const readyValue =
+        location.isReady ??
+        location.IsReady ??
+        location.Ready ??
+        location.Status;
 
-          name:
-            getText(
-              location.location_name,
-              location.label,
-              location.loc_name,
-              location.Loc_Name,
-              location.LocationName,
-              location.name
-            ) || `LOCATION - ${id}`,
+      locationMap.set(id, {
+        id: String(id),
 
-          cluster: getText(
-            location.cluster,
-            location.Cluster,
-            location.ClusterName
-          ),
+        name:
+          getText(
+            location.LOCATION_NAME,
+            location.location_name,
+            location.label,
+            location.loc_name,
+            location.Loc_Name,
+            location.LocationName,
+            location.name
+          ) || `LOCATION - ${id}`,
 
-          empCount: totalEmployees,
-          totalEmployees,
-          activeEmployees,
+        cluster: getText(
+          location.cluster,
+          location.Cluster,
+          location.ClusterName
+        ),
 
-          isReady:
-            readyValue === undefined
-              ? true
-              : readyValue === true ||
-                readyValue === 1 ||
-                readyValue === "1" ||
-                readyValue === "Y",
+        empCount: totalEmployees,
+        totalEmployees,
+        activeEmployees,
 
-          isBlocked,
-        });
+        isReady:
+          readyValue === undefined
+            ? true
+            : readyValue === true ||
+              readyValue === 1 ||
+              readyValue === "1" ||
+              readyValue === "Y",
+
+        isBlocked,
       });
+    });
 
-      return Array.from(locationMap.values());
-    },
-    [lockedLocationIds]
-  );
+    return Array.from(locationMap.values());
+  },
+  [lockedLocationIds]
+);
+
 
   // -----------------------------------------
   // FETCH CHANNEL / CLUSTER / REGION MASTERS
@@ -303,102 +307,116 @@ export default function SalaryCalculationByLocationPage() {
   // FETCH LOCATIONS + EMPLOYEE COUNTS
   // -----------------------------------------
 
-  const fetchLocationData = useCallback(async () => {
-    if (!user?.EMPCODE || !user?.Comp_Code) return;
+const fetchLocationData = useCallback(async () => {
+  if (!user?.EMPCODE || !user?.Comp_Code) return;
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const locationsArray = user?.branch
-        ? String(user.branch)
-            .split(",")
-            .map((item: string) => item.trim())
-            .filter(Boolean)
-        : [];
+    const locationsArray = user?.branch
+      ? String(user.branch)
+          .split(",")
+          .map((item: string) => item.trim())
+          .filter(Boolean)
+      : [];
 
-      if (locationsArray.length === 0) {
-        setLocations([]);
-        setSelectedLocations([]);
-        return;
-      }
-
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_local}/ars/getEmployeeCountByBranchRegion`,
-        {},
-        {
-          headers: apiHeaders,
-          params: {
-            region: region || undefined,
-          },
-        }
-      );
-
-      const result = response?.data?.data || [];
-
-      if (
-        response?.data?.success !== true ||
-        !Array.isArray(result)
-      ) {
-        setLocations([]);
-        setSelectedLocations([]);
-        return;
-      }
-
-      // Only locations assigned to the logged-in user.
-      const allowedLocations = new Set(
-        locationsArray.map((item) => String(item))
-      );
-
-      const filteredResult = result.filter((item: any) => {
-        const locationCode = getText(
-          item.Location,
-          item.location,
-          item.location_code,
-          item.Loc_Code,
-          item.LocCode
-        );
-
-        return (
-          locationCode &&
-          allowedLocations.has(String(locationCode))
-        );
-      });
-
-      // Aggregate same Location irrespective of REGION.
-      const mappedLocations = mapLocationData(filteredResult);
-
-      setLocations(mappedLocations);
+    if (locationsArray.length === 0) {
+      setLocations([]);
       setSelectedLocations([]);
-    } catch (error) {
-      console.error("Location API error:", error);
-
-      Swal.fire({
-        icon: "error",
-        title: "Location fetching error",
-        text: getApiError(error),
-      });
-    } finally {
-      setLoading(false);
+      return;
     }
-  }, [
-    user?.EMPCODE,
-    user?.Comp_Code,
-    user?.branch,
-    apiHeaders,
-    region,
-    mapLocationData,
-  ]);
 
-  useEffect(() => {
-    if (user?.branch && user?.EMPCODE && user?.Comp_Code) {
-      fetchLocationData();
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/ars/getEmployeeCountByBranchRegion`,
+
+      // POST BODY
+      {},
+
+      // HEADERS + QUERY PARAMS
+      {
+        headers: apiHeaders,
+        params: {
+          groupBy: "LOCATION",
+          branch: locationsArray.join(","),
+          region: region || "",
+        },
+      }
+    );
+
+    const result = response?.data?.data || [];
+
+    if (
+      response?.data?.success !== true ||
+      !Array.isArray(result)
+    ) {
+      setLocations([]);
+      setSelectedLocations([]);
+      return;
     }
-  }, [
-    user?.branch,
-    user?.EMPCODE,
-    user?.Comp_Code,
-    fetchLocationData,
-  ]);
+
+    const allowedLocations = new Set(
+      locationsArray.map((item) => String(item))
+    );
+
+    const filteredResult = result.filter((item: any) => {
+      const locationCode = getText(
+        item.LOCATION,
+        item.Location,
+        item.location,
+        item.location_code,
+        item.Loc_Code,
+        item.LocCode
+      );
+
+      return (
+        locationCode &&
+        allowedLocations.has(String(locationCode))
+      );
+    });
+
+    const mappedLocations = mapLocationData(filteredResult);
+
+    setLocations(mappedLocations);
+
+    setSelectedLocations((prev) =>
+      prev.filter((id) =>
+        mappedLocations.some(
+          (loc) => loc.id === id && !loc.isBlocked
+        )
+      )
+    );
+
+  } catch (error) {
+    console.error("Location API error:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: "Location fetching error",
+      text: getApiError(error),
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [
+  user?.EMPCODE,
+  user?.Comp_Code,
+  user?.branch,
+  apiHeaders,
+  region,
+  mapLocationData,
+]);
+
+useEffect(() => {
+  if (user?.branch && user?.EMPCODE && user?.Comp_Code) {
+    fetchLocationData();
+  }
+}, [
+  user?.branch,
+  user?.EMPCODE,
+  user?.Comp_Code,
+  fetchLocationData,
+]);
+
 
   // -----------------------------------------
   // ALREADY PROCESSED SALARY CHECK

@@ -60,10 +60,10 @@ const formatDate = (date: string) => {
 
   if (!year || !month || !day) return date;
 
-  return `${day} ${new Date(
-    Number(year),
-    Number(month) - 1
-  ).toLocaleString("en-IN", { month: "short" })} ${year}`;
+  return `${day} ${new Date(Number(year), Number(month) - 1).toLocaleString(
+    "en-IN",
+    { month: "short" },
+  )} ${year}`;
 };
 
 const getLastMonthEnd = () => {
@@ -84,7 +84,7 @@ const getYesterday = () => {
 
 const getText = (...values: any[]) => {
   const value = values.find(
-    (item) => item !== undefined && item !== null && String(item).trim() !== ""
+    (item) => item !== undefined && item !== null && String(item).trim() !== "",
   );
 
   return value === undefined ? "" : String(value).trim();
@@ -104,6 +104,57 @@ const getDateValue = (value: any) => {
   if (Number.isNaN(date.getTime())) return "";
 
   return toISODate(date);
+};
+
+const getRows = (response: any): any[] => {
+  const data = response?.data;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(data?.recordset)) return data.recordset;
+  if (Array.isArray(data?.data?.recordset)) return data.data.recordset;
+
+  return [];
+};
+
+const getBranchCode = (item: any) =>
+  getText(
+    item.BRANCH,
+    item.BRANCH_CODE,
+    item.Branch,
+    item.Branch_Code,
+    item.LOCATION,
+    item.LOCATION_CODE,
+    item.Loc_Code,
+    item.LocCode,
+    item.location_id,
+    item.LocationCode,
+    item.value,
+    item.id,
+  );
+
+const getEmployeeCount = (item: any) => {
+  const value =
+    item.TOTAL_EMPLOYEES ??
+    item.TOTAL_EMPLOYEE ??
+    item.TotalEmployees ??
+    item.TotalEmployee ??
+    item.Total_Employees ??
+    item.total_employees ??
+    item.total_employee ??
+    item.total_emp ??
+    item.EMPLOYEE_COUNT ??
+    item.EmployeeCount ??
+    item.employee_count ??
+    item.EMP_COUNT ??
+    item.emp_count ??
+    item.employees ??
+    0;
+
+  const count = Number(value);
+
+  return Number.isFinite(count) ? count : 0;
 };
 
 function InfoItem({
@@ -141,7 +192,6 @@ function InfoItem({
 }
 
 export default function SalaryLockPage() {
-  // Do not destructure useCurrentUser: it can initially return null.
   const user = useCurrentUser();
   const compdata = useSecureStorage();
 
@@ -168,7 +218,7 @@ export default function SalaryLockPage() {
       compcode: user?.Comp_Code,
       name: user?.name,
     }),
-    [user?.Comp_Code, user?.name]
+    [user?.Comp_Code, user?.name],
   );
 
   const branchLocations = useMemo(() => {
@@ -180,7 +230,9 @@ export default function SalaryLockPage() {
       .filter((item) => Number.isFinite(item));
   }, [user?.branch]);
 
-  // Convert API location row into the UI's location structure.
+  // --------------------------------------------------
+  // MAP LOCATION RESPONSE
+  // --------------------------------------------------
   const mapLocationData = useCallback((rows: any[]): Location[] => {
     return (Array.isArray(rows) ? rows : [])
       .map((item: any) => {
@@ -190,7 +242,7 @@ export default function SalaryLockPage() {
           item.LocCode,
           item.location_id,
           item.LocationCode,
-          item.id
+          item.id,
         );
 
         if (!id) return null;
@@ -202,18 +254,14 @@ export default function SalaryLockPage() {
           item.LocationName,
           item.location_name,
           item.BranchName,
-          item.name
+          item.name,
         );
 
         const city = getText(
           item.city,
           item.City,
           item.Loc_City,
-          item.LocationCity
-        );
-
-        const lockDateValue = getDateValue(
-          item.Lock_Date ?? item.lockDate ?? item.Join_Date
+          item.LocationCity,
         );
 
         return {
@@ -225,123 +273,183 @@ export default function SalaryLockPage() {
               item.TotalEmployee ??
               item.Total_Employees ??
               item.employees ??
-              0
+              0,
           ),
-          channel: getText(
-            item.Channel,
-            item.channel,
-            item.ChannelName
-          ),
-          cluster: getText(
-            item.Cluster,
-            item.cluster,
-            item.ClusterName
-          ),
+          channel: getText(item.Channel, item.channel, item.ChannelName),
+          cluster: getText(item.Cluster, item.cluster, item.ClusterName),
           region: getText(
             item.Region,
             item.region,
-            item.RegionName
+            item.RegionName,
+            item.Sal_Region,
+            item.sal_region,
           ),
-          lockDate: lockDateValue,
+          lockDate: getDateValue(
+            item.Lock_Date ?? item.lockDate ?? item.Join_Date,
+          ),
           raw: item,
         } as Location;
       })
       .filter(Boolean) as Location[];
   }, []);
 
-  // Fetch Channel, Cluster and Region master options.
-const fetchMasters = useCallback(async () => {
-  if (!user?.Comp_Code) return;
+  // --------------------------------------------------
+  // FETCH MASTER DATA
+  // --------------------------------------------------
+  const fetchMasters = useCallback(async () => {
+    if (!user?.Comp_Code) return;
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/employee/masters`,
+        {},
+        { headers },
+      );
+
+      const data = response?.data?.data || {};
+
+      const mapOptions = (items: any[]): FilterOption[] => {
+        return (Array.isArray(items) ? items : [])
+          .map((item: any) => {
+            const value = getText(
+              item.value,
+              item.Value,
+              item.code,
+              item.Code,
+              item.id,
+              item.ID,
+            );
+
+            const label = getText(
+              item.label,
+              item.labelName,
+              item.name,
+              item.Name,
+              value,
+            );
+
+            return value && label ? { value, label } : null;
+          })
+          .filter(Boolean) as FilterOption[];
+      };
+
+      setRegionOptions(mapOptions(data.Sal_Region));
+
+      setChannelOptions(
+        mapOptions(data.CHANNEL1 || data.Channel || data.CHANNEL),
+      );
+
+      setClusterOptions(
+        mapOptions(data.CLUSTER1 || data.Cluster || data.CLUSTER),
+      );
+    } catch (error: any) {
+      console.error("Salary lock masters error:", error);
+
+      Swal.fire(
+        "Error",
+        error?.response?.data?.message || "Unable to load master data.",
+        "error",
+      );
+    }
+  }, [user?.Comp_Code, headers]);
+
+
+  // --------------------------------------------------
+  // FETCH BRANCH EMPLOYEE COUNTS
+  // --------------------------------------------------
+
+const fetchBranchEmployeeCounts = useCallback(async () => {
+  const countMap = new Map<string, number>();
+
+  if (!user?.Comp_Code || branchLocations.length === 0) {   
+    return countMap;
+  }
 
   try {
-    const response = await axios.post(
-      `${API_URL}/employee/masters`,
-      {},
-      { headers }
+    const response = await axios.postt(
+      `${process.env.NEXT_PUBLIC_URL_local}/ars/getEmployeeCountByBranchRegion`,
+      {
+        params: {
+          branch: branchLocations.join(","),
+          region: region || undefined,
+          groupBy: "LOCATION",
+        },
+        headers,
+      }
     );
 
-    // Actual response structure: response.data.data
-    const data = response?.data?.data || {};
+    const rows = response?.data?.data || [];
 
-    const mapOptions = (items: any[]): FilterOption[] => {
-      return (Array.isArray(items) ? items : [])
-        .map((item: any) => {
-          const value = getText(
-            item.value,
-            item.Value,
-            item.code,
-            item.Code,
-            item.id,
-            item.ID
-          );
+    if (Array.isArray(rows)) {
+      rows.forEach((item: any) => {
+        const code = getText(
+          item.LOCATION,
+          item.Location,
+          item.location,
+          item.BRANCH,
+          item.BRANCH_CODE
+        );
 
-          const label = getText(
-            item.label,
-            item.labelName,
-            item.name,
-            item.Name,
-            value
-          );
+        if (code) {
+          countMap.set(String(code), getEmployeeCount(item));
+        }
+      });
+    }
 
-          return value && label
-            ? { value, label }
-            : null;
-        })
-        .filter(Boolean) as FilterOption[];
-    };
-
-    // Match the API keys exactly
-    setRegionOptions(mapOptions(data.Sal_Region));
-
-    // These two keys must match the actual API response.
-    setChannelOptions(
-      mapOptions(data.CHANNEL1 || data.Channel || data.CHANNEL)
-    );
-
-    setClusterOptions(
-      mapOptions(data.CLUSTER1 || data.Cluster || data.CLUSTER)
-    );
-
-    console.log("Salary Lock Masters:", data);
+    return countMap;
   } catch (error: any) {
-    console.error("Salary lock masters error:", error);
-
-    Swal.fire(
-      "Error",
-      error?.response?.data?.message || "Unable to load master data.",
-      "error"
+    console.error(
+      "Branch employee count API error:",
+      error?.response?.data || error
     );
-  }
-}, [user?.Comp_Code, headers]);
 
-  // Fetch locations from SalaryLock API.
+    return countMap;
+  }
+}, [user?.Comp_Code, branchLocations, region, headers]);
+
+
+
+  // --------------------------------------------------
+  // FETCH LOCATIONS + BRANCH EMPLOYEE COUNTS
+  // --------------------------------------------------
   const fetchLocationData = useCallback(async () => {
     if (!user?.Comp_Code || branchLocations.length === 0) {
       setLocations([]);
       setLockedLocations([]);
+      setSelectedLocations([]);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        `${API_URL}/SalaryLock/getLocationsByRegion`,
-        {
-          locations: branchLocations,
-          Channel: channel || null,
-          Cluster: cluster || null,
-          Region: region || null,
-        },
-        { headers }
-      );
+      const [locationResponse, employeeCountMap] = await Promise.all([
+        axios.post(
+          `${API_URL}/SalaryLock/getLocationsByRegion`,
+          {
+            locations: branchLocations,
+            Channel: channel || null,
+            Cluster: cluster || null,
+            Region: region || null,
+          },
+          { headers },
+        ),
+        fetchBranchEmployeeCounts(),
+      ]);
 
-      const rows = response?.data?.results || [];
-      const mappedLocations = mapLocationData(rows);
+      const rows = locationResponse?.data?.results || [];
+      const mappedLocations = mapLocationData(rows).map((location) => {
+        const branchCount = employeeCountMap.get(location.id);
+
+        return {
+          ...location,
+          employees:
+            branchCount !== undefined ? branchCount : location.employees,
+        };
+      });
 
       setLocations(mappedLocations);
 
-      // Locked locations are determined by the Lock_Date returned by the API.
       const locked = mappedLocations
         .filter((item) => Boolean(item.lockDate))
         .map((item) => ({
@@ -353,25 +461,23 @@ const fetchMasters = useCallback(async () => {
 
       setLockedLocations(locked);
 
-      // Remove selections that are no longer available or have become locked.
       const availableIds = new Set(
-        mappedLocations
-          .filter((item) => !item.lockDate)
-          .map((item) => item.id)
+        mappedLocations.filter((item) => !item.lockDate).map((item) => item.id),
       );
 
       setSelectedLocations((previous) =>
-        previous.filter((id) => availableIds.has(id))
+        previous.filter((id) => availableIds.has(id)),
       );
     } catch (error: any) {
       console.error("Salary lock locations error:", error);
+
       setLocations([]);
       setLockedLocations([]);
 
       Swal.fire(
         "Error",
         error?.response?.data?.message || "Unable to fetch locations.",
-        "error"
+        "error",
       );
     } finally {
       setIsLoading(false);
@@ -384,6 +490,7 @@ const fetchMasters = useCallback(async () => {
     region,
     headers,
     mapLocationData,
+    fetchBranchEmployeeCounts,
   ]);
 
   useEffect(() => {
@@ -405,6 +512,9 @@ const fetchMasters = useCallback(async () => {
     fetchLocationData,
   ]);
 
+  // --------------------------------------------------
+  // FILTER HANDLING
+  // --------------------------------------------------
   const handleFilterChange = (name: string, value: any) => {
     const val = String(value ?? "");
 
@@ -436,14 +546,31 @@ const fetchMasters = useCallback(async () => {
   const selectedCount = selectedLocations.length;
 
   const selectableLocations = filteredLocations.filter(
-    (location) => !isLocked(location.id)
+    (location) => !isLocked(location.id),
   );
 
   const allVisibleSelected =
     selectableLocations.length > 0 &&
     selectableLocations.every((location) =>
-      selectedLocations.includes(location.id)
+      selectedLocations.includes(location.id),
     );
+
+  const selectedEmployeeCount = useMemo(
+    () =>
+      locations
+        .filter((location) => selectedLocations.includes(location.id))
+        .reduce((total, location) => total + location.employees, 0),
+    [locations, selectedLocations],
+  );
+
+  const visibleEmployeeCount = useMemo(
+    () =>
+      filteredLocations.reduce(
+        (total, location) => total + location.employees,
+        0,
+      ),
+    [filteredLocations],
+  );
 
   const toggleLocation = (id: string) => {
     if (isLocked(id)) return;
@@ -451,7 +578,7 @@ const fetchMasters = useCallback(async () => {
     setSelectedLocations((previous) =>
       previous.includes(id)
         ? previous.filter((item) => item !== id)
-        : [...previous, id]
+        : [...previous, id],
     );
   };
 
@@ -460,11 +587,11 @@ const fetchMasters = useCallback(async () => {
 
     if (ids.every((id) => selectedLocations.includes(id))) {
       setSelectedLocations((previous) =>
-        previous.filter((id) => !ids.includes(id))
+        previous.filter((id) => !ids.includes(id)),
       );
     } else {
       setSelectedLocations((previous) =>
-        Array.from(new Set([...previous, ...ids]))
+        Array.from(new Set([...previous, ...ids])),
       );
     }
   };
@@ -477,7 +604,9 @@ const fetchMasters = useCallback(async () => {
     if (type === "thisMonth") setLockDate(getThisMonthEnd());
   };
 
-  // Actual backend update.
+  // --------------------------------------------------
+  // UPDATE LOCATION LOCK DATE
+  // --------------------------------------------------
   const handleUpdateLocation = async (date: string | null) => {
     try {
       const numericLocations = selectedLocations
@@ -485,7 +614,11 @@ const fetchMasters = useCallback(async () => {
         .filter(Number.isFinite);
 
       if (!numericLocations.length) {
-        Swal.fire("Select locations", "Please select valid locations.", "warning");
+        Swal.fire(
+          "Select locations",
+          "Please select valid locations.",
+          "warning",
+        );
         return false;
       }
 
@@ -496,7 +629,7 @@ const fetchMasters = useCallback(async () => {
           joinDate: date,
           selectedLocations: numericLocations,
         },
-        { headers }
+        { headers },
       );
 
       const result = response?.data;
@@ -507,7 +640,8 @@ const fetchMasters = useCallback(async () => {
         await Swal.fire({
           icon: "success",
           title: date ? "Salary locked" : "Location unlocked",
-          text: result?.message ||
+          text:
+            result?.message ||
             (date
               ? `${numericLocations.length} location(s) locked successfully.`
               : "Location unlocked successfully."),
@@ -522,7 +656,7 @@ const fetchMasters = useCallback(async () => {
       Swal.fire(
         "Unable to update",
         result?.message || "Salary lock update failed.",
-        "error"
+        "error",
       );
 
       return false;
@@ -532,14 +666,16 @@ const fetchMasters = useCallback(async () => {
       Swal.fire(
         "Error",
         error?.response?.data?.message || "Unable to update salary lock.",
-        "error"
+        "error",
       );
 
       return false;
     }
   };
 
-  // Backdate check and OTP verification from the existing page logic.
+  // --------------------------------------------------
+  // SALARY LOCK + BACKDATE OTP
+  // --------------------------------------------------
   const handleUpdateClick = async () => {
     if (!region) {
       Swal.fire("Select region", "Please select a region.", "warning");
@@ -555,17 +691,21 @@ const fetchMasters = useCallback(async () => {
       Swal.fire(
         "Select locations",
         "Please select at least one location.",
-        "warning"
+        "warning",
       );
       return;
     }
 
     const selected = locations.filter((location) =>
-      selectedLocations.includes(location.id)
+      selectedLocations.includes(location.id),
     );
 
     if (!selected.length) {
-      Swal.fire("No locations", "Selected locations are not available.", "warning");
+      Swal.fire(
+        "No locations",
+        "Selected locations are not available.",
+        "warning",
+      );
       return;
     }
 
@@ -575,6 +715,7 @@ const fetchMasters = useCallback(async () => {
       html: `
         <div style="text-align:left;font-size:12px;line-height:1.8">
           <p><b>Selected locations:</b> ${selected.length}</p>
+          <p><b>Total employees:</b> ${selectedEmployeeCount}</p>
           <p><b>Lock date:</b> ${formatDate(lockDate)}</p>
           <p><b>Locations:</b> ${selected.map((item) => item.name).join(", ")}</p>
           <p style="color:#e11d48;margin-top:8px">
@@ -590,26 +731,20 @@ const fetchMasters = useCallback(async () => {
 
     if (!confirmResult.isConfirmed) return;
 
-    // Backdate means moving the existing lock date to an earlier date.
     const hasBackdate = selected.some(
-      (location) =>
-        location.lockDate &&
-        lockDate < location.lockDate
+      (location) => location.lockDate && lockDate < location.lockDate,
     );
 
     setIsSubmitting(true);
 
     try {
-      // If there is no backdate, update directly.
       if (!hasBackdate) {
         await handleUpdateLocation(lockDate);
         return;
       }
 
-      // Existing SalaryUnlock mobile configuration.
       const unlockMobile = compdata?.SalaryUnlock;
 
-      // Keep existing behavior: if no OTP mobile is configured, update directly.
       if (!unlockMobile) {
         await handleUpdateLocation(lockDate);
         return;
@@ -624,14 +759,14 @@ const fetchMasters = useCallback(async () => {
           joinDate: lockDate,
           locations: selectedLocations.map(Number).filter(Number.isFinite),
         },
-        { headers }
+        { headers },
       );
 
       if (!otpResponse?.data?.Status) {
         Swal.fire(
           "OTP failed",
           otpResponse?.data?.message || "Unable to send OTP.",
-          "error"
+          "error",
         );
         return;
       }
@@ -667,19 +802,16 @@ const fetchMasters = useCallback(async () => {
           mobile: unlockMobile,
           otp: otpResult.value,
         },
-        { headers }
+        { headers },
       );
 
-      if (
-        verifyResponse?.data?.Status ||
-        verifyResponse?.data?.success
-      ) {
+      if (verifyResponse?.data?.Status || verifyResponse?.data?.success) {
         await handleUpdateLocation(lockDate);
       } else {
         Swal.fire(
           "Invalid OTP",
           verifyResponse?.data?.message || "OTP verification failed.",
-          "error"
+          "error",
         );
       }
     } catch (error: any) {
@@ -689,7 +821,7 @@ const fetchMasters = useCallback(async () => {
         "Error",
         error?.response?.data?.message ||
           "Something went wrong while verifying OTP.",
-        "error"
+        "error",
       );
     } finally {
       setOtpSending(false);
@@ -697,11 +829,11 @@ const fetchMasters = useCallback(async () => {
     }
   };
 
-  const applySalaryLock = () => {
-    return handleUpdateClick();
-  };
+  const applySalaryLock = () => handleUpdateClick();
 
-  // Unlock through the same existing update endpoint, clearing Join_Date.
+  // --------------------------------------------------
+  // UNLOCK LOCATION
+  // --------------------------------------------------
   const unlockLocation = async (location: LockedLocation) => {
     const result = await Swal.fire({
       icon: "warning",
@@ -740,14 +872,16 @@ const fetchMasters = useCallback(async () => {
           joinDate: null,
           selectedLocations: [numericId],
         },
-        { headers }
+        { headers },
       );
 
       if (response?.data?.Status) {
         await Swal.fire({
           icon: "success",
           title: "Location unlocked",
-          text: response?.data?.message || `${location.name} unlocked successfully.`,
+          text:
+            response?.data?.message ||
+            `${location.name} unlocked successfully.`,
           timer: 1300,
           showConfirmButton: false,
         });
@@ -758,7 +892,7 @@ const fetchMasters = useCallback(async () => {
         Swal.fire(
           "Unable to unlock",
           response?.data?.message || "Location could not be unlocked.",
-          "error"
+          "error",
         );
       }
     } catch (error: any) {
@@ -767,7 +901,7 @@ const fetchMasters = useCallback(async () => {
       Swal.fire(
         "Error",
         error?.response?.data?.message || "Unable to unlock location.",
-        "error"
+        "error",
       );
     } finally {
       setSelectedLocations([]);
@@ -775,10 +909,12 @@ const fetchMasters = useCallback(async () => {
     }
   };
 
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
   return (
     <div className="min-h-screen min-w-0 bg-[#f5f8fc] p-2 transition-colors dark:bg-[#0b1220] sm:p-3 lg:p-4">
       <div className="mx-auto max-w-[1600px] space-y-3">
-
         {/* HEADER */}
         <div>
           <h1 className="text-[20px] font-bold leading-tight text-[#152b4b] dark:text-slate-100 sm:text-[22px]">
@@ -786,21 +922,19 @@ const fetchMasters = useCallback(async () => {
           </h1>
 
           <p className="mt-1 text-[11px] leading-5 text-[#64748b] dark:text-slate-400 sm:text-[12px]">
-            Freeze the calculated salary for a month so nothing can be recalculated after disbursement. Lock a location once its bank transfer is out.
+            Freeze the calculated salary for a month so nothing can be
+            recalculated after disbursement. Lock a location once its bank
+            transfer is out.
           </p>
         </div>
 
         {/* MAIN GRID */}
         <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-
           {/* LEFT SECTION */}
           <div className="min-w-0 space-y-3">
-
             {/* FILTER PANEL */}
             <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-900 sm:p-4">
-
               <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_165px_175px]">
-
                 <div className="min-w-0">
                   <Eselect
                     title="CHANNEL"
@@ -872,11 +1006,9 @@ const fetchMasters = useCallback(async () => {
 
             {/* LOCATIONS PANEL */}
             <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-900">
-
               {/* LOCATION HEADER */}
               <div className="flex min-w-0 flex-col gap-2.5 border-b border-[#e2e8f0] p-3 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between">
-
-                <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={allVisibleSelected}
@@ -891,6 +1023,10 @@ const fetchMasters = useCallback(async () => {
 
                   <span className="text-[11px] text-[#64748b] dark:text-slate-400">
                     {selectedCount} of {locations.length} selected
+                  </span>
+
+                  <span className="rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                    {visibleEmployeeCount.toLocaleString("en-IN")} employees
                   </span>
                 </div>
 
@@ -908,7 +1044,6 @@ const fetchMasters = useCallback(async () => {
 
               {/* LOCATION LIST */}
               <div className="grid min-w-0 grid-cols-1 gap-x-2 gap-y-0.5 p-2 sm:grid-cols-2 sm:p-3">
-
                 {isLoading ? (
                   <div className="col-span-full flex min-h-[100px] items-center justify-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
@@ -921,8 +1056,9 @@ const fetchMasters = useCallback(async () => {
                     {filteredLocations.map((location) => {
                       const locked = isLocked(location.id);
                       const selected = selectedLocations.includes(location.id);
+
                       const lockInfo = lockedLocations.find(
-                        (item) => item.id === location.id
+                        (item) => item.id === location.id,
                       );
 
                       return (
@@ -933,8 +1069,8 @@ const fetchMasters = useCallback(async () => {
                             locked
                               ? "cursor-not-allowed"
                               : selected
-                              ? "bg-indigo-50 dark:bg-indigo-500/15"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                                ? "bg-indigo-50 dark:bg-indigo-500/15"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800"
                           }`}
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
@@ -961,13 +1097,15 @@ const fetchMasters = useCallback(async () => {
                           {locked ? (
                             <div className="flex shrink-0 items-center gap-1 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
                               <Lock size={14} />
-                              <span>{formatDate(lockInfo?.lockDate || "")}</span>
+                              <span>
+                                {formatDate(lockInfo?.lockDate || "")}
+                              </span>
                             </div>
                           ) : (
                             <span className="shrink-0 text-right text-[10px] text-[#64748b] dark:text-slate-400">
                               {location.city}
                               {location.city ? " · " : ""}
-                              {location.employees} emp
+                              {location.employees.toLocaleString("en-IN")} emp
                             </span>
                           )}
                         </div>
@@ -991,13 +1129,22 @@ const fetchMasters = useCallback(async () => {
 
               {/* FOOTER */}
               <div className="flex min-w-0 flex-col gap-2.5 border-t border-[#e2e8f0] bg-[#f8fafc] p-3 dark:border-slate-700 dark:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-[11px] leading-5 text-[#64748b] dark:text-slate-400">
+                  <p>
+                    Locking {selectedCount} location
+                    {selectedCount !== 1 ? "s" : ""} up to and including{" "}
+                    <span className="font-semibold text-[#152b4b] dark:text-slate-200">
+                      {formatDate(lockDate)}
+                    </span>
+                  </p>
 
-                <p className="text-[11px] leading-5 text-[#64748b] dark:text-slate-400">
-                  Locking {selectedCount} location{selectedCount !== 1 ? "s" : ""} up to and including{" "}
-                  <span className="font-semibold text-[#152b4b] dark:text-slate-200">
-                    {formatDate(lockDate)}
-                  </span>
-                </p>
+                  <p>
+                    Selected employees:{" "}
+                    <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                      {selectedEmployeeCount.toLocaleString("en-IN")}
+                    </span>
+                  </p>
+                </div>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                   <AButton
@@ -1024,8 +1171,8 @@ const fetchMasters = useCallback(async () => {
                     {otpSending
                       ? "Verifying OTP..."
                       : isSubmitting
-                      ? "Processing..."
-                      : "Apply salary lock"}
+                        ? "Processing..."
+                        : "Apply salary lock"}
                   </AButton>
                 </div>
               </div>
@@ -1034,10 +1181,8 @@ const fetchMasters = useCallback(async () => {
 
           {/* RIGHT SIDEBAR */}
           <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1">
-
             {/* CURRENTLY LOCKED */}
             <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-900">
-
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="text-[11px] font-bold uppercase tracking-wide text-[#52627c] dark:text-slate-300">
                   Currently locked
@@ -1056,13 +1201,17 @@ const fetchMasters = useCallback(async () => {
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-500/15">
-                        <Lock size={14} className="text-rose-600 dark:text-rose-400" />
+                        <Lock
+                          size={14}
+                          className="text-rose-600 dark:text-rose-400"
+                        />
                       </div>
 
                       <div className="min-w-0">
                         <p className="truncate text-[11px] font-bold text-[#152b4b] dark:text-slate-100">
                           {location.name}
                         </p>
+
                         <p className="truncate text-[10px] text-[#64748b] dark:text-slate-400">
                           {location.city} · {formatDate(location.lockDate)}
                         </p>
@@ -1094,7 +1243,6 @@ const fetchMasters = useCallback(async () => {
 
             {/* WHAT THE LOCK BLOCKS */}
             <div className="min-w-0 rounded-xl border border-[#dce5f1] bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-900">
-
               <h2 className="mb-4 text-[11px] font-bold uppercase tracking-wide text-[#52627c] dark:text-slate-300">
                 What the lock blocks
               </h2>
