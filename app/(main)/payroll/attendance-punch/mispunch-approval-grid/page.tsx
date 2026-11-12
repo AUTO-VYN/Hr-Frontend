@@ -459,7 +459,7 @@ const Approver2 = ({ back }: Approver2Props) => {
       }
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_URL_LOCAL}/template/ApproveAttendance_New`,
+        `${process.env.NEXT_PUBLIC_URL}/mobile/ApproveAttendance_New`,
         {
           params: {
             EMPCODE: empCodes,
