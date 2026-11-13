@@ -1173,11 +1173,7 @@ export default function SalaryReportsPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="mb-1 flex items-center gap-2 text-[12px] text-[#64748b] dark:text-slate-400">
-              <span>Reports</span>
-              <ChevronRight size={13} />
-              <span>Payroll</span>
-            </div>
+            <div className="mb-1 flex items-center gap-2 text-[12px] text-[#64748b] dark:text-slate-400"></div>
 
             <h1 className="text-[21px] font-bold leading-tight text-[#152b4b] dark:text-slate-100">
               Salary Reports
