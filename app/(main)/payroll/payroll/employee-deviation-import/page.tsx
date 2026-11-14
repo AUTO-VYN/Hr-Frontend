@@ -555,8 +555,7 @@ export default function Approver2() {
               <Info size={15} className="shrink-0 text-[var(--muted)]" />
 
               <p className="m-0 text-[12px] text-[var(--muted)]">
-                Upload the Excel file using the Download Sample format. Only
-                .xlsx and .xls files are accepted.
+                Columns expected: EmpCode, Month, Year, DeviationDays, Reason, Remark. Deviation days may be negative.
               </p>
             </div>
           </div>

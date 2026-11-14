@@ -837,7 +837,7 @@ useEffect(() => {
           </h1>
 
           <p className="mt-1 text-[12px] text-[#64748b] dark:text-slate-400 sm:text-[13px]">
-            Select filters and locations to run salary calculation.
+           Calculate the salary month for the branches you pick. Each branch shows whether it is ready before you commit the run.
           </p>
         </div>
 

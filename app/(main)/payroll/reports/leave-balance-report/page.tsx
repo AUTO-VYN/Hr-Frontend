@@ -877,27 +877,6 @@ export default function LeaveBalanceReportViewPage() {
                 />
               </div>
 
-              {/* COLUMN FILTERS */}
-
-              <AButton
-                type="button"
-                onClick={() => setShowColumnFilters((previous) => !previous)}
-                className={`inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
-                  showColumnFilters
-                    ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-[#dce5f1] bg-white text-[#152b4b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                }`}
-              >
-                <SlidersHorizontal size={15} />
-                Column filters
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${
-                    showColumnFilters ? "rotate-180" : ""
-                  }`}
-                />
-              </AButton>
-
               {/* RESET */}
 
               <AButton
@@ -907,18 +886,6 @@ export default function LeaveBalanceReportViewPage() {
               >
                 <RotateCcw size={14} />
                 Reset
-              </AButton>
-
-              {/* EXPORT */}
-
-              <AButton
-                type="button"
-                onClick={exportToExcel}
-                disabled={!filteredRows.length}
-                className="inline-flex h-[41px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-              >
-                <FileSpreadsheet size={15} />
-                Export to Excel
               </AButton>
             </div>
           </div>
@@ -969,7 +936,12 @@ export default function LeaveBalanceReportViewPage() {
             <div className="w-full min-w-0 overflow-x-auto">
               <div className="min-w-max">
                 {filteredRows.length > 0 ? (
-                  <DataTable columns={columns} data={filteredRows} />
+                  <DataTable
+                    columns={columns}
+                    data={filteredRows}
+                    showExcelExport={true}
+                    showColumnFilters={true}
+                  />
                 ) : (
                   <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                     No records found for the selected criteria.

@@ -1,18 +1,17 @@
-
-
 export type ModuleItem = { name: string; slug: string };
-export type ModuleGroup = { name: string; slug: string; icon: string; items: ModuleItem[] };
+export type ModuleGroup = {
+  name: string;
+  slug: string;
+  icon: string;
+  items: ModuleItem[];
+};
 
 export const PAYROLL_MODULES: ModuleGroup[] = [
-
   {
     name: "AI",
     slug: "AI",
     icon: "Sparkles",
-    items: [
-      { name: "AI Model", slug: "Ai-Model" },
-
-    ],
+    items: [{ name: "AI Model", slug: "Ai-Model" }],
   },
   {
     name: "Masters",
@@ -23,7 +22,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Employee Master", slug: "Employee_Master" },
       { name: "Employee View", slug: "employee-view" },
       { name: "Salary Approver Grid", slug: "salary-approver-grid" },
-      { name: "Employee Master With Basic Info", slug: "employee-master-with-basic-info" },
+      {
+        name: "Employee Master With Basic Info",
+        slug: "employee-master-with-basic-info",
+      },
       { name: "Employee At a Glance", slug: "employee-at-a-glance" },
       { name: "Employee Salary Structure", slug: "employee-salary-structure" },
       { name: "HR Master", slug: "hr-master" },
@@ -37,7 +39,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     items: [
       { name: "Processflow", slug: "processflow" },
       { name: "Create Job Opening", slug: "create-job-opening" },
-      { name: "Candidate Registration Form", slug: "candidate-registration-form" },
+      {
+        name: "Candidate Registration Form",
+        slug: "candidate-registration-form",
+      },
       { name: "Resume Bank", slug: "resume-bank" },
       { name: "Shortlisted Applications", slug: "shortlisted-applications" },
       { name: "Interview Scheduling", slug: "interview-scheduling" },
@@ -56,7 +61,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     items: [
       { name: "Letter Template Creator", slug: "letter-template-creator" },
       { name: "Print Letter", slug: "print-letter" },
-      { name: "Print Letter approver Window", slug: "print-letter-approver-window" },
+      {
+        name: "Print Letter approver Window",
+        slug: "print-letter-approver-window",
+      },
       { name: "Document Management", slug: "document-management" },
       { name: "Document View", slug: "document-view" },
       { name: "Employee Asset", slug: "employee-asset" },
@@ -66,7 +74,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "HR Policies View", slug: "hr-policies-view" },
       { name: "Policies Logs Report", slug: "policies-logs-report" },
       { name: "Confirmation Status", slug: "confirmation-status" },
-      { name: "Whatsapp Confirmation Report", slug: "whatsapp-confirmation-report" },
+      {
+        name: "Whatsapp Confirmation Report",
+        slug: "whatsapp-confirmation-report",
+      },
     ],
   },
   {
@@ -74,8 +85,14 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     slug: "hcm",
     icon: "Network",
     items: [
-      { name: "Employee Location Transfer", slug: "employee-location-transfer" },
-      { name: "Emp Loc Transfer Approval View", slug: "emp-loc-transfer-approval-view" },
+      {
+        name: "Employee Location Transfer",
+        slug: "employee-location-transfer",
+      },
+      {
+        name: "Emp Loc Transfer Approval View",
+        slug: "emp-loc-transfer-approval-view",
+      },
       { name: "Separation Date Update", slug: "separation-date-update" },
       { name: "Employee Reference Check", slug: "employee-reference-check" },
       { name: "Employee Reference View", slug: "employee-reference-view" },
@@ -86,11 +103,11 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Employee Hierarchy View", slug: "employee-hierarchy-view" },
       { name: "Employee Salary Review", slug: "employee-salary-review" },
       { name: "QR Scanner", slug: "qr-scanner" },
-      {name:"Employee Transfer Form",slug:"employee-transfer-form"},
+      { name: "Employee Transfer Form", slug: "employee-transfer-form" },
       { name: "Mispunch InOut Document", slug: "mispunch-inout-document" },
       { name: "Daily HR Report", slug: "daily-hr-report" },
-      {name:"Comp Off Run Page",slug:"comp-off-run-page"},
-      {name:"Emp Transfer History",slug:'emp-transfer-history'}
+      { name: "Comp Off Run Page", slug: "comp-off-run-page" },
+      { name: "Emp Transfer History", slug: "emp-transfer-history" },
     ],
   },
   {
@@ -102,7 +119,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Employee ID Card", slug: "employee-id-card" },
       { name: "Attendance Calendar", slug: "attendance-calendar" },
       { name: "Add Attendance", slug: "add-attendance" },
-      { name: "Attendance Punching Approval", slug: "attendance-punching-approval" },
+      {
+        name: "Attendance Punching Approval",
+        slug: "attendance-punching-approval",
+      },
       { name: "Mispunch Request", slug: "mispunch-request" },
       { name: "Mispunch Approval Grid", slug: "mispunch-approval-grid" },
       { name: "Mispunch Dashboard", slug: "mispunch-dashboard" },
@@ -115,7 +135,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "COMP OFF Approver Grid", slug: "comp-off-approver-grid" },
       { name: "Leave Cancel Request Page", slug: "leave-cancel-request-page" },
       { name: "Leave Cancel Approval", slug: "leave-cancel-approval" },
-      { name: "Mispunch Cancel Request Page", slug: "mispunch-cancel-request-page" },
+      {
+        name: "Mispunch Cancel Request Page",
+        slug: "mispunch-cancel-request-page",
+      },
       { name: "Mispunch Cancel Approval", slug: "mispunch-cancel-approval" },
       { name: "Attendance Tracking", slug: "attendance-tracking" },
       { name: "Attendance Tracking 1", slug: "attendance-tracking-1" },
@@ -135,17 +158,38 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     items: [
       { name: "Online Mark Attendance", slug: "online-mark-attendance" },
       { name: "Attendance Regularization", slug: "attendance-regularization" },
-      { name: "Reset Attn. From Machine Logs", slug: "reset-attn-from-machine-logs" },
-      { name: "Attn. Calculation By Branch", slug: "attn-calculation-by-branch" },
-      { name: "Attn. Calculation By Region", slug: "attn-calculation-by-region" },
-      { name: "Attn. Calculation From Excel", slug: "attn-calculation-from-excel" },
-      { name: "Attn. Calculation With Leave", slug: "attn-calculation-with-leave" },
+      {
+        name: "Reset Attn. From Machine Logs",
+        slug: "reset-attn-from-machine-logs",
+      },
+      {
+        name: "Attn. Calculation By Branch",
+        slug: "attn-calculation-by-branch",
+      },
+      {
+        name: "Attn. Calculation By Region",
+        slug: "attn-calculation-by-region",
+      },
+      {
+        name: "Attn. Calculation From Excel",
+        slug: "attn-calculation-from-excel",
+      },
+      {
+        name: "Attn. Calculation With Leave",
+        slug: "attn-calculation-with-leave",
+      },
       { name: "COMP OFF HR Request Page", slug: "comp-off-hr-request-page" },
       { name: "Attendance Lock", slug: "attendance-lock" },
       { name: "Shift Change Lock", slug: "shift-change-lock" },
-      { name: "Attendance Detailed Report", slug: "attendance-detailed-report" },
+      {
+        name: "Attendance Detailed Report",
+        slug: "attendance-detailed-report",
+      },
       { name: "Attendance Summary Report", slug: "attendance-summary-report" },
-      { name: "Approve Auto Rejected Leave & Misspunch", slug: "approve-auto-rejected-leave-misspunch" },
+      {
+        name: "Approve Auto Rejected Leave & Misspunch",
+        slug: "approve-auto-rejected-leave-misspunch",
+      },
     ],
   },
   {
@@ -153,7 +197,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     slug: "payroll",
     icon: "Wallet",
     items: [
-      { name: "Salary Paid Days Deviation", slug: "salary-paid-days-deviation" },
+      {
+        name: "Salary Paid Days Deviation",
+        slug: "salary-paid-days-deviation",
+      },
       { name: "Deviation Approver Grid", slug: "deviation-approver-grid" },
       { name: "Employee Deviation View", slug: "employee-deviation-view" },
       { name: "Employee Deviation Import", slug: "employee-deviation-import" },
@@ -161,16 +208,31 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Employee Deduction View", slug: "employee-deduction-view" },
       { name: "Remove Wrong Deduction", slug: "remove-wrong-deduction" },
       { name: "Salary Disbursement", slug: "salary-disbursement" },
-      { name: "Salary Calculation (By Excel)", slug: "salary-calculation-by-excel" },
-      { name: "Salary Calculation (All Locations)", slug: "salary-calculation-all-locations" },
-      { name: "Salary Calculation (Selected Region)", slug: "salary-calculation-selected-region" },
+      {
+        name: "Salary Calculation (By Excel)",
+        slug: "salary-calculation-by-excel",
+      },
+      {
+        name: "Salary Calculation (All Locations)",
+        slug: "salary-calculation-all-locations",
+      },
+      {
+        name: "Salary Calculation (Selected Region)",
+        slug: "salary-calculation-selected-region",
+      },
       { name: "Salary Payslip", slug: "salary-payslip" },
-      { name: "Salary Bank Transfer Sheet", slug: "salary-bank-transfer-sheet" },
+      {
+        name: "Salary Bank Transfer Sheet",
+        slug: "salary-bank-transfer-sheet",
+      },
       { name: "Salary Lock", slug: "salary-lock" },
       { name: "PF Structure", slug: "pf-structure" },
       { name: "Self Salary Slip", slug: "self-salary-slip" },
       { name: "Release Note", slug: "release-note" },
-      { name: "GLB Salary Calculation (All Locations)", slug: "glb-salary-calculation-all-locations" },
+      {
+        name: "GLB Salary Calculation (All Locations)",
+        slug: "glb-salary-calculation-all-locations",
+      },
     ],
   },
   {
@@ -185,32 +247,66 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Salary Structure Report", slug: "salary-structure-report" },
       { name: "Employee Rejection Report", slug: "employee-rejection-report" },
       { name: "Manual Attendance Report", slug: "manual-attendance-report" },
-      { name: "Attendance Performance Register", slug: "attendance-performance-register" },
+      {
+        name: "Attendance Performance Register",
+        slug: "attendance-performance-register",
+      },
       { name: "Monthly Salary Register", slug: "monthly-salary-register" },
-      { name: "Detail EmployeeMaster Report", slug: "detail-employeemaster-report" },
+      {
+        name: "Detail EmployeeMaster Report",
+        slug: "detail-employeemaster-report",
+      },
       { name: "Management Report", slug: "management-report" },
       { name: "Department Wise Report", slug: "department-wise-report" },
       { name: "Employee Month Report", slug: "employee-month-report" },
       { name: "Retail PerFormance Report", slug: "retail-performance-report" },
-      { name: "Monthwise Retail Performance Report", slug: "monthwise-retail-performance-report" },
+      {
+        name: "Monthwise Retail Performance Report",
+        slug: "monthwise-retail-performance-report",
+      },
       { name: "PerFormance Report", slug: "performance-report" },
-      { name: "Attendance Without Salary Report", slug: "attendance-without-salary-report" },
+      {
+        name: "Attendance Without Salary Report",
+        slug: "attendance-without-salary-report",
+      },
       { name: "Shift History Report", slug: "shift-history-report" },
-      { name: "Incentive Paid Outside Salary Report", slug: "incentive-paid-outside-salary-report" },
+      {
+        name: "Incentive Paid Outside Salary Report",
+        slug: "incentive-paid-outside-salary-report",
+      },
       { name: "Evaluater Report", slug: "evaluater-report" },
       { name: "Retail Evaluater Report", slug: "retail-evaluater-report" },
       { name: "Leave Misspunch Report", slug: "leave-misspunch-report" },
-      { name: "Biometric Machine Data Export", slug: "biometric-machine-data-export" },
-      { name: "Full & Final Salary Payslip", slug: "full-final-salary-payslip" },
+      {
+        name: "Biometric Machine Data Export",
+        slug: "biometric-machine-data-export",
+      },
+      {
+        name: "Full & Final Salary Payslip",
+        slug: "full-final-salary-payslip",
+      },
       { name: "Dev Status Report", slug: "dev-status-report" },
       { name: "Summary Report", slug: "summary-report" },
-      { name: "Employee Continuous Absent Report", slug: "employee-continuous-absent-report" },
+      {
+        name: "Employee Continuous Absent Report",
+        slug: "employee-continuous-absent-report",
+      },
       { name: "Employee IN/OUT Report", slug: "employee-in-out-report" },
-      { name: "Left Employee Analysis Report", slug: "left-employee-analysis-report" },
+      {
+        name: "Left Employee Analysis Report",
+        slug: "left-employee-analysis-report",
+      },
       { name: "Employee Joining Report", slug: "employee-joining-report" },
       { name: "Employee Balance Report", slug: "employee-balance-report" },
       { name: "Employee Journey History", slug: "employee-journey-history" },
-      { name: "Monthly Salary Register View", slug: "monthly-salary-register-view" },
+      {
+        name: "Monthly Salary Register View",
+        slug: "monthly-salary-register-view",
+      },
+      {
+        name: "Mispunch Report With Picture",
+        slug: "mispunch-report-with-picture",
+      },
     ],
   },
   {
@@ -222,18 +318,36 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Salary Structure Import", slug: "salary-structure-import" },
       { name: "Employee Shift Import", slug: "employee-shift-import" },
       { name: "Bulk Roaster Creation", slug: "bulk-roaster-creation" },
-      { name: "Salary Attendance Data From Excel Import", slug: "salary-attendance-data-from-excel-import" },
+      {
+        name: "Salary Attendance Data From Excel Import",
+        slug: "salary-attendance-data-from-excel-import",
+      },
       { name: "Import Salary Sheet", slug: "import-salary-sheet" },
-      { name: "Employee Deductions Import", slug: "employee-deductions-import" },
+      {
+        name: "Employee Deductions Import",
+        slug: "employee-deductions-import",
+      },
       { name: "Employee Incentive Import", slug: "employee-incentive-import" },
       { name: "Leave Balance Import", slug: "leave-balance-import" },
-      { name: "Incentive Paid Outside Salary Import", slug: "incentive-paid-outside-salary-import" },
-      { name: "Required Fields Update EmpMstr Import", slug: "required-fields-update-empmstr-import" },
+      {
+        name: "Incentive Paid Outside Salary Import",
+        slug: "incentive-paid-outside-salary-import",
+      },
+      {
+        name: "Required Fields Update EmpMstr Import",
+        slug: "required-fields-update-empmstr-import",
+      },
       { name: "Import ReRun Attn Process", slug: "import-rerun-attn-process" },
       { name: "Import Employee Balance", slug: "import-employee-balance" },
-      { name: "Employee Master Mini Import", slug: "employee-master-mini-import" },
+      {
+        name: "Employee Master Mini Import",
+        slug: "employee-master-mini-import",
+      },
       { name: "OT Hours Import", slug: "ot-hours-import" },
-      { name: "Month Wise Employee Salary", slug: "month-wise-employee-salary" },
+      {
+        name: "Month Wise Employee Salary",
+        slug: "month-wise-employee-salary",
+      },
     ],
   },
   {
@@ -246,7 +360,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Professional Tax  .", slug: "professional-tax" },
       { name: "LWF Report", slug: "lwf-report" },
       { name: "Income Tax .", slug: "income-tax" },
-      { name: "Employee Investment Declaration", slug: "employee-investment-declaration" },
+      {
+        name: "Employee Investment Declaration",
+        slug: "employee-investment-declaration",
+      },
       { name: "TDS Calculation Sheet", slug: "tds-calculation-sheet" },
     ],
   },
@@ -258,7 +375,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Loan & Advance Request", slug: "loan-advance-request" },
       { name: "Approver Grid", slug: "approver-grid" },
       { name: "Accounts View", slug: "accounts-view" },
-      { name: "Employee Wise Loan & Advance View", slug: "employee-wise-loan-advance-view" },
+      {
+        name: "Employee Wise Loan & Advance View",
+        slug: "employee-wise-loan-advance-view",
+      },
       { name: "Detailed Report", slug: "detailed-report" },
     ],
   },
@@ -268,7 +388,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     icon: "Plane",
     items: [
       { name: "Add Travel Expense", slug: "add-travel-expense" },
-      { name: "Employee Travel Expense View", slug: "employee-travel-expense-view" },
+      {
+        name: "Employee Travel Expense View",
+        slug: "employee-travel-expense-view",
+      },
       { name: "Team Travel Expense View", slug: "team-travel-expense-view" },
     ],
   },
@@ -278,11 +401,26 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
     icon: "DoorOpen",
     items: [
       { name: "Employee Gatepass Request", slug: "employee-gatepass-request" },
-      { name: "Employee Gatepass Approval", slug: "employee-gatepass-approval" },
-      { name: "Employee Gatepass Guard View", slug: "employee-gatepass-guard-view" },
-      { name: "Employee Gatepass Detailed Report", slug: "employee-gatepass-detailed-report" },
-      { name: "Employee Gatepass Summary Report", slug: "employee-gatepass-summary-report" },
-      { name: "Employee Gatepass Dashboard", slug: "employee-gatepass-dashboard" },
+      {
+        name: "Employee Gatepass Approval",
+        slug: "employee-gatepass-approval",
+      },
+      {
+        name: "Employee Gatepass Guard View",
+        slug: "employee-gatepass-guard-view",
+      },
+      {
+        name: "Employee Gatepass Detailed Report",
+        slug: "employee-gatepass-detailed-report",
+      },
+      {
+        name: "Employee Gatepass Summary Report",
+        slug: "employee-gatepass-summary-report",
+      },
+      {
+        name: "Employee Gatepass Dashboard",
+        slug: "employee-gatepass-dashboard",
+      },
       { name: "HR Listing Gatepass", slug: "hr-listing-gatepass" },
     ],
   },
@@ -321,7 +459,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Add Bulk Date Punch", slug: "add-bulk-date-punch" },
       { name: "Employee Deduction", slug: "employee-deduction" },
       { name: "Employee Deviation View", slug: "employee-deviation-view" },
-      { name: "Month Wise Employee Salary", slug: "month-wise-employee-salary" },
+      {
+        name: "Month Wise Employee Salary",
+        slug: "month-wise-employee-salary",
+      },
       { name: "Employee Salary Run", slug: "employee-salary-run" },
       { name: "Salary Lock", slug: "salary-lock" },
     ],

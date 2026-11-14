@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -61,9 +60,7 @@ const makeOptions = (list: any[]): Option[] => {
     .filter((item) => item.value && item.label);
 
   return Array.from(
-    new Map(
-      options.map((item) => [item.value.toLowerCase(), item]),
-    ).values(),
+    new Map(options.map((item) => [item.value.toLowerCase(), item])).values(),
   );
 };
 
@@ -482,12 +479,7 @@ export default function EmployeeDeductionView() {
       const matchesCluster =
         cluster === "all" || rowCluster === cluster.toLowerCase();
 
-      return (
-        matchesSearch &&
-        matchesRegion &&
-        matchesChannel &&
-        matchesCluster
-      );
+      return matchesSearch && matchesRegion && matchesChannel && matchesCluster;
     });
   }, [rows, search, region, channel, cluster, deductionTypes]);
 
@@ -919,14 +911,7 @@ export default function EmployeeDeductionView() {
               {filteredRows.length} deductions
             </div>
 
-            <AButton
-              type="button"
-              onClick={exportToExcel}
-              className="inline-flex h-[33px] items-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3 text-[12px] font-semibold text-[#334155] hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              <Download size={15} />
-              Export to Excel
-            </AButton>
+           
           </div>
 
           {/* RESPONSIVE TABLE + DARK MODE TABLE OVERRIDES */}
@@ -953,7 +938,8 @@ export default function EmployeeDeductionView() {
                 columns={columns}
                 data={tableData}
                 showTopSearch={false}
-                showExcelExport={false}
+                showExcelExport={true}
+                showColumnFilters={true}
                 initialPageSize={10}
               />
             </div>

@@ -584,10 +584,10 @@ export default function EmployeeDeviationView() {
         />
 
         <SummaryCard
-          label="Pending approval"
+          label="Approval"
           value={String(pendingCount)}
           description="Not in payroll yet"
-          dotColor="bg-amber-500"
+          dotColor="bg-emerald-500"
         />
 
         <SummaryCard
@@ -608,14 +608,14 @@ export default function EmployeeDeviationView() {
             {visibleRows.length} deviations
           </span>
 
-          <AButton
+          {/* <AButton
             type="button"
             onClick={handleExport}
             className="inline-flex h-[30px] items-center justify-center gap-[6px] rounded-[7px] border border-[var(--border)] bg-[var(--card)] px-[11px] text-[11px] font-[650] text-[var(--fg)] transition hover:bg-slate-50"
           >
             <Download size={13} />
             Export to Excel
-          </AButton>
+          </AButton> */}
         </div>
 
         {/* REUSABLE REACT TABLE */}
@@ -625,7 +625,8 @@ export default function EmployeeDeviationView() {
             columns={columns}
             data={visibleRows}
             showTopSearch={false}
-            showExcelExport={false}
+            showExcelExport={true}
+            showColumnFilters={true}
             initialPageSize={10}
           />
         </div>
