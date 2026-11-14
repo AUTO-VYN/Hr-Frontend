@@ -1107,7 +1107,7 @@ export default function PFStructurePage() {
               <SummaryCard
                 label="PF contribution"
                 value={formatAmount(totals.pfContribution)}
-                subText="Employee share"
+                subText="Employee share, capped"
                 dotColor="bg-violet-500"
                 icon={IndianRupee}
               />
@@ -1168,7 +1168,8 @@ export default function PFStructurePage() {
                     columns={columns}
                     data={filteredRows}
                     showTopSearch={false}
-                    showExcelExport={false}
+                     showExcelExport={true}
+                      showColumnFilters= {true}
                     initialPageSize={10}
                   />
                 </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -39,16 +40,15 @@ type SelectOption = {
 };
 
 type RegisterRow = {
-  id: number;
-  empCode: string;
-  employeeName: string;
-  monthDays: number;
-  presentDays: number;
-  basic: number;
-  hra: number;
-  gross: number;
-  netPayment: number;
   [key: string]: any;
+};
+
+type TableColumn = {
+  Header: string;
+  accessor: string;
+  minWidth: number;
+  width: number;
+  Cell: ({ value }: any) => React.ReactNode;
 };
 
 // --------------------------------------------------
@@ -57,27 +57,16 @@ type RegisterRow = {
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (value !== null && value !== undefined && String(value).trim() !== "") {
+    if (
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== ""
+    ) {
       return String(value);
     }
   }
 
   return "";
-};
-
-const getNumber = (...values: any[]): number => {
-  for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      value !== "" &&
-      Number.isFinite(Number(value))
-    ) {
-      return Number(value);
-    }
-  }
-
-  return 0;
 };
 
 const getResponseArray = (response: any): any[] => {
@@ -147,160 +136,6 @@ const showSideAlert = (message: string, type: any = "info") => {
 };
 
 // --------------------------------------------------
-// EARNING AMOUNT HELPER
-// --------------------------------------------------
-
-const getEarningAmount = (earnings: any, keywords: string[]): number => {
-  if (!earnings) return 0;
-
-  if (Array.isArray(earnings)) {
-    const item = earnings.find((entry: any) => {
-      const name = getText(
-        entry.Component_Name,
-        entry.ComponentName,
-        entry.Earning_Name,
-        entry.EarningName,
-        entry.Head_Name,
-        entry.HeadName,
-        entry.Name,
-        entry.name,
-        entry.Salary_Head,
-        entry.SalaryHead,
-        entry.Particulars,
-      ).toLowerCase();
-
-      return keywords.some((keyword) => name.includes(keyword));
-    });
-
-    return getNumber(
-      item?.Amount,
-      item?.amount,
-      item?.Value,
-      item?.value,
-      item?.Salary,
-      item?.salary,
-      item?.Actual_Amount,
-      item?.ActualAmount,
-    );
-  }
-
-  if (typeof earnings === "object") {
-    for (const key of Object.keys(earnings)) {
-      if (keywords.some((keyword) => key.toLowerCase().includes(keyword))) {
-        return getNumber(earnings[key]);
-      }
-    }
-  }
-
-  return 0;
-};
-
-// --------------------------------------------------
-// MAP SALARY REGISTER ROW
-// --------------------------------------------------
-
-const mapRegisterRow = (
-  item: any,
-  index: number,
-  selectedEmployee?: any,
-): RegisterRow => {
-  const earnings =
-    item.earnings || item.Earnings || item.salary || item.Salary || [];
-
-  const basic = getNumber(
-    item.Basic,
-    item.BASIC,
-    item.Basic_Salary,
-    item.BasicSalary,
-    getEarningAmount(earnings, ["basic"]),
-  );
-
-  const hra = getNumber(
-    item.HRA,
-    item.Hra,
-    item.HRA_Amount,
-    item.HRAAmount,
-    getEarningAmount(earnings, ["hra", "house rent"]),
-  );
-
-  const gross = getNumber(
-    item["Gross Salary"],
-    item.Gross,
-    item["total Wages"],
-    item["Total Wages"],
-    item.Total_Wages,
-    item.TotalWages,
-    item.Gross_Salary,
-    item.GrossSalary,
-    item.gross_salary,
-  );
-
-  const netPayment = getNumber(
-    item["NET PAYMENT"],
-    item["Net Payment"],
-    item["Net Salary"],
-    item.Net_Salary,
-    item.NetSalary,
-    item.NetPay,
-    item.Net_Pay,
-    item.NetAmount,
-    item.NetPaid,
-    item.Net_Amount,
-  );
-
-  return {
-    ...item,
-
-    id: index,
-
-    empCode: getText(
-      item.EMPCODE,
-      item["Employee Code"],
-      item.Emp_Code,
-      item.EmpCode,
-      item.EmployeeCode,
-      item.Employee_Code,
-      selectedEmployee?.value,
-    ),
-
-    employeeName: getText(
-      item.EMPFIRSTNAME,
-      item["Employee Name"],
-      item.Emp_Name,
-      item.EmployeeName,
-      item.EmpName,
-      item.Name,
-      item.Employee_Name,
-      selectedEmployee?.label,
-    ),
-
-    monthDays: getNumber(
-      item.Monthdays,
-      item.Month_Days,
-      item.MonthDays,
-      item.Total_Days,
-      item.TotalDays,
-      item.Month_Days_Count,
-    ),
-
-    presentDays: getNumber(
-      item["Present days"],
-      item.Present_days,
-      item.Present_Days,
-      item.PresentDays,
-      item["Days Paid"],
-      item.Days_Paid,
-      item.DaysPaid,
-    ),
-
-    basic,
-    hra,
-    gross,
-    netPayment,
-  };
-};
-
-// --------------------------------------------------
 // MAIN PAGE
 // --------------------------------------------------
 
@@ -320,7 +155,6 @@ export default function MonthlySalaryRegisterViewPage() {
   const currentDate = useMemo(() => new Date(), []);
 
   const [year, setYear] = useState(String(currentDate.getFullYear()));
-
   const [month, setMonth] = useState(String(currentDate.getMonth() + 1));
 
   const [rows, setRows] = useState<RegisterRow[]>([]);
@@ -411,7 +245,10 @@ export default function MonthlySalaryRegisterViewPage() {
 
       const responseData = response.data;
 
-      if (responseData?.Status === false || responseData?.status === false) {
+      if (
+        responseData?.Status === false ||
+        responseData?.status === false
+      ) {
         throw new Error(
           responseData?.message ||
             responseData?.Message ||
@@ -562,10 +399,6 @@ export default function MonthlySalaryRegisterViewPage() {
       return;
     }
 
-    const selectedEmployee = employeeOptions.find(
-      (item) => item.value === employee,
-    );
-
     setLoading(true);
     setRows([]);
     setReportHeaders([]);
@@ -591,15 +424,12 @@ export default function MonthlySalaryRegisterViewPage() {
       // STEP 2: PARSE TEMPLATE FIELDS
 
       const rawFields = parseFields(templateData?.selected_fields);
-
       const locationFields = parseFields(templateData?.location_fields);
 
       const selectFields = rawFields
         .map((item: any) => ({
           field_key: item.field_key || item.field,
-
           alias: item.alias || item.field_key || item.field,
-
           block_id: item.block_id ?? null,
         }))
         .filter((item: any) => Boolean(item.field_key));
@@ -621,13 +451,9 @@ export default function MonthlySalaryRegisterViewPage() {
         {
           salyear: Number(year),
           SalMnth: Number(month),
-
           selectFields,
-
           location: locationFields.length ? locationFields : null,
-
           empType: "both",
-
           empCode: employee || null,
         },
         {
@@ -654,26 +480,44 @@ export default function MonthlySalaryRegisterViewPage() {
         );
       }
 
-      // STEP 4: SAVE API HEADERS
+      // STEP 4: DYNAMIC API HEADERS
+      // Same approach as your existing working page.
+      // API header names and order are preserved.
 
       const apiHeadersList: string[] = Array.isArray(responseData?.headers)
         ? responseData.headers
         : [];
 
-      // Preserve the API header names and their order.
       const uniqueHeaders = Array.from(
-        new Set(apiHeadersList.filter((header: any) => String(header).trim())),
+        new Set(
+          apiHeadersList
+            .filter((header: any) => header !== null && header !== undefined)
+            .map((header: any) => String(header).trim())
+            .filter(Boolean),
+        ),
       );
+
+      if (!uniqueHeaders.length) {
+        showSideAlert("No columns received from API", "warning");
+
+        setRows([]);
+        setReportHeaders([]);
+        setHasSearched(true);
+
+        return;
+      }
 
       setReportHeaders(uniqueHeaders);
 
-      // STEP 5: MAP RESPONSE ROWS
+      // STEP 5: DIRECT API ROW MAPPING
+      // No fixed fields or hardcoded column mapping.
+      // Original API keys remain unchanged.
 
       const result = getResponseArray(responseData);
 
-      const mappedRows = result.map((item: any, index: number) =>
-        mapRegisterRow(item, index, selectedEmployee),
-      );
+      const mappedRows: RegisterRow[] = result.map((item: any) => ({
+        ...item,
+      }));
 
       setRows(mappedRows);
       setHasSearched(true);
@@ -709,7 +553,6 @@ export default function MonthlySalaryRegisterViewPage() {
     user?.Comp_Code,
     user?.name,
     employee,
-    employeeOptions,
     month,
     year,
     template,
@@ -729,7 +572,9 @@ export default function MonthlySalaryRegisterViewPage() {
   const resetFilters = () => {
     setSearch("");
 
-    setFilters(Object.fromEntries(reportHeaders.map((header) => [header, ""])));
+    setFilters(
+      Object.fromEntries(reportHeaders.map((header) => [header, ""])),
+    );
   };
 
   // --------------------------------------------------
@@ -748,29 +593,33 @@ export default function MonthlySalaryRegisterViewPage() {
             .includes(query),
         );
 
-      const matchesColumns = Object.entries(filters).every(([key, value]) => {
-        if (!value.trim()) return true;
+      const matchesColumns = Object.entries(filters).every(
+        ([key, value]) => {
+          if (!value.trim()) return true;
 
-        return String(row[key] ?? "")
-          .toLowerCase()
-          .includes(value.trim().toLowerCase());
-      });
+          return String(row[key] ?? "")
+            .toLowerCase()
+            .includes(value.trim().toLowerCase());
+        },
+      );
 
       return matchesSearch && matchesColumns;
     });
   }, [rows, search, filters, reportHeaders]);
 
   // --------------------------------------------------
-  // TABLE COLUMNS - DYNAMIC API HEADERS
+  // DYNAMIC TABLE COLUMNS
   // --------------------------------------------------
 
-  const columns = useMemo(() => {
+  const columns = useMemo((): TableColumn[] => {
     const currencyFields = [
       "Basic",
       "HRA",
       "Gross",
       "Gross Salary",
       "NET PAYMENT",
+      "Net Payment",
+      "Net Salary",
       "Washing",
       "DD CLUB",
       "Uniform",
@@ -791,7 +640,9 @@ export default function MonthlySalaryRegisterViewPage() {
 
     const numberFields = [
       "Monthdays",
+      "Month_Days",
       "Present days",
+      "Present_Days",
       "LEAVEVALUE",
       "PD",
       "UNIFORM QTY",
@@ -799,8 +650,12 @@ export default function MonthlySalaryRegisterViewPage() {
 
     return reportHeaders.map((header) => ({
       Header: header,
+
+      // Exact API header as accessor
       accessor: header,
+
       minWidth: 140,
+
       width:
         header === "EMPFIRSTNAME" ||
         header === "PERMANENTADDRESS1" ||
@@ -814,17 +669,21 @@ export default function MonthlySalaryRegisterViewPage() {
         }
 
         if (currencyFields.includes(header)) {
-          return (
-            <span className="font-medium tabular-nums text-[#152b4b] dark:text-slate-200">
-              {formatCurrency(Number(value))}
-            </span>
-          );
+          const numericValue = Number(value);
+
+          if (Number.isFinite(numericValue)) {
+            return (
+              <span className="font-medium tabular-nums text-[#152b4b] dark:text-slate-200">
+                {formatCurrency(numericValue)}
+              </span>
+            );
+          }
         }
 
         if (numberFields.includes(header)) {
           return (
             <span className="tabular-nums text-[#152b4b] dark:text-slate-200">
-              {value}
+              {String(value)}
             </span>
           );
         }
@@ -832,7 +691,7 @@ export default function MonthlySalaryRegisterViewPage() {
         if (header === "EMPCODE" || header === "SRNO") {
           return (
             <span className="font-mono text-[12px] font-bold text-[#152b4b] dark:text-slate-200">
-              {value}
+              {String(value)}
             </span>
           );
         }
@@ -840,7 +699,7 @@ export default function MonthlySalaryRegisterViewPage() {
         if (header === "EMPFIRSTNAME") {
           return (
             <span className="font-medium text-[#152b4b] dark:text-slate-100">
-              {value}
+              {String(value)}
             </span>
           );
         }
@@ -901,7 +760,10 @@ export default function MonthlySalaryRegisterViewPage() {
   // COLUMN FILTER DEFINITIONS
   // --------------------------------------------------
 
-  const columnFilters = reportHeaders.map((header) => [header, header]);
+  const columnFilters = reportHeaders.map((header) => [
+    header,
+    header,
+  ]);
 
   // --------------------------------------------------
   // RENDER
@@ -1046,7 +908,7 @@ export default function MonthlySalaryRegisterViewPage() {
 
               {/* COLUMN FILTERS */}
 
-              <AButton
+              {/* <AButton
                 type="button"
                 onClick={() => setShowColumnFilters((previous) => !previous)}
                 className={`inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
@@ -1063,7 +925,7 @@ export default function MonthlySalaryRegisterViewPage() {
                     showColumnFilters ? "rotate-180" : ""
                   }`}
                 />
-              </AButton>
+              </AButton> */}
 
               {/* RESET */}
 
@@ -1078,6 +940,7 @@ export default function MonthlySalaryRegisterViewPage() {
 
               {/* EXPORT */}
 
+              {/*
               <AButton
                 type="button"
                 onClick={exportToExcel}
@@ -1087,6 +950,7 @@ export default function MonthlySalaryRegisterViewPage() {
                 <FileSpreadsheet size={15} />
                 Export to Excel
               </AButton>
+              */}
             </div>
           </div>
 
@@ -1140,7 +1004,8 @@ export default function MonthlySalaryRegisterViewPage() {
                     columns={columns}
                     data={filteredRows}
                     showTopSearch={false}
-                    showExcelExport={false}
+                    showExcelExport={true}
+                    showColumnFilters={true}
                     initialPageSize={10}
                   />
                 ) : (

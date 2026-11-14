@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -604,9 +603,7 @@ export default function EmployeeDeductionView() {
   );
 
   // SELECTION
-  const visibleRowKeys = tableData.map((row: AnyRecord) =>
-    String(row._rowKey),
-  );
+  const visibleRowKeys = tableData.map((row: AnyRecord) => String(row._rowKey));
 
   const allVisibleSelected =
     visibleRowKeys.length > 0 &&
@@ -1066,10 +1063,7 @@ export default function EmployeeDeductionView() {
             <Eselect
               title="REGION"
               name="region"
-              option={[
-                { value: "all", label: "All regions" },
-                ...regions,
-              ]}
+              option={[{ value: "all", label: "All regions" }, ...regions]}
               initialValue={region}
               handleInputChange={handleInputChange}
               className="h-[34px] w-full"
@@ -1079,10 +1073,7 @@ export default function EmployeeDeductionView() {
             <Eselect
               title="DEDUCTION TYPE"
               name="deductionType"
-              option={[
-                { value: "all", label: "All types" },
-                ...deductionTypes,
-              ]}
+              option={[{ value: "all", label: "All types" }, ...deductionTypes]}
               initialValue={deductionType}
               handleInputChange={handleInputChange}
               className="h-[34px] w-full"
@@ -1196,15 +1187,6 @@ export default function EmployeeDeductionView() {
                 Select the rows you need to delete
               </span>
             </div>
-
-            <AButton
-              type="button"
-              onClick={exportToExcel}
-              className="inline-flex h-[32px] w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3 text-[11px] font-semibold text-[#334155] hover:bg-slate-50 dark:border-slate-600 dark:bg-[#202c3e] dark:text-slate-200 dark:hover:bg-slate-700 sm:w-auto"
-            >
-              <Download size={14} />
-              Export to Excel
-            </AButton>
           </div>
 
           {/* TABLE */}
@@ -1214,7 +1196,8 @@ export default function EmployeeDeductionView() {
                 columns={columns}
                 data={tableData}
                 showTopSearch={false}
-                showExcelExport={false}
+                showExcelExport={true}
+                showColumnFilters={true}
                 initialPageSize={10}
               />
             </div>

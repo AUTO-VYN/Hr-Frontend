@@ -1119,14 +1119,7 @@ export default function BankTransferSheetPage() {
                     )}
                   </div>
 
-                  <AButton
-                    type="button"
-                    onClick={handleExport}
-                    className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-lg border border-[#dce5f1] bg-white px-3 text-[11px] font-medium text-[#536987] hover:bg-slate-50 dark:border-slate-600 dark:bg-[#202c3e] dark:text-slate-300 dark:hover:bg-slate-700"
-                  >
-                    <Download size={14} />
-                    Export
-                  </AButton>
+                
                 </div>
               </div>
 
@@ -1138,7 +1131,8 @@ export default function BankTransferSheetPage() {
                       columns={columns}
                       data={tableData}
                       showTopSearch={false}
-                      showExcelExport={false}
+                       showExcelExport={true}
+                      showColumnFilters= {true}
                       initialPageSize={10}
                     />
                   ) : (

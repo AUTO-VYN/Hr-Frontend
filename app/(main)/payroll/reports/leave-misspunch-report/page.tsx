@@ -1074,7 +1074,7 @@ export default function LeaveMispunchReportPage() {
                 />
               </div>
 
-              <AButton
+              {/* <AButton
                 type="button"
                 onClick={() => setShowColumnFilters((previous) => !previous)}
                 className={`inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
@@ -1084,7 +1084,7 @@ export default function LeaveMispunchReportPage() {
                 }`}
               >
                 Column filters
-              </AButton>
+              </AButton> */}
 
               <AButton
                 type="button"
@@ -1093,7 +1093,7 @@ export default function LeaveMispunchReportPage() {
               >
                 Reset
               </AButton>
-
+              {/* 
               <AButton
                 type="button"
                 onClick={exportToExcel}
@@ -1101,7 +1101,7 @@ export default function LeaveMispunchReportPage() {
                 className="inline-flex h-[38px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
               >
                 Export to Excel
-              </AButton>
+              </AButton> */}
             </div>
           </div>
 
@@ -1151,7 +1151,12 @@ export default function LeaveMispunchReportPage() {
             <div className="w-full min-w-0 overflow-x-auto">
               <div className="min-w-max">
                 {filteredRows.length > 0 ? (
-                  <DataTable columns={columns} data={filteredRows} />
+                  <DataTable
+                    columns={columns}
+                    data={filteredRows}
+                    showExcelExport={true}
+                    showColumnFilters={true}
+                  />
                 ) : (
                   <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                     No records found for the selected criteria.

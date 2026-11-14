@@ -1184,7 +1184,8 @@ export default function ReleaseNotesPage() {
                   columns={columns}
                   data={filteredNotes}
                   showTopSearch={false}
-                  showExcelExport={false}
+                  showExcelExport={true}
+                      showColumnFilters= {true}
                   initialPageSize={10}
                   onRowClick={(row: ReleaseNote) => setSelectedId(row.id)}
                 />

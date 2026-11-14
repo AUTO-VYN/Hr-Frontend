@@ -934,7 +934,7 @@ export default function SalaryStructureReportPage() {
 
               {/* COLUMN FILTERS */}
 
-              <AButton
+              {/* <AButton
                 type="button"
                 onClick={() => setShowColumnFilters((prev) => !prev)}
                 className={`inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
@@ -951,7 +951,7 @@ export default function SalaryStructureReportPage() {
                     showColumnFilters ? "rotate-180" : ""
                   }`}
                 />
-              </AButton>
+              </AButton> */}
 
               {/* RESET */}
 
@@ -966,7 +966,7 @@ export default function SalaryStructureReportPage() {
 
               {/* EXPORT */}
 
-              <AButton
+              {/* <AButton
                 type="button"
                 onClick={exportToExcel}
                 disabled={!filteredRows.length}
@@ -974,7 +974,7 @@ export default function SalaryStructureReportPage() {
               >
                 <FileSpreadsheet size={15} />
                 Export to Excel
-              </AButton>
+              </AButton> */}
             </div>
           </div>
 
@@ -1066,7 +1066,8 @@ export default function SalaryStructureReportPage() {
                     columns={columns}
                     data={filteredRows}
                     showTopSearch={false}
-                    showExcelExport={false}
+                    showExcelExport={true}
+                    showColumnFilters={true}
                     initialPageSize={10}
                   />
                 ) : (

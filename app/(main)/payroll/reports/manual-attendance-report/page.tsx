@@ -1,21 +1,9 @@
-
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import {
-  Search,
-  Filter,
-  RotateCcw,
-  Download,
-  X,
-} from "lucide-react";
+import { Search, Filter, RotateCcw, Download, X } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import AButton from "@/components/atoms/Button";
@@ -47,11 +35,7 @@ const getDefaultDates = () => {
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    ) {
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
       return String(value).trim();
     }
   }
@@ -70,7 +54,7 @@ const formatDate = (dateString: any) => {
     ? new Date(
         Number(dateOnlyMatch[1]),
         Number(dateOnlyMatch[2]) - 1,
-        Number(dateOnlyMatch[3])
+        Number(dateOnlyMatch[3]),
       )
     : new Date(raw);
 
@@ -103,11 +87,7 @@ const formatTime = (value: any) => {
 const getResponseArray = (response: any): any[] => {
   if (Array.isArray(response)) return response;
 
-  const containers = [
-    response,
-    response?.data,
-    response?.Data,
-  ];
+  const containers = [response, response?.data, response?.Data];
 
   const keys = [
     "result",
@@ -139,81 +119,43 @@ const mapReportRow = (item: any) => ({
 
   Region: getText(item.Region, item.REGION),
 
-  Location: getText(
-    item.Location,
-    item.Branch,
-    item.LOCATION,
-    item.Loc_Name
-  ),
+  Location: getText(item.Location, item.Branch, item.LOCATION, item.Loc_Name),
 
-  Division: getText(
-    item.Division,
-    item.Channel,
-    item.CHANNEL,
-    item.DIVISION
-  ),
+  Division: getText(item.Division, item.Channel, item.CHANNEL, item.DIVISION),
 
-  Department: getText(
-    item.Department,
-    item.DEPARTMENT
-  ),
+  Department: getText(item.Department, item.DEPARTMENT),
 
-  Designation: getText(
-    item.Designation,
-    item.DESIGNATION
-  ),
+  Designation: getText(item.Designation, item.DESIGNATION),
 
-  EmpCode: getText(
-    item.EmpCode,
-    item.Emp_Code,
-    item.EMPCODE
-  ),
+  EmpCode: getText(item.EmpCode, item.Emp_Code, item.EMPCODE),
 
   EmployeeName: getText(
     item.EmployeeName,
     item.EMPName,
     item.EMPNAME,
-    item.Emp_Name
+    item.Emp_Name,
   ),
 
   AttendanceDate:
-    item.AttendanceDate ??
-    item.dateoffice ??
-    item.ATTENDANCE_DATE ??
-    "",
+    item.AttendanceDate ?? item.dateoffice ?? item.ATTENDANCE_DATE ?? "",
 
   ShiftStartTime: getText(
     item.ShiftStartTime,
     item.shift,
     item.Shift,
     item.shiftTime,
-    item.ShiftTime
+    item.ShiftTime,
   ),
 
-  BM_IN1:
-    item.BM_IN1 ??
-    item.BM_IN ??
-    item.BM_IN_TIME,
+  BM_IN1: item.BM_IN1 ?? item.BM_IN ?? item.BM_IN_TIME,
 
-  BM_OUT1:
-    item.BM_OUT1 ??
-    item.BM_OUT ??
-    item.BM_OUT_TIME,
+  BM_OUT1: item.BM_OUT1 ?? item.BM_OUT ?? item.BM_OUT_TIME,
 
-  mp_in1:
-    item.mp_in1 ??
-    item.MP_IN ??
-    item.MP_IN1,
+  mp_in1: item.mp_in1 ?? item.MP_IN ?? item.MP_IN1,
 
-  mp_out1:
-    item.mp_out1 ??
-    item.MP_OUT ??
-    item.MP_OUT1,
+  mp_out1: item.mp_out1 ?? item.MP_OUT ?? item.MP_OUT1,
 
-  ShiftEndTime: getText(
-    item.ShiftEndTime,
-    item.SHIFT_END_TIME
-  ),
+  ShiftEndTime: getText(item.ShiftEndTime, item.SHIFT_END_TIME),
 
   InTime: item.InTime ?? item.IN_TIME,
 
@@ -221,44 +163,32 @@ const mapReportRow = (item: any) => ({
 
   Status: getText(item.Status, item.status),
 
-  InManual: getText(
-    item.InManual,
-    item.IN_MANUAL
-  ),
+  InManual: getText(item.InManual, item.IN_MANUAL),
 
-  OutManual: getText(
-    item.OutManual,
-    item.OUT_MANUAL
-  ),
+  OutManual: getText(item.OutManual, item.OUT_MANUAL),
 
-  IsMobilePunch: getText(
-    item.IsMobilePunch,
-    item.IS_MOBILE_PUNCH
-  ),
+  IsMobilePunch: getText(item.IsMobilePunch, item.IS_MOBILE_PUNCH),
 
   MispunchReason: getText(
     item.MispunchReason,
     item.MIS_PUNCH_REASON,
     item.mipunch_reason,
-    item.ReasonName
+    item.ReasonName,
   ),
 
   MispunchRemark: getText(
     item.MispunchRemark,
     item.MISPUNCH_REMARK,
-    item.Mis_Enterby
+    item.Mis_Enterby,
   ),
 
-  SPLRemark: getText(
-    item.SPLRemark,
-    item.SPL_REMARK
-  ),
+  SPLRemark: getText(item.SPLRemark, item.SPL_REMARK),
 
   Approver1: getText(
     item.Approver1,
     item.Approver1Name,
     item.Appr_1_Name,
-    item.Appr_1_Code
+    item.Appr_1_Code,
   ),
 
   Appr_1_Rem: getText(item.Appr_1_Rem),
@@ -267,7 +197,7 @@ const mapReportRow = (item: any) => ({
     item.Approver2,
     item.Approver2Name,
     item.Appr_2_Name,
-    item.Appr_2_Code
+    item.Appr_2_Code,
   ),
 
   Appr_2_Rem: getText(item.Appr_2_Rem),
@@ -276,7 +206,7 @@ const mapReportRow = (item: any) => ({
     item.Approver3,
     item.Approver3Name,
     item.Appr_3_Name,
-    item.Appr_3_Code
+    item.Appr_3_Code,
   ),
 
   Appr_3_Rem: getText(item.Appr_3_Rem),
@@ -284,7 +214,7 @@ const mapReportRow = (item: any) => ({
 
 const showAlert = (
   message: string,
-  icon: "success" | "error" | "warning" | "info" = "info"
+  icon: "success" | "error" | "warning" | "info" = "info",
 ) => {
   Swal.mixin({
     toast: true,
@@ -301,10 +231,7 @@ const showAlert = (
 export default function Page() {
   const user = useCurrentUser();
 
-  const defaultDates = useMemo(
-    () => getDefaultDates(),
-    []
-  );
+  const defaultDates = useMemo(() => getDefaultDates(), []);
 
   const [dates, setDates] = useState({
     DATE_FROM: defaultDates.from,
@@ -317,14 +244,11 @@ export default function Page() {
   const [searchText, setSearchText] = useState("");
   const [showColumnFilters, setShowColumnFilters] = useState(false);
 
-  const [columnFilters, setColumnFilters] = useState<
-    Record<string, string>
-  >({});
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
+    {},
+  );
 
-  const handleDateChange = (
-    name: string,
-    value: string
-  ) => {
+  const handleDateChange = (name: string, value: string) => {
     setDates((prev) => ({
       ...prev,
       [name]: value,
@@ -520,17 +444,14 @@ export default function Page() {
         width: 180,
       },
     ],
-    []
+    [],
   );
 
   // REPORT API
 
   const ShowData = useCallback(async () => {
     if (!user?.Comp_Code || !user?.branch) {
-      showAlert(
-        "Company or branch information is missing.",
-        "warning"
-      );
+      showAlert("Company or branch information is missing.", "warning");
       return;
     }
 
@@ -543,10 +464,7 @@ export default function Page() {
       new Date(`${dates.DATE_FROM}T00:00:00`) >
       new Date(`${dates.DATE_TO}T00:00:00`)
     ) {
-      showAlert(
-        "Date from cannot be greater than date to.",
-        "warning"
-      );
+      showAlert("Date from cannot be greater than date to.", "warning");
       return;
     }
 
@@ -567,7 +485,7 @@ export default function Page() {
             compcode: user.Comp_Code,
             name: user.name,
           },
-        }
+        },
       );
 
       console.log("Mispunch Report Response:", response?.data);
@@ -582,7 +500,7 @@ export default function Page() {
         throw new Error(
           responseData?.message ||
             responseData?.Message ||
-            "Unable to fetch mispunch report."
+            "Unable to fetch mispunch report.",
         );
       }
 
@@ -594,10 +512,7 @@ export default function Page() {
         Object.keys(row || {}).forEach((key) => {
           const value = row[key];
 
-          trimmedRow[key] =
-            typeof value === "string"
-              ? value.trim()
-              : value;
+          trimmedRow[key] = typeof value === "string" ? value.trim() : value;
         });
 
         return mapReportRow(trimmedRow);
@@ -606,15 +521,12 @@ export default function Page() {
       setTabledata(cleanedData);
 
       if (!cleanedData.length) {
-        showAlert(
-          "No mispunch records found for selected dates.",
-          "info"
-        );
+        showAlert("No mispunch records found for selected dates.", "info");
       }
     } catch (error: any) {
       console.error(
         "Mispunch Report API Error:",
-        error?.response?.data || error
+        error?.response?.data || error,
       );
 
       setTabledata([]);
@@ -658,9 +570,9 @@ export default function Page() {
           "Designation",
           "Status",
           "MispunchReason",
-        ].includes(column.accessor)
+        ].includes(column.accessor),
       ),
-    [columns]
+    [columns],
   );
 
   const columnFilterOptions = useMemo(() => {
@@ -668,14 +580,12 @@ export default function Page() {
 
     filterableColumns.forEach((column: any) => {
       const values = tabledata
-        .map((row) =>
-          String(row[column.accessor] ?? "").trim()
-        )
+        .map((row) => String(row[column.accessor] ?? "").trim())
         .filter(Boolean);
 
-      options[column.accessor] = Array.from(
-        new Set(values)
-      ).sort((a, b) => a.localeCompare(b));
+      options[column.accessor] = Array.from(new Set(values)).sort((a, b) =>
+        a.localeCompare(b),
+      );
     });
 
     return options;
@@ -701,11 +611,8 @@ export default function Page() {
         ([accessor, selectedValue]) => {
           if (!selectedValue) return true;
 
-          return (
-            String(row[accessor] ?? "").trim() ===
-            selectedValue
-          );
-        }
+          return String(row[accessor] ?? "").trim() === selectedValue;
+        },
       );
     });
   }, [tabledata, searchText, columnFilters, columns]);
@@ -720,16 +627,11 @@ export default function Page() {
 
   const exportToExcel = () => {
     if (!filteredData.length) {
-      showAlert(
-        "No records available to export.",
-        "warning"
-      );
+      showAlert("No records available to export.", "warning");
       return;
     }
 
-    const headers = columns.map(
-      (column: any) => column.Header
-    );
+    const headers = columns.map((column: any) => column.Header);
 
     const csvRows = [
       headers,
@@ -755,7 +657,7 @@ export default function Page() {
           }
 
           return value;
-        })
+        }),
       ),
     ];
 
@@ -764,11 +666,8 @@ export default function Page() {
       csvRows
         .map((row) =>
           row
-            .map(
-              (value: any) =>
-                `"${String(value ?? "").replace(/"/g, '""')}"`
-            )
-            .join(",")
+            .map((value: any) => `"${String(value ?? "").replace(/"/g, '""')}"`)
+            .join(","),
         )
         .join("\n");
 
@@ -791,7 +690,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] px-3 py-3 text-[#172b45] dark:bg-[#101827] dark:text-slate-100 sm:px-5">
-
       {/* HEADER */}
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -844,17 +742,14 @@ export default function Page() {
       {/* TABLE CARD */}
 
       <div className="overflow-hidden rounded-2xl border border-[#dce5f0] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-
         {/* TABLE TOOLBAR */}
 
         <div className="flex flex-col gap-3 border-b border-[#dce5f0] bg-white px-5 py-3 dark:border-slate-700 dark:bg-slate-900 lg:flex-row lg:items-center lg:justify-between">
-
           <div className="text-[15px] font-medium text-[#64748b] dark:text-slate-300">
             {filteredData.length} of {tabledata.length} rows
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-
             <div className="relative w-full sm:w-[285px]">
               <Search
                 size={17}
@@ -883,7 +778,7 @@ export default function Page() {
             >
               <Filter size={16} className="mr-2" />
               Column filters
-            </button>
+            </button> */}
 
             <button
               type="button"
@@ -894,7 +789,7 @@ export default function Page() {
               Reset
             </button>
 
-            <button
+            {/* <button
               type="button"
               onClick={exportToExcel}
               disabled={!filteredData.length}
@@ -902,7 +797,7 @@ export default function Page() {
             >
               <Download size={16} className="mr-2" />
               Export to Excel
-            </button> */}
+            </button>  */}
           </div>
         </div>
 
@@ -910,7 +805,6 @@ export default function Page() {
 
         {showColumnFilters && (
           <div className="border-b border-[#dce5f0] bg-[#f8fafc] px-5 py-4 dark:border-slate-700 dark:bg-slate-800">
-
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[#172b45] dark:text-white">
                 Filter columns
@@ -949,7 +843,7 @@ export default function Page() {
                         <option key={value} value={value}>
                           {value}
                         </option>
-                      )
+                      ),
                     )}
                   </select>
                 </div>
@@ -975,9 +869,9 @@ export default function Page() {
             <DataTable
               columns={columns}
               data={filteredData}
-              onRowDoubleClick={(row: any) =>
-                console.log(row, "rowData")
-              }
+              showExcelExport={true}
+              showColumnFilters={true}
+              onRowDoubleClick={(row: any) => console.log(row, "rowData")}
             />
           </div>
         </div>

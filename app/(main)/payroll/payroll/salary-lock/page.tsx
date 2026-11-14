@@ -1034,6 +1034,7 @@ const fetchBranchEmployeeCounts = useCallback(async () => {
                   <Einput
                     title=""
                     name="search"
+                    placeholder="Search locations..."
                     type="text"
                     value={search}
                     handleInputChange={handleFilterChange}
