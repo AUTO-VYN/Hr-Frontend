@@ -15,6 +15,7 @@ import {
   Download,
   Check,
   Minus,
+  RotateCcw,
 } from "lucide-react";
 
 import useExcelDownload from "@/app/hooks/excel-download";
@@ -70,6 +71,8 @@ interface Props {
   columnFilters?: Record<string, string>;
   onColumnFilterChange?: (columnKey: string, value: string) => void;
   columnFiltersResetTrigger?: number;
+  resetfilters?: any;
+  resetFilters?: any;
 
   footerTextMode?: "showing" | "pageItems";
   containerClassName?: string;
@@ -143,6 +146,8 @@ export default function ServiceTablePagination({
   columnFilters,
   onColumnFilterChange,
   columnFiltersResetTrigger,
+  resetfilters,
+  resetFilters,
   footerTextMode = "showing",
   containerClassName = "",
 }: Props) {
@@ -156,11 +161,17 @@ export default function ServiceTablePagination({
     Record<string, string>
   >({});
 
+  const filterResetProp =
+    resetfilters !== undefined ? resetfilters : resetFilters;
+
   useEffect(() => {
-    if (columnFiltersResetTrigger !== undefined) {
+    if (
+      columnFiltersResetTrigger !== undefined ||
+      filterResetProp !== undefined
+    ) {
       setInternalColumnFilters({});
     }
-  }, [columnFiltersResetTrigger]);
+  }, [columnFiltersResetTrigger, filterResetProp]);
 
   const activeColumnFilters = useMemo(() => {
     return columnFilters !== undefined ? columnFilters : internalColumnFilters;
@@ -685,6 +696,7 @@ export default function ServiceTablePagination({
           onServerPageChange?.(1, false);
         }
       } else {
+        setAllMode(true); 
         const total = allRows.length || data.length || 0;
         setPageSize(total || 1);
         gotoPage(0);
@@ -693,7 +705,7 @@ export default function ServiceTablePagination({
     }
 
     // ✅ switching back to normal sizes
-    if (serverMode && allMode) {
+    if ( allMode) {
       setAllMode(false);
       setAllModeData([]);
       loadedPagesRef.current = new Set();
@@ -793,14 +805,22 @@ export default function ServiceTablePagination({
     handleExcelDownload(downloadCols, exportData);
   };
 
+  const handleResetAllFilters = () => {
+    setInternalColumnFilters({});
+    if (globalFilter) setGlobalFilter("");
+    if (onSearchChange) onSearchChange("");
+    gotoPage(0);
+  };
+
+  // ✅ dropdown me "All" select dikhane ke liye
   // ✅ dropdown me "All" select dikhane ke liye
   const pageSizeSelectValue =
-    serverMode && allMode
+    allMode
       ? -1
       : serverMode
         ? serverPagination?.pageSize || pageSize
         : pageSize;
-
+        
   const currentPageLabel = serverMode
     ? serverPagination?.currentPage || 1
     : pageIndex + 1;
@@ -819,7 +839,8 @@ export default function ServiceTablePagination({
         showTopSearch ||
         searchValue !== undefined ||
         onSearchChange ||
-        showExcelExport) && (
+        showExcelExport ||
+        Boolean(resetfilters || resetFilters)) && (
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-200 dark:border-slate-800 gap-2.5 bg-slate-50/50 dark:bg-slate-900/50">
             {title ? (
               <div className="font-bold text-base text-slate-800 dark:text-slate-200 uppercase tracking-wide">
@@ -861,6 +882,20 @@ export default function ServiceTablePagination({
                     />
                   </svg>
                 </div>
+              )}
+
+              {Boolean(resetfilters || resetFilters) && (
+                <button
+                  type="button"
+                  onClick={handleResetAllFilters}
+                  className="h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold
+                           hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed
+                           dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800
+                           inline-flex items-center gap-2 shrink-0 shadow-2xs cursor-pointer"
+                >
+                  <RotateCcw className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                  <span>Reset Filter</span>
+                </button>
               )}
 
               {showExcelExport ? (

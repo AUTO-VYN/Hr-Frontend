@@ -105,6 +105,26 @@ const displayValue = (value: unknown) => {
   return String(value);
 };
 
+const getImageUrl = (path?: string) => {
+  if (!path || typeof path !== "string") return "";
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    if (trimmed.includes("filePath=undefined")) {
+      return trimmed.replace("filePath=undefined", "filePath=");
+    }
+    return trimmed;
+  }
+
+  const cleanPath = trimmed.replace(/^undefined/i, "").replace(/\\/g, "/");
+  const basePath =
+    process.env.NEXT_PUBLIC_imagepath ||
+    `${process.env.NEXT_PUBLIC_URL || "https://erp.autovyn.com/backend"}/fetch?filePath=`;
+
+  return `${basePath}${cleanPath}`;
+};
+
 const getStatus = (row: MissPunchRow) => {
   const MAN_APPR = String(row.MAN_APPR || "").trim().toUpperCase();
   const Man_Rej = String(row.Man_Rej || "").trim().toUpperCase();
@@ -365,6 +385,7 @@ const Approver2 = ({ back }: Approver2Props) => {
       toast({
         title:
           error?.response?.data?.Message ||
+
           "Unable to fetch miss-punch records",
         variant: "destructive",
       });
@@ -418,6 +439,7 @@ const Approver2 = ({ back }: Approver2Props) => {
         icon: "warning",
         title: "Remark required",
         text: "Please enter a remark before proceeding.",
+        customClass: { container: "!z-[99999]" },
         confirmButtonColor: "#4338CA",
       });
       return false;
@@ -485,9 +507,11 @@ const Approver2 = ({ back }: Approver2Props) => {
           title: "Success",
           text:
             response.data?.Message ||
+
             `${selectedrowdata.length} record(s) ${
               approve ? "approved" : "rejected"
             } successfully`,
+
           confirmButtonColor: "#4338CA",
         });
 
@@ -501,6 +525,7 @@ const Approver2 = ({ back }: Approver2Props) => {
           title: approve ? "Approval failed" : "Rejection failed",
           text:
             response.data?.Message ||
+
             `${approve ? "Approval" : "Rejection"} failed`,
           confirmButtonColor: "#4338CA",
         });
@@ -512,6 +537,7 @@ const Approver2 = ({ back }: Approver2Props) => {
         title: approve ? "Approval failed" : "Rejection failed",
         text:
           error?.response?.data?.Message ||
+
           `${approve ? "Approval" : "Rejection"} failed`,
         confirmButtonColor: "#4338CA",
       });
@@ -633,7 +659,7 @@ const Approver2 = ({ back }: Approver2Props) => {
     <div className="min-h-screen bg-[#F5F7FB] pb-28 text-slate-900 dark:bg-[#070D18] dark:text-slate-100">
       <div className="mx-auto w-full max-w-[1800px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
         {/* Page heading */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-[30px]">
               Mis-punch approver grid
@@ -643,12 +669,13 @@ const Approver2 = ({ back }: Approver2Props) => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 md:shrink-0">
             <AButton
               type="button"
               variant="outline"
               size="lg"
-              icon={<FileSpreadsheet className="h-5 w-5" />}
+              className="whitespace-nowrap sm:h-12 sm:px-6 sm:py-3 sm:text-base"
+              icon={<FileSpreadsheet className="h-5 w-5 shrink-0" />}
               loading={isExcelLoading}
               onClick={handleExportExcel}
             >
@@ -658,8 +685,9 @@ const Approver2 = ({ back }: Approver2Props) => {
               type="button"
               variant="outline"
               size="lg"
-              icon={<ListChecks className="h-5 w-5" />}
+              icon={<ListChecks className="h-5 w-5 shrink-0" />}
               onClick={() => setIsApproverListOpen(true)}
+              className="whitespace-nowrap sm:h-12 sm:px-6 sm:py-3 sm:text-base"
               aria-label="View approver list"
             >
               Approvers
@@ -668,6 +696,7 @@ const Approver2 = ({ back }: Approver2Props) => {
               type="button"
               variant="outline"
               size="lg"
+              className="whitespace-nowrap sm:h-12 sm:px-6 sm:py-3 sm:text-base"
               onClick={handleBack}
             >
               Back
@@ -676,7 +705,7 @@ const Approver2 = ({ back }: Approver2Props) => {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           <SummaryCard
             label="Pending"
             count={summary.pending}
@@ -861,8 +890,22 @@ const Approver2 = ({ back }: Approver2Props) => {
       </div>
 
       {/* Employee details dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[calc(100%-24px)] max-w-5xl overflow-y-auto rounded-2xl p-5 sm:p-6">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} modal={false}>
+        <DialogContent
+          className="max-h-[90vh] w-[calc(100%-24px)] max-w-5xl overflow-y-auto rounded-2xl p-5 sm:p-6"
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target?.closest?.(".swal2-container") || document.querySelector(".swal2-container")) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target?.closest?.(".swal2-container") || document.querySelector(".swal2-container")) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <div className="mb-2 flex items-center gap-2">
               {statusBadge(Number(missPunchData.status || 1))}
@@ -889,10 +932,10 @@ const Approver2 = ({ back }: Approver2Props) => {
 
                 <div className="col-span-1 flex flex-col gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
                   <span className="font-semibold">In Punch Image</span>
-                  {missPunchData.fileIn ? (
+                  {getImageUrl(missPunchData.fileIn) ? (
                     <>
                       <Image
-                        src={missPunchData.fileIn}
+                        src={getImageUrl(missPunchData.fileIn)}
                         alt="In punch attachment"
                         width={180}
                         height={100}
@@ -900,8 +943,8 @@ const Approver2 = ({ back }: Approver2Props) => {
                         className="max-h-36 w-fit rounded-lg object-contain"
                       />
                       <FileViewer
-                        fileLink={missPunchData.fileIn}
-                        celldata={missPunchData.fileIn}
+                        fileLink={getImageUrl(missPunchData.fileIn)}
+                        celldata={getImageUrl(missPunchData.fileIn)}
                       />
                     </>
                   ) : (
@@ -911,17 +954,20 @@ const Approver2 = ({ back }: Approver2Props) => {
 
                 <div className="col-span-1 flex flex-col gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
                   <span className="font-semibold">Out Punch Image</span>
-                  {missPunchData.fileOut ? (
+                  {getImageUrl(missPunchData.fileOut) ? (
                     <>
                       <Image
-                        src={missPunchData.fileOut}
+                        src={getImageUrl(missPunchData.fileOut)}
                         alt="Out punch attachment"
                         width={180}
                         height={100}
                         unoptimized
                         className="max-h-36 w-fit rounded-lg object-contain"
                       />
-                      <FileViewer fileLink={missPunchData.fileOut} />
+                      <FileViewer
+                        fileLink={getImageUrl(missPunchData.fileOut)}
+                        celldata={getImageUrl(missPunchData.fileOut)}
+                      />
                     </>
                   ) : (
                     <span className="text-slate-400">No image available</span>
@@ -966,8 +1012,22 @@ const Approver2 = ({ back }: Approver2Props) => {
       </Dialog>
 
       {/* Approver list dialog */}
-      <Dialog open={isApproverListOpen} onOpenChange={setIsApproverListOpen}>
-        <DialogContent className="max-h-[85vh] w-[calc(100%-24px)] max-w-4xl overflow-y-auto rounded-2xl p-5">
+      <Dialog open={isApproverListOpen} onOpenChange={setIsApproverListOpen} modal={false}>
+        <DialogContent
+          className="max-h-[85vh] w-[calc(100%-24px)] max-w-4xl overflow-y-auto rounded-2xl p-5"
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target?.closest?.(".swal2-container") || document.querySelector(".swal2-container")) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target?.closest?.(".swal2-container") || document.querySelector(".swal2-container")) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Approver List</DialogTitle>
             <DialogDescription asChild>
@@ -1061,19 +1121,19 @@ const SummaryCard = ({ label, count, icon, tone, active }: SummaryCardProps) => 
 
   return (
     <div
-      className={`rounded-2xl border bg-white p-5 shadow-sm transition-colors dark:bg-[#0B1220] ${
+      className={`rounded-2xl border bg-white p-3.5 sm:p-5 shadow-sm transition-colors dark:bg-[#0B1220] ${
         active ? tones[tone].border : "border-slate-200 dark:border-slate-800"
       }`}
     >
-      <div className="flex items-center gap-3">
-        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tones[tone].icon}`}>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl ${tones[tone].icon}`}>
           {icon}
         </span>
-        <span className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <span className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 sm:text-sm">
           {label}
         </span>
       </div>
-      <div className="mt-3 text-3xl font-bold leading-none text-slate-900 dark:text-white">
+      <div className="mt-2 text-2xl font-bold leading-none text-slate-900 dark:text-white sm:mt-3 sm:text-3xl">
         {count}
       </div>
     </div>
