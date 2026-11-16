@@ -1155,6 +1155,7 @@ export default function LeaveMispunchReportPage() {
                     columns={columns}
                     data={filteredRows}
                     showExcelExport={true}
+                     showPageSizeInFooter = {true}
                     showColumnFilters={true}
                   />
                 ) : (

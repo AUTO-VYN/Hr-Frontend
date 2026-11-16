@@ -772,6 +772,7 @@ export default function BiometricMachineDataExportPage() {
                     showTopSearch={false}
                     showExcelExport={true}
                     showColumnFilters={true}
+                     showPageSizeInFooter = {true}
                     initialPageSize={10}
                   />
                 ) : (

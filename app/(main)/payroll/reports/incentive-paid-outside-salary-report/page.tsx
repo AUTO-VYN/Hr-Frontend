@@ -706,6 +706,7 @@ export default function IncentivePaidOutsideSalaryPage() {
                     data={filteredRows}
                     onRowDoubleClick={() => {}}
                     showExcelExport={true}
+                     showPageSizeInFooter = {true}
                     showColumnFilters={true}
                   />
                 ) : (

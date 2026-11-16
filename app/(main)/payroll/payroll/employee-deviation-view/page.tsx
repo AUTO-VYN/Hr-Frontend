@@ -624,8 +624,9 @@ export default function EmployeeDeviationView() {
           <DataTable
             columns={columns}
             data={visibleRows}
-            showTopSearch={false}
+            showTopSearch={true}
             showExcelExport={true}
+            showPageSizeInFooter={true}
             showColumnFilters={true}
             initialPageSize={10}
           />

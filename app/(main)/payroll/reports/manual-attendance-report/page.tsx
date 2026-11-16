@@ -871,6 +871,7 @@ export default function Page() {
               data={filteredData}
               showExcelExport={true}
               showColumnFilters={true}
+               showPageSizeInFooter = {true}
               onRowDoubleClick={(row: any) => console.log(row, "rowData")}
             />
           </div>

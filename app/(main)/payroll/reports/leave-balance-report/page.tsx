@@ -940,6 +940,7 @@ export default function LeaveBalanceReportViewPage() {
                     columns={columns}
                     data={filteredRows}
                     showExcelExport={true}
+                     showPageSizeInFooter = {true}
                     showColumnFilters={true}
                   />
                 ) : (

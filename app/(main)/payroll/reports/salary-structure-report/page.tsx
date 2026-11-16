@@ -1068,6 +1068,7 @@ export default function SalaryStructureReportPage() {
                     showTopSearch={false}
                     showExcelExport={true}
                     showColumnFilters={true}
+                     showPageSizeInFooter = {true}
                     initialPageSize={10}
                   />
                 ) : (

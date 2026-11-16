@@ -1195,9 +1195,10 @@ export default function EmployeeDeductionView() {
               <DataTable
                 columns={columns}
                 data={tableData}
-                showTopSearch={false}
+                showTopSearch={true}
                 showExcelExport={true}
                 showColumnFilters={true}
+                 showPageSizeInFooter = {true}
                 initialPageSize={10}
               />
             </div>

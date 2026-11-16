@@ -1382,7 +1382,8 @@ export default function EmployeeSalarySlipsPage() {
                 columns={columns}
                 data={slipRows}
                 showTopSearch={true}
-                showExcelExport={false}
+                showExcelExport={true}
+                 showPageSizeInFooter = {true}
                 initialPageSize={10}
               />
             </div>

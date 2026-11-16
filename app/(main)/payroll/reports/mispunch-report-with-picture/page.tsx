@@ -224,33 +224,47 @@ const showSideAlert = (
 // FORMAT HELPERS
 // --------------------------------------------------
 
+// Format date values without timezone conversion. API values such as
+// 2025-06-26T00:00:00.000Z must display as 26-06-2025, not the raw ISO string.
+const formatDateOnly = (value: any): string => {
+  if (value === null || value === undefined || value === "") return "—";
+
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "—";
+    return `${String(value.getDate()).padStart(2, "0")}-${String(
+      value.getMonth() + 1,
+    ).padStart(2, "0")}-${value.getFullYear()}`;
+  }
+
+  const raw = String(value).trim();
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
+
+  const dmyMatch = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+  if (dmyMatch) return `${dmyMatch[1]}-${dmyMatch[2]}-${dmyMatch[3]}`;
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  return `${String(parsed.getDate()).padStart(2, "0")}-${String(
+    parsed.getMonth() + 1,
+  ).padStart(2, "0")}-${parsed.getFullYear()}`;
+};
+
 const formatDate = (value: any): string => {
   if (!value) return "";
-
-  const raw = String(value);
-
-  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-  if (match) {
-    const date = new Date(
-      Number(match[1]),
-      Number(match[2]) - 1,
-      Number(match[3]),
-    );
-
+  const raw = String(value).trim();
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
   }
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return raw;
-  }
-
+  if (Number.isNaN(date.getTime())) return raw;
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -259,26 +273,32 @@ const formatDate = (value: any): string => {
 };
 
 const formatDateTime = (value: any): string => {
-  if (!value) return "";
+  if (value === null || value === undefined || value === "") return "—";
 
-  const raw = String(value);
-  const parts = raw.split(/[ T]/);
-  const datePart = parts[0];
-  const timePart = parts[1];
+  const raw = String(value).trim();
+  if (!raw) return "—";
 
-  if (!datePart) return raw;
+  // ISO / SQL date-time, including milliseconds and Z / timezone offsets.
+  const isoMatch = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/i,
+  );
+  if (isoMatch) {
+    const [, year, month, day, hours, minutes, seconds] = isoMatch;
+    const date = `${day}-${month}-${year}`;
+    return hours ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}` : date;
+  }
 
-  const [year, month, day] = datePart.split("-");
+  // Also support DD-MM-YYYY / DD/MM/YYYY values returned by some APIs.
+  const dmyMatch = raw.match(
+    /^(\d{2})[-/](\d{2})[-/](\d{4})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (dmyMatch) {
+    const [, day, month, year, hours, minutes, seconds] = dmyMatch;
+    const date = `${day}-${month}-${year}`;
+    return hours ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}` : date;
+  }
 
-  if (!year || !month || !day) return raw;
-
-  const formattedDate = `${day}-${month}-${year}`;
-
-  if (!timePart) return formattedDate;
-
-  const timeOnly = timePart.split(".")[0];
-
-  return `${formattedDate} ${timeOnly}`;
+  return raw;
 };
 
 const isDateTimeColumn = (key: string) => {
@@ -297,6 +317,41 @@ const getColumnLabel = (key: string) => {
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .trim()
     .toUpperCase();
+};
+
+
+const getFieldValue = (row: any, aliases: string[], fallback: any = "") => {
+  if (!row) return fallback;
+  const normalized: Record<string, any> = {};
+  Object.keys(row).forEach((key) => {
+    normalized[normalizeFieldName(key)] = row[key];
+  });
+  for (const alias of aliases) {
+    const value = normalized[normalizeFieldName(alias)];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return fallback;
+};
+
+const displayValue = (value: any) =>
+  value === null || value === undefined || value === "" ? "—" : String(value);
+
+const getImageSource = (value: any): string => {
+  if (!value || typeof value !== "string") return "";
+  const raw = value.trim();
+  if (/^(https?:\/\/|data:image\/|blob:)/i.test(raw)) return raw;
+  if (/^[A-Za-z0-9+/=\s]+$/.test(raw) && raw.length > 100) {
+    return `data:image/jpeg;base64,${raw.replace(/\s/g, "")}`;
+  }
+  return raw;
+};
+
+const getStatusLabel = (value: any) => {
+  const status = String(value ?? "").trim().toLowerCase();
+  if (["1", "approved", "approve"].includes(status)) return "Approved";
+  if (["0", "rejected", "reject"].includes(status)) return "Rejected";
+  if (["2", "pending"].includes(status)) return "Pending";
+  return displayValue(value);
 };
 
 // --------------------------------------------------
@@ -548,6 +603,15 @@ export default function MisPunchApproverReportPage() {
   const [showColumnFilters, setShowColumnFilters] = useState(false);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
+
+  // --------------------------------------------------
+  // EMPLOYEE DETAIL DIALOG
+  // --------------------------------------------------
+
+  const [selectedEmployee, setSelectedEmployee] = useState<ReportRow | null>(null);
+  const [attendanceDetailRows, setAttendanceDetailRows] = useState<any[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+
 
   // --------------------------------------------------
   // API HEADERS
@@ -1006,6 +1070,156 @@ if (reportType === "Attendance report") {
   };
 
   // --------------------------------------------------
+  // EMPLOYEE DETAIL DIALOG
+  // --------------------------------------------------
+
+  const closeEmployeeDialog = () => {
+    setSelectedEmployee(null);
+    setAttendanceDetailRows([]);
+    setDetailLoading(false);
+  };
+
+  const handleEmployeeRowClick = async (row: ReportRow) => {
+    setSelectedEmployee(row);
+
+    if (reportType !== "Attendance report") {
+      return;
+    }
+
+    const employeeCode = getFieldValue(row, [
+      "Employee Code", "EMPCODE", "EMP_CODE", "EmpCode", "Code",
+    ]);
+
+    if (!employeeCode) {
+      setAttendanceDetailRows([]);
+      return;
+    }
+
+    setDetailLoading(true);
+    setAttendanceDetailRows([]);
+
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_URL}${ATTENDANCE_REPORT_API}`;
+      const pageSize = 500;
+      const collected: any[] = [];
+
+      const createDetailPayload = (page: number) => ({
+        dateFrom,
+        dateto: dateTo,
+        status: "3",
+        region: "",
+        channel: "",
+        Cluster: "",
+        location: "",
+        section: "",
+        department: "",
+        designation: "",
+        emptype: "",
+        empcode: String(employeeCode),
+        reporttype: "attendance",
+        LeftEmp: 1,
+        page,
+        pageSize,
+        limit: pageSize,
+        loc_code: Number(user?.branch),
+        search: "",
+      });
+
+      const firstResponse = await axios.post(
+        apiUrl,
+        createDetailPayload(1),
+        {
+          headers: apiHeaders,
+          params: { compcode: user?.Comp_Code },
+          timeout: 60000,
+        },
+      );
+
+      const firstData = firstResponse?.data;
+      if (
+        firstData?.success === false ||
+        firstData?.status === false
+      ) {
+        throw new Error(firstData?.message || "Unable to fetch employee attendance details.");
+      }
+
+      collected.push(...getResponseArray(firstData));
+
+      const totalPages = Math.max(
+        1,
+        Number(
+          firstData?.pagination?.totalPages ??
+          firstData?.data?.pagination?.totalPages ??
+          1,
+        ),
+      );
+
+      for (let page = 2; page <= totalPages; page += 1) {
+        const response = await axios.post(
+          apiUrl,
+          createDetailPayload(page),
+          {
+            headers: apiHeaders,
+            params: { compcode: user?.Comp_Code },
+            timeout: 60000,
+          },
+        );
+
+        const pageData = response?.data;
+        if (pageData?.success === false || pageData?.status === false) {
+          throw new Error(pageData?.message || `Attendance detail page ${page} failed.`);
+        }
+        collected.push(...getResponseArray(pageData));
+      }
+
+      const employeeRows = collected.filter((item) => {
+        const code = getFieldValue(item, [
+          "Employee Code", "EMPCODE", "EMP_CODE", "EmpCode", "Code",
+        ]);
+        return String(code) === String(employeeCode);
+      });
+
+      setAttendanceDetailRows(employeeRows);
+    } catch (error: any) {
+      console.error("Employee attendance detail error:", error);
+      showSideAlert(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to fetch attendance details.",
+        "error",
+      );
+      setAttendanceDetailRows([]);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const getAttendanceDate = (item: any) =>
+    getFieldValue(item, [
+      "AttendanceDate", "AttnDate", "DATEOFFICE", "Date", "ATT_DATE",
+      "PunchDate", "TRANS_DATE", "DATE",
+    ]);
+
+  const getAttendanceStatus = (item: any) =>
+    getFieldValue(item, ["Status", "ATT_STATUS", "AttnStatus", "AttendanceStatus", "STATUS"]);
+
+  const getAttendanceInTime = (item: any) =>
+    getFieldValue(item, ["InTime", "IN_TIME", "PunchIn", "PUNCH_IN", "TIME_IN", "In_Time"]);
+
+  const getAttendanceOutTime = (item: any) =>
+    getFieldValue(item, ["OutTime", "OUT_TIME", "PunchOut", "PUNCH_OUT", "TIME_OUT", "Out_Time"]);
+
+  const getAttendanceInImage = (item: any) =>
+    getImageSource(getFieldValue(item, [
+      "fileIn", "InImage", "PunchInImage", "IN_IMAGE", "Punch_In_Image", "InPhoto",
+    ]));
+
+  const getAttendanceOutImage = (item: any) =>
+    getImageSource(getFieldValue(item, [
+      "fileOut", "OutImage", "PunchOutImage", "OUT_IMAGE", "Punch_Out_Image", "OutPhoto",
+    ]));
+
+  // --------------------------------------------------
   // DYNAMIC TABLE COLUMNS
   // --------------------------------------------------
 
@@ -1019,62 +1233,82 @@ if (reportType === "Attendance report") {
       minWidth: getColumnWidth(key),
       width: getColumnWidth(key),
 
-      Cell: ({ value }: any) => {
-        if (value === null || value === undefined || value === "") {
-          return <span className="text-slate-400">—</span>;
-        }
+      Cell: ({ value, row }: any) => {
+        const cellContent = (() => {
+          if (value === null || value === undefined || value === "") {
+            return <span className="text-slate-400">—</span>;
+          }
 
-        const normalizedKey = key.toUpperCase();
+          const normalizedKey = key.toUpperCase();
 
-        if (
-          normalizedKey.includes("STATUS") ||
-          normalizedKey.includes("APPROVAL")
-        ) {
+          if (
+            normalizedKey.includes("STATUS") ||
+            normalizedKey.includes("APPROVAL")
+          ) {
+            return (
+              <span className="whitespace-nowrap text-[12px] font-semibold text-[#152b4b] dark:text-slate-200">
+                {String(value)}
+              </span>
+            );
+          }
+
+          if (isDateTimeColumn(key)) {
+            return (
+              <span className="whitespace-nowrap text-[13px] text-[#152b4b] dark:text-slate-300">
+                {formatDateTime(value)}
+              </span>
+            );
+          }
+
+          if (isDateColumn(key)) {
+            return (
+              <span className="whitespace-nowrap text-[13px] text-[#152b4b] dark:text-slate-300">
+                {formatDate(value)}
+              </span>
+            );
+          }
+
+          if (
+            normalizedKey.includes("EMPCODE") ||
+            normalizedKey.includes("EMP_CODE") ||
+            normalizedKey.includes("EMPLOYEE CODE") ||
+            normalizedKey === "SRNO" ||
+            normalizedKey === "SR NO"
+          ) {
+            return (
+              <span className="whitespace-nowrap font-mono text-[12px] font-bold text-[#152b4b] dark:text-slate-200">
+                {String(value)}
+              </span>
+            );
+          }
+
           return (
-            <span className="whitespace-nowrap text-[12px] font-semibold text-[#152b4b] dark:text-slate-200">
+            <span className="text-[13px] text-[#152b4b] dark:text-slate-300">
               {String(value)}
             </span>
           );
-        }
-
-        if (isDateTimeColumn(key)) {
-          return (
-            <span className="whitespace-nowrap text-[13px] text-[#152b4b] dark:text-slate-300">
-              {formatDateTime(value)}
-            </span>
-          );
-        }
-
-        if (isDateColumn(key)) {
-          return (
-            <span className="whitespace-nowrap text-[13px] text-[#152b4b] dark:text-slate-300">
-              {formatDate(value)}
-            </span>
-          );
-        }
-
-        if (
-          normalizedKey.includes("EMPCODE") ||
-          normalizedKey.includes("EMP_CODE") ||
-          normalizedKey.includes("EMPLOYEE CODE") ||
-          normalizedKey === "SRNO" ||
-          normalizedKey === "SR NO"
-        ) {
-          return (
-            <span className="whitespace-nowrap font-mono text-[12px] font-bold text-[#152b4b] dark:text-slate-200">
-              {String(value)}
-            </span>
-          );
-        }
+        })();
 
         return (
-          <span className="text-[13px] text-[#152b4b] dark:text-slate-300">
-            {String(value)}
-          </span>
+          <div
+            role="button"
+            tabIndex={0}
+            title="Click to view employee details"
+            onClick={() => handleEmployeeRowClick(row?.original || {})}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleEmployeeRowClick(row?.original || {});
+              }
+            }}
+            className="w-full cursor-pointer"
+          >
+            {cellContent}
+          </div>
         );
       },
     }));
-  }, [headers, reportType]);
+  }, [headers, reportType, handleEmployeeRowClick]);
 
   // --------------------------------------------------
   // FILTERED ROWS
@@ -1391,6 +1625,355 @@ if (reportType === "Attendance report") {
           )}
         </div>
       </div>
+
+      {/* EMPLOYEE DETAIL DIALOG */}
+      {selectedEmployee && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-3 sm:p-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeEmployeeDialog();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="employee-detail-title"
+            className={`relative flex max-h-[94vh] w-full flex-col overflow-hidden rounded-lg border border-slate-700 bg-white shadow-2xl dark:border-slate-600 dark:bg-slate-900 ${
+              reportType === "Attendance report"
+                ? "max-w-[1480px]"
+                : "max-w-[1120px]"
+            }`}
+          >
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-300 px-5 py-3 dark:border-slate-700">
+              <h2
+                id="employee-detail-title"
+                className="text-[16px] font-bold text-slate-900 dark:text-slate-100"
+              >
+                {reportType === "Attendance report"
+                  ? "Attendance Details"
+                  : "Mis-Punch Request Details"}
+              </h2>
+              <button
+                type="button"
+                onClick={closeEmployeeDialog}
+                aria-label="Close dialog"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-blue-400 text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
+              {reportType === "Approval report" ? (
+                <div className="space-y-5 text-[12px] text-[#152b4b] dark:text-slate-200">
+                  {/* EMPLOYEE INFORMATION */}
+                  <section className="border-b border-slate-200 pb-4 dark:border-slate-700">
+                    <h3 className="mb-3 text-[13px] font-semibold text-blue-800 dark:text-blue-300">
+                      Employee Information
+                    </h3>
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                      {[
+                        ["Employee Code", ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"]],
+                        ["Employee Name", ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"]],
+                        ["Date Of Joining", ["Date Of Joining", "Joining Date", "DOJ", "DATE_OF_JOINING"]],
+                        ["Mobile No.", ["Mobile No", "Mobile", "MOBILE_NO", "MobileNumber"]],
+                        ["Company", ["Company", "CompanyName", "COMP_NAME"]],
+                        ["Designation", ["Designation", "DESIGNATION", "Desig_Name"]],
+                      ].map(([label, aliases]: any) => (
+                        <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
+                          <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                          <span>:</span>
+                          <span className="font-medium">
+                            {label === "Date Of Joining"
+                              ? formatDateOnly(getFieldValue(selectedEmployee, aliases))
+                              : displayValue(getFieldValue(selectedEmployee, aliases))}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* ORGANIZATIONAL DETAILS */}
+                  <section className="border-b border-slate-200 pb-4 dark:border-slate-700">
+                    <h3 className="mb-3 text-[13px] font-semibold text-blue-800 dark:text-blue-300">
+                      Organizational Details
+                    </h3>
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                      {[
+                        ["Channel", ["Channel", "CHANNEL_NAME"]],
+                        ["Cluster", ["Cluster", "CLUSTER_NAME"]],
+                        ["Branch", ["Branch", "Location", "Loc_Name", "LOCATION"]],
+                        ["Section", ["Section", "SECTION_NAME"]],
+                        ["Department", ["Department", "DEPARTMENT_NAME", "Dept_Name"]],
+                        ["Region", ["Region", "Sal_Region", "SAL_REGION"]],
+                      ].map(([label, aliases]: any) => (
+                        <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
+                          <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                          <span>:</span>
+                          <span className="font-medium">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* MIS-PUNCH DETAILS */}
+                  <section className="border-b border-slate-200 pb-4 dark:border-slate-700">
+                    <h3 className="mb-3 text-[13px] font-semibold text-blue-800 dark:text-blue-300">
+                      Mis-Punch Details
+                    </h3>
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                      {[
+                        ["Start From", ["Start From", "StartFrom", "DATE_FROM", "OD_FROM"]],
+                        ["End From", ["End From", "EndFrom", "DATE_TO", "OD_TO"]],
+                        ["OD Type", ["OD Type", "OD_TYPE", "Reason", "MIS_PUNCH_TYPE"]],
+                        ["Attn. Status", ["Attn. Status", "AttnStatus", "ATT_STATUS", "AttendanceStatus"]],
+                        ["Shift Start Time", ["Shift Start Time", "ShiftStartTime", "SHIFT_IN"]],
+                        ["Shift End Time", ["Shift End Time", "ShiftEndTime", "SHIFT_OUT"]],
+                        ["Mispunch IN Applied On", ["Mispunch IN Applied On", "MisPunchInAppliedOn", "AppliedOnIn", "IN_APPLIED_ON"]],
+                        ["Mispunch OUT Applied On", ["Mispunch OUT Applied On", "MisPunchOutAppliedOn", "AppliedOnOut", "OUT_APPLIED_ON"]],
+                        ["Mispunch Entered By", ["Mispunch Entered By", "EnteredBy", "CreatedBy", "USER_NAME"]],
+                        ["Applied Type", ["Applied Type", "AppliedType", "OD_TYPE_NAME"]],
+                        ["Total Days", ["Total Days", "Total_OD_Days", "OD_DAYS", "TOTAL_DAYS"]],
+                        ["Mis-Punch Status", ["Mis-Punch Status", "OD Status", "Status", "OD_STATUS"]],
+                        ["Employee Remark", ["Employee Remark", "Remark", "EMP_REMARK", "REMARKS"]],
+                        ["Employee SPL Remark", ["Employee SPL Remark", "EmployeeSPLRemark", "SPL_REMARK"]],
+                      ].map(([label, aliases]: any) => {
+                        const value = getFieldValue(selectedEmployee, aliases);
+                        return (
+                          <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
+                            <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                            <span>:</span>
+                            <span className="font-medium">
+                              {["Start From", "End From", "Mispunch IN Applied On", "Mispunch OUT Applied On"].includes(label)
+                                ? formatDateTime(value)
+                                : displayValue(value)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* PUNCH IMAGES */}
+                  <section className="border-b border-slate-200 pb-4 dark:border-slate-700">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {[
+                        ["Mispunch In Image", ["fileIn", "InImage", "PunchInImage", "IN_IMAGE", "InPhoto"]],
+                        ["Mispunch Out Image", ["fileOut", "OutImage", "PunchOutImage", "OUT_IMAGE", "OutPhoto"]],
+                      ].map(([label, aliases]: any) => {
+                        const imageSrc = getImageSource(getFieldValue(selectedEmployee, aliases));
+                        return (
+                          <div key={label}>
+                            <p className="mb-1 text-[11px] text-slate-600 dark:text-slate-400">{label}</p>
+                            <div className="flex h-[175px] items-center justify-center overflow-hidden rounded-xl border border-slate-400 bg-[#edf4fa] dark:border-slate-600 dark:bg-slate-800">
+                              {imageSrc ? (
+                                <img src={imageSrc} alt={label} className="h-full w-full object-contain" />
+                              ) : (
+                                <span className="text-[12px] italic text-slate-400">
+                                  {label.toLowerCase().includes("out")
+                                    ? "Mispunch Out photo shows here"
+                                    : "No Image Available"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* APPROVER DETAILS */}
+                  {[1, 2, 3].map((number) => {
+                    const approverCode = getFieldValue(selectedEmployee, [
+                      `Approver ${number} Emp Code`, `Approver${number}EmpCode`,
+                      `APPR_${number}`, `APPR${number}_CODE`, `APPROVER_${number}_CODE`,
+                    ]);
+                    const approverName = getFieldValue(selectedEmployee, [
+                      `Approver ${number} Name`, `Approver${number}Name`,
+                      `APPR_${number}_NAME`, `APPROVER_${number}_NAME`,
+                    ]);
+                    const actionStatus = getFieldValue(selectedEmployee, [
+                      `Approver ${number} Action Status`, `Approver${number}Status`,
+                      `APPR_${number}_STATUS`, `APPR_${number}_ACTION`,
+                      `APPROVER_${number}_STATUS`,
+                    ]);
+                    const remarks = getFieldValue(selectedEmployee, [
+                      `Approver ${number} Remarks`, `Approver${number}Remark`,
+                      `APPR_${number}_REMARK`, `APPR_${number}_REMARKS`,
+                    ]);
+                    const actionOn = getFieldValue(selectedEmployee, [
+                      `Approver ${number} Action Taken On`, `Approver${number}ActionOn`,
+                      `APPR_${number}_DATE`, `APPR_${number}_ACTION_ON`,
+                    ]);
+                    return (
+                      <section key={number} className="border-b border-slate-200 pb-4 last:border-0 dark:border-slate-700">
+                        <h3 className="mb-3 text-[13px] font-semibold text-blue-800 dark:text-blue-300">
+                          Approver {number} Details
+                        </h3>
+                        <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                          {[
+                            ["Emp Code", approverCode],
+                            ["Name", approverName],
+                            ["Action Status", getStatusLabel(actionStatus)],
+                            ["Remarks", remarks],
+                            ["Action Taken On", actionOn],
+                          ].map(([label, value]: any) => (
+                            <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
+                              <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                              <span>:</span>
+                              <span className="font-medium">{displayValue(value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-[315px_minmax(0,1fr)]">
+                  {/* EMPLOYEE SUMMARY */}
+                  <aside className="space-y-4 border-b border-slate-300 pb-4 xl:border-b-0 xl:border-r xl:pr-5 dark:border-slate-700">
+                    <section>
+                      <h3 className="mb-3 text-[14px] font-bold text-slate-900 dark:text-slate-100">
+                        Employee Information
+                      </h3>
+                      {[
+                        ["Employee Code", ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"]],
+                        ["Employee Name", ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"]],
+                        ["Joining Date", ["Joining Date", "JoiningDate", "DOJ"]],
+                        ["Designation", ["Designation", "DESIGNATION", "Desig_Name"]],
+                      ].map(([label, aliases]: any) => (
+                        <div key={label} className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]">
+                          <span>{label}</span><span>:</span>
+                          <span className="font-semibold">
+                            {label === "Joining Date"
+                              ? formatDateOnly(getFieldValue(selectedEmployee, aliases))
+                              : displayValue(getFieldValue(selectedEmployee, aliases))}
+                          </span>
+                        </div>
+                      ))}
+                    </section>
+
+                    <section className="border-t border-slate-300 pt-4 dark:border-slate-700">
+                      <h3 className="mb-3 text-[14px] font-bold text-slate-900 dark:text-slate-100">
+                        Organizational Details
+                      </h3>
+                      {[
+                        ["Region", ["Region", "Sal_Region"]],
+                        ["Channel", ["Channel", "ChannelName"]],
+                        ["Cluster", ["Cluster", "ClusterName"]],
+                        ["Location", ["Location", "Branch", "Loc_Name"]],
+                        ["Section", ["Section", "SectionName"]],
+                        ["Department", ["Department", "Dept_Name"]],
+                      ].map(([label, aliases]: any) => (
+                        <div key={label} className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]">
+                          <span>{label}</span><span>:</span>
+                          <span className="font-semibold">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                        </div>
+                      ))}
+                    </section>
+
+                    <section className="border-t border-slate-300 pt-4 dark:border-slate-700">
+                      <h3 className="mb-3 text-[14px] font-bold text-slate-900 dark:text-slate-100">
+                        Attendance Summary
+                      </h3>
+                      {[
+                        ["Paid Days", ["Paid Days", "PaidDays", "PAID_DAYS"]],
+                        ["Total Penalty Days", ["Total Penalty Days", "TotalPenaltyDays", "Penalty_Days"]],
+                        ["Total Days in Period", ["Month Count", "MonthCount", "Month_Days", "TotalMonth"]],
+                      ].map(([label, aliases]: any) => (
+                        <div key={label} className="mb-2 grid grid-cols-[140px_10px_minmax(0,1fr)] gap-1 text-[12px]">
+                          <span>{label}</span><span>:</span>
+                          <span className="font-bold">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                        </div>
+                      ))}
+                    </section>
+                  </aside>
+
+                  {/* DAILY ATTENDANCE */}
+                  <section className="min-w-0">
+                    <h3 className="mb-3 text-[14px] font-bold text-slate-900 dark:text-slate-100">
+                      <span className="mr-2">🗓️</span>
+                      Daily Attendance Records ({attendanceDetailRows.length} records)
+                    </h3>
+
+                    {detailLoading ? (
+                      <div className="flex min-h-[220px] items-center justify-center text-[13px] text-slate-500">
+                        Loading employee attendance records...
+                      </div>
+                    ) : attendanceDetailRows.length === 0 ? (
+                      <div className="flex min-h-[180px] items-center justify-center rounded-lg border border-dashed border-slate-300 text-[13px] text-slate-500 dark:border-slate-700">
+                        No daily attendance records available for this employee.
+                      </div>
+                    ) : (
+                      <div className="max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+                        {attendanceDetailRows.map((item, index) => {
+                          const inImage = getAttendanceInImage(item);
+                          const outImage = getAttendanceOutImage(item);
+                          return (
+                            <article
+                              key={`${getAttendanceDate(item) || "date"}-${index}`}
+                              className="rounded-lg border border-slate-200 border-l-[3px] border-l-slate-800 bg-[#f4f8fc] p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/60"
+                            >
+                              <h4 className="mb-4 text-[14px] font-bold text-slate-900 dark:text-slate-100">
+                                🗓️ {formatDate(getAttendanceDate(item)) || `Record ${index + 1}`}
+                              </h4>
+                              <div className="grid grid-cols-3 gap-3 text-[12px]">
+                                <div>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">Status</p>
+                                  <p className="font-bold text-slate-900 dark:text-slate-100">
+                                    {displayValue(getAttendanceStatus(item))}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">In Time</p>
+                                  <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {displayValue(getAttendanceInTime(item))}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">Out Time</p>
+                                  <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {displayValue(getAttendanceOutTime(item))}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {(inImage || outImage) ? (
+                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                  {[
+                                    ["Punch In Image", inImage],
+                                    ["Punch Out Image", outImage],
+                                  ].map(([label, imageSrc]: any) => (
+                                    <div key={label}>
+                                      <p className="mb-1 text-[11px] text-slate-500">{label}</p>
+                                      <div className="flex h-[130px] items-center justify-center overflow-hidden rounded-md border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900">
+                                        {imageSrc ? (
+                                          <img src={imageSrc} alt={label} className="h-full w-full object-contain" />
+                                        ) : (
+                                          <span className="text-[11px] italic text-slate-400">No punch image available</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="mt-3 rounded border-l-[3px] border-slate-800 bg-white px-3 py-2 text-[12px] text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                                  ⚠️ No punch images available for this date
+                                </div>
+                              )}
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

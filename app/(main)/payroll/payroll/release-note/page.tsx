@@ -910,6 +910,8 @@ export default function ReleaseNotesPage() {
             <Einput
               type="date"
               name="releaseDate"
+              title="Release date "
+              redlabel="*"
               value={releaseDate}
               handleInputChange={(name: string, value: string) => {
                 setReleaseDate(value);
@@ -1134,21 +1136,6 @@ export default function ReleaseNotesPage() {
                 <option value="BOTH">Both platforms</option>
               </select>
 
-              <div className="relative min-w-0 flex-1 sm:w-[200px] sm:flex-none">
-                <Search
-                  size={14}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search module or text"
-                  className="release-input h-[32px] w-full rounded-lg border border-[#dce5f1] bg-white pl-8 pr-3 text-[11px] text-[#172b4d] outline-none placeholder:text-slate-400 focus:border-[#5145e9] dark:border-slate-600 dark:bg-[#1e293b] dark:text-slate-100"
-                />
-              </div>
-
               {(search || platformFilter !== "ALL") && (
                 <button
                   type="button"
@@ -1183,9 +1170,10 @@ export default function ReleaseNotesPage() {
                 <DataTable
                   columns={columns}
                   data={filteredNotes}
-                  showTopSearch={false}
+                  showTopSearch={true}
+                  showPageSizeInFooter={true}
                   showExcelExport={true}
-                      showColumnFilters= {true}
+                  showColumnFilters={true}
                   initialPageSize={10}
                   onRowClick={(row: ReleaseNote) => setSelectedId(row.id)}
                 />
