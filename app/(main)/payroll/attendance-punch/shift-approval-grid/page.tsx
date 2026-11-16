@@ -1061,6 +1061,8 @@ export default function ShiftApprovalGridPage() {
             showExcelExport={false}
             showTopSearch={false}
             initialPageSize={25}
+            resetfilters={true}
+            showColumnFilters={true}
             footerTextMode="pageItems"
             containerClassName="border-0 shadow-none rounded-none"
           />

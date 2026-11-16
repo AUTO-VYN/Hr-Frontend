@@ -75,7 +75,12 @@ export default function PrintLetterApproverWindowPage() {
   const [dates, setDates] = useState({
     DATE_FROM: getCurrentDate(1),
     DATE_TO: getCurrentDate(),
-    branch: user?.branch || "",
+    branch:
+      typeof user?.branch === "string" && user.branch.includes(",")
+        ? "ALL"
+        : Array.isArray(user?.branch) && user.branch.length > 1
+        ? "ALL"
+        : user?.branch || "",
     status: 2,
   });
 
@@ -99,6 +104,22 @@ export default function PrintLetterApproverWindowPage() {
     );
   }, [user]);
 
+  // Multi-location check: single branch vs multi location
+  const isMultiLoc = useMemo(() => {
+    if (branch && branch.length > 1) return true;
+    if (Array.isArray(user?.branch) && user.branch.length > 1) return true;
+    if (typeof user?.branch === "string" && user.branch.includes(",")) return true;
+    return false;
+  }, [branch, user?.branch]);
+
+  // Branch Options: All Branches only when multi-location
+  const branchOptions = useMemo(() => {
+    if (isMultiLoc) {
+      return [{ value: "ALL", label: "All Branches" }, ...branch];
+    }
+    return branch;
+  }, [isMultiLoc, branch]);
+
   // Fetch branches
   const fetchBranches = useCallback(async () => {
     const compCode = getCompCode();
@@ -120,18 +141,27 @@ export default function PrintLetterApproverWindowPage() {
         }
       );
       if (result.data?.branch && Array.isArray(result.data.branch)) {
-        setBranch(result.data.branch);
-        if (!dates.branch && result.data.branch.length > 0) {
-          setDates((prev) => ({
+        const branchList = result.data.branch;
+        setBranch(branchList);
+
+        const isMulti =
+          branchList.length > 1 ||
+          (typeof user?.branch === "string" && user.branch.includes(",")) ||
+          (Array.isArray(user?.branch) && user.branch.length > 1);
+
+        setDates((prev) => {
+          const exists = branchList.some((b: any) => String(b.value) === String(prev.branch));
+          if (exists) return prev;
+          return {
             ...prev,
-            branch: result.data.branch[0].value || result.data.branch[0].label || "",
-          }));
-        }
+            branch: isMulti ? "ALL" : (branchList[0]?.value || branchList[0]?.label || ""),
+          };
+        });
       }
     } catch (err) {
       console.error("Error fetching branches:", err);
     }
-  }, [getCompCode, user?.branch, user?.name, user?.email, dates.DATE_FROM, dates.DATE_TO, dates.branch]);
+  }, [getCompCode, user?.branch, user?.name, user?.email, dates.DATE_FROM, dates.DATE_TO]);
 
   // Filter helper
   const filterByStatus = useCallback((data: any[], status: any) => {
@@ -155,11 +185,20 @@ export default function PrintLetterApproverWindowPage() {
     setsellectedrowdata([]);
 
     try {
+      const branchParam =
+        dates?.branch === "ALL" || !dates?.branch
+          ? typeof user?.branch === "string"
+            ? user.branch
+            : Array.isArray(user?.branch)
+            ? user.branch.join(",")
+            : ""
+          : dates.branch;
+
       const result = await axios.post(
         `${process.env.NEXT_PUBLIC_URL}/template/ApproverViewTemplates`,
         {
           username: user?.name,
-          loc_code: dates?.branch || user?.branch || "",
+          loc_code: branchParam,
           status: "", // Fetch all to calculate accurate counts for pending, approved, rejected, and all
           Appr_Code: user?.EMPCODE,
           DateFrom: dates.DATE_FROM,
@@ -783,7 +822,7 @@ return (
               title="BRANCH"
               name="branch"
               className="h-[32px]"
-              option={[{ value: "", label: "All Branches" }, ...branch]}
+              option={branchOptions}
               initialValue={dates.branch}
               handleInputChange={handleInputChange}
               placeholder="Select Branch"

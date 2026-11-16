@@ -702,9 +702,11 @@ export default function ApproverGridTemplate({
           onRowDoubleClick={handleRowDoubleClickInternal}
           height={430}
           showExcelExport={false}
+          resetfilters={true}
           footerTextMode="pageItems"
           initialPageSize={25}
           showPageSizeInFooter={true}
+          showColumnFilters={true}
           containerClassName="!border-none !shadow-none !rounded-none !bg-transparent"
           headerClassName="!bg-[#F8FAFC] dark:!bg-[#0E1524] !border-b !border-[#E2E8F0] dark:!border-[#1F2937] !text-[10.5px] !font-[700] !tracking-[0.05em] !uppercase !text-[#64748B] dark:!text-[#94A3B8] !px-[11px] !py-[10px]"
         />

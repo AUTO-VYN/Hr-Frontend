@@ -266,7 +266,7 @@ export default function AddWeeklyOffChangePage() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_LOCAL}/mobile/applyWOChange`,
+        `${process.env.NEXT_PUBLIC_URL}/mobile/applyWOChange`,
         formData,
         {
           headers: {

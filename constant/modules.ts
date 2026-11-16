@@ -149,6 +149,7 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
       { name: "Edit Profile", slug: "edit-profile" },
       { name: "Add Bulk Punch", slug: "add-bulk-punch" },
       { name: "Add Bulk Date Punch", slug: "add-bulk-date-punch" },
+      {name:"Emp profile approver view",slug:"emp-profile-approver-view"},
     ],
   },
   {
