@@ -1484,8 +1484,10 @@ export default function SalaryPaidDaysDeviationApprovals() {
           <DataTable
             columns={approvalColumns}
             data={visibleRequests}
-            showTopSearch={false}
-            showExcelExport={false}
+            showTopSearch={true}
+            showExcelExport={true}
+            showPageSizeInFooter={true}
+            showColumnFilters={true}
             initialPageSize={10}
           />
         </div>

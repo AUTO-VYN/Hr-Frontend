@@ -116,25 +116,25 @@ const SummaryRow = ({
   iconStyle: string;
   valueStyle: string;
 }) => {
-return (
-  <div className="flex min-w-0 items-center justify-between gap-2 rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] px-[10px] py-[7px] dark:border-slate-700 dark:bg-slate-800">
-    <div className="flex min-w-0 items-center gap-[8px]">
-      <div
-        className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] ${iconStyle}`}
-      >
-        <Icon size={14} />
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-2 rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] px-[10px] py-[7px] dark:border-slate-700 dark:bg-slate-800">
+      <div className="flex min-w-0 items-center gap-[8px]">
+        <div
+          className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] ${iconStyle}`}
+        >
+          <Icon size={14} />
+        </div>
+
+        <span className="truncate text-[12px] font-medium text-slate-600 dark:text-slate-200">
+          {label}
+        </span>
       </div>
 
-      <span className="truncate text-[12px] font-medium text-slate-600 dark:text-slate-200">
-        {label}
+      <span className={`shrink-0 text-[16px] font-bold ${valueStyle}`}>
+        {value}
       </span>
     </div>
-
-    <span className={`shrink-0 text-[16px] font-bold ${valueStyle}`}>
-      {value}
-    </span>
-  </div>
-);
+  );
 };
 
 /* =========================================================
@@ -555,7 +555,8 @@ export default function Approver2() {
               <Info size={15} className="shrink-0 text-[var(--muted)]" />
 
               <p className="m-0 text-[12px] text-[var(--muted)]">
-                Columns expected: EmpCode, Month, Year, DeviationDays, Reason, Remark. Deviation days may be negative.
+                Columns expected: EmpCode, Month, Year, DeviationDays, Reason,
+                Remark. Deviation days may be negative.
               </p>
             </div>
           </div>
@@ -628,6 +629,11 @@ export default function Approver2() {
                   excelname="Employee Deviation Import"
                   filterPosition="FilterData"
                   numericFilterColumns={[]}
+                  showTopSearch={true}
+                  showExcelExport={true}
+                  showPageSizeInFooter={true}
+                  showColumnFilters={true}
+                  initialPageSize={10}
                 />
               </div>
             </div>
@@ -636,77 +642,77 @@ export default function Approver2() {
 
         {/* RIGHT COLUMN */}
 
-       <aside className="space-y-[10px]">
-  {/* IMPORT SUMMARY */}
-  <div className="rounded-[14px] border border-[#dce5f1] bg-white p-[15px] shadow-[0_2px_8px_rgba(15,23,42,0.05)] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
-    <p className="mb-[10px] mt-0 text-[12px] font-bold tracking-[0.02em] text-[#647895] dark:text-slate-400">
-      IMPORT SUMMARY
-    </p>
-
-    <div className="space-y-[8px]">
-      <SummaryRow
-        label="Rows in file"
-        value={summary.total}
-        icon={Rows3}
-        iconStyle="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
-        valueStyle="text-indigo-600 dark:text-indigo-400"
-      />
-
-      <SummaryRow
-        label="Imported"
-        value={summary.imported}
-        icon={CheckCircle2}
-        iconStyle="bg-emerald-100 text-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400"
-        valueStyle="text-emerald-500 dark:text-emerald-400"
-      />
-
-      <SummaryRow
-        label="Rejected"
-        value={summary.rejected}
-        icon={XCircle}
-        iconStyle="bg-rose-100 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400"
-        valueStyle="text-rose-500 dark:text-rose-400"
-      />
-
-      <SummaryRow
-        label="Sent to approver"
-        value={summary.sentToApprover}
-        icon={Upload}
-        iconStyle="bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
-        valueStyle="text-violet-600 dark:text-violet-400"
-      />
-    </div>
-  </div>
-
-  {/* REJECTION REASONS */}
-  <div className="rounded-[14px] border border-[var(--border)] bg-[var(--card)] p-[15px] shadow-[var(--shadow)]">
-    <p className="mb-[10px] mt-0 text-[11px] font-bold tracking-[0.03em] text-[var(--muted)]">
-      WHY ROWS GET REJECTED
-    </p>
-
-    <div className="space-y-[10px]">
-      {REJECT_REASONS.map(({ title, text, icon: Icon, iconStyle }) => (
-        <div key={title} className="flex items-start gap-[9px]">
-          <span
-            className={`flex h-[25px] w-[25px] shrink-0 items-center justify-center rounded-[7px] ${iconStyle}`}
-          >
-            <Icon size={13} />
-          </span>
-
-          <div className="min-w-0">
-            <p className="m-0 text-[12px] font-bold text-[var(--fg)]">
-              {title}
+        <aside className="space-y-[10px]">
+          {/* IMPORT SUMMARY */}
+          <div className="rounded-[14px] border border-[#dce5f1] bg-white p-[15px] shadow-[0_2px_8px_rgba(15,23,42,0.05)] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
+            <p className="mb-[10px] mt-0 text-[12px] font-bold tracking-[0.02em] text-[#647895] dark:text-slate-400">
+              IMPORT SUMMARY
             </p>
 
-            <p className="mb-0 mt-[2px] text-[11px] leading-[1.4] text-[var(--muted)]">
-              {text}
-            </p>
+            <div className="space-y-[8px]">
+              <SummaryRow
+                label="Rows in file"
+                value={summary.total}
+                icon={Rows3}
+                iconStyle="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
+                valueStyle="text-indigo-600 dark:text-indigo-400"
+              />
+
+              <SummaryRow
+                label="Imported"
+                value={summary.imported}
+                icon={CheckCircle2}
+                iconStyle="bg-emerald-100 text-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400"
+                valueStyle="text-emerald-500 dark:text-emerald-400"
+              />
+
+              <SummaryRow
+                label="Rejected"
+                value={summary.rejected}
+                icon={XCircle}
+                iconStyle="bg-rose-100 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400"
+                valueStyle="text-rose-500 dark:text-rose-400"
+              />
+
+              <SummaryRow
+                label="Sent to approver"
+                value={summary.sentToApprover}
+                icon={Upload}
+                iconStyle="bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
+                valueStyle="text-violet-600 dark:text-violet-400"
+              />
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </div>
-</aside>
+
+          {/* REJECTION REASONS */}
+          <div className="rounded-[14px] border border-[var(--border)] bg-[var(--card)] p-[15px] shadow-[var(--shadow)]">
+            <p className="mb-[10px] mt-0 text-[11px] font-bold tracking-[0.03em] text-[var(--muted)]">
+              WHY ROWS GET REJECTED
+            </p>
+
+            <div className="space-y-[10px]">
+              {REJECT_REASONS.map(({ title, text, icon: Icon, iconStyle }) => (
+                <div key={title} className="flex items-start gap-[9px]">
+                  <span
+                    className={`flex h-[25px] w-[25px] shrink-0 items-center justify-center rounded-[7px] ${iconStyle}`}
+                  >
+                    <Icon size={13} />
+                  </span>
+
+                  <div className="min-w-0">
+                    <p className="m-0 text-[12px] font-bold text-[var(--fg)]">
+                      {title}
+                    </p>
+
+                    <p className="mb-0 mt-[2px] text-[11px] leading-[1.4] text-[var(--muted)]">
+                      {text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
 
       {/* LOADER */}

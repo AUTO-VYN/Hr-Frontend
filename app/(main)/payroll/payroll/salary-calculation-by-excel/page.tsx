@@ -908,8 +908,9 @@ export default function SalaryCalculationExcelPage() {
                       <DataTable
                         columns={columns}
                         data={filteredRows}
-                        showTopSearch={false}
-                        showExcelExport={false}
+                        showTopSearch={true}
+                        showExcelExport={true}
+                         showPageSizeInFooter = {true}
                         initialPageSize={10}
                       />
                     </div>

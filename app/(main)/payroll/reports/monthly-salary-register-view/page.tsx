@@ -906,28 +906,7 @@ export default function MonthlySalaryRegisterViewPage() {
                 />
               </div>
 
-              {/* COLUMN FILTERS */}
-
-              {/* <AButton
-                type="button"
-                onClick={() => setShowColumnFilters((previous) => !previous)}
-                className={`inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
-                  showColumnFilters
-                    ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-[#dce5f1] bg-white text-[#152b4b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                }`}
-              >
-                <SlidersHorizontal size={15} />
-                Column filters
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${
-                    showColumnFilters ? "rotate-180" : ""
-                  }`}
-                />
-              </AButton> */}
-
-              {/* RESET */}
+              
 
               <AButton
                 type="button"
@@ -938,19 +917,7 @@ export default function MonthlySalaryRegisterViewPage() {
                 Reset
               </AButton>
 
-              {/* EXPORT */}
-
-              {/*
-              <AButton
-                type="button"
-                onClick={exportToExcel}
-                disabled={!filteredRows.length}
-                className="inline-flex h-[41px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-              >
-                <FileSpreadsheet size={15} />
-                Export to Excel
-              </AButton>
-              */}
+         
             </div>
           </div>
 
@@ -1006,6 +973,7 @@ export default function MonthlySalaryRegisterViewPage() {
                     showTopSearch={false}
                     showExcelExport={true}
                     showColumnFilters={true}
+                     showPageSizeInFooter = {true}
                     initialPageSize={10}
                   />
                 ) : (

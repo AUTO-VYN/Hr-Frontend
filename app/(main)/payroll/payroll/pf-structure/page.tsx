@@ -1135,23 +1135,6 @@ export default function PFStructurePage() {
                     shown
                   </span>
                 </div>
-
-                <div className="relative w-full sm:max-w-[205px]">
-                  <Search
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-
-                  <input
-                    type="text"
-                    value={tableSearch}
-                    onChange={(e) =>
-                      setTableSearch(e.target.value)
-                    }
-                    placeholder="Pay code, name or emp code"
-                    className="h-[30px] w-full rounded-lg border border-[#dce5f1] bg-white pl-8 pr-2 text-[10px] text-[#152b4b] outline-none placeholder:text-slate-400 focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  />
-                </div>
               </div>
 
               {/* ERROR */}
@@ -1167,9 +1150,10 @@ export default function PFStructurePage() {
                   <DataTable
                     columns={columns}
                     data={filteredRows}
-                    showTopSearch={false}
+                    showTopSearch={true}
                      showExcelExport={true}
                       showColumnFilters= {true}
+                       showPageSizeInFooter = {true}
                     initialPageSize={10}
                   />
                 </div>

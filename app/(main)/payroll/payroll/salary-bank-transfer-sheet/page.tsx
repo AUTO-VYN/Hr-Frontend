@@ -1095,31 +1095,6 @@ export default function BankTransferSheetPage() {
                       Incomplete
                     </button>
                   </div>
-
-                  {/* SEARCH */}
-                  <div className="relative min-w-0 sm:w-[210px]">
-                    <Einput
-                      title=""
-                      name="search"
-                      type="text"
-                      value={search}
-                      handleInputChange={handleInputChange}
-                      className="h-[32px] w-full pl-8"
-                      placeholder="Name, code or account"
-                    />
-
-                    {search && (
-                      <button
-                        type="button"
-                        onClick={() => setSearch("")}
-                        className="absolute right-2 top-[9px] z-10 text-slate-400"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
-
-                
                 </div>
               </div>
 
@@ -1130,9 +1105,10 @@ export default function BankTransferSheetPage() {
                     <DataTable
                       columns={columns}
                       data={tableData}
-                      showTopSearch={false}
-                       showExcelExport={true}
-                      showColumnFilters= {true}
+                      showTopSearch={true}
+                      showExcelExport={true}
+                      showColumnFilters={true}
+                      showPageSizeInFooter={true}
                       initialPageSize={10}
                     />
                   ) : (

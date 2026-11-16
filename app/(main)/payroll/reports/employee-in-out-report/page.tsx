@@ -921,6 +921,7 @@ export default function EarlyLatePunchReportPage() {
                     showTopSearch={false}
                     showExcelExport={true}
                     showColumnFilters={true}
+                     showPageSizeInFooter = {true}
                     initialPageSize={10}
                   />
                 ) : (

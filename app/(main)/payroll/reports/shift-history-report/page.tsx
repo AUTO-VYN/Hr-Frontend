@@ -687,6 +687,7 @@ export default function ShiftHistoryReportPage() {
                     data={filteredRows}
                     showTopSearch={false}
                     showExcelExport={true}
+                     showPageSizeInFooter = {true}
                     showColumnFilters={true}
                     initialPageSize={10}
                   />
