@@ -40,23 +40,23 @@ import Swal from "sweetalert2";
 // Helper Utilities
 // ============================================================================
 
-const formatDateTime = (dateString?: string) => {
-  if (!dateString) return "-";
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
-  } catch {
-    return dateString;
-  }
-};
+// const formatDateTime = (dateString?: string) => {
+//   if (!dateString) return "-";
+//   try {
+//     const date = new Date(dateString);
+//     if (isNaN(date.getTime())) return dateString;
+//     const day = String(date.getDate()).padStart(2, "0");
+//     const month = String(date.getMonth() + 1).padStart(2, "0");
+//     const year = date.getFullYear();
+//     let hours = date.getHours();
+//     const minutes = String(date.getMinutes()).padStart(2, "0");
+//     const ampm = hours >= 12 ? "PM" : "AM";
+//     hours = hours % 12 || 12;
+//     return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+//   } catch {
+//     return dateString;
+//   }
+// };
 
 const formatCardDate = (dateString?: string) => {
   if (!dateString) return "";
@@ -99,16 +99,29 @@ function getCurrentDate(monthsBack = 0) {
 }
 
 const DEPARTMENT_COLORS = [
-  "#10B981", // Emerald / Green
-  "#F59E0B", // Amber / Orange
-  "#8B5CF6", // Purple
-  "#06B6D4", // Cyan / Blue
-  "#EF4444", // Red
-  "#0D9488", // Teal
+  "#3B82F6", // Blue (Sales)
+  "#00B87C", // Green (Service)
+  "#F59E0B", // Amber / Orange (Spare Part)
+  "#8B5CF6", // Purple (Accessories)
+  "#06B6D4", // Cyan / Sky (Account)
+  "#E11D48", // Crimson / Red (Admin)
+  "#0D9488", // Teal (IT)
   "#64748B", // Slate
-  "#3B82F6", // Blue
   "#EC4899", // Pink
 ];
+
+const formatDeptName = (name?: string) => {
+  if (!name) return "";
+  const trimmed = name.trim();
+  if (trimmed.toUpperCase() === "IT") return "IT";
+  if (trimmed.toUpperCase() === "HR") return "HR";
+  if (trimmed.toUpperCase() === "MIS") return "MIS";
+  return trimmed
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 const AVATAR_PALETTES = [
   { bg: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300" },
@@ -127,6 +140,106 @@ const getInitials = (name?: string) => {
   }
   return name.slice(0, 2).toUpperCase();
 };
+
+const getEmployeePhotoUrl = (emp: any) => {
+  const photo =
+    emp?.PHOTO_PATH ||
+    emp?.photo_path ||
+    emp?.DOC_PATH ||
+    emp?.doc_path ||
+    emp?.PHOTO_URL ||
+    emp?.photo_url ||
+    emp?.EMP_PHOTO ||
+    emp?.emp_photo ||
+    emp?.photo ||
+    "";
+
+  if (!photo || typeof photo !== "string" || !photo.trim()) return "";
+  const trimmed = photo.trim();
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+
+  const imageBasePath =
+    process.env.NEXT_PUBLIC_imagepath ||
+    "https://erp.autovyn.com/backend/fetch?filePath=";
+
+  const normalizedPath = trimmed.replace(/\\/g, "/");
+  return `${imageBasePath}${encodeURIComponent(normalizedPath)}`;
+};
+
+const getEmployeeCategory = (e: any): "absent" | "late" | "onTime" | "earlyGo" => {
+  const cat = (e?.PUNCH_CATEGORY || "").toUpperCase();
+  const status = (e?.PUNCH_STATUS || e?.STATUS || e?.ATTENDANCE_STATUS || "").toUpperCase();
+  const hasLogin = e?.LOGIN_TIME && e.LOGIN_TIME !== "--:--" && e.LOGIN_TIME !== "-";
+
+  // 1. Explicit Absent or No punch recorded -> ALWAYS absent
+  if (
+    cat === "ABSENT" ||
+    status === "A" ||
+    status.includes("ABSENT") ||
+    !hasLogin
+  ) {
+    return "absent";
+  }
+
+  // 2. Late punch
+  if (cat === "LATE" || status === "LP" || status.includes("LATE")) {
+    return "late";
+  }
+
+  // 3. Early Go
+  if (cat === "EARLY_GO" || status === "EG" || status.includes("EARLY")) {
+    return "earlyGo";
+  }
+
+  // 4. On Time / Present
+  if (
+    cat === "ON_TIME" ||
+    status === "P" ||
+    status.includes("ONTIME") ||
+    status.includes("ON_TIME") ||
+    status.includes("PRESENT")
+  ) {
+    return "onTime";
+  }
+
+  return "absent";
+};
+
+function EmployeeAvatar({
+  emp,
+  onPreview,
+}: {
+  emp: any;
+  onPreview?: (url: string) => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const photoUrl = useMemo(() => getEmployeePhotoUrl(emp), [emp]);
+
+  if (photoUrl && !imgError) {
+    return (
+      <img
+        src={photoUrl}
+        alt={emp?.EMP_NAME || "Employee"}
+        onError={() => setImgError(true)}
+        onClick={() => onPreview?.(photoUrl)}
+        className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0 cursor-pointer"
+      />
+    );
+  }
+
+  return (
+    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
+      {getInitials(emp?.EMP_NAME)}
+    </div>
+  );
+}
 
 // ============================================================================
 // Main Dashboard Component
@@ -159,6 +272,7 @@ export default function AttendanceDashboardPage() {
     late?: any[];
     earlyGo?: any[];
     misPunch?: any[];
+    mispunch?: any[];
   }>({
     all: [],
     present: [],
@@ -220,7 +334,7 @@ export default function AttendanceDashboardPage() {
 
       // 1. Primary API: /hrmsreport/getDashboardData
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/hrmsreport/getDashboardData`,
+        `${process.env.NEXT_PUBLIC_URL_LOCAL}/hrmsreport/getDashboardData`,
         {
           selectedDate: dates?.DATE_TO,
           Loc_code: branchArray,
@@ -264,14 +378,18 @@ export default function AttendanceDashboardPage() {
         if (Array.isArray(result.employees)) {
           setEmployeeData({ all: result.employees });
         } else {
-          setEmployeeData(result.employees);
+          setEmployeeData({
+            ...result.employees,
+            misPunch: result.employees.misPunch || result.employees.mispunch || [],
+            mispunch: result.employees.mispunch || result.employees.misPunch || [],
+          });
         }
       }
 
-      // 2. Secondary API: /hr/needsyoutoday (for alert counts)
+      // 2. Secondary API: /hrmsreport/getNeedsAttentionData (for alert counts)
       try {
         const needsRes = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/hr/needsyoutoday`,
+          `${process.env.NEXT_PUBLIC_URL}/hrmsreport/getNeedsAttentionData`,
           {
             selectedDate: dates?.DATE_TO,
             Loc_code: branchArray,
@@ -281,10 +399,10 @@ export default function AttendanceDashboardPage() {
         if (needsRes.data?.success && needsRes.data?.data) {
           const d = needsRes.data.data;
           setNeedsAttention({
-            punchApprovals: d.punchApprovals?.count ?? d.gatePass?.count ?? 0,
-            mispunch: d.mispunch?.count ?? 0,
-            compOff: d.paidDays?.count ?? 0,
-            shiftChanges: d.shiftRequest?.count ?? 0,
+            punchApprovals: typeof d.punchApprovals === "number" ? d.punchApprovals : (d.punchApprovals?.count ?? 0),
+            mispunch: typeof d.mispunch === "number" ? d.mispunch : (d.mispunch?.count ?? 0),
+            compOff: typeof d.compOff === "number" ? d.compOff : (d.compOff?.count ?? 0),
+            shiftChanges: typeof d.shiftChanges === "number" ? d.shiftChanges : (d.shiftChanges?.count ?? 0),
           });
         }
       } catch {
@@ -316,22 +434,24 @@ export default function AttendanceDashboardPage() {
           (g.DATE_LABEL && dates.DATE_TO && String(g.DATE_LABEL).slice(0, 10) === String(dates.DATE_TO).slice(0, 10))
       ) || (graphData && graphData.length > 0 ? graphData[graphData.length - 1] : null);
 
-    const graphPresent = matchingGraphItem ? Number(matchingGraphItem.PRESENT) || 0 : 0;
-    const graphAbsent = matchingGraphItem ? Number(matchingGraphItem.ABSENT) || 0 : 0;
+    const onTimeCount = Number(matchingGraphItem?.ON_TIME ?? matchingGraphItem?.PRESENT ?? 0);
+    const lateCount = Number(matchingGraphItem?.LATE ?? 0);
+    const absentCount = Number(matchingGraphItem?.ABSENT ?? 0);
+    const earlyGoCount = Number(matchingGraphItem?.EARLY_GO ?? 0);
+    const misPunchCount =
+      Number(matchingGraphItem?.MISPUNCH ?? matchingGraphItem?.mispunch) ||
+      (employeeData as any)?.mispunch?.length ||
+      (employeeData as any)?.misPunch?.length ||
+      Number(needsAttention.mispunch) ||
+      0;
 
-    const baseTotal = graphPresent + graphAbsent;
-
-    const onTimeCount = graphPresent;
-    const absentCount = graphAbsent;
-    const lateCount = 0;
-    const earlyGoCount = 0;
-    const misPunchCount = 0;
+    const baseTotal = onTimeCount + lateCount + absentCount + earlyGoCount || Number(matchingGraphItem?.TOTAL) || (onTimeCount + absentCount);
 
     const onTimePct = baseTotal > 0 ? Math.round((onTimeCount / baseTotal) * 100) : 0;
+    const latePct = baseTotal > 0 ? Math.round((lateCount / baseTotal) * 100) : 0;
     const absentPct = baseTotal > 0 ? Math.round((absentCount / baseTotal) * 100) : 0;
-    const latePct = 0;
-    const earlyGoPct = 0;
-    const misPunchPct = 0;
+    const earlyGoPct = baseTotal > 0 ? Math.round((earlyGoCount / baseTotal) * 100) : 0;
+    const misPunchPct = baseTotal > 0 ? Math.round((misPunchCount / baseTotal) * 100) : 0;
 
     return {
       totalMarked: baseTotal,
@@ -346,16 +466,19 @@ export default function AttendanceDashboardPage() {
       misPunchCount,
       misPunchPct,
     };
-  }, [graphData, dates.DATE_TO]);
+  }, [graphData, dates.DATE_TO, employeeData, needsAttention.mispunch]);
 
   // --------------------------------------------------------------------------
-  // Computed 7-Day Chart Data (Direct 1:1 Backend Graph Data: Present vs Absent)
+  // Computed 7-Day Chart Data (Grouped 4-Column Bar Chart matching design system)
   // --------------------------------------------------------------------------
   const chartData = useMemo(() => {
     if (graphData && graphData.length > 0) {
       const categories: string[] = [];
-      const presentSeries: number[] = [];
+      const onTimeSeries: number[] = [];
+      const lateSeries: number[] = [];
       const absentSeries: number[] = [];
+      const earlyGoSeries: number[] = [];
+      const totalsPerDay: number[] = [];
 
       graphData.forEach((item: any) => {
         const d = item.DATE_LABEL ? new Date(item.DATE_LABEL) : new Date();
@@ -365,53 +488,58 @@ export default function AttendanceDashboardPage() {
           : d.toLocaleDateString("en-US", { weekday: "short" });
         categories.push(`${dayNumber} ${dayShort}`);
 
-        const presentVal = Number(item.PRESENT) || 0;
-        const absentVal = Number(item.ABSENT) || 0;
+        const onTimeVal = Number(item.ON_TIME ?? item.PRESENT ?? 0);
+        const lateVal = Number(item.LATE ?? 0);
+        const absentVal = Number(item.ABSENT ?? 0);
+        const earlyGoVal = Number(item.EARLY_GO ?? 0);
+        const totalVal = onTimeVal + lateVal + absentVal + earlyGoVal || Number(item.TOTAL) || 0;
 
-        presentSeries.push(presentVal);
+        onTimeSeries.push(onTimeVal);
+        lateSeries.push(lateVal);
         absentSeries.push(absentVal);
+        earlyGoSeries.push(earlyGoVal);
+        totalsPerDay.push(totalVal);
       });
 
       return {
         categories,
+        totalsPerDay,
         series: [
-          { name: "Present", data: presentSeries, color: "#10B981" },
-          { name: "Absent", data: absentSeries, color: "#EF4444" },
+          { name: "On time", data: onTimeSeries, color: "#00b87c" },
+          { name: "Late", data: lateSeries, color: "#f59e0b" },
+          { name: "Absent", data: absentSeries, color: "#e11d48" },
+          { name: "Early go", data: earlyGoSeries, color: "#8b5cf6" },
         ],
-        todayPresent: presentSeries[presentSeries.length - 1] ?? 0,
-        todayAbsent: absentSeries[absentSeries.length - 1] ?? 0,
       };
     }
 
     return {
       categories: [],
+      totalsPerDay: [],
       series: [
-        { name: "Present", data: [], color: "#10B981" },
-        { name: "Absent", data: [], color: "#EF4444" },
+        { name: "On time", data: [], color: "#00b87c" },
+        { name: "Late", data: [], color: "#f59e0b" },
+        { name: "Absent", data: [], color: "#e11d48" },
+        { name: "Early go", data: [], color: "#8b5cf6" },
       ],
-      todayPresent: 0,
-      todayAbsent: 0,
     };
   }, [graphData]);
 
   // --------------------------------------------------------------------------
-  // Departments List & Summary
+  // Departments List & Summary (Real ON_TIME, LATE, ON_LEAVE counts)
   // --------------------------------------------------------------------------
   const departmentsSummary = useMemo(() => {
     if (deptStats && deptStats.length > 0) {
       return deptStats.map((dept: any, index: number) => {
-        const deptEmps = (employeeData.all || []).filter(
-          (e) => e.DEPARTMENT === dept.DEPT_NAME || e.DEPT_CODE === dept.DEPT_CODE
-        );
-
-        const onTime = dept.ON_TIME ?? dept.PRESENT ?? 0;
-        const late = dept.LATE ?? deptEmps.filter((e) => e.PUNCH_STATUS === "LATE" || (e.LOGIN_TIME && e.LOGIN_TIME > "09:30:00")).length ?? 0;
-        const leave = dept.ON_LEAVE ?? deptEmps.filter((e) => e.ATTENDANCE_STATUS === "L" || e.ATTENDANCE_STATUS === "HD").length ?? 0;
+        const onTime = Number(dept.ON_TIME ?? dept.onTime ?? dept.PRESENT ?? 0);
+        const late = Number(dept.LATE ?? dept.late ?? 0);
+        const leave = Number(dept.ON_LEAVE ?? dept.leave ?? 0);
+        const total = Number(dept.TOTAL ?? dept.total ?? onTime + late + leave + Number(dept.ABSENT ?? 0));
 
         return {
-          deptCode: dept.DEPT_CODE,
-          deptName: dept.DEPT_NAME,
-          total: dept.TOTAL || (onTime + late + leave),
+          deptCode: dept.DEPT_CODE || dept.deptCode,
+          deptName: dept.DEPT_NAME || dept.deptName,
+          total,
           onTime,
           late,
           leave,
@@ -421,7 +549,7 @@ export default function AttendanceDashboardPage() {
     }
 
     return [];
-  }, [deptStats, employeeData.all]);
+  }, [deptStats]);
 
   const totalOnRoll = useMemo(() => {
     return departmentsSummary.reduce((sum, d) => sum + (d.total || 0), 0);
@@ -432,12 +560,13 @@ export default function AttendanceDashboardPage() {
   // --------------------------------------------------------------------------
   const pendingLeavesList = useMemo(() => {
     if (pendingLeaves && pendingLeaves.length > 0) {
-      return pendingLeaves.slice(0, 10);
+      return pendingLeaves;
     }
     return [];
   }, [pendingLeaves]);
 
   // Leave approve action
+  const [approvingKey, setApprovingKey] = useState<string | null>(null);
   const handleApproveLeave = async (leave: any) => {
     const result = await Swal.fire({
       title: "Approve Leave?",
@@ -450,15 +579,71 @@ export default function AttendanceDashboardPage() {
     });
 
     if (result.isConfirmed) {
-      Swal.fire({
-        title: "Approved!",
-        text: `Leave request for ${leave.EMP_NAME} has been approved.`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      // Remove approved leave from list locally
-      setPendingLeaves((prev) => prev.filter((p) => p.EMP_CODE !== leave.EMP_CODE));
+      const leaveKey = `${leave.EMP_CODE || leave.EmpCode}_${leave.LEAVE_DATE || leave.Leave_applied_on}`;
+      const utd = leave.UTD ?? leave.Utd ?? leave.id;
+
+      if (!utd) {
+        Swal.fire({
+          title: "Refresh Required",
+          text: "Leave ID (UTD) not found in current view. Please refresh the page (F5) once and try again.",
+          icon: "warning",
+        });
+        return;
+      }
+
+      setApprovingKey(leaveKey);
+      try {
+        const compCode = user?.Comp_Code || (user as any)?.comp_code || (user as any)?.company_code;
+        const apprCode = user?.EMPCODE || (user as any)?.empcode || (user as any)?.EmpCode || "";
+
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/mobile/ApproveLeave`,
+          {
+            EMPCODE: leave.EMP_CODE || leave.EmpCode,
+            Appr_Code: apprCode,
+            ApproveOrRej: "1",
+            Utd: utd,
+            Remark: "Approved",
+          },
+          {
+            headers: { compcode: compCode, name: user?.name || "" },
+          }
+        );
+
+        if (res.data?.Status === true || res.data?.Status === "true" || res.data?.success) {
+          Swal.fire({
+            title: "Approved!",
+            text: res.data?.Message || `Leave request for ${leave.EMP_NAME} has been approved.`,
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          // Remove approved leave from list locally
+          setPendingLeaves((prev) =>
+            prev.filter(
+              (p) =>
+                !(
+                  p.EMP_CODE === leave.EMP_CODE &&
+                  (p.LEAVE_DATE === leave.LEAVE_DATE || p.UTD === leave.UTD)
+                )
+            )
+          );
+        } else {
+          Swal.fire({
+            title: "Failed!",
+            text: res.data?.Message || "Failed to approve leave request.",
+            icon: "error",
+          });
+        }
+      } catch (err: any) {
+        Swal.fire({
+          title: "Error!",
+          text: err?.response?.data?.Message || err?.message || "Error approving leave request.",
+          icon: "error",
+        });
+      } finally {
+        setApprovingKey(null);
+      }
     }
   };
 
@@ -505,26 +690,11 @@ export default function AttendanceDashboardPage() {
     let earlyGo = 0;
 
     currentDeptEmployees.forEach((e: any) => {
-      const status = (e.PUNCH_STATUS || e.STATUS || e.ATTENDANCE_STATUS || "").toUpperCase();
-      if (status.includes("ABSENT") || status === "A") {
-        absent++;
-      } else if (status.includes("LATE") || (e.LOGIN_TIME && e.LOGIN_TIME > "09:30:00")) {
-        late++;
-      } else if (status.includes("EARLY") || status.includes("EARLYGO")) {
-        earlyGo++;
-      } else if (
-        status.includes("ONTIME") ||
-        status.includes("ON_TIME") ||
-        status.includes("PRESENT") ||
-        status === "P" ||
-        (e.LOGIN_TIME && e.LOGIN_TIME <= "09:30:00")
-      ) {
-        onTime++;
-      } else if (!e.LOGIN_TIME && !e.LOGOUT_TIME) {
-        absent++;
-      } else {
-        onTime++;
-      }
+      const cat = getEmployeeCategory(e);
+      if (cat === "absent") absent++;
+      else if (cat === "late") late++;
+      else if (cat === "onTime") onTime++;
+      else if (cat === "earlyGo") earlyGo++;
     });
 
     return {
@@ -539,34 +709,8 @@ export default function AttendanceDashboardPage() {
   const drilldownEmployees = useMemo(() => {
     let list = currentDeptEmployees;
 
-    if (drilldownTab === "absent") {
-      list = list.filter((e: any) => {
-        const status = (e.PUNCH_STATUS || e.STATUS || e.ATTENDANCE_STATUS || "").toUpperCase();
-        return (
-          status.includes("ABSENT") ||
-          status === "A" ||
-          (!e.LOGIN_TIME && !e.LOGOUT_TIME && !status.includes("PRESENT") && !status.includes("ONTIME"))
-        );
-      });
-    } else if (drilldownTab === "late") {
-      list = list.filter((e: any) => {
-        const status = (e.PUNCH_STATUS || e.STATUS || e.ATTENDANCE_STATUS || "").toUpperCase();
-        return status.includes("LATE") || (e.LOGIN_TIME && e.LOGIN_TIME > "09:30:00");
-      });
-    } else if (drilldownTab === "onTime") {
-      list = list.filter((e: any) => {
-        const status = (e.PUNCH_STATUS || e.STATUS || e.ATTENDANCE_STATUS || "").toUpperCase();
-        return (
-          status.includes("ONTIME") ||
-          status.includes("ON_TIME") ||
-          (e.LOGIN_TIME && e.LOGIN_TIME <= "09:30:00")
-        );
-      });
-    } else if (drilldownTab === "earlyGo") {
-      list = list.filter((e: any) => {
-        const status = (e.PUNCH_STATUS || e.STATUS || e.ATTENDANCE_STATUS || "").toUpperCase();
-        return status.includes("EARLY") || status.includes("EARLYGO");
-      });
+    if (drilldownTab !== "all") {
+      list = list.filter((e: any) => getEmployeeCategory(e) === drilldownTab);
     }
 
     if (empSearch.trim()) {
@@ -865,20 +1009,46 @@ export default function AttendanceDashboardPage() {
               )}
             </div>
 
-            {/* Custom Legend matching exact Backend Data */}
+            {/* Custom Legend matching exact Backend Data (Option 2) */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                <span className="text-slate-500 dark:text-slate-400 font-medium">Present</span>
+                <span
+                  className="w-2.5 h-2.5 rounded-xs shrink-0 inline-block"
+                  style={{ backgroundColor: "#00b87c" }}
+                />
+                <span className="text-slate-500 dark:text-slate-400 font-medium">On time</span>
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {(chartData.todayPresent || metrics.onTimeCount).toLocaleString()}
+                  {metrics.onTimeCount.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
+                <span
+                  className="w-2.5 h-2.5 rounded-xs shrink-0 inline-block"
+                  style={{ backgroundColor: "#f59e0b" }}
+                />
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Late</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {metrics.lateCount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-xs shrink-0 inline-block"
+                  style={{ backgroundColor: "#e11d48" }}
+                />
                 <span className="text-slate-500 dark:text-slate-400 font-medium">Absent</span>
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {(chartData.todayAbsent || metrics.absentCount).toLocaleString()}
+                  {metrics.absentCount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-xs shrink-0 inline-block"
+                  style={{ backgroundColor: "#8b5cf6" }}
+                />
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Early go</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {metrics.earlyGoCount.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -888,7 +1058,7 @@ export default function AttendanceDashboardPage() {
           <div className="mt-2">
             <Chart
               type="column"
-              stacked="normal"
+              stacked={false}
               categories={chartData.categories}
               series={chartData.series}
               height={320}
@@ -898,35 +1068,100 @@ export default function AttendanceDashboardPage() {
                 plotOptions: {
                   column: {
                     borderRadius: 4,
+                    pointPadding: 0.04,
+                    groupPadding: 0.16,
+                    borderWidth: 0,
                     dataLabels: {
                       enabled: false,
                     },
-                    stacking: "normal",
                   },
                 },
+                series: chartData.series.map((s, idx) => ({
+                  ...s,
+                  dataLabels:
+                    idx === 0
+                      ? {
+                          enabled: true,
+                          crop: false,
+                          overflow: "allow",
+                          verticalAlign: "top",
+                          y: -22,
+                          style: {
+                            color: "#64748B",
+                            fontWeight: "bold",
+                            fontSize: "11px",
+                            textOutline: "none",
+                          },
+                          formatter: function () {
+                            const total = (chartData as any)?.totalsPerDay?.[this.point.index];
+                            return total ? total.toLocaleString() : (this.y ? this.y.toLocaleString() : "");
+                          },
+                        }
+                      : { enabled: false },
+                })),
                 yAxis: {
                   visible: false,
-                  stackLabels: {
-                    enabled: true,
-                    style: {
-                      fontWeight: "bold",
-                      color: "#64748B",
-                      fontSize: "11px",
-                    },
-                    formatter: function () {
-                      return this.total ? this.total.toLocaleString() : "";
-                    },
-                  },
                 },
                 xAxis: {
                   labels: {
+                    useHTML: true,
                     style: {
-                      color: "#64748B",
-                      fontWeight: "600",
                       fontSize: "11px",
                     },
+                    formatter: function () {
+                      const isLast = this.isLast;
+                      return isLast
+                        ? `<span style="font-weight: 700; color: #0f172a;">${this.value}</span>`
+                        : `<span style="font-weight: 500; color: #64748b;">${this.value}</span>`;
+                    },
                   },
-                  lineColor: "#E2E8F0",
+                  lineColor: "#F1F5F9",
+                  tickWidth: 0,
+                },
+                tooltip: {
+                  shared: true,
+                  useHTML: true,
+                  outside: true,
+                  backgroundColor: "#FFFFFF",
+                  borderColor: "#E2E8F0",
+                  borderRadius: 12,
+                  padding: 0,
+                  shadow: {
+                    color: "rgba(0, 0, 0, 0.12)",
+                    offsetX: 0,
+                    offsetY: 6,
+                    width: 16,
+                  },
+                  positioner: function (labelWidth: number, labelHeight: number, point: any) {
+                    const chart = this.chart;
+                    let x = point.plotX + chart.plotLeft - labelWidth / 2;
+                    x = Math.max(chart.plotLeft, Math.min(x, chart.plotLeft + chart.plotWidth - labelWidth));
+
+                    // Always place cleanly ABOVE the bar
+                    let minY = point.plotY;
+                    if (this.points && this.points.length > 0) {
+                      this.points.forEach((p: any) => {
+                        if (p.plotY !== undefined && p.plotY < minY) minY = p.plotY;
+                      });
+                    }
+                    let y = minY + chart.plotTop - labelHeight - 14;
+                    if (y < 8) y = 8;
+                    return { x, y };
+                  },
+                  formatter: function () {
+                    let s = `<div style="padding: 10px 12px; min-width: 140px; background: #ffffff; border-radius: 12px; font-family: inherit; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.08);">`;
+                    s += `<div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 6px; border-bottom: 1px solid #F1F5F9; padding-bottom: 4px;">${this.x}</div>`;
+                    this.points?.forEach((point: any) => {
+                      s += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 11px; margin-top: 4px;">`;
+                      s += `<span style="display: flex; align-items: center; gap: 6px; color: #64748B;">`;
+                      s += `<span style="width: 8px; height: 8px; border-radius: 2px; background-color: ${point.color};"></span>`;
+                      s += `${point.series.name}:</span>`;
+                      s += `<b style="color: #0F172A; font-weight: 700;">${point.y?.toLocaleString()}</b>`;
+                      s += `</div>`;
+                    });
+                    s += `</div>`;
+                    return s;
+                  },
                 },
               }}
             />
@@ -940,17 +1175,17 @@ export default function AttendanceDashboardPage() {
           } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between transition-all`}
         >
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Departments
               </h2>
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
                 {totalOnRoll.toLocaleString()} on roll
               </span>
             </div>
 
             {/* Department Rows */}
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[330px] overflow-y-auto pr-1">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[350px] overflow-y-auto pr-1.5 scrollbar-thin">
               {departmentsSummary.length > 0 ? (
                 departmentsSummary.map((dept) => {
                   const isSelected = selectedDept?.deptCode === dept.deptCode;
@@ -958,48 +1193,48 @@ export default function AttendanceDashboardPage() {
                     <div
                       key={dept.deptCode || dept.deptName}
                       onClick={() => handleDepartmentClick(dept)}
-                      className={`py-3 flex items-center justify-between group cursor-pointer transition-colors px-2 rounded-xl ${
+                      className={`py-3.5 flex items-center justify-between group cursor-pointer transition-colors px-1.5 rounded-xl ${
                         isSelected
                           ? "bg-indigo-50/70 border border-indigo-200/80 dark:bg-slate-800/80 dark:border-indigo-500/30"
                           : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                       }`}
                     >
                       {/* Left: Color Dot & Department Name */}
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
                         <span
-                          className="w-2.5 h-2.5 rounded-sm shrink-0"
+                          className="w-2.5 h-2.5 rounded-[3px] shrink-0"
                           style={{ backgroundColor: dept.color }}
                         />
                         <span
-                          className={`text-sm font-semibold truncate ${
+                          className={`text-[13.5px] font-semibold truncate ${
                             isSelected
                               ? "text-indigo-900 dark:text-indigo-300 font-bold"
                               : "text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white"
                           }`}
                         >
-                          {dept.deptName}
+                          {formatDeptName(dept.deptName)}
                         </span>
                       </div>
 
                       {/* Right: On-time / Late / Leave counts */}
-                      <div className="flex items-center gap-4 text-right shrink-0">
-                        <div className="w-14">
-                          <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                            {dept.onTime}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-medium">on-time</div>
+                      <div className="flex items-center gap-6 sm:gap-7 text-center shrink-0">
+                        <div className="flex flex-col items-center min-w-[46px]">
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                            {dept.onTime.toLocaleString()}
+                          </span>
+                          <span className="text-[10.5px] text-slate-400 font-normal mt-0.5">on-time</span>
                         </div>
-                        <div className="w-10">
-                          <div className="text-sm font-bold text-amber-500">
-                            {dept.late}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-medium">late</div>
+                        <div className="flex flex-col items-center min-w-[34px]">
+                          <span className="text-sm font-bold text-[#F59E0B] leading-tight">
+                            {dept.late.toLocaleString()}
+                          </span>
+                          <span className="text-[10.5px] text-slate-400 font-normal mt-0.5">late</span>
                         </div>
-                        <div className="w-10">
-                          <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                            {dept.leave}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-medium">leave</div>
+                        <div className="flex flex-col items-center min-w-[34px]">
+                          <span className="text-sm font-bold text-slate-600 dark:text-slate-400 leading-tight">
+                            {dept.leave.toLocaleString()}
+                          </span>
+                          <span className="text-[10.5px] text-slate-400 font-normal mt-0.5">leave</span>
                         </div>
                       </div>
                     </div>
@@ -1016,7 +1251,7 @@ export default function AttendanceDashboardPage() {
           {selectedDept && (
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs text-slate-500 truncate mr-2">
-                Filtered by: <strong>{selectedDept.deptName}</strong>
+                Filtered by: <strong>{formatDeptName(selectedDept.deptName)}</strong>
               </span>
               <button
                 onClick={handleClearDeptFilter}
@@ -1030,19 +1265,19 @@ export default function AttendanceDashboardPage() {
 
         {/* Right: Employee Drilldown Card (Opens right beside Departments when any dept is clicked) */}
         {selectedDept && (
-          <div className="lg:col-span-4 xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between space-y-3 transition-all">
-            <div className="space-y-3">
+          <div className="lg:col-span-4 xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3.5 transition-all">
+            <div className="space-y-3.5">
               {/* Header: Dept Name & Close */}
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <span
-                    className="w-2.5 h-2.5 rounded-sm shrink-0"
-                    style={{ backgroundColor: selectedDept.color || "#10B981" }}
+                    className="w-2.5 h-2.5 rounded-[3px] shrink-0"
+                    style={{ backgroundColor: selectedDept.color || "#3B82F6" }}
                   />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate">
-                    {selectedDept.deptName}
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                    {formatDeptName(selectedDept.deptName)}
                   </h3>
-                  <span className="text-[11px] font-semibold text-slate-400 shrink-0">
+                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500 shrink-0">
                     ({drilldownCounts.all})
                   </span>
                 </div>
@@ -1069,7 +1304,7 @@ export default function AttendanceDashboardPage() {
                     <button
                       key={tab.id}
                       onClick={() => setDrilldownTab(tab.id as any)}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         isActive
                           ? "border border-indigo-500 text-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-500 shadow-2xs"
                           : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
@@ -1089,7 +1324,7 @@ export default function AttendanceDashboardPage() {
                     placeholder="Search employee..."
                     value={empSearch}
                     onChange={(e) => setEmpSearch(e.target.value)}
-                    className="w-full pl-3 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full pl-3 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
                   />
                   <Search className="w-3.5 h-3.5 text-indigo-500 absolute right-2.5 top-2.5" />
                 </div>
@@ -1099,36 +1334,33 @@ export default function AttendanceDashboardPage() {
                     setEmpSearch("");
                     setDrilldownTab("all");
                   }}
-                  className="text-xs font-serif font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shrink-0 cursor-pointer"
+                  className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shrink-0 cursor-pointer"
                 >
                   View All Employees
                 </button>
               </div>
 
               {/* Employees List */}
-              <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[300px] overflow-y-auto pr-1">
+              <div
+                key={`drilldown-list-${selectedDept?.deptCode || selectedDept?.deptName || "dept"}-${drilldownTab}`}
+                className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[350px] overflow-y-auto pr-1.5 scrollbar-thin"
+              >
                 {drilldownEmployees.length > 0 ? (
                   drilldownEmployees.map((emp: any, index: number) => {
-                    const statusUpper = (emp.PUNCH_STATUS || emp.STATUS || emp.ATTENDANCE_STATUS || "").toUpperCase();
-                    const isAbsent =
-                      statusUpper.includes("ABSENT") ||
-                      statusUpper === "A" ||
-                      (!emp.LOGIN_TIME && !emp.LOGOUT_TIME && !statusUpper.includes("PRESENT") && !statusUpper.includes("ONTIME"));
-                    const isLate = statusUpper.includes("LATE") || (emp.LOGIN_TIME && emp.LOGIN_TIME > "09:30:00");
-                    const isEarlyGo = statusUpper.includes("EARLY") || statusUpper.includes("EARLYGO");
+                    const cat = getEmployeeCategory(emp);
 
                     let badgeText = "✓ OnTime";
                     let badgeClass =
-                      "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-400";
-                    if (isAbsent) {
+                      "bg-emerald-50 text-[#00B87C] border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800";
+                    if (cat === "absent") {
                       badgeText = "✕ Absent";
                       badgeClass =
                         "bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/50 dark:border-rose-800 dark:text-rose-400";
-                    } else if (isLate) {
+                    } else if (cat === "late") {
                       badgeText = "⏱ Late";
                       badgeClass =
-                        "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-400";
-                    } else if (isEarlyGo) {
+                        "bg-amber-50 text-[#F59E0B] border border-amber-200 dark:bg-amber-950/50 dark:border-amber-800";
+                    } else if (cat === "earlyGo") {
                       badgeText = "→ Early Go";
                       badgeClass =
                         "bg-purple-50 text-purple-600 border border-purple-200 dark:bg-purple-950/50 dark:border-purple-800 dark:text-purple-400";
@@ -1136,32 +1368,24 @@ export default function AttendanceDashboardPage() {
 
                     return (
                       <div
-                        key={emp.EMP_CODE || index}
-                        className="py-2.5 px-2 flex items-center justify-between gap-3 group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
+                        key={`${emp.EMP_CODE || "emp"}_${emp.UTD || emp.id || index}_${index}`}
+                        className="py-3 px-1.5 flex items-center justify-between gap-3 group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
                       >
                         {/* Left: Avatar + Employee Info */}
                         <div className="flex items-center gap-2.5 min-w-0">
-                          {emp.PHOTO_URL || emp.EMP_PHOTO ? (
-                            <img
-                              src={emp.PHOTO_URL || emp.EMP_PHOTO}
-                              alt={emp.EMP_NAME}
-                              onClick={() => setPreviewImage(emp.PHOTO_URL || emp.EMP_PHOTO)}
-                              className="w-9 h-9 rounded-full object-cover cursor-pointer border border-slate-200 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-xs font-bold shrink-0">
-                              {getInitials(emp.EMP_NAME)}
-                            </div>
-                          )}
+                          <EmployeeAvatar
+                            emp={emp}
+                            onPreview={(url) => setPreviewImage(url)}
+                          />
 
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase truncate">
+                            <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 uppercase truncate tracking-tight">
                               {emp.EMP_NAME}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-medium uppercase truncate">
+                            <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase truncate">
                               {emp.DESIGNATION || "EMPLOYEE"}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                            <div className="text-[10.5px] text-slate-400 dark:text-slate-500 font-normal flex items-center gap-2.5 mt-0.5">
                               <span>Login: {emp.LOGIN_TIME || "--:--"}</span>
                               <span>Logout: {emp.LOGOUT_TIME || "--:--"}</span>
                             </div>
@@ -1180,8 +1404,16 @@ export default function AttendanceDashboardPage() {
                     );
                   })
                 ) : (
-                  <div className="py-12 text-center text-xs text-slate-400">
-                    No employees found for this filter
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-2">
+                      <Search className="w-4 h-4" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      No data found
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      No employees recorded for this filter
+                    </p>
                   </div>
                 )}
               </div>
@@ -1197,7 +1429,7 @@ export default function AttendanceDashboardPage() {
         {/* 1. Pending Leave Requests Card */}
         <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
           {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <Inbox className="w-4 h-4" />
@@ -1205,7 +1437,7 @@ export default function AttendanceDashboardPage() {
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Pending leave requests
               </h2>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
                 {pendingLeavesList.length} waiting
               </span>
             </div>
@@ -1223,7 +1455,7 @@ export default function AttendanceDashboardPage() {
           </div>
 
           {/* List of Pending Leaves */}
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[270px] overflow-y-auto pr-1.5 custom-scrollbar">
             {pendingLeavesList.length > 0 ? (
               pendingLeavesList.map((leave, index) => {
                 const palette = AVATAR_PALETTES[index % AVATAR_PALETTES.length];
@@ -1237,7 +1469,7 @@ export default function AttendanceDashboardPage() {
                   : "Today";
 
                 return (
-                  <div key={index} className="py-3.5 flex items-center justify-between gap-3 group">
+                  <div key={index} className="py-3 px-1.5 flex items-center justify-between gap-3 group hover:bg-slate-50/70 dark:hover:bg-slate-800/40 rounded-xl transition-colors">
                     {/* Left: Avatar + Name + Details */}
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -1247,10 +1479,10 @@ export default function AttendanceDashboardPage() {
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                          {leave.EMP_NAME}
+                        <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 tracking-tight truncate">
+                          {formatDeptName(leave.EMP_NAME)}
                         </div>
-                        <div className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 truncate mt-0.5">
                           {formattedDate} · {leave.duration || "1 day"} · {leave.reason || "personal work"}
                         </div>
                       </div>
@@ -1258,16 +1490,17 @@ export default function AttendanceDashboardPage() {
 
                     {/* Right: Type Badge + Approve Button */}
                     <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                        {leave.LEAVE_TYPE || "CL"}
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        {leave.LEAVE_TYPE || "Leave"}
                       </span>
 
                       <button
                         onClick={() => handleApproveLeave(leave)}
-                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg border border-emerald-300 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                        disabled={approvingKey === `${leave.EMP_CODE || leave.EmpCode}_${leave.LEAVE_DATE || leave.Leave_applied_on}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg border border-emerald-300 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        Approve
+                        {approvingKey === `${leave.EMP_CODE || leave.EmpCode}_${leave.LEAVE_DATE || leave.Leave_applied_on}` ? "Approving..." : "Approve"}
                       </button>
                     </div>
                   </div>
@@ -1284,7 +1517,7 @@ export default function AttendanceDashboardPage() {
         {/* 2. Needs Attention Today Card */}
         <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
           {/* Header */}
-          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 pb-3.5 border-b border-slate-100 dark:border-slate-800">
             <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4" />
             </div>
@@ -1298,22 +1531,22 @@ export default function AttendanceDashboardPage() {
             {/* Row 1: Punch approvals pending */}
             <div
               onClick={() => router.push("/payroll/attendance-punch/attendance-punching-approval")}
-              className="py-3.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors"
+              className="py-3 px-1.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                   <Fingerprint className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 transition-colors">
+                  <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-amber-600 transition-colors">
                     Punch approvals pending
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 mt-0.5">
                     In and out punches raised this week
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
                 <span>{needsAttention.punchApprovals}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </div>
@@ -1322,22 +1555,22 @@ export default function AttendanceDashboardPage() {
             {/* Row 2: Mis-punch requests */}
             <div
               onClick={() => router.push("/payroll/attendance-punch/mispunch-approval-grid")}
-              className="py-3.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors"
+              className="py-3 px-1.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
                   <Clock className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-rose-600 transition-colors">
+                  <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-rose-600 transition-colors">
                     Mis-punch requests
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 mt-0.5">
                     Awaiting HOD sign-off
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-rose-600">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
                 <span>{needsAttention.mispunch}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </div>
@@ -1346,22 +1579,22 @@ export default function AttendanceDashboardPage() {
             {/* Row 3: Comp off not raised */}
             <div
               onClick={() => router.push("/payroll/attendance-punch/comp-off-approver-grid")}
-              className="py-3.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors"
+              className="py-3 px-1.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                   <Gift className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-purple-600 transition-colors">
+                  <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-purple-600 transition-colors">
                     Comp off not raised
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 mt-0.5">
                     Week-off days already worked
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-purple-600">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
                 <span>{needsAttention.compOff}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </div>
@@ -1370,22 +1603,22 @@ export default function AttendanceDashboardPage() {
             {/* Row 4: Shift changes waiting */}
             <div
               onClick={() => router.push("/payroll/attendance-punch/shift-approval-grid")}
-              className="py-3.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors"
+              className="py-3 px-1.5 flex items-center justify-between group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 rounded-xl transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-cyan-600 transition-colors">
+                  <div className="text-[13.5px] font-semibold text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-cyan-600 transition-colors">
                     Shift changes waiting
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-normal text-slate-400 dark:text-slate-500 mt-0.5">
                     Approver 1 has not acted
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-cyan-600">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
                 <span>{needsAttention.shiftChanges}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </div>
