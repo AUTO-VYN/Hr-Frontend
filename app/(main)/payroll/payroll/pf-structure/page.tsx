@@ -1152,6 +1152,7 @@ export default function PFStructurePage() {
                     data={filteredRows}
                     showTopSearch={true}
                      showExcelExport={true}
+                      resetFilters={true}
                       showColumnFilters= {true}
                        showPageSizeInFooter = {true}
                     initialPageSize={10}

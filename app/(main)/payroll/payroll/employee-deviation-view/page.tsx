@@ -627,6 +627,7 @@ export default function EmployeeDeviationView() {
             showTopSearch={true}
             showExcelExport={true}
             showPageSizeInFooter={true}
+             resetFilters={true}
             showColumnFilters={true}
             initialPageSize={10}
           />

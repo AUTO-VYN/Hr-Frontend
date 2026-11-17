@@ -1059,50 +1059,6 @@ export default function LeaveMispunchReportPage() {
                 )}
               </p>
             </div>
-
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative min-w-0 flex-1 sm:w-[260px] sm:flex-none">
-                <Einput
-                  name="search"
-                  type="text"
-                  value={search}
-                  placeholder="Search in results..."
-                  handleInputChange={(name: string, value: string) =>
-                    setSearch(value)
-                  }
-                  className="h-[38px] w-full"
-                />
-              </div>
-
-              {/* <AButton
-                type="button"
-                onClick={() => setShowColumnFilters((previous) => !previous)}
-                className={`inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
-                  showColumnFilters
-                    ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-[#dce5f1] bg-white text-[#152b4b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                }`}
-              >
-                Column filters
-              </AButton> */}
-
-              <AButton
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                Reset
-              </AButton>
-              {/* 
-              <AButton
-                type="button"
-                onClick={exportToExcel}
-                disabled={!filteredRows.length}
-                className="inline-flex h-[38px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-              >
-                Export to Excel
-              </AButton> */}
-            </div>
           </div>
 
           {/* COLUMN FILTER PANEL */}
@@ -1155,7 +1111,9 @@ export default function LeaveMispunchReportPage() {
                     columns={columns}
                     data={filteredRows}
                     showExcelExport={true}
-                     showPageSizeInFooter = {true}
+                    showTopSearch={true}
+                    resetFilters={true}
+                    showPageSizeInFooter={true}
                     showColumnFilters={true}
                   />
                 ) : (

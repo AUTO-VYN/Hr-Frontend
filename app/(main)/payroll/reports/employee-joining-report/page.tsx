@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -13,6 +12,7 @@ import Eselect from "@/components/atoms/Eselect";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import AButton from "@/components/atoms/Button";
+import FilterScope from "@/components/atoms/FilterScope";
 
 /* ------------------------------------------------------------------ */
 /* TYPES                                                              */
@@ -82,7 +82,6 @@ const YEARS: Option[] = Array.from({ length: 15 }, (_, index) => {
 });
 
 const EMPLOYEE_TYPES: Option[] = [
-
   { value: "1", label: "Regular" },
   { value: "2", label: "Casual" },
   { value: "3", label: "Apprentice" },
@@ -161,16 +160,6 @@ const EMPTY_SELECTED: Record<FilterKey, string[]> = {
   SECTION: [],
   DIVISION: [],
   DESIGNATION: [],
-};
-
-const EMPTY_SEARCH: Record<FilterKey, string> = {
-  Region: "",
-  CHANNEL: "",
-  CLUSTER: "",
-  Location: "",
-  SECTION: "",
-  DIVISION: "",
-  DESIGNATION: "",
 };
 
 /* ------------------------------------------------------------------ */
@@ -277,12 +266,7 @@ const getResponseRows = (response: any): any[] => {
     if (Array.isArray(item)) return item;
 
     if (item && typeof item === "object") {
-      const nested = [
-        item.data,
-        item.Result,
-        item.result,
-        item.recordset,
-      ];
+      const nested = [item.data, item.Result, item.result, item.recordset];
 
       for (const value of nested) {
         if (Array.isArray(value)) return value;
@@ -338,16 +322,12 @@ const makeOptions = (
       return {
         value: String(code || name),
         label:
-          code && name && code !== name
-            ? `${code} · ${name}`
-            : name || code,
+          code && name && code !== name ? `${code} · ${name}` : name || code,
       };
     })
     .filter(Boolean) as Option[];
 
-  return Array.from(
-    new Map(result.map((item) => [item.value, item])).values(),
-  );
+  return Array.from(new Map(result.map((item) => [item.value, item])).values());
 };
 
 const formatDate = (date: Date) => {
@@ -404,9 +384,7 @@ const cellText = (value: any) => {
 };
 
 const isEmptyValue = (value: any) =>
-  value === null ||
-  value === undefined ||
-  String(value).trim() === "";
+  value === null || value === undefined || String(value).trim() === "";
 
 const parseAnyDate = (value: any): Date | null => {
   if (isEmptyValue(value)) return null;
@@ -416,21 +394,13 @@ const parseAnyDate = (value: any): Date | null => {
   let match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
 
   if (match) {
-    return new Date(
-      Number(match[3]),
-      Number(match[2]) - 1,
-      Number(match[1]),
-    );
+    return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
   }
 
   match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
   if (match) {
-    return new Date(
-      Number(match[1]),
-      Number(match[2]) - 1,
-      Number(match[3]),
-    );
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   }
 
   match = text.match(/^(\d{1,2})[-\s]([A-Za-z]{3})[-\s,]+(\d{4})$/);
@@ -441,11 +411,7 @@ const parseAnyDate = (value: any): Date | null => {
     );
 
     if (monthIndex >= 0) {
-      return new Date(
-        Number(match[3]),
-        monthIndex,
-        Number(match[1]),
-      );
+      return new Date(Number(match[3]), monthIndex, Number(match[1]));
     }
   }
 
@@ -465,11 +431,7 @@ const getEmployeeType = (
 ): "regular" | "casual" | "apprentice" | "" => {
   const type = cellText(value).trim().toLowerCase();
 
-  if (
-    type === "1" ||
-    type.includes("regular") ||
-    type.includes("permanent")
-  ) {
+  if (type === "1" || type.includes("regular") || type.includes("permanent")) {
     return "regular";
   }
 
@@ -491,19 +453,11 @@ const getEmployeeType = (
 const getGenderType = (value: any): "male" | "female" | "" => {
   const gender = cellText(value).trim().toLowerCase();
 
-  if (
-    gender === "m" ||
-    gender === "male" ||
-    gender.startsWith("male ")
-  ) {
+  if (gender === "m" || gender === "male" || gender.startsWith("male ")) {
     return "male";
   }
 
-  if (
-    gender === "f" ||
-    gender === "female" ||
-    gender.startsWith("female ")
-  ) {
+  if (gender === "f" || gender === "female" || gender.startsWith("female ")) {
     return "female";
   }
 
@@ -527,15 +481,11 @@ const normalizeReportRows = (rows: any[]) => {
     const actualKeys = Object.keys(row || {});
 
     JOINING_REPORT_COLUMN_DEFS.forEach(({ accessor }) => {
-      const exactKey = actualKeys.find(
-        (key) => key === accessor,
-      );
+      const exactKey = actualKeys.find((key) => key === accessor);
 
       const matchedKey =
         exactKey ||
-        actualKeys.find(
-          (key) => normalizeKey(key) === normalizeKey(accessor),
-        );
+        actualKeys.find((key) => normalizeKey(key) === normalizeKey(accessor));
 
       if (matchedKey !== undefined) {
         normalizedRow[accessor] = row[matchedKey];
@@ -544,26 +494,12 @@ const normalizeReportRows = (rows: any[]) => {
 
     // Handle common alternate API field names.
     const aliases: Record<string, string[]> = {
-      EmployeeType: [
-        "EMPLOYEETYPE",
-        "EmpType",
-        "Employee_Type",
-        "EMP_TYPE",
-      ],
-      EMPLOYEENAME: [
-        "EMPLOYEE_NAME",
-        "EMP_NAME",
-        "EmployeeName",
-        "Name",
-      ],
+      EmployeeType: ["EMPLOYEETYPE", "EmpType", "Employee_Type", "EMP_TYPE"],
+      EMPLOYEENAME: ["EMPLOYEE_NAME", "EMP_NAME", "EmployeeName", "Name"],
       GENDER: ["Gender", "SEX"],
       region1: ["REGION", "Region", "Region_Name"],
       Department: ["DEPARTMENT", "Division_Name", "DIVISION"],
-      EMPLOYEEDESIGNATION: [
-        "DESIGNATION",
-        "Designation",
-        "EMP_DESIGNATION",
-      ],
+      EMPLOYEEDESIGNATION: ["DESIGNATION", "Designation", "EMP_DESIGNATION"],
     };
 
     Object.entries(aliases).forEach(([target, possibleKeys]) => {
@@ -611,10 +547,7 @@ const buildReportColumns = () => {
         );
       }
 
-      if (
-        normalized === "employeename" ||
-        normalized === "empname"
-      ) {
+      if (normalized === "employeename" || normalized === "empname") {
         return (
           <span className="font-semibold text-[12px] text-slate-900 dark:text-slate-100">
             {String(value)}
@@ -727,9 +660,7 @@ export default function EmployeeJoiningReportPage() {
   const [masterLoading, setMasterLoading] = useState(false);
 
   // Month and year
-  const [month, setMonth] = useState(
-    String(CURRENT_DATE.getMonth() + 1),
-  );
+  const [month, setMonth] = useState(String(CURRENT_DATE.getMonth() + 1));
 
   const [year, setYear] = useState(String(CURRENT_YEAR));
 
@@ -757,11 +688,18 @@ export default function EmployeeJoiningReportPage() {
   const [selected, setSelected] =
     useState<Record<FilterKey, string[]>>(EMPTY_SELECTED);
 
-  const [searches, setSearches] =
-    useState<Record<FilterKey, string>>(EMPTY_SEARCH);
-
-  const [activeFilter, setActiveFilter] =
-    useState<FilterKey>("Region");
+  const filterScopeCategories = useMemo(
+    () =>
+      FILTER_CONFIG.map((config) => ({
+        key: config.key,
+        label: config.title,
+        options: filters[config.key].map((item) => ({
+          value: item.value,
+          label: item.label,
+        })),
+      })),
+    [filters],
+  );
 
   // Report
   const [showReport, setShowReport] = useState(false);
@@ -888,59 +826,6 @@ export default function EmployeeJoiningReportPage() {
   }, [fetchMasters, user?.Comp_Code, user?.branch]);
 
   /* -------------------------------------------------------------- */
-  /* FILTER SCOPE HANDLERS                                          */
-  /* -------------------------------------------------------------- */
-
-  const toggleFilter = (key: FilterKey, value: string) => {
-    setSelected((prev) => ({
-      ...prev,
-      [key]: prev[key].includes(value)
-        ? prev[key].filter((item) => item !== value)
-        : [...prev[key], value],
-    }));
-  };
-
-  const selectAllFilter = (key: FilterKey) => {
-    const allValues = filters[key].map((item) => item.value);
-
-    setSelected((prev) => ({
-      ...prev,
-      [key]:
-        prev[key].length === allValues.length ? [] : allValues,
-    }));
-  };
-
-  const totalSelected = useMemo(
-    () =>
-      Object.values(selected).reduce(
-        (acc, arr) => acc + arr.length,
-        0,
-      ),
-    [selected],
-  );
-
-  const handleClearAll = () => {
-    setSelected(EMPTY_SELECTED);
-    setSearches(EMPTY_SEARCH);
-    setEmployeeType("");
-  };
-
-  const activeConfig = FILTER_CONFIG.find(
-    (item) => item.key === activeFilter,
-  )!;
-
-  const activeScopeOptions = useMemo(() => {
-    const opts = filters[activeFilter] || [];
-    const term = searches[activeFilter].trim().toLowerCase();
-
-    if (!term) return opts;
-
-    return opts.filter((item) =>
-      item.label.toLowerCase().includes(term),
-    );
-  }, [filters, activeFilter, searches]);
-
-  /* -------------------------------------------------------------- */
   /* RESET REPORT FILTERS                                           */
   /* -------------------------------------------------------------- */
 
@@ -1032,10 +917,7 @@ export default function EmployeeJoiningReportPage() {
   /* REPORT COLUMNS                                                 */
   /* -------------------------------------------------------------- */
 
-  const baseColumns = useMemo(
-    () => buildReportColumns(),
-    [],
-  );
+  const baseColumns = useMemo(() => buildReportColumns(), []);
 
   /* -------------------------------------------------------------- */
   /* FILTERED ROWS                                                  */
@@ -1116,7 +998,7 @@ export default function EmployeeJoiningReportPage() {
 
   if (showReport) {
     return (
-      <div className="min-h-screen min-w-0 bg-[#f8fafc] p-4 dark:bg-[#0b1220] sm:p-6">
+      <div className="min-h-screen min-w-0 bg-[#f8fafc] p-4 dark:bg-[#0b1220]">
         <HashloaderComponent isLoading={loading || masterLoading} />
 
         <div className="mx-auto max-w-[1800px] space-y-4">
@@ -1131,7 +1013,7 @@ export default function EmployeeJoiningReportPage() {
                 }}
                 className="flex h-[36px] items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               >
-                 <ArrowLeft size={14} />
+                <ArrowLeft size={14} />
                 Back To Filters
               </AButton>
             </div>
@@ -1211,6 +1093,7 @@ export default function EmployeeJoiningReportPage() {
                   showTopSearch={true}
                   showExcelExport={true}
                   showColumnFilters={true}
+                  resetFilters={true}
                   showPageSizeInFooter={true}
                 />
               ) : (
@@ -1239,7 +1122,7 @@ export default function EmployeeJoiningReportPage() {
     <div className="min-h-screen min-w-0 bg-[#f8fafc] p-4 dark:bg-[#0b1220] sm:p-6">
       <HashloaderComponent isLoading={loading || masterLoading} />
 
-      <div className="mx-auto max-w-[1600px] space-y-5">
+      <div className="mx-auto max-w-[1600px] space-y-4">
         <PageHeader />
 
         {/* Top Parameter Filter Card */}
@@ -1313,146 +1196,13 @@ export default function EmployeeJoiningReportPage() {
         </div>
 
         {/* Master Scope Filter Box */}
-
-        <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs md:w-[65%] dark:border-slate-800 dark:bg-slate-900">
-          {/* Card Header */}
-
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
-            <h2 className="text-[14px] font-bold text-slate-900 dark:text-slate-100">
-              Filter scope
-            </h2>
-
-            <div className="flex items-center gap-4 text-[12px]">
-              <span className="text-slate-500 dark:text-slate-400">
-                {totalSelected} selected
-              </span>
-
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="font-semibold text-[#4f46e5] hover:underline dark:text-indigo-400"
-              >
-                Clear all
-              </button>
-            </div>
-          </div>
-
-          {/* Split Body */}
-
-          <div className="grid min-h-[340px] grid-cols-1 md:grid-cols-12">
-            {/* Left Category Sidebar */}
-
-            <div className="border-b border-slate-100 p-2.5 dark:border-slate-800 md:col-span-4 md:border-b-0 md:border-r">
-              <div className="space-y-1">
-                {FILTER_CONFIG.map((item) => {
-                  const isActive = activeFilter === item.key;
-                  const count = selected[item.key]?.length || 0;
-                  const total = filters[item.key]?.length || 0;
-
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setActiveFilter(item.key)}
-                      className={`flex w-full items-center justify-between rounded-lg px-3.5 py-2.5 text-left text-[12px] transition ${
-                        isActive
-                          ? "bg-[#eef2ff] font-semibold text-[#4f46e5] dark:bg-indigo-500/15 dark:text-indigo-400"
-                          : "font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <span>{item.title}</span>
-
-                      <span
-                        className={`text-[11px] ${
-                          isActive
-                            ? "text-[#4f46e5] dark:text-indigo-400"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {count}/{total}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Right Checkbox Selection Area */}
-
-            <div className="p-4 md:col-span-8">
-              {/* Search & Select All Row */}
-
-              <div className="mb-4 flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-
-                  <input
-                    type="text"
-                    value={searches[activeFilter]}
-                    onChange={(e) =>
-                      setSearches((prev) => ({
-                        ...prev,
-                        [activeFilter]: e.target.value,
-                      }))
-                    }
-                    placeholder={`Search ${activeConfig.title.toLowerCase()}`}
-                    className="h-[38px] w-full rounded-lg border border-slate-200 bg-slate-50/70 pl-9 pr-3 text-[12px] text-slate-800 outline-none transition focus:border-indigo-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => selectAllFilter(activeFilter)}
-                  className="whitespace-nowrap text-[12px] font-semibold text-[#4f46e5] hover:underline dark:text-indigo-400"
-                >
-                  Select all
-                </button>
-              </div>
-
-              {/* Checkbox Options Grid */}
-
-              <div className="max-h-[260px] overflow-y-auto pr-1">
-                {activeScopeOptions.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                    {activeScopeOptions.map((option) => {
-                      const isChecked = selected[activeFilter].includes(
-                        option.value,
-                      );
-
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex cursor-pointer items-center gap-2.5 rounded-md py-1 text-[12px] text-slate-700 transition hover:text-slate-900 dark:text-slate-300"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() =>
-                              toggleFilter(activeFilter, option.value)
-                            }
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                          />
-
-                          <span className="truncate">{option.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex h-[200px] flex-col items-center justify-center text-center text-slate-400">
-                    <Search size={20} className="mb-1.5 opacity-50" />
-
-                    <p className="text-[12px]">
-                      No {activeConfig.title.toLowerCase()} found
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="w-full md:w-[66%]">
+          <FilterScope
+            title="Filter scope"
+            categories={filterScopeCategories}
+            selected={selected}
+            onChange={setSelected}
+          />
         </div>
       </div>
     </div>

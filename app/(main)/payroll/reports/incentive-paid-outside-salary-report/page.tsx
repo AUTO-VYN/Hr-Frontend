@@ -618,41 +618,6 @@ export default function IncentivePaidOutsideSalaryPage() {
                 of {rows.length} rows
               </p>
             </div>
-
-            {/* ACTIONS */}
-
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              {/* SEARCH */}
-
-              <div className="relative min-w-0 flex-1 sm:w-[280px] sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <Einput
-                  name="search"
-                  type="text"
-                  value={search}
-                  placeholder="Search in results..."
-                  handleInputChange={(name: string, value: string) =>
-                    setSearch(value)
-                  }
-                  className="h-[41px] w-full pl-9"
-                />
-              </div>
-
-              {/* RESET */}
-
-              <AButton
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </AButton>
-            </div>
           </div>
 
           {/* COLUMN FILTER PANEL */}
@@ -707,6 +672,8 @@ export default function IncentivePaidOutsideSalaryPage() {
                     onRowDoubleClick={() => {}}
                     showExcelExport={true}
                      showPageSizeInFooter = {true}
+                     showTopSearch={true}
+                     resetFilters={true}
                     showColumnFilters={true}
                   />
                 ) : (

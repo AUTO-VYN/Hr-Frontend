@@ -308,6 +308,14 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
         name: "Mispunch Report With Picture",
         slug: "mispunch-report-with-picture",
       },
+       {
+        name: "Employee Face Register",
+        slug: "employee-face-register",
+      },
+       {
+        name: "Employee Profile Document View",
+        slug: "employee-profile-document-view",
+      },
     ],
   },
   {

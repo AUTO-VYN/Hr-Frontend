@@ -1,12 +1,6 @@
-
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -31,8 +25,7 @@ import HashloaderComponent from "@/components/Templates/hashloader";
 // API CONFIGURATION
 // --------------------------------------------------
 
-const CONTINUOUS_ABSENT_API =
-  "/hrmsreport/getContinuousAbsentReport";
+const CONTINUOUS_ABSENT_API = "/hrmsreport/getContinuousAbsentReport";
 
 // --------------------------------------------------
 // TYPES
@@ -91,11 +84,7 @@ const getCurrentDate = () => {
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    ) {
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
       return String(value);
     }
   }
@@ -151,7 +140,7 @@ const formatDate = (value: any): string => {
 
 const showSideAlert = (
   message: string,
-  type: "success" | "error" | "warning" | "info" = "info"
+  type: "success" | "error" | "warning" | "info" = "info",
 ) => {
   Swal.mixin({
     toast: true,
@@ -274,7 +263,7 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.Emp_Code,
       item?.EmpCode,
       item?.EMP_CODE,
-      item?.EmployeeCode
+      item?.EmployeeCode,
     ),
 
     EMP_NAME: getText(
@@ -283,7 +272,7 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.EMPLOYEE_NAME,
       item?.EmployeeName,
       item?.EmpName,
-      item?.Emp_Name
+      item?.Emp_Name,
     ),
 
     LOCATION: getText(
@@ -292,14 +281,14 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.BRANCH_NAME,
       item?.Branch_Name,
       item?.BRANCH,
-      item?.LOC_NAME
+      item?.LOC_NAME,
     ),
 
     SECTION: getText(
       item?.SECTION,
       item?.Section,
       item?.SECTION_NAME,
-      item?.Section_Name
+      item?.Section_Name,
     ),
 
     DESIGNATION: getText(
@@ -307,35 +296,35 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.EMPLOYEEDESIGNATION,
       item?.Designation,
       item?.DESIG_NAME,
-      item?.Desig_Name
+      item?.Desig_Name,
     ),
 
     CHANNEL: getText(
       item?.CHANNEL,
       item?.Channel,
       item?.CHANNEL_NAME,
-      item?.Channel_Name
+      item?.Channel_Name,
     ),
 
     CLUSTER: getText(
       item?.CLUSTER,
       item?.Cluster,
       item?.CLUSTER_NAME,
-      item?.Cluster_Name
+      item?.Cluster_Name,
     ),
 
     DEPARTMENT: getText(
       item?.DEPARTMENT,
       item?.Department,
       item?.DEPT_NAME,
-      item?.Dept_Name
+      item?.Dept_Name,
     ),
 
     EMPLOYEE_TYPE: getText(
       item?.EMPLOYEE_TYPE,
       item?.EmployeeType,
       item?.Emp_Type,
-      item?.EMP_TYPE
+      item?.EMP_TYPE,
     ),
 
     JOINING_DATE: getText(
@@ -343,7 +332,7 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.JOININGDATE,
       item?.JoiningDate,
       item?.DOJ,
-      item?.DateOfJoining
+      item?.DateOfJoining,
     ),
 
     MOBILENO: getText(
@@ -351,7 +340,7 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.MOBILE_NO,
       item?.MobileNo,
       item?.Mobile,
-      item?.PHONE
+      item?.PHONE,
     ),
 
     CORPORATEMAILID: getText(
@@ -359,35 +348,35 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.CORPORATE_EMAIL_ID,
       item?.EMAIL,
       item?.Email,
-      item?.EmailId
+      item?.EmailId,
     ),
 
     PUNCHCODE: getText(
       item?.PUNCHCODE,
       item?.PUNCH_CODE,
       item?.PunchCode,
-      item?.Punch_Code
+      item?.Punch_Code,
     ),
 
     EMP_SHIFT: getText(
       item?.EMP_SHIFT,
       item?.SHIFT,
       item?.Shift,
-      item?.Shift_Name
+      item?.Shift_Name,
     ),
 
     From_Date: getText(
       item?.From_Date,
       item?.FROM_DATE,
       item?.FromDate,
-      item?.ABSENT_FROM
+      item?.ABSENT_FROM,
     ),
 
     To_Date: getText(
       item?.To_Date,
       item?.TO_DATE,
       item?.ToDate,
-      item?.ABSENT_TO
+      item?.ABSENT_TO,
     ),
 
     Absent_Days: getText(
@@ -395,7 +384,7 @@ const mapReportRows = (result: any[]): AbsentRow[] => {
       item?.ABSENT_DAYS,
       item?.AbsentDays,
       item?.ABSENT_COUNT,
-      item?.TOTAL_ABSENT_DAYS
+      item?.TOTAL_ABSENT_DAYS,
     ),
   }));
 };
@@ -434,7 +423,7 @@ export default function ContinuousAbsentReportPage() {
     () => ({
       compcode: user?.Comp_Code,
     }),
-    [user?.Comp_Code]
+    [user?.Comp_Code],
   );
 
   // --------------------------------------------------
@@ -465,7 +454,7 @@ export default function ContinuousAbsentReportPage() {
     if (!user?.Comp_Code) {
       showSideAlert(
         "Company information missing. Please login again.",
-        "warning"
+        "warning",
       );
       return;
     }
@@ -494,7 +483,7 @@ export default function ContinuousAbsentReportPage() {
         payload,
         {
           headers: apiHeaders,
-        }
+        },
       );
 
       console.log("Continuous Absent Response:", response.data);
@@ -509,7 +498,7 @@ export default function ContinuousAbsentReportPage() {
         throw new Error(
           responseData?.message ||
             responseData?.Message ||
-            "Unable to fetch report."
+            "Unable to fetch report.",
         );
       }
 
@@ -520,23 +509,18 @@ export default function ContinuousAbsentReportPage() {
       setRows(mappedRows);
 
       setFilters(
-        Object.fromEntries(
-          REPORT_COLUMNS.map((column) => [column.key, ""])
-        )
+        Object.fromEntries(REPORT_COLUMNS.map((column) => [column.key, ""])),
       );
 
       setSearch("");
       setHasSearched(true);
 
       if (mappedRows.length === 0) {
-        showSideAlert(
-          "No continuous absent records found.",
-          "info"
-        );
+        showSideAlert("No continuous absent records found.", "info");
       } else {
         showSideAlert(
           `${mappedRows.length} records fetched successfully.`,
-          "success"
+          "success",
         );
       }
     } catch (error: any) {
@@ -553,13 +537,7 @@ export default function ContinuousAbsentReportPage() {
     } finally {
       setLoading(false);
     }
-  }, [
-    user?.Comp_Code,
-    user?.branch,
-    reportDate,
-    apiHeaders,
-    validateDate,
-  ]);
+  }, [user?.Comp_Code, user?.branch, reportDate, apiHeaders, validateDate]);
 
   // --------------------------------------------------
   // INITIAL FETCH
@@ -603,18 +581,16 @@ export default function ContinuousAbsentReportPage() {
         REPORT_COLUMNS.some((column) =>
           String(row[column.key] ?? "")
             .toLowerCase()
-            .includes(query)
+            .includes(query),
         );
 
-      const matchesColumns = Object.entries(filters).every(
-        ([key, value]) => {
-          if (!value.trim()) return true;
+      const matchesColumns = Object.entries(filters).every(([key, value]) => {
+        if (!value.trim()) return true;
 
-          return String(row[key] ?? "")
-            .toLowerCase()
-            .includes(value.trim().toLowerCase());
-        }
-      );
+        return String(row[key] ?? "")
+          .toLowerCase()
+          .includes(value.trim().toLowerCase());
+      });
 
       return matchesSearch && matchesColumns;
     });
@@ -677,9 +653,7 @@ export default function ContinuousAbsentReportPage() {
     setSearch("");
 
     setFilters(
-      Object.fromEntries(
-        REPORT_COLUMNS.map((column) => [column.key, ""])
-      )
+      Object.fromEntries(REPORT_COLUMNS.map((column) => [column.key, ""])),
     );
   };
 
@@ -706,8 +680,6 @@ export default function ContinuousAbsentReportPage() {
           <h1 className="text-[20px] font-bold leading-tight text-[#152b4b] dark:text-slate-100 sm:text-[23px]">
             Continuous Absent Report (3+ days)
           </h1>
-
-       
         </div>
 
         {/* REPORT DATE FILTER */}
@@ -752,41 +724,6 @@ export default function ContinuousAbsentReportPage() {
                 </span>{" "}
                 of {rows.length} rows
               </p>
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              {/* GLOBAL SEARCH */}
-
-              <div className="relative min-w-0 flex-1 sm:w-[285px] sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <Einput
-                  name="search"
-                  type="text"
-                  value={search}
-                  placeholder="Search in results..."
-                  handleInputChange={(name: string, value: string) =>
-                    setSearch(value)
-                  }
-                  className="h-[41px] w-full pl-9"
-                />
-              </div>
-
-             
-
-              {/* RESET */}
-
-              <AButton
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </AButton>
             </div>
           </div>
 
@@ -840,10 +777,11 @@ export default function ContinuousAbsentReportPage() {
                   <DataTable
                     columns={columns}
                     data={filteredRows}
-                    showTopSearch={false}
+                    showTopSearch={true}
                     showExcelExport={true}
+                    resetFilters={true}
                     showColumnFilters={true}
-                     showPageSizeInFooter = {true}
+                    showPageSizeInFooter={true}
                     initialPageSize={10}
                   />
                 ) : (

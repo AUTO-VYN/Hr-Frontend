@@ -1108,6 +1108,7 @@ export default function BankTransferSheetPage() {
                       showTopSearch={true}
                       showExcelExport={true}
                       showColumnFilters={true}
+                       resetFilters={true}
                       showPageSizeInFooter={true}
                       initialPageSize={10}
                     />

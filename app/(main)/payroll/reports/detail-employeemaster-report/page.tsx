@@ -645,38 +645,6 @@ export default function Page() {
           <div className="text-[15px] font-medium text-[#64748b] dark:text-slate-300">
             {filteredData.length} of {statusFilteredData.length} rows
           </div>
-
-          {/* ACTIONS */}
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            {/* SEARCH */}
-
-            <div className="relative w-full sm:w-[285px]">
-              <Search
-                size={17}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search in results..."
-                className="h-[41px] w-full rounded-xl border border-[#dce5f0] bg-white pl-10 pr-3 text-sm text-[#172b45] outline-none placeholder:text-slate-400 transition focus:border-[#8b9cf7] focus:ring-2 focus:ring-[#5146e5]/10 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400"
-              />
-            </div>
-
-            {/* RESET */}
-
-            <button
-              type="button"
-              onClick={resetTableFilters}
-              className="flex h-[41px] items-center justify-center rounded-xl border border-[#dce5f0] bg-white px-4 text-sm font-semibold text-[#172b45] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              <RotateCcw size={15} className="mr-2" />
-              Reset
-            </button>
-          </div>
         </div>
 
         {/* COLUMN FILTER PANEL */}
@@ -749,7 +717,9 @@ export default function Page() {
               data={filteredData}
               showExcelExport={true}
               showColumnFilters={true}
-                showPageSizeInFooter = {true}
+              showTopSearch={true}
+              resetFilters={true}
+              showPageSizeInFooter={true}
               onRowDoubleClick={(row: any) => console.log("Employee Row:", row)}
             />
           </div>
