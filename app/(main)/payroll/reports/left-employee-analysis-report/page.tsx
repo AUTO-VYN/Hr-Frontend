@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Search, Filter, X, Check, ArrowLeft } from "lucide-react";
+import { Filter, ArrowLeft } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import useExcelDownload from "@/app/hooks/excel-download";
@@ -13,6 +12,7 @@ import Eselect from "@/components/atoms/Eselect";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import AButton from "@/components/atoms/Button";
+import FilterScope from "@/components/atoms/FilterScope";
 
 /* ------------------------------------------------------------------ */
 /* TYPES                                                              */
@@ -49,8 +49,18 @@ const REPORT_ENDPOINT = "/hrmsreport/leftEMPAnalaysisReport";
 const REPORT_PERMISSION = "";
 
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 const MONTHS: Option[] = MONTH_NAMES.map((label, index) => ({
@@ -147,16 +157,6 @@ const EMPTY_SELECTED: Record<FilterKey, string[]> = {
   DESIGNATION: [],
 };
 
-const EMPTY_SEARCH: Record<FilterKey, string> = {
-  Region: "",
-  CHANNEL: "",
-  CLUSTER: "",
-  Location: "",
-  SECTION: "",
-  DIVISION: "",
-  DESIGNATION: "",
-};
-
 const REPORT_COLUMNS: {
   header: string;
   keys: string[];
@@ -242,10 +242,8 @@ const REPORT_COLUMNS: {
 const TYPE_BADGE_CLASS: Record<string, string> = {
   regular:
     "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  casual:
-    "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  apprentice:
-    "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
+  casual: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  apprentice: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
 };
 
 /* ------------------------------------------------------------------ */
@@ -417,22 +415,14 @@ const parseAnyDate = (value: any): Date | null => {
   match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
 
   if (match) {
-    return new Date(
-      Number(match[3]),
-      Number(match[2]) - 1,
-      Number(match[1]),
-    );
+    return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
   }
 
   // Example: 2026-10-15
   match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
   if (match) {
-    return new Date(
-      Number(match[1]),
-      Number(match[2]) - 1,
-      Number(match[3]),
-    );
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   }
 
   return null;
@@ -459,9 +449,7 @@ const buildReportColumns = (rows: any[]): any[] => {
 
   const apiKeys = Object.keys(rows[0]);
 
-  const keyMap = new Map(
-    apiKeys.map((key) => [normalizeKey(key), key]),
-  );
+  const keyMap = new Map(apiKeys.map((key) => [normalizeKey(key), key]));
 
   const makeCell = (kind?: ColumnKind) =>
     function Cell({ value }: any) {
@@ -488,9 +476,8 @@ const buildReportColumns = (rows: any[]): any[] => {
         const lower = text.toLowerCase();
 
         const badge =
-          Object.keys(TYPE_BADGE_CLASS).find((word) =>
-            lower.includes(word),
-          ) || "";
+          Object.keys(TYPE_BADGE_CLASS).find((word) => lower.includes(word)) ||
+          "";
 
         return (
           <span
@@ -530,8 +517,7 @@ const buildReportColumns = (rows: any[]): any[] => {
   if (fixed.length < 3) {
     const fallback = apiKeys
       .filter(
-        (key) =>
-          typeof rows[0][key] !== "object" || rows[0][key] === null,
+        (key) => typeof rows[0][key] !== "object" || rows[0][key] === null,
       )
       .map((key) => ({
         Header: prettyHeader(key).toUpperCase(),
@@ -571,14 +557,14 @@ function PageTop({ onBackToFilters }: { onBackToFilters?: () => void }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="mt-1 text-[22px] font-bold leading-tight text-slate-900 dark:text-slate-100">
-            Left Employee Analysis Report
+            Left Employee Analysis
           </h1>
         </div>
 
         {onBackToFilters && (
           <AButton
             onClick={onBackToFilters}
-            className="inline-flex h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            className="inline-flex h-[38px] items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
           >
             <ArrowLeft size={14} />
             Back to filters
@@ -624,122 +610,6 @@ function StatCard({
   );
 }
 
-function FilterScope({
-  config,
-  options,
-  selected,
-  search,
-  onSearch,
-  onToggle,
-  onSelectAll,
-  onClear,
-}: {
-  config: FilterConfig;
-  options: FilterOption[];
-  selected: string[];
-  search: string;
-  onSearch: (value: string) => void;
-  onToggle: (value: string) => void;
-  onSelectAll: () => void;
-  onClear: () => void;
-}) {
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return options;
-
-    return options.filter((item) =>
-      item.label.toLowerCase().includes(term),
-    );
-  }, [options, search]);
-
-  return (
-    <div className="min-w-0">
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder={`Search ${config.title.toLowerCase()}`}
-            className="h-[36px] w-full rounded-lg border border-[#dce5f1] bg-[#f8fafc] pl-9 pr-3 text-[11px] text-[#152b4b] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onSelectAll}
-            className="whitespace-nowrap text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            Select all
-          </button>
-
-          <button
-            type="button"
-            onClick={onClear}
-            className="whitespace-nowrap text-[11px] font-medium text-slate-500 hover:text-red-500"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      <div className="max-h-[265px] min-h-[180px] overflow-y-auto rounded-lg border border-[#e7edf5] p-2 dark:border-slate-800">
-        {filtered.length ? (
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-            {filtered.map((item) => {
-              const checked = selected.includes(item.value);
-
-              return (
-                <label
-                  key={item.value}
-                  className={`flex min-w-0 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition ${
-                    checked
-                      ? "bg-indigo-50 dark:bg-indigo-500/10"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onToggle(item.value)}
-                    className="h-3.5 w-3.5 shrink-0 rounded border-[#cbd5e1] text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                  />
-
-                  <span className="min-w-0 break-words text-[11px] text-[#52627c] dark:text-slate-300">
-                    {item.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex h-[170px] flex-col items-center justify-center text-center">
-            <Search size={20} className="mb-2 text-slate-300" />
-            <p className="text-[11px] text-slate-400">
-              No {config.title.toLowerCase()} found
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-slate-500">
-          {selected.length} selected
-        </span>
-        <span className="text-[10px] text-slate-400">
-          {options.length} available
-        </span>
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* PAGE                                                               */
 /* ------------------------------------------------------------------ */
@@ -751,9 +621,7 @@ export default function LeftEmployeeAnalysisPage() {
   const [loading, setLoading] = useState(false);
   const [masterLoading, setMasterLoading] = useState(false);
 
-  const [month, setMonth] = useState(
-    String(CURRENT_DATE.getMonth() + 1),
-  );
+  const [month, setMonth] = useState(String(CURRENT_DATE.getMonth() + 1));
   const [year, setYear] = useState(String(CURRENT_YEAR));
 
   const initialDates = getMonthDates(
@@ -765,9 +633,7 @@ export default function LeftEmployeeAnalysisPage() {
   const [dateTo, setDateTo] = useState(initialDates.to);
   const [employeeType, setEmployeeType] = useState("");
 
-  const [filters, setFilters] = useState<
-    Record<FilterKey, FilterOption[]>
-  >({
+  const [filters, setFilters] = useState<Record<FilterKey, FilterOption[]>>({
     Region: [],
     CHANNEL: [],
     CLUSTER: [],
@@ -779,12 +645,6 @@ export default function LeftEmployeeAnalysisPage() {
 
   const [selected, setSelected] =
     useState<Record<FilterKey, string[]>>(EMPTY_SELECTED);
-
-  const [searches, setSearches] =
-    useState<Record<FilterKey, string>>(EMPTY_SEARCH);
-
-  const [activeFilter, setActiveFilter] =
-    useState<FilterKey>("Region");
 
   const [showReport, setShowReport] = useState(false);
   const [rows, setRows] = useState<any[]>([]);
@@ -948,25 +808,18 @@ export default function LeftEmployeeAnalysisPage() {
 
   /* ---------------- filter selection ---------------- */
 
-  const toggleFilter = (key: FilterKey, value: string) => {
-    setSelected((previous) => ({
-      ...previous,
-      [key]: previous[key].includes(value)
-        ? previous[key].filter((item) => item !== value)
-        : [...previous[key], value],
-    }));
-  };
-
-  const selectAllFilter = (key: FilterKey) => {
-    setSelected((previous) => ({
-      ...previous,
-      [key]: filters[key].map((item) => item.value),
-    }));
-  };
-
-  const clearOneFilter = (key: FilterKey) => {
-    setSelected((previous) => ({ ...previous, [key]: [] }));
-  };
+  const filterScopeCategories = useMemo(
+    () =>
+      FILTER_CONFIG.map((config) => ({
+        key: config.key,
+        label: config.title,
+        options: filters[config.key].map((item) => ({
+          value: item.value,
+          label: item.label,
+        })),
+      })),
+    [filters],
+  );
 
   const totalSelected = useMemo(
     () =>
@@ -979,7 +832,6 @@ export default function LeftEmployeeAnalysisPage() {
 
   const handleClearAll = () => {
     setSelected(EMPTY_SELECTED);
-    setSearches(EMPTY_SEARCH);
     setEmployeeType("");
 
     Swal.fire({
@@ -1058,10 +910,7 @@ export default function LeftEmployeeAnalysisPage() {
     try {
       setLoading(true);
 
-      const response = await postApi(
-        REPORT_ENDPOINT,
-        getReportPayload(),
-      );
+      const response = await postApi(REPORT_ENDPOINT, getReportPayload());
 
       const reportData = getResponseRows(response);
 
@@ -1094,10 +943,7 @@ export default function LeftEmployeeAnalysisPage() {
 
   /* ---------------- report data ---------------- */
 
-  const baseColumns = useMemo(
-    () => buildReportColumns(rows),
-    [rows],
-  );
+  const baseColumns = useMemo(() => buildReportColumns(rows), [rows]);
 
   const typeKey = useMemo(
     () => baseColumns.find((column) => column.Header === "EMP TYPE")?.accessor,
@@ -1163,10 +1009,6 @@ export default function LeftEmployeeAnalysisPage() {
       filteredRows,
     );
   };
-
-  const activeConfig = FILTER_CONFIG.find(
-    (item) => item.key === activeFilter,
-  )!;
 
   /* ================================================================ */
   /* REPORT VIEW                                                      */
@@ -1237,6 +1079,7 @@ export default function LeftEmployeeAnalysisPage() {
               showPageSizeInFooter={true}
               showTopSearch={true}
               showExcelExport={true}
+              resetFilters={true}
               showColumnFilters={true}
               containerClassName="border-t border-slate-200 text-[12px] dark:border-slate-800"
             />
@@ -1251,7 +1094,7 @@ export default function LeftEmployeeAnalysisPage() {
   /* ================================================================ */
 
   return (
-    <div className="min-h-screen min-w-0 bg-[#f8fafc] p-4 transition-colors dark:bg-[#0b1220] sm:p-6">
+    <div className="min-h-screen min-w-0 bg-[#f8fafc] p-2 transition-colors dark:bg-[#0b1220]">
       <HashloaderComponent isLoading={loading || masterLoading} />
 
       <div className="mx-auto max-w-[1800px] space-y-4">
@@ -1327,134 +1170,13 @@ export default function LeftEmployeeAnalysisPage() {
 
         {/* FILTER SCOPE */}
 
-        <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 xl:max-w-[1000px]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8edf5] px-4 py-3 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              <Filter
-                size={15}
-                className="text-indigo-600 dark:text-indigo-400"
-              />
-
-              <h2 className="text-[13px] font-bold text-[#152b4b] dark:text-slate-100">
-                Filter scope
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-[#64748b] dark:text-slate-400">
-                {totalSelected} selected
-              </span>
-
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-              >
-                Clear all
-              </button>
-            </div>
-          </div>
-
-          <div className="grid min-h-[365px] grid-cols-1 md:grid-cols-[180px_minmax(0,1fr)]">
-            {/* CATEGORY SIDEBAR */}
-
-            <div className="border-b border-[#e8edf5] bg-[#fbfcfe] p-2 dark:border-slate-800 dark:bg-slate-900 md:border-b-0 md:border-r">
-              <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible">
-                {FILTER_CONFIG.map((config) => {
-                  const isActive = activeFilter === config.key;
-                  const count = selected[config.key].length;
-                  const total = filters[config.key].length;
-
-                  return (
-                    <button
-                      key={config.key}
-                      type="button"
-                      onClick={() => setActiveFilter(config.key)}
-                      className={`flex min-w-max items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition md:min-w-0 ${
-                        isActive
-                          ? "bg-[#eef2ff] text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                          : "text-[#52627c] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <span className="text-[11px] font-semibold">
-                        {config.title}
-                      </span>
-
-                      <span
-                        className={`text-[10px] ${
-                          isActive ? "text-indigo-500" : "text-slate-400"
-                        }`}
-                      >
-                        {count}/{total}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ACTIVE FILTER OPTIONS */}
-
-            <div className="min-w-0 p-3.5 sm:p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-[12px] font-bold text-[#152b4b] dark:text-slate-100">
-                    {activeConfig.title}
-                  </h3>
-
-                  <p className="mt-0.5 text-[10px] text-slate-400">
-                    Select one or more {activeConfig.title.toLowerCase()}
-                  </p>
-                </div>
-
-                <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-                  {selected[activeFilter].length} selected
-                </span>
-              </div>
-
-              <FilterScope
-                config={activeConfig}
-                options={filters[activeFilter]}
-                selected={selected[activeFilter]}
-                search={searches[activeFilter]}
-                onSearch={(value) =>
-                  setSearches((prev) => ({
-                    ...prev,
-                    [activeFilter]: value,
-                  }))
-                }
-                onToggle={(value) => toggleFilter(activeFilter, value)}
-                onSelectAll={() => selectAllFilter(activeFilter)}
-                onClear={() => clearOneFilter(activeFilter)}
-              />
-
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#e8edf5] pt-3 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400">
-                  {filters[activeFilter].length} options available
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => clearOneFilter(activeFilter)}
-                    className="inline-flex h-[29px] items-center gap-1 rounded-md border border-[#dce5f1] px-3 text-[10px] font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                  >
-                    <X size={11} />
-                    Clear
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => selectAllFilter(activeFilter)}
-                    className="inline-flex h-[29px] items-center gap-1 rounded-md bg-indigo-600 px-3 text-[10px] font-semibold text-white hover:bg-indigo-700"
-                  >
-                    <Check size={11} />
-                    Select all
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="w-full p-0 lg:w-[66%]">
+          <FilterScope
+            title="Filter scope"
+            categories={filterScopeCategories}
+            selected={selected}
+            onChange={setSelected}
+          />
         </div>
       </div>
     </div>

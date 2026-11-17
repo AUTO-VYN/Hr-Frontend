@@ -1460,6 +1460,7 @@ export default function SalaryDisbursementPage() {
                 data={filteredRows}
                 showTopSearch={true}
                 showExcelExport={true}
+                 resetFilters={true}
                  showPageSizeInFooter = {true}
                 initialPageSize={10}
               />

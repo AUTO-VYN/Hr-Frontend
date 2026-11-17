@@ -910,6 +910,7 @@ export default function SalaryCalculationExcelPage() {
                         data={filteredRows}
                         showTopSearch={true}
                         showExcelExport={true}
+                         resetFilters={true}
                          showPageSizeInFooter = {true}
                         initialPageSize={10}
                       />

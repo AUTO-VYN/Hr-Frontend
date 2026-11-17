@@ -748,57 +748,6 @@ export default function Page() {
           <div className="text-[15px] font-medium text-[#64748b] dark:text-slate-300">
             {filteredData.length} of {tabledata.length} rows
           </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative w-full sm:w-[285px]">
-              <Search
-                size={17}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search in results..."
-                className="h-[40px] w-full rounded-xl border border-[#dce5f0] bg-white pl-10 pr-3 text-sm text-[#172b45] outline-none placeholder:text-slate-400 focus:border-[#8b9cf7] focus:ring-2 focus:ring-[#5146e5]/10 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400"
-              />
-            </div>
-
-            {/* <button
-              type="button"
-              onClick={() =>
-                setShowColumnFilters((prev) => !prev)
-              }
-              className={`flex h-[40px] items-center justify-center rounded-xl border px-4 text-sm font-semibold transition-colors dark:border-slate-600 ${
-                showColumnFilters
-                  ? "border-[#5146e5] bg-[#f1f0ff] text-[#5146e5] dark:bg-indigo-950 dark:text-indigo-300"
-                  : "border-[#dce5f0] bg-white text-[#172b45] dark:bg-slate-800 dark:text-slate-200"
-              }`}
-            >
-              <Filter size={16} className="mr-2" />
-              Column filters
-            </button> */}
-
-            <button
-              type="button"
-              onClick={resetTableFilters}
-              className="flex h-[42px] items-center justify-center rounded-xl border border-[#dce5f0] bg-white px-4 text-sm font-semibold text-[#172b45] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              <RotateCcw size={15} className="mr-2" />
-              Reset
-            </button>
-
-            {/* <button
-              type="button"
-              onClick={exportToExcel}
-              disabled={!filteredData.length}
-              className="flex h-[42px] items-center justify-center rounded-xl border border-[#dce5f0] bg-white px-4 text-sm font-semibold text-[#15945b] transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-green-400 dark:hover:bg-green-950"
-            >
-              <Download size={16} className="mr-2" />
-              Export to Excel
-            </button>  */}
-          </div>
         </div>
 
         {/* COLUMN FILTER PANEL */}
@@ -872,6 +821,8 @@ export default function Page() {
               showExcelExport={true}
               showColumnFilters={true}
                showPageSizeInFooter = {true}
+               showTopSearch={true}
+               resetFilters={true}
               onRowDoubleClick={(row: any) => console.log(row, "rowData")}
             />
           </div>

@@ -3,21 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import {
-  Search,
-  Download,
-  Filter,
-  X,
-  Check,
-  ChevronRight,
-  Users,
-  UserRound,
-} from "lucide-react";
+import { Search, Download, X, Users, UserRound } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import HashloaderComponent from "@/components/Templates/hashloader";
+import FilterScope from "@/components/atoms/FilterScope";
 
 type Option = {
   value: string;
@@ -67,11 +59,7 @@ const CURRENT_YEAR = CURRENT_DATE.getFullYear();
 
 const YEARS: Option[] = Array.from({ length: 15 }, (_, index) => {
   const year = CURRENT_YEAR - index;
-
-  return {
-    value: String(year),
-    label: String(year),
-  };
+  return { value: String(year), label: String(year) };
 });
 
 const EMPLOYEE_TYPES: Option[] = [
@@ -93,18 +81,21 @@ const PAYMENT_OPTIONS: Option[] = [
   { value: "2", label: "NO" },
 ];
 
+const EMPTY_SELECTED: Record<FilterKey, string[]> = {
+  Region: [],
+  CHANNEL: [],
+  CLUSTER: [],
+  Location: [],
+  SECTION: [],
+  DIVISION: [],
+  DESIGNATION: [],
+};
+
 const FILTER_CONFIG: FilterConfig[] = [
   {
     key: "Region",
     title: "Regions",
-    codeKeys: [
-      "Region_Code",
-      "RegionCode",
-      "REGION_CODE",
-      "Code",
-      "value",
-      "value",
-    ],
+    codeKeys: ["Region_Code", "RegionCode", "REGION_CODE", "Code", "value"],
     nameKeys: ["Region_Name", "RegionName", "REGION_NAME", "Name", "label"],
   },
   {
@@ -203,15 +194,8 @@ const getText = (...values: any[]): string => {
 
 const getArray = (value: any): any[] => {
   if (Array.isArray(value)) return value;
-
-  if (value && Array.isArray(value.data)) {
-    return value.data;
-  }
-
-  if (value && Array.isArray(value.recordset)) {
-    return value.recordset;
-  }
-
+  if (value && Array.isArray(value.data)) return value.data;
+  if (value && Array.isArray(value.recordset)) return value.recordset;
   return [];
 };
 
@@ -268,7 +252,7 @@ const getLabel = (item: any, keys: string[]): string => {
       item?.[key] !== null &&
       String(item[key]).trim() !== ""
     ) {
-      return String(item[key]);
+      return String(item[key]).trim();
     }
   }
 
@@ -326,12 +310,10 @@ const formatDateForAPI = (dateStr: any) => {
 
   const value = String(dateStr).trim();
 
-  // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
   }
 
-  // DD/MM/YYYY
   const parts = value.split("/");
 
   if (parts.length === 3) {
@@ -353,18 +335,26 @@ const normalizeEmployee = (item: any) => {
     item?.Code,
   );
 
+  const labelParts = String(item?.label || "").split("|");
+
+  const labelCode = labelParts.length > 1 ? labelParts[0].trim() : "";
+
+  const labelName =
+    labelParts.length > 1 ? labelParts.slice(1).join("|").trim() : "";
+
   const name = getText(
-    item?.label?.split(" - ").slice(1).join(" - "),
     item?.EmployeeName,
     item?.EmpName,
     item?.EMP_NAME,
     item?.Name,
     item?.EMPNAME,
+    labelName,
+    item?.label?.split(" - ").slice(1).join(" - "),
   );
 
   return {
-    code,
-    name: name || code,
+    code: code || labelCode,
+    name: name || code || labelCode,
     designation: getText(item?.DESIGNATION, item?.Designation, item?.DesigName),
     branch: getText(
       item?.LocationName,
@@ -377,123 +367,6 @@ const normalizeEmployee = (item: any) => {
     raw: item,
   };
 };
-
-function FilterScope({
-  config,
-  options,
-  selected,
-  search,
-  onSearch,
-  onToggle,
-  onSelectAll,
-  onClear,
-}: {
-  config: FilterConfig;
-  options: FilterOption[];
-  selected: string[];
-  search: string;
-  onSearch: (value: string) => void;
-  onToggle: (value: string) => void;
-  onSelectAll: () => void;
-  onClear: () => void;
-}) {
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-
-    if (!term) return options;
-
-    return options.filter((item) => item.label.toLowerCase().includes(term));
-  }, [options, search]);
-
-  return (
-    <div className="min-w-0">
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder={`Search ${config.title.toLowerCase()}`}
-            className="h-[38px] w-full rounded-lg border border-[#dce5f1] bg-[#f8fafc] pl-9 pr-3 text-[12px] text-[#152b4b] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onSelectAll}
-            className="whitespace-nowrap text-[12px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            Select all
-          </button>
-
-          <button
-            type="button"
-            onClick={onClear}
-            className="whitespace-nowrap text-[12px] font-medium text-slate-500 hover:text-red-500"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      <div className="max-h-[265px] min-h-[180px] overflow-y-auto rounded-lg border border-[#e7edf5] p-2 dark:border-slate-800">
-        {filtered.length ? (
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-            {filtered.map((item) => {
-              const checked = selected.includes(item.value);
-
-              return (
-                <label
-                  key={item.value}
-                  className={`flex min-w-0 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition ${
-                    checked
-                      ? "bg-indigo-50 dark:bg-indigo-500/10"
-                      : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onToggle(item.value)}
-                    className="h-4 w-4 shrink-0 rounded border-[#cbd5e1] text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                  />
-
-                  <span className="min-w-0 break-words text-[12px] text-[#52627c] dark:text-slate-300">
-                    {item.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex h-[170px] flex-col items-center justify-center text-center">
-            <Search size={22} className="mb-2 text-slate-300" />
-
-            <p className="text-[12px] text-slate-400">
-              No {config.title.toLowerCase()} found
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between">
-        <span className="text-[11px] text-slate-500">
-          {selected.length} selected
-        </span>
-
-        <span className="text-[11px] text-slate-400">
-          {options.length} available
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function DownloadRow({
   title,
@@ -549,7 +422,6 @@ export default function SalaryReportsPage() {
   const [employeeLoading, setEmployeeLoading] = useState(false);
 
   const [month, setMonth] = useState(String(CURRENT_DATE.getMonth() + 1));
-
   const [year, setYear] = useState(String(CURRENT_YEAR));
 
   const initialDates = getMonthDates(
@@ -559,7 +431,6 @@ export default function SalaryReportsPage() {
 
   const [dateFrom, setDateFrom] = useState(initialDates.from);
   const [dateTo, setDateTo] = useState(initialDates.to);
-
   const [miscDates, setMiscDates] = useState<any[]>([]);
 
   const [filters, setFilters] = useState<Record<FilterKey, FilterOption[]>>({
@@ -572,27 +443,8 @@ export default function SalaryReportsPage() {
     DESIGNATION: [],
   });
 
-  const [selected, setSelected] = useState<Record<FilterKey, string[]>>({
-    Region: [],
-    CHANNEL: [],
-    CLUSTER: [],
-    Location: [],
-    SECTION: [],
-    DIVISION: [],
-    DESIGNATION: [],
-  });
-
-  const [searches, setSearches] = useState<Record<FilterKey, string>>({
-    Region: "",
-    CHANNEL: "",
-    CLUSTER: "",
-    Location: "",
-    SECTION: "",
-    DIVISION: "",
-    DESIGNATION: "",
-  });
-
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("Region");
+  const [selected, setSelected] =
+    useState<Record<FilterKey, string[]>>(EMPTY_SELECTED);
 
   const [employeeMaster, setEmployeeMaster] = useState<any[]>([]);
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -645,6 +497,48 @@ export default function SalaryReportsPage() {
   );
 
   // --------------------------------------------------
+  // FILTER SCOPE CATEGORY DATA FOR REUSABLE COMPONENT
+  // --------------------------------------------------
+
+  const filterCategories = useMemo(
+    () =>
+      FILTER_CONFIG.map((config) => ({
+        key: config.key,
+        label: config.title,
+        subtitle: `${filters[config.key].length} options available`,
+        options: filters[config.key],
+      })),
+    [filters],
+  );
+
+  const totalSelected = useMemo(
+    () =>
+      Object.values(selected).reduce(
+        (total, values) => total + values.length,
+        0,
+      ),
+    [selected],
+  );
+
+  // Handles the reusable FilterScope component's selected object.
+  const handleFilterScopeChange = useCallback(
+    (nextSelected: Record<string, string[]>) => {
+      setSelected((previous) => {
+        const next = { ...previous };
+
+        FILTER_CONFIG.forEach(({ key }) => {
+          next[key] = Array.isArray(nextSelected?.[key])
+            ? nextSelected[key]
+            : [];
+        });
+
+        return next;
+      });
+    },
+    [],
+  );
+
+  // --------------------------------------------------
   // DATE INPUT HANDLING
   // --------------------------------------------------
 
@@ -655,7 +549,6 @@ export default function SalaryReportsPage() {
       setMonth(val);
 
       const dates = getMonthDates(year, val);
-
       setDateFrom(dates.from);
       setDateTo(dates.to);
     }
@@ -664,22 +557,13 @@ export default function SalaryReportsPage() {
       setYear(val);
 
       const dates = getMonthDates(val, month);
-
       setDateFrom(dates.from);
       setDateTo(dates.to);
     }
 
-    if (name === "employeeType") {
-      setEmployeeType(val);
-    }
-
-    if (name === "totalDays") {
-      setTotalDays(val);
-    }
-
-    if (name === "finalPayment") {
-      setFinalPayment(val);
-    }
+    if (name === "employeeType") setEmployeeType(val);
+    if (name === "totalDays") setTotalDays(val);
+    if (name === "finalPayment") setFinalPayment(val);
   };
 
   // --------------------------------------------------
@@ -730,6 +614,7 @@ export default function SalaryReportsPage() {
 
       setFilters(nextFilters);
 
+      // Keep only selections that are still present in the refreshed masters.
       setSelected((previous) => {
         const next = { ...previous };
 
@@ -779,7 +664,6 @@ export default function SalaryReportsPage() {
       });
 
       const misc = response?.data?.data?.MiscDate;
-
       setMiscDates(getArray(misc));
     } catch (error) {
       console.error("Misc date error:", error);
@@ -807,7 +691,6 @@ export default function SalaryReportsPage() {
 
   // --------------------------------------------------
   // EMPLOYEE MASTER
-  // Existing API: /users/findAllEmployee
   // --------------------------------------------------
 
   const loadEmployeeMaster = useCallback(async () => {
@@ -869,61 +752,11 @@ export default function SalaryReportsPage() {
   }, [employeeMaster, employeeSearch]);
 
   // --------------------------------------------------
-  // FILTER SELECTION
+  // CLEAR FILTERS
   // --------------------------------------------------
 
-  const toggleFilter = (key: FilterKey, value: string) => {
-    setSelected((previous) => ({
-      ...previous,
-      [key]: previous[key].includes(value)
-        ? previous[key].filter((item) => item !== value)
-        : [...previous[key], value],
-    }));
-  };
-
-  const selectAllFilter = (key: FilterKey) => {
-    setSelected((previous) => ({
-      ...previous,
-      [key]: filters[key].map((item) => item.value),
-    }));
-  };
-
-  const clearOneFilter = (key: FilterKey) => {
-    setSelected((previous) => ({
-      ...previous,
-      [key]: [],
-    }));
-  };
-
-  const totalSelected = useMemo(
-    () =>
-      Object.values(selected).reduce(
-        (total, values) => total + values.length,
-        0,
-      ),
-    [selected],
-  );
-
   const clearAllFilters = () => {
-    setSelected({
-      Region: [],
-      CHANNEL: [],
-      CLUSTER: [],
-      Location: [],
-      SECTION: [],
-      DIVISION: [],
-      DESIGNATION: [],
-    });
-
-    setSearches({
-      Region: "",
-      CHANNEL: "",
-      CLUSTER: "",
-      Location: "",
-      SECTION: "",
-      DIVISION: "",
-      DESIGNATION: "",
-    });
+    setSelected({ ...EMPTY_SELECTED });
 
     setSelectedEmployee(null);
     setEmployeeSearch("");
@@ -947,7 +780,7 @@ export default function SalaryReportsPage() {
 
   // --------------------------------------------------
   // EXISTING REPORT PAYLOADS
-  // Exact field names preserved from old page
+  // Exact field names preserved
   // --------------------------------------------------
 
   const getReportPayload = (
@@ -998,7 +831,6 @@ export default function SalaryReportsPage() {
 
   const downloadBlob = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
-
     const link = document.createElement("a");
 
     link.href = url;
@@ -1008,7 +840,6 @@ export default function SalaryReportsPage() {
     link.click();
 
     link.remove();
-
     window.URL.revokeObjectURL(url);
   };
 
@@ -1067,7 +898,6 @@ export default function SalaryReportsPage() {
       setLoading(true);
 
       const payload = getReportPayload(reportType);
-
       const endpoint = `${report.endpoint}?compcode=${user?.Comp_Code}`;
 
       const response = await postApi(endpoint, payload, {
@@ -1075,14 +905,12 @@ export default function SalaryReportsPage() {
       });
 
       const contentType = response?.headers?.["content-type"] || "";
-
       const blob = response.data;
 
       if (!blob || blob.size === 0) {
         throw new Error("The report returned an empty file.");
       }
 
-      // Handle API errors returned as Blob.
       if (
         contentType.includes("application/json") ||
         contentType.includes("text/plain")
@@ -1093,7 +921,6 @@ export default function SalaryReportsPage() {
 
         try {
           const parsed = JSON.parse(text);
-
           message = parsed?.message || parsed?.Message || parsed?.error || text;
         } catch {
           // Keep plain-text error.
@@ -1105,7 +932,10 @@ export default function SalaryReportsPage() {
       const extension =
         contentType.includes("pdf") || format === "PDF" ? "pdf" : "xlsx";
 
-      const fileName = `${report.name.replace(/[^a-zA-Z0-9 ]/g, "")}.${extension}`;
+      const fileName = `${report.name.replace(
+        /[^a-zA-Z0-9 ]/g,
+        "",
+      )}.${extension}`;
 
       downloadBlob(
         new Blob([blob], {
@@ -1156,8 +986,6 @@ export default function SalaryReportsPage() {
     await Promise.all([fetchMasters(), fetchMiscDates(), loadEmployeeMaster()]);
   };
 
-  const activeConfig = FILTER_CONFIG.find((item) => item.key === activeFilter)!;
-
   const periodLabel = `${
     MONTHS.find((item) => item.value === month)?.label
   } ${year}`;
@@ -1173,12 +1001,19 @@ export default function SalaryReportsPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="mb-1 flex items-center gap-2 text-[12px] text-[#64748b] dark:text-slate-400"></div>
-
             <h1 className="text-[21px] font-bold leading-tight text-[#152b4b] dark:text-slate-100">
               Salary Reports
             </h1>
           </div>
+
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={loading || masterLoading || employeeLoading}
+            className="inline-flex h-[34px] items-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <span>Refresh</span>
+          </button>
         </div>
 
         {/* DATE AND PERIOD FILTERS */}
@@ -1234,138 +1069,15 @@ export default function SalaryReportsPage() {
         {/* MAIN CONTENT */}
 
         <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_430px]">
-          {/* FILTER SCOPE */}
+          {/* REUSABLE FILTER SCOPE */}
 
-          <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8edf5] px-4 py-3 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <Filter
-                  size={17}
-                  className="text-indigo-600 dark:text-indigo-400"
-                />
-
-                <h2 className="text-[14px] font-bold text-[#152b4b] dark:text-slate-100">
-                  Filter scope
-                </h2>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] text-[#64748b] dark:text-slate-400">
-                  {totalSelected} selected
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleClearAll}
-                  className="text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  Clear all
-                </button>
-              </div>
-            </div>
-
-            <div className="grid min-h-[365px] grid-cols-1 md:grid-cols-[190px_minmax(0,1fr)]">
-              {/* FILTER CATEGORY SIDEBAR */}
-
-              <div className="border-b border-[#e8edf5] bg-[#fbfcfe] p-2 dark:border-slate-800 dark:bg-slate-900 md:border-b-0 md:border-r">
-                <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible">
-                  {FILTER_CONFIG.map((config) => {
-                    const isActive = activeFilter === config.key;
-
-                    const count = selected[config.key].length;
-
-                    const total = filters[config.key].length;
-
-                    return (
-                      <button
-                        key={config.key}
-                        type="button"
-                        onClick={() => setActiveFilter(config.key)}
-                        className={`flex min-w-max items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition md:min-w-0 ${
-                          isActive
-                            ? "bg-[#eef2ff] text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                            : "text-[#52627c] hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        <span className="text-[12px] font-semibold">
-                          {config.title}
-                        </span>
-
-                        <span
-                          className={`text-[11px] ${
-                            isActive ? "text-indigo-500" : "text-slate-400"
-                          }`}
-                        >
-                          {count}/{total}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ACTIVE FILTER OPTIONS */}
-
-              <div className="min-w-0 p-3.5 sm:p-4">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-[#152b4b] dark:text-slate-100">
-                      {activeConfig.title}
-                    </h3>
-
-                    <p className="mt-0.5 text-[11px] text-slate-400">
-                      Select one or more {activeConfig.title.toLowerCase()}
-                    </p>
-                  </div>
-
-                  <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-                    {selected[activeFilter].length} selected
-                  </span>
-                </div>
-
-                <FilterScope
-                  config={activeConfig}
-                  options={filters[activeFilter]}
-                  selected={selected[activeFilter]}
-                  search={searches[activeFilter]}
-                  onSearch={(value) =>
-                    setSearches((prev) => ({
-                      ...prev,
-                      [activeFilter]: value,
-                    }))
-                  }
-                  onToggle={(value) => toggleFilter(activeFilter, value)}
-                  onSelectAll={() => selectAllFilter(activeFilter)}
-                  onClear={() => clearOneFilter(activeFilter)}
-                />
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#e8edf5] pt-3 dark:border-slate-800">
-                  <span className="text-[11px] text-slate-400">
-                    {filters[activeFilter].length} options available
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => clearOneFilter(activeFilter)}
-                      className="inline-flex h-[30px] items-center gap-1 rounded-md border border-[#dce5f1] px-3 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                    >
-                      <X size={12} />
-                      Clear
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => selectAllFilter(activeFilter)}
-                      className="inline-flex h-[30px] items-center gap-1 rounded-md bg-indigo-600 px-3 text-[11px] font-semibold text-white hover:bg-indigo-700"
-                    >
-                      <Check size={12} />
-                      Select all
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="min-w-0 space-y-2">
+            <FilterScope
+              title="Filter scope"
+              categories={filterCategories}
+              selected={selected}
+              onChange={handleFilterScopeChange}
+            />
           </div>
 
           {/* RIGHT SIDE */}
@@ -1496,9 +1208,7 @@ export default function SalaryReportsPage() {
                           type="button"
                           onClick={() => {
                             setSelectedEmployee(item);
-
                             setEmployeeSearch(`${item.code} - ${item.name}`);
-
                             setShowEmployeeDropdown(false);
                           }}
                           className="flex w-full flex-col items-start border-b border-slate-100 px-3 py-2.5 text-left last:border-0 hover:bg-indigo-50 dark:border-slate-800 dark:hover:bg-slate-800"
@@ -1597,6 +1307,7 @@ export default function SalaryReportsPage() {
                   onClick={() => {
                     setEmployeeSearch("");
                     setSelectedEmployee(null);
+                    setShowEmployeeDropdown(false);
                     setEmployeeType("");
                     setTotalDays("");
                     setFinalPayment("");

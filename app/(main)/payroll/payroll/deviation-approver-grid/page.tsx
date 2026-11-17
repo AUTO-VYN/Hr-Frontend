@@ -1486,6 +1486,7 @@ export default function SalaryPaidDaysDeviationApprovals() {
             data={visibleRequests}
             showTopSearch={true}
             showExcelExport={true}
+            resetFilters={true}
             showPageSizeInFooter={true}
             showColumnFilters={true}
             initialPageSize={10}

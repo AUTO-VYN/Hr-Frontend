@@ -912,70 +912,8 @@ export default function SalaryStructureReportPage() {
               </p>
             </div>
 
-            {/* ACTIONS */}
 
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              {/* SEARCH */}
-
-              <div className="relative min-w-0 flex-1 sm:w-[280px] sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search in results..."
-                  className="h-[41px] w-full rounded-lg border border-[#dce5f1] bg-white pl-9 pr-3 text-[12px] text-[#152b4b] outline-none placeholder:text-slate-400 focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              {/* COLUMN FILTERS */}
-
-              {/* <AButton
-                type="button"
-                onClick={() => setShowColumnFilters((prev) => !prev)}
-                className={`inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border px-3.5 text-[12px] font-semibold transition ${
-                  showColumnFilters
-                    ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-[#dce5f1] bg-white text-[#152b4b] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                }`}
-              >
-                <SlidersHorizontal size={15} />
-                Column filters
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${
-                    showColumnFilters ? "rotate-180" : ""
-                  }`}
-                />
-              </AButton> */}
-
-              {/* RESET */}
-
-              <AButton
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </AButton>
-
-              {/* EXPORT */}
-
-              {/* <AButton
-                type="button"
-                onClick={exportToExcel}
-                disabled={!filteredRows.length}
-                className="inline-flex h-[41px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-              >
-                <FileSpreadsheet size={15} />
-                Export to Excel
-              </AButton> */}
-            </div>
+           
           </div>
 
           {/* COLUMN FILTER PANEL */}
@@ -1065,10 +1003,11 @@ export default function SalaryStructureReportPage() {
                   <DataTable
                     columns={columns}
                     data={filteredRows}
-                    showTopSearch={false}
+                    showTopSearch={true}
                     showExcelExport={true}
                     showColumnFilters={true}
                      showPageSizeInFooter = {true}
+                     resetFilters={true}
                     initialPageSize={10}
                   />
                 ) : (

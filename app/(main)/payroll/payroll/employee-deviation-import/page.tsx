@@ -631,6 +631,7 @@ export default function Approver2() {
                   numericFilterColumns={[]}
                   showTopSearch={true}
                   showExcelExport={true}
+                   resetFilters={true}
                   showPageSizeInFooter={true}
                   showColumnFilters={true}
                   initialPageSize={10}

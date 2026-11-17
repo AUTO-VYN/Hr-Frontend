@@ -939,6 +939,7 @@ export default function EmployeeDeductionView() {
                 data={tableData}
                 showTopSearch={true}
                 showExcelExport={true}
+                 resetFilters={true}
                  showPageSizeInFooter = {true}
                 showColumnFilters={true}
                 initialPageSize={10}

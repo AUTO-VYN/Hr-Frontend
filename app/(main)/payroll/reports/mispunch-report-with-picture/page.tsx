@@ -285,7 +285,9 @@ const formatDateTime = (value: any): string => {
   if (isoMatch) {
     const [, year, month, day, hours, minutes, seconds] = isoMatch;
     const date = `${day}-${month}-${year}`;
-    return hours ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}` : date;
+    return hours
+      ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}`
+      : date;
   }
 
   // Also support DD-MM-YYYY / DD/MM/YYYY values returned by some APIs.
@@ -295,7 +297,9 @@ const formatDateTime = (value: any): string => {
   if (dmyMatch) {
     const [, day, month, year, hours, minutes, seconds] = dmyMatch;
     const date = `${day}-${month}-${year}`;
-    return hours ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}` : date;
+    return hours
+      ? `${date} ${hours}:${minutes || "00"}:${seconds || "00"}`
+      : date;
   }
 
   return raw;
@@ -318,7 +322,6 @@ const getColumnLabel = (key: string) => {
     .trim()
     .toUpperCase();
 };
-
 
 const getFieldValue = (row: any, aliases: string[], fallback: any = "") => {
   if (!row) return fallback;
@@ -347,7 +350,9 @@ const getImageSource = (value: any): string => {
 };
 
 const getStatusLabel = (value: any) => {
-  const status = String(value ?? "").trim().toLowerCase();
+  const status = String(value ?? "")
+    .trim()
+    .toLowerCase();
   if (["1", "approved", "approve"].includes(status)) return "Approved";
   if (["0", "rejected", "reject"].includes(status)) return "Rejected";
   if (["2", "pending"].includes(status)) return "Pending";
@@ -410,24 +415,11 @@ const ATTENDANCE_FIELD_ALIASES: Record<string, string[]> = {
     "DATE_OF_JOINING",
   ],
 
-  Region: [
-    "Region",
-    "Sal_Region",
-    "SAL_REGION",
-    "RegionName",
-  ],
+  Region: ["Region", "Sal_Region", "SAL_REGION", "RegionName"],
 
-  Channel: [
-    "Channel",
-    "ChannelName",
-    "CHANNEL_NAME",
-  ],
+  Channel: ["Channel", "ChannelName", "CHANNEL_NAME"],
 
-  Cluster: [
-    "Cluster",
-    "ClusterName",
-    "CLUSTER_NAME",
-  ],
+  Cluster: ["Cluster", "ClusterName", "CLUSTER_NAME"],
 
   Location: [
     "Location",
@@ -438,18 +430,9 @@ const ATTENDANCE_FIELD_ALIASES: Record<string, string[]> = {
     "BranchName",
   ],
 
-  Section: [
-    "Section",
-    "SectionName",
-    "SECTION_NAME",
-  ],
+  Section: ["Section", "SectionName", "SECTION_NAME"],
 
-  Department: [
-    "Department",
-    "DepartmentName",
-    "DEPARTMENT_NAME",
-    "Dept_Name",
-  ],
+  Department: ["Department", "DepartmentName", "DEPARTMENT_NAME", "Dept_Name"],
 
   Designation: [
     "Designation",
@@ -458,13 +441,7 @@ const ATTENDANCE_FIELD_ALIASES: Record<string, string[]> = {
     "Desig_Name",
   ],
 
-  "Paid Days": [
-    "PaidDays",
-    "Paid_Days",
-    "PAID_DAYS",
-    "AttnPaidDays",
-    "FPDays",
-  ],
+  "Paid Days": ["PaidDays", "Paid_Days", "PAID_DAYS", "AttnPaidDays", "FPDays"],
 
   "Total Penalty Days": [
     "TotalPenaltyDays",
@@ -498,11 +475,7 @@ const mapAttendanceRows = (result: any[]): ReportRow[] => {
 
     const mapped: ReportRow = {
       Srno:
-        source.Srno ??
-        source.srno ??
-        source.SRNO ??
-        source.Sr_No ??
-        index + 1,
+        source.Srno ?? source.srno ?? source.SRNO ?? source.Sr_No ?? index + 1,
       __rowId: index + 1,
     };
 
@@ -511,14 +484,9 @@ const mapAttendanceRows = (result: any[]): ReportRow[] => {
 
       const matchingKey = aliases
         .map((alias) => normalizeFieldName(alias))
-        .find(
-          (normalizedKey) =>
-            normalizedRecord[normalizedKey] !== undefined,
-        );
+        .find((normalizedKey) => normalizedRecord[normalizedKey] !== undefined);
 
-      mapped[column] = matchingKey
-        ? normalizedRecord[matchingKey]
-        : "";
+      mapped[column] = matchingKey ? normalizedRecord[matchingKey] : "";
     });
 
     return mapped;
@@ -608,10 +576,11 @@ export default function MisPunchApproverReportPage() {
   // EMPLOYEE DETAIL DIALOG
   // --------------------------------------------------
 
-  const [selectedEmployee, setSelectedEmployee] = useState<ReportRow | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<ReportRow | null>(
+    null,
+  );
   const [attendanceDetailRows, setAttendanceDetailRows] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
-
 
   // --------------------------------------------------
   // API HEADERS
@@ -943,38 +912,38 @@ export default function MisPunchApproverReportPage() {
 
       console.log(`${reportType} Total Rows:`, result.length);
 
-  let mappedRows: ReportRow[] = [];
-let dynamicHeaders: string[] = [];
+      let mappedRows: ReportRow[] = [];
+      let dynamicHeaders: string[] = [];
 
-if (reportType === "Attendance report") {
-  // Attendance report fixed columns and field mapping
-  mappedRows = mapAttendanceRows(result);
+      if (reportType === "Attendance report") {
+        // Attendance report fixed columns and field mapping
+        mappedRows = mapAttendanceRows(result);
 
-  dynamicHeaders = ATTENDANCE_HEADERS;
-} else {
-  // Approval report existing mapping unchanged
-  mappedRows = mapReportRows(result, []).map((item, index) => ({
-    ...item,
-    srno: index + 1,
-  }));
+        dynamicHeaders = ATTENDANCE_HEADERS;
+      } else {
+        // Approval report existing mapping unchanged
+        mappedRows = mapReportRows(result, []).map((item, index) => ({
+          ...item,
+          srno: index + 1,
+        }));
 
-  if (mappedRows.length > 0) {
-    const firstRowKeys = Object.keys(mappedRows[0]);
+        if (mappedRows.length > 0) {
+          const firstRowKeys = Object.keys(mappedRows[0]);
 
-    dynamicHeaders = PREFERRED_HEADERS.filter((key) =>
-      firstRowKeys.includes(key),
-    );
+          dynamicHeaders = PREFERRED_HEADERS.filter((key) =>
+            firstRowKeys.includes(key),
+          );
 
-    if (dynamicHeaders.length <= 1) {
-      dynamicHeaders = [
-        "srno",
-        ...firstRowKeys.filter(
-          (key) => key !== "srno" && !HIDDEN_KEYS.includes(key),
-        ),
-      ];
-    }
-  }
-}
+          if (dynamicHeaders.length <= 1) {
+            dynamicHeaders = [
+              "srno",
+              ...firstRowKeys.filter(
+                (key) => key !== "srno" && !HIDDEN_KEYS.includes(key),
+              ),
+            ];
+          }
+        }
+      }
 
       setHeaders(dynamicHeaders);
       setRows(mappedRows);
@@ -1087,7 +1056,11 @@ if (reportType === "Attendance report") {
     }
 
     const employeeCode = getFieldValue(row, [
-      "Employee Code", "EMPCODE", "EMP_CODE", "EmpCode", "Code",
+      "Employee Code",
+      "EMPCODE",
+      "EMP_CODE",
+      "EmpCode",
+      "Code",
     ]);
 
     if (!employeeCode) {
@@ -1125,22 +1098,17 @@ if (reportType === "Attendance report") {
         search: "",
       });
 
-      const firstResponse = await axios.post(
-        apiUrl,
-        createDetailPayload(1),
-        {
-          headers: apiHeaders,
-          params: { compcode: user?.Comp_Code },
-          timeout: 60000,
-        },
-      );
+      const firstResponse = await axios.post(apiUrl, createDetailPayload(1), {
+        headers: apiHeaders,
+        params: { compcode: user?.Comp_Code },
+        timeout: 60000,
+      });
 
       const firstData = firstResponse?.data;
-      if (
-        firstData?.success === false ||
-        firstData?.status === false
-      ) {
-        throw new Error(firstData?.message || "Unable to fetch employee attendance details.");
+      if (firstData?.success === false || firstData?.status === false) {
+        throw new Error(
+          firstData?.message || "Unable to fetch employee attendance details.",
+        );
       }
 
       collected.push(...getResponseArray(firstData));
@@ -1149,32 +1117,34 @@ if (reportType === "Attendance report") {
         1,
         Number(
           firstData?.pagination?.totalPages ??
-          firstData?.data?.pagination?.totalPages ??
-          1,
+            firstData?.data?.pagination?.totalPages ??
+            1,
         ),
       );
 
       for (let page = 2; page <= totalPages; page += 1) {
-        const response = await axios.post(
-          apiUrl,
-          createDetailPayload(page),
-          {
-            headers: apiHeaders,
-            params: { compcode: user?.Comp_Code },
-            timeout: 60000,
-          },
-        );
+        const response = await axios.post(apiUrl, createDetailPayload(page), {
+          headers: apiHeaders,
+          params: { compcode: user?.Comp_Code },
+          timeout: 60000,
+        });
 
         const pageData = response?.data;
         if (pageData?.success === false || pageData?.status === false) {
-          throw new Error(pageData?.message || `Attendance detail page ${page} failed.`);
+          throw new Error(
+            pageData?.message || `Attendance detail page ${page} failed.`,
+          );
         }
         collected.push(...getResponseArray(pageData));
       }
 
       const employeeRows = collected.filter((item) => {
         const code = getFieldValue(item, [
-          "Employee Code", "EMPCODE", "EMP_CODE", "EmpCode", "Code",
+          "Employee Code",
+          "EMPCODE",
+          "EMP_CODE",
+          "EmpCode",
+          "Code",
         ]);
         return String(code) === String(employeeCode);
       });
@@ -1184,8 +1154,8 @@ if (reportType === "Attendance report") {
       console.error("Employee attendance detail error:", error);
       showSideAlert(
         error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch attendance details.",
+          error?.message ||
+          "Unable to fetch attendance details.",
         "error",
       );
       setAttendanceDetailRows([]);
@@ -1196,28 +1166,68 @@ if (reportType === "Attendance report") {
 
   const getAttendanceDate = (item: any) =>
     getFieldValue(item, [
-      "AttendanceDate", "AttnDate", "DATEOFFICE", "Date", "ATT_DATE",
-      "PunchDate", "TRANS_DATE", "DATE",
+      "AttendanceDate",
+      "AttnDate",
+      "DATEOFFICE",
+      "Date",
+      "ATT_DATE",
+      "PunchDate",
+      "TRANS_DATE",
+      "DATE",
     ]);
 
   const getAttendanceStatus = (item: any) =>
-    getFieldValue(item, ["Status", "ATT_STATUS", "AttnStatus", "AttendanceStatus", "STATUS"]);
+    getFieldValue(item, [
+      "Status",
+      "ATT_STATUS",
+      "AttnStatus",
+      "AttendanceStatus",
+      "STATUS",
+    ]);
 
   const getAttendanceInTime = (item: any) =>
-    getFieldValue(item, ["InTime", "IN_TIME", "PunchIn", "PUNCH_IN", "TIME_IN", "In_Time"]);
+    getFieldValue(item, [
+      "InTime",
+      "IN_TIME",
+      "PunchIn",
+      "PUNCH_IN",
+      "TIME_IN",
+      "In_Time",
+    ]);
 
   const getAttendanceOutTime = (item: any) =>
-    getFieldValue(item, ["OutTime", "OUT_TIME", "PunchOut", "PUNCH_OUT", "TIME_OUT", "Out_Time"]);
+    getFieldValue(item, [
+      "OutTime",
+      "OUT_TIME",
+      "PunchOut",
+      "PUNCH_OUT",
+      "TIME_OUT",
+      "Out_Time",
+    ]);
 
   const getAttendanceInImage = (item: any) =>
-    getImageSource(getFieldValue(item, [
-      "fileIn", "InImage", "PunchInImage", "IN_IMAGE", "Punch_In_Image", "InPhoto",
-    ]));
+    getImageSource(
+      getFieldValue(item, [
+        "fileIn",
+        "InImage",
+        "PunchInImage",
+        "IN_IMAGE",
+        "Punch_In_Image",
+        "InPhoto",
+      ]),
+    );
 
   const getAttendanceOutImage = (item: any) =>
-    getImageSource(getFieldValue(item, [
-      "fileOut", "OutImage", "PunchOutImage", "OUT_IMAGE", "Punch_Out_Image", "OutPhoto",
-    ]));
+    getImageSource(
+      getFieldValue(item, [
+        "fileOut",
+        "OutImage",
+        "PunchOutImage",
+        "OUT_IMAGE",
+        "Punch_Out_Image",
+        "OutPhoto",
+      ]),
+    );
 
   // --------------------------------------------------
   // DYNAMIC TABLE COLUMNS
@@ -1225,10 +1235,7 @@ if (reportType === "Attendance report") {
 
   const columns = useMemo((): ReportColumn[] => {
     return headers.map((key) => ({
-     Header:
-  reportType === "Attendance report"
-    ? key
-    : getColumnLabel(key),
+      Header: reportType === "Attendance report" ? key : getColumnLabel(key),
       accessor: key,
       minWidth: getColumnWidth(key),
       width: getColumnWidth(key),
@@ -1493,41 +1500,6 @@ if (reportType === "Attendance report") {
                 of {rows.length} rows
               </p>
             </div>
-
-            {/* TABLE ACTIONS */}
-
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              {/* GLOBAL SEARCH */}
-
-              <div className="relative min-w-0 flex-1 sm:w-[285px] sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <Einput
-                  name="search"
-                  type="text"
-                  value={search}
-                  placeholder="Search in results..."
-                  handleInputChange={(name: string, value: string) =>
-                    setSearch(value)
-                  }
-                  className="h-[41px] w-full pl-9"
-                />
-              </div>
-
-              {/* RESET */}
-
-              <AButton
-                type="button"
-                onClick={resetTableFilters}
-                className="inline-flex h-[41px] items-center justify-center gap-2 rounded-xl border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </AButton>
-            </div>
           </div>
 
           {/* COLUMN FILTER PANEL */}
@@ -1582,7 +1554,8 @@ if (reportType === "Attendance report") {
                   <DataTable
                     columns={columns}
                     data={filteredRows}
-                    showTopSearch={false}
+                    showTopSearch={true}
+                    resetFilters={true}
                     showExcelExport={true}
                     showColumnFilters={true}
                     showPageSizeInFooter={true}
@@ -1673,20 +1646,49 @@ if (reportType === "Attendance report") {
                     </h3>
                     <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
                       {[
-                        ["Employee Code", ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"]],
-                        ["Employee Name", ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"]],
-                        ["Date Of Joining", ["Date Of Joining", "Joining Date", "DOJ", "DATE_OF_JOINING"]],
-                        ["Mobile No.", ["Mobile No", "Mobile", "MOBILE_NO", "MobileNumber"]],
+                        [
+                          "Employee Code",
+                          ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"],
+                        ],
+                        [
+                          "Employee Name",
+                          ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"],
+                        ],
+                        [
+                          "Date Of Joining",
+                          [
+                            "Date Of Joining",
+                            "Joining Date",
+                            "DOJ",
+                            "DATE_OF_JOINING",
+                          ],
+                        ],
+                        [
+                          "Mobile No.",
+                          ["Mobile No", "Mobile", "MOBILE_NO", "MobileNumber"],
+                        ],
                         ["Company", ["Company", "CompanyName", "COMP_NAME"]],
-                        ["Designation", ["Designation", "DESIGNATION", "Desig_Name"]],
+                        [
+                          "Designation",
+                          ["Designation", "DESIGNATION", "Desig_Name"],
+                        ],
                       ].map(([label, aliases]: any) => (
-                        <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
-                          <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                        <div
+                          key={label}
+                          className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1"
+                        >
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {label}
+                          </span>
                           <span>:</span>
                           <span className="font-medium">
                             {label === "Date Of Joining"
-                              ? formatDateOnly(getFieldValue(selectedEmployee, aliases))
-                              : displayValue(getFieldValue(selectedEmployee, aliases))}
+                              ? formatDateOnly(
+                                  getFieldValue(selectedEmployee, aliases),
+                                )
+                              : displayValue(
+                                  getFieldValue(selectedEmployee, aliases),
+                                )}
                           </span>
                         </div>
                       ))}
@@ -1702,15 +1704,30 @@ if (reportType === "Attendance report") {
                       {[
                         ["Channel", ["Channel", "CHANNEL_NAME"]],
                         ["Cluster", ["Cluster", "CLUSTER_NAME"]],
-                        ["Branch", ["Branch", "Location", "Loc_Name", "LOCATION"]],
+                        [
+                          "Branch",
+                          ["Branch", "Location", "Loc_Name", "LOCATION"],
+                        ],
                         ["Section", ["Section", "SECTION_NAME"]],
-                        ["Department", ["Department", "DEPARTMENT_NAME", "Dept_Name"]],
+                        [
+                          "Department",
+                          ["Department", "DEPARTMENT_NAME", "Dept_Name"],
+                        ],
                         ["Region", ["Region", "Sal_Region", "SAL_REGION"]],
                       ].map(([label, aliases]: any) => (
-                        <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
-                          <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                        <div
+                          key={label}
+                          className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1"
+                        >
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {label}
+                          </span>
                           <span>:</span>
-                          <span className="font-medium">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                          <span className="font-medium">
+                            {displayValue(
+                              getFieldValue(selectedEmployee, aliases),
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1723,28 +1740,119 @@ if (reportType === "Attendance report") {
                     </h3>
                     <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
                       {[
-                        ["Start From", ["Start From", "StartFrom", "DATE_FROM", "OD_FROM"]],
-                        ["End From", ["End From", "EndFrom", "DATE_TO", "OD_TO"]],
-                        ["OD Type", ["OD Type", "OD_TYPE", "Reason", "MIS_PUNCH_TYPE"]],
-                        ["Attn. Status", ["Attn. Status", "AttnStatus", "ATT_STATUS", "AttendanceStatus"]],
-                        ["Shift Start Time", ["Shift Start Time", "ShiftStartTime", "SHIFT_IN"]],
-                        ["Shift End Time", ["Shift End Time", "ShiftEndTime", "SHIFT_OUT"]],
-                        ["Mispunch IN Applied On", ["Mispunch IN Applied On", "MisPunchInAppliedOn", "AppliedOnIn", "IN_APPLIED_ON"]],
-                        ["Mispunch OUT Applied On", ["Mispunch OUT Applied On", "MisPunchOutAppliedOn", "AppliedOnOut", "OUT_APPLIED_ON"]],
-                        ["Mispunch Entered By", ["Mispunch Entered By", "EnteredBy", "CreatedBy", "USER_NAME"]],
-                        ["Applied Type", ["Applied Type", "AppliedType", "OD_TYPE_NAME"]],
-                        ["Total Days", ["Total Days", "Total_OD_Days", "OD_DAYS", "TOTAL_DAYS"]],
-                        ["Mis-Punch Status", ["Mis-Punch Status", "OD Status", "Status", "OD_STATUS"]],
-                        ["Employee Remark", ["Employee Remark", "Remark", "EMP_REMARK", "REMARKS"]],
-                        ["Employee SPL Remark", ["Employee SPL Remark", "EmployeeSPLRemark", "SPL_REMARK"]],
+                        [
+                          "Start From",
+                          ["Start From", "StartFrom", "DATE_FROM", "OD_FROM"],
+                        ],
+                        [
+                          "End From",
+                          ["End From", "EndFrom", "DATE_TO", "OD_TO"],
+                        ],
+                        [
+                          "OD Type",
+                          ["OD Type", "OD_TYPE", "Reason", "MIS_PUNCH_TYPE"],
+                        ],
+                        [
+                          "Attn. Status",
+                          [
+                            "Attn. Status",
+                            "AttnStatus",
+                            "ATT_STATUS",
+                            "AttendanceStatus",
+                          ],
+                        ],
+                        [
+                          "Shift Start Time",
+                          ["Shift Start Time", "ShiftStartTime", "SHIFT_IN"],
+                        ],
+                        [
+                          "Shift End Time",
+                          ["Shift End Time", "ShiftEndTime", "SHIFT_OUT"],
+                        ],
+                        [
+                          "Mispunch IN Applied On",
+                          [
+                            "Mispunch IN Applied On",
+                            "MisPunchInAppliedOn",
+                            "AppliedOnIn",
+                            "IN_APPLIED_ON",
+                          ],
+                        ],
+                        [
+                          "Mispunch OUT Applied On",
+                          [
+                            "Mispunch OUT Applied On",
+                            "MisPunchOutAppliedOn",
+                            "AppliedOnOut",
+                            "OUT_APPLIED_ON",
+                          ],
+                        ],
+                        [
+                          "Mispunch Entered By",
+                          [
+                            "Mispunch Entered By",
+                            "EnteredBy",
+                            "CreatedBy",
+                            "USER_NAME",
+                          ],
+                        ],
+                        [
+                          "Applied Type",
+                          ["Applied Type", "AppliedType", "OD_TYPE_NAME"],
+                        ],
+                        [
+                          "Total Days",
+                          [
+                            "Total Days",
+                            "Total_OD_Days",
+                            "OD_DAYS",
+                            "TOTAL_DAYS",
+                          ],
+                        ],
+                        [
+                          "Mis-Punch Status",
+                          [
+                            "Mis-Punch Status",
+                            "OD Status",
+                            "Status",
+                            "OD_STATUS",
+                          ],
+                        ],
+                        [
+                          "Employee Remark",
+                          [
+                            "Employee Remark",
+                            "Remark",
+                            "EMP_REMARK",
+                            "REMARKS",
+                          ],
+                        ],
+                        [
+                          "Employee SPL Remark",
+                          [
+                            "Employee SPL Remark",
+                            "EmployeeSPLRemark",
+                            "SPL_REMARK",
+                          ],
+                        ],
                       ].map(([label, aliases]: any) => {
                         const value = getFieldValue(selectedEmployee, aliases);
                         return (
-                          <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
-                            <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                          <div
+                            key={label}
+                            className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1"
+                          >
+                            <span className="text-slate-500 dark:text-slate-400">
+                              {label}
+                            </span>
                             <span>:</span>
                             <span className="font-medium">
-                              {["Start From", "End From", "Mispunch IN Applied On", "Mispunch OUT Applied On"].includes(label)
+                              {[
+                                "Start From",
+                                "End From",
+                                "Mispunch IN Applied On",
+                                "Mispunch OUT Applied On",
+                              ].includes(label)
                                 ? formatDateTime(value)
                                 : displayValue(value)}
                             </span>
@@ -1758,16 +1866,42 @@ if (reportType === "Attendance report") {
                   <section className="border-b border-slate-200 pb-4 dark:border-slate-700">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                       {[
-                        ["Mispunch In Image", ["fileIn", "InImage", "PunchInImage", "IN_IMAGE", "InPhoto"]],
-                        ["Mispunch Out Image", ["fileOut", "OutImage", "PunchOutImage", "OUT_IMAGE", "OutPhoto"]],
+                        [
+                          "Mispunch In Image",
+                          [
+                            "fileIn",
+                            "InImage",
+                            "PunchInImage",
+                            "IN_IMAGE",
+                            "InPhoto",
+                          ],
+                        ],
+                        [
+                          "Mispunch Out Image",
+                          [
+                            "fileOut",
+                            "OutImage",
+                            "PunchOutImage",
+                            "OUT_IMAGE",
+                            "OutPhoto",
+                          ],
+                        ],
                       ].map(([label, aliases]: any) => {
-                        const imageSrc = getImageSource(getFieldValue(selectedEmployee, aliases));
+                        const imageSrc = getImageSource(
+                          getFieldValue(selectedEmployee, aliases),
+                        );
                         return (
                           <div key={label}>
-                            <p className="mb-1 text-[11px] text-slate-600 dark:text-slate-400">{label}</p>
+                            <p className="mb-1 text-[11px] text-slate-600 dark:text-slate-400">
+                              {label}
+                            </p>
                             <div className="flex h-[175px] items-center justify-center overflow-hidden rounded-xl border border-slate-400 bg-[#edf4fa] dark:border-slate-600 dark:bg-slate-800">
                               {imageSrc ? (
-                                <img src={imageSrc} alt={label} className="h-full w-full object-contain" />
+                                <img
+                                  src={imageSrc}
+                                  alt={label}
+                                  className="h-full w-full object-contain"
+                                />
                               ) : (
                                 <span className="text-[12px] italic text-slate-400">
                                   {label.toLowerCase().includes("out")
@@ -1785,28 +1919,42 @@ if (reportType === "Attendance report") {
                   {/* APPROVER DETAILS */}
                   {[1, 2, 3].map((number) => {
                     const approverCode = getFieldValue(selectedEmployee, [
-                      `Approver ${number} Emp Code`, `Approver${number}EmpCode`,
-                      `APPR_${number}`, `APPR${number}_CODE`, `APPROVER_${number}_CODE`,
+                      `Approver ${number} Emp Code`,
+                      `Approver${number}EmpCode`,
+                      `APPR_${number}`,
+                      `APPR${number}_CODE`,
+                      `APPROVER_${number}_CODE`,
                     ]);
                     const approverName = getFieldValue(selectedEmployee, [
-                      `Approver ${number} Name`, `Approver${number}Name`,
-                      `APPR_${number}_NAME`, `APPROVER_${number}_NAME`,
+                      `Approver ${number} Name`,
+                      `Approver${number}Name`,
+                      `APPR_${number}_NAME`,
+                      `APPROVER_${number}_NAME`,
                     ]);
                     const actionStatus = getFieldValue(selectedEmployee, [
-                      `Approver ${number} Action Status`, `Approver${number}Status`,
-                      `APPR_${number}_STATUS`, `APPR_${number}_ACTION`,
+                      `Approver ${number} Action Status`,
+                      `Approver${number}Status`,
+                      `APPR_${number}_STATUS`,
+                      `APPR_${number}_ACTION`,
                       `APPROVER_${number}_STATUS`,
                     ]);
                     const remarks = getFieldValue(selectedEmployee, [
-                      `Approver ${number} Remarks`, `Approver${number}Remark`,
-                      `APPR_${number}_REMARK`, `APPR_${number}_REMARKS`,
+                      `Approver ${number} Remarks`,
+                      `Approver${number}Remark`,
+                      `APPR_${number}_REMARK`,
+                      `APPR_${number}_REMARKS`,
                     ]);
                     const actionOn = getFieldValue(selectedEmployee, [
-                      `Approver ${number} Action Taken On`, `Approver${number}ActionOn`,
-                      `APPR_${number}_DATE`, `APPR_${number}_ACTION_ON`,
+                      `Approver ${number} Action Taken On`,
+                      `Approver${number}ActionOn`,
+                      `APPR_${number}_DATE`,
+                      `APPR_${number}_ACTION_ON`,
                     ]);
                     return (
-                      <section key={number} className="border-b border-slate-200 pb-4 last:border-0 dark:border-slate-700">
+                      <section
+                        key={number}
+                        className="border-b border-slate-200 pb-4 last:border-0 dark:border-slate-700"
+                      >
                         <h3 className="mb-3 text-[13px] font-semibold text-blue-800 dark:text-blue-300">
                           Approver {number} Details
                         </h3>
@@ -1818,10 +1966,17 @@ if (reportType === "Attendance report") {
                             ["Remarks", remarks],
                             ["Action Taken On", actionOn],
                           ].map(([label, value]: any) => (
-                            <div key={label} className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1">
-                              <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                            <div
+                              key={label}
+                              className="grid grid-cols-[130px_12px_minmax(0,1fr)] gap-1"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400">
+                                {label}
+                              </span>
                               <span>:</span>
-                              <span className="font-medium">{displayValue(value)}</span>
+                              <span className="font-medium">
+                                {displayValue(value)}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -1838,17 +1993,37 @@ if (reportType === "Attendance report") {
                         Employee Information
                       </h3>
                       {[
-                        ["Employee Code", ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"]],
-                        ["Employee Name", ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"]],
-                        ["Joining Date", ["Joining Date", "JoiningDate", "DOJ"]],
-                        ["Designation", ["Designation", "DESIGNATION", "Desig_Name"]],
+                        [
+                          "Employee Code",
+                          ["Employee Code", "EMPCODE", "EMP_CODE", "EmpCode"],
+                        ],
+                        [
+                          "Employee Name",
+                          ["Employee Name", "EMP_NAME", "EMPNAME", "EmpName"],
+                        ],
+                        [
+                          "Joining Date",
+                          ["Joining Date", "JoiningDate", "DOJ"],
+                        ],
+                        [
+                          "Designation",
+                          ["Designation", "DESIGNATION", "Desig_Name"],
+                        ],
                       ].map(([label, aliases]: any) => (
-                        <div key={label} className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]">
-                          <span>{label}</span><span>:</span>
+                        <div
+                          key={label}
+                          className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]"
+                        >
+                          <span>{label}</span>
+                          <span>:</span>
                           <span className="font-semibold">
                             {label === "Joining Date"
-                              ? formatDateOnly(getFieldValue(selectedEmployee, aliases))
-                              : displayValue(getFieldValue(selectedEmployee, aliases))}
+                              ? formatDateOnly(
+                                  getFieldValue(selectedEmployee, aliases),
+                                )
+                              : displayValue(
+                                  getFieldValue(selectedEmployee, aliases),
+                                )}
                           </span>
                         </div>
                       ))}
@@ -1866,9 +2041,17 @@ if (reportType === "Attendance report") {
                         ["Section", ["Section", "SectionName"]],
                         ["Department", ["Department", "Dept_Name"]],
                       ].map(([label, aliases]: any) => (
-                        <div key={label} className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]">
-                          <span>{label}</span><span>:</span>
-                          <span className="font-semibold">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                        <div
+                          key={label}
+                          className="mb-2 grid grid-cols-[130px_10px_minmax(0,1fr)] gap-1 text-[12px]"
+                        >
+                          <span>{label}</span>
+                          <span>:</span>
+                          <span className="font-semibold">
+                            {displayValue(
+                              getFieldValue(selectedEmployee, aliases),
+                            )}
+                          </span>
                         </div>
                       ))}
                     </section>
@@ -1879,12 +2062,35 @@ if (reportType === "Attendance report") {
                       </h3>
                       {[
                         ["Paid Days", ["Paid Days", "PaidDays", "PAID_DAYS"]],
-                        ["Total Penalty Days", ["Total Penalty Days", "TotalPenaltyDays", "Penalty_Days"]],
-                        ["Total Days in Period", ["Month Count", "MonthCount", "Month_Days", "TotalMonth"]],
+                        [
+                          "Total Penalty Days",
+                          [
+                            "Total Penalty Days",
+                            "TotalPenaltyDays",
+                            "Penalty_Days",
+                          ],
+                        ],
+                        [
+                          "Total Days in Period",
+                          [
+                            "Month Count",
+                            "MonthCount",
+                            "Month_Days",
+                            "TotalMonth",
+                          ],
+                        ],
                       ].map(([label, aliases]: any) => (
-                        <div key={label} className="mb-2 grid grid-cols-[140px_10px_minmax(0,1fr)] gap-1 text-[12px]">
-                          <span>{label}</span><span>:</span>
-                          <span className="font-bold">{displayValue(getFieldValue(selectedEmployee, aliases))}</span>
+                        <div
+                          key={label}
+                          className="mb-2 grid grid-cols-[140px_10px_minmax(0,1fr)] gap-1 text-[12px]"
+                        >
+                          <span>{label}</span>
+                          <span>:</span>
+                          <span className="font-bold">
+                            {displayValue(
+                              getFieldValue(selectedEmployee, aliases),
+                            )}
+                          </span>
                         </div>
                       ))}
                     </section>
@@ -1894,7 +2100,10 @@ if (reportType === "Attendance report") {
                   <section className="min-w-0">
                     <h3 className="mb-3 text-[14px] font-bold text-slate-900 dark:text-slate-100">
                       <span className="mr-2">🗓️</span>
-                      Daily Attendance Records ({attendanceDetailRows.length} records)
+                      Daily Attendance Records ({
+                        attendanceDetailRows.length
+                      }{" "}
+                      records)
                     </h3>
 
                     {detailLoading ? (
@@ -1916,42 +2125,58 @@ if (reportType === "Attendance report") {
                               className="rounded-lg border border-slate-200 border-l-[3px] border-l-slate-800 bg-[#f4f8fc] p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/60"
                             >
                               <h4 className="mb-4 text-[14px] font-bold text-slate-900 dark:text-slate-100">
-                                🗓️ {formatDate(getAttendanceDate(item)) || `Record ${index + 1}`}
+                                🗓️{" "}
+                                {formatDate(getAttendanceDate(item)) ||
+                                  `Record ${index + 1}`}
                               </h4>
                               <div className="grid grid-cols-3 gap-3 text-[12px]">
                                 <div>
-                                  <p className="mb-1 text-slate-600 dark:text-slate-400">Status</p>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">
+                                    Status
+                                  </p>
                                   <p className="font-bold text-slate-900 dark:text-slate-100">
                                     {displayValue(getAttendanceStatus(item))}
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="mb-1 text-slate-600 dark:text-slate-400">In Time</p>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">
+                                    In Time
+                                  </p>
                                   <p className="font-semibold text-slate-900 dark:text-slate-100">
                                     {displayValue(getAttendanceInTime(item))}
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="mb-1 text-slate-600 dark:text-slate-400">Out Time</p>
+                                  <p className="mb-1 text-slate-600 dark:text-slate-400">
+                                    Out Time
+                                  </p>
                                   <p className="font-semibold text-slate-900 dark:text-slate-100">
                                     {displayValue(getAttendanceOutTime(item))}
                                   </p>
                                 </div>
                               </div>
 
-                              {(inImage || outImage) ? (
+                              {inImage || outImage ? (
                                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                   {[
                                     ["Punch In Image", inImage],
                                     ["Punch Out Image", outImage],
                                   ].map(([label, imageSrc]: any) => (
                                     <div key={label}>
-                                      <p className="mb-1 text-[11px] text-slate-500">{label}</p>
+                                      <p className="mb-1 text-[11px] text-slate-500">
+                                        {label}
+                                      </p>
                                       <div className="flex h-[130px] items-center justify-center overflow-hidden rounded-md border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900">
                                         {imageSrc ? (
-                                          <img src={imageSrc} alt={label} className="h-full w-full object-contain" />
+                                          <img
+                                            src={imageSrc}
+                                            alt={label}
+                                            className="h-full w-full object-contain"
+                                          />
                                         ) : (
-                                          <span className="text-[11px] italic text-slate-400">No punch image available</span>
+                                          <span className="text-[11px] italic text-slate-400">
+                                            No punch image available
+                                          </span>
                                         )}
                                       </div>
                                     </div>

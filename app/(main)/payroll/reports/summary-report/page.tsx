@@ -1,12 +1,6 @@
-
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -78,11 +72,7 @@ const getCurrentDate = (monthsBack = 0) => {
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    ) {
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
       return String(value);
     }
   }
@@ -140,7 +130,7 @@ const getApiError = (error: any) =>
 
 const showSideAlert = (
   message: string,
-  type: "success" | "error" | "warning" | "info" = "info"
+  type: "success" | "error" | "warning" | "info" = "info",
 ) => {
   Swal.mixin({
     toast: true,
@@ -222,12 +212,10 @@ export default function DeviationSummaryReportPage() {
   // --------------------------------------------------
 
   const [dateFrom, setDateFrom] = useState(
-    globalDateRange?.from || getCurrentDate(1)
+    globalDateRange?.from || getCurrentDate(1),
   );
 
-  const [dateTo, setDateTo] = useState(
-    globalDateRange?.to || getCurrentDate()
-  );
+  const [dateTo, setDateTo] = useState(globalDateRange?.to || getCurrentDate());
 
   // --------------------------------------------------
   // REPORT STATES
@@ -253,7 +241,7 @@ export default function DeviationSummaryReportPage() {
     () => ({
       compcode: user?.Comp_Code,
     }),
-    [user?.Comp_Code]
+    [user?.Comp_Code],
   );
 
   // --------------------------------------------------
@@ -269,19 +257,13 @@ export default function DeviationSummaryReportPage() {
     const from = new Date(`${dateFrom}T00:00:00`);
     const to = new Date(`${dateTo}T00:00:00`);
 
-    if (
-      Number.isNaN(from.getTime()) ||
-      Number.isNaN(to.getTime())
-    ) {
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
       showSideAlert("Please select valid dates.", "warning");
       return false;
     }
 
     if (from > to) {
-      showSideAlert(
-        "Date from cannot be greater than date to.",
-        "warning"
-      );
+      showSideAlert("Date from cannot be greater than date to.", "warning");
       return false;
     }
 
@@ -292,91 +274,84 @@ export default function DeviationSummaryReportPage() {
   // MAP API RESPONSE
   // --------------------------------------------------
 
-  const mapReportRows = useCallback(
-    (result: any[]): DeviationRow[] => {
-      return result.map((item: any) => {
-        const deviationDays = getText(
-          item?.TotalDevEntries,
-          item?.DEVIATION_DAYS,
-          item?.DeviationDays,
-          item?.DEVIATION_DAYS_COUNT,
-          item?.DEV_DAYS,
-          item?.Dev_Days,
-          item?.Deviation_Days,
-          item?.DEVIATION,
-          item?.Deviation,
-          item?.DEV_DAYS_COUNT
-        );
+  const mapReportRows = useCallback((result: any[]): DeviationRow[] => {
+    return result.map((item: any) => {
+      const deviationDays = getText(
+        item?.TotalDevEntries,
+        item?.DEVIATION_DAYS,
+        item?.DeviationDays,
+        item?.DEVIATION_DAYS_COUNT,
+        item?.DEV_DAYS,
+        item?.Dev_Days,
+        item?.Deviation_Days,
+        item?.DEVIATION,
+        item?.Deviation,
+        item?.DEV_DAYS_COUNT,
+      );
 
-        return {
-          ...item,
+      return {
+        ...item,
 
-          Emp_Code: getText(
-            item?.Emp_Code,
-            item?.EMPCODE,
-            item?.EmpCode,
-            item?.EMP_CODE
-          ),
+        Emp_Code: getText(
+          item?.Emp_Code,
+          item?.EMPCODE,
+          item?.EmpCode,
+          item?.EMP_CODE,
+        ),
 
-          EMPLOYEENAME: getText(
-            item?.EMPLOYEENAME,
-            item?.EMPLOYEE_NAME,
-            item?.EmployeeName,
-            item?.EmpName,
-            item?.EMP_NAME,
-            item?.Emp_Name
-          ),
+        EMPLOYEENAME: getText(
+          item?.EMPLOYEENAME,
+          item?.EMPLOYEE_NAME,
+          item?.EmployeeName,
+          item?.EmpName,
+          item?.EMP_NAME,
+          item?.Emp_Name,
+        ),
 
-          GENDER: getText(
-            item?.GENDER,
-            item?.Gender,
-            item?.SEX
-          ),
+        GENDER: getText(item?.GENDER, item?.Gender, item?.SEX),
 
-          EmployeeType: getText(
-            item?.EmployeeType,
-            item?.EMPLOYEE_TYPE,
-            item?.Emp_Type,
-            item?.EMP_TYPE
-          ),
+        EmployeeType: getText(
+          item?.EmployeeType,
+          item?.EMPLOYEE_TYPE,
+          item?.Emp_Type,
+          item?.EMP_TYPE,
+        ),
 
-          Department: getText(
-            item?.Department,
-            item?.DEPARTMENT,
-            item?.DEPT_NAME,
-            item?.Dept_Name
-          ),
+        Department: getText(
+          item?.Department,
+          item?.DEPARTMENT,
+          item?.DEPT_NAME,
+          item?.Dept_Name,
+        ),
 
-          SECTION: getText(
-            item?.SECTION,
-            item?.Section,
-            item?.SECTION_NAME,
-            item?.Section_Name
-          ),
+        SECTION: getText(
+          item?.SECTION,
+          item?.Section,
+          item?.SECTION_NAME,
+          item?.Section_Name,
+        ),
 
-          EMPLOYEEDESIGNATION: getText(
-            item?.EMPLOYEEDESIGNATION,
-            item?.DESIGNATION,
-            item?.Designation,
-            item?.DESIG_NAME,
-            item?.Desig_Name
-          ),
+        EMPLOYEEDESIGNATION: getText(
+          item?.EMPLOYEEDESIGNATION,
+          item?.DESIGNATION,
+          item?.Designation,
+          item?.DESIG_NAME,
+          item?.Desig_Name,
+        ),
 
-          Location: getText(
-            item?.Location,
-            item?.LOCATION,
-            item?.BRANCH_NAME,
-            item?.Branch_Name,
-            item?.BRANCH
-          ),
+        Location: getText(
+          item?.Location,
+          item?.LOCATION,
+          item?.BRANCH_NAME,
+          item?.Branch_Name,
+          item?.BRANCH,
+        ),
 
-          DEVIATION_DAYS: deviationDays,
-          TotalDevEntries: deviationDays,
-        };
-      });
-    },
-    []
-  );
+        DEVIATION_DAYS: deviationDays,
+        TotalDevEntries: deviationDays,
+      };
+    });
+  }, []);
 
   // --------------------------------------------------
   // FETCH REPORT
@@ -386,16 +361,13 @@ export default function DeviationSummaryReportPage() {
     if (!user?.Comp_Code) {
       showSideAlert(
         "Company information missing. Please login again.",
-        "warning"
+        "warning",
       );
       return;
     }
 
     if (!user?.branch) {
-      showSideAlert(
-        "Branch information missing.",
-        "warning"
-      );
+      showSideAlert("Branch information missing.", "warning");
       return;
     }
 
@@ -419,13 +391,10 @@ export default function DeviationSummaryReportPage() {
         payload,
         {
           headers: apiHeaders,
-        }
+        },
       );
 
-      console.log(
-        "Deviation Summary Response:",
-        response.data
-      );
+      console.log("Deviation Summary Response:", response.data);
 
       const responseData = response?.data;
 
@@ -436,8 +405,8 @@ export default function DeviationSummaryReportPage() {
       ) {
         throw new Error(
           responseData?.message ||
-          responseData?.Message ||
-          "Unable to fetch report."
+            responseData?.Message ||
+            "Unable to fetch report.",
         );
       }
 
@@ -449,30 +418,22 @@ export default function DeviationSummaryReportPage() {
       setRows(mappedRows);
 
       setFilters(
-        Object.fromEntries(
-          REPORT_COLUMNS.map((column) => [column.key, ""])
-        )
+        Object.fromEntries(REPORT_COLUMNS.map((column) => [column.key, ""])),
       );
 
       setSearch("");
       setHasSearched(true);
 
       if (mappedRows.length === 0) {
-        showSideAlert(
-          "No deviation records found.",
-          "info"
-        );
+        showSideAlert("No deviation records found.", "info");
       } else {
         showSideAlert(
           `${mappedRows.length} records fetched successfully.`,
-          "success"
+          "success",
         );
       }
     } catch (error: any) {
-      console.error(
-        "Deviation Summary Report Error:",
-        error
-      );
+      console.error("Deviation Summary Report Error:", error);
 
       setRows([]);
       setHasSearched(true);
@@ -503,20 +464,13 @@ export default function DeviationSummaryReportPage() {
     if (user?.Comp_Code && user?.branch) {
       fetchReport();
     }
-  }, [
-    user?.Comp_Code,
-    user?.branch,
-    fetchReport,
-  ]);
+  }, [user?.Comp_Code, user?.branch, fetchReport]);
 
   // --------------------------------------------------
   // DATE CHANGE
   // --------------------------------------------------
 
-  const handleDateChange = (
-    name: string,
-    value: string
-  ) => {
+  const handleDateChange = (name: string, value: string) => {
     if (name === "dateFrom") {
       setDateFrom(value);
     }
@@ -530,10 +484,7 @@ export default function DeviationSummaryReportPage() {
   // COLUMN FILTER CHANGE
   // --------------------------------------------------
 
-  const handleFilterChange = (
-    name: string,
-    value: string
-  ) => {
+  const handleFilterChange = (name: string, value: string) => {
     setFilters((previous) => ({
       ...previous,
       [name]: value,
@@ -553,18 +504,16 @@ export default function DeviationSummaryReportPage() {
         REPORT_COLUMNS.some((column) =>
           String(row[column.key] ?? "")
             .toLowerCase()
-            .includes(query)
+            .includes(query),
         );
 
-      const matchesColumns = Object.entries(filters).every(
-        ([key, value]) => {
-          if (!value.trim()) return true;
+      const matchesColumns = Object.entries(filters).every(([key, value]) => {
+        if (!value.trim()) return true;
 
-          return String(row[key] ?? "")
-            .toLowerCase()
-            .includes(value.trim().toLowerCase());
-        }
-      );
+        return String(row[key] ?? "")
+          .toLowerCase()
+          .includes(value.trim().toLowerCase());
+      });
 
       return matchesSearch && matchesColumns;
     });
@@ -585,14 +534,8 @@ export default function DeviationSummaryReportPage() {
       width: column.width,
 
       Cell: ({ value }: any) => {
-        if (
-          value === null ||
-          value === undefined ||
-          value === ""
-        ) {
-          return (
-            <span className="text-slate-400">—</span>
-          );
+        if (value === null || value === undefined || value === "") {
+          return <span className="text-slate-400">—</span>;
         }
 
         if (column.key === "Emp_Code") {
@@ -628,9 +571,7 @@ export default function DeviationSummaryReportPage() {
     setSearch("");
 
     setFilters(
-      Object.fromEntries(
-        REPORT_COLUMNS.map((column) => [column.key, ""])
-      )
+      Object.fromEntries(REPORT_COLUMNS.map((column) => [column.key, ""])),
     );
   };
 
@@ -648,27 +589,21 @@ export default function DeviationSummaryReportPage() {
 
   return (
     <div className="min-h-screen min-w-0 bg-[#f5f8fc] p-3 transition-colors dark:bg-[#0b1220] sm:p-4 lg:p-5">
-
       <HashloaderComponent isLoading={loading} />
 
       <div className="mx-auto max-w-[1800px] space-y-4">
-
         {/* PAGE HEADER */}
 
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-[20px] font-bold leading-tight text-[#152b4b] dark:text-slate-100 sm:text-[23px]">
             Dev Summary Report
           </h1>
-
-        
         </div>
 
         {/* DATE FILTER CARD */}
 
         <div className="rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.03)] dark:border-slate-700 dark:bg-slate-900 sm:p-5">
-
           <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(220px,360px)_minmax(220px,360px)_auto]">
-
             {/* DATE FROM */}
 
             <div className="min-w-0">
@@ -708,18 +643,15 @@ export default function DeviationSummaryReportPage() {
                 Show
               </AButton>
             </div>
-
           </div>
         </div>
 
         {/* REPORT TABLE CARD */}
 
         <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.03)] dark:border-slate-700 dark:bg-slate-900">
-
           {/* TOOLBAR */}
 
           <div className="flex min-w-0 flex-col gap-3 border-b border-[#e8edf5] p-3.5 dark:border-slate-700 lg:flex-row lg:items-center lg:justify-between">
-
             {/* ROW COUNT */}
 
             <div className="shrink-0">
@@ -730,52 +662,12 @@ export default function DeviationSummaryReportPage() {
                 of {rows.length} rows
               </p>
             </div>
-
-            {/* ACTIONS */}
-
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-
-              {/* GLOBAL SEARCH */}
-
-              <div className="relative min-w-0 flex-1 sm:w-[285px] sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <Einput
-                  name="search"
-                  type="text"
-                  value={search}
-                  placeholder="Search in results..."
-                  handleInputChange={(
-                    name: string,
-                    value: string
-                  ) => setSearch(value)}
-                  className="h-[41px] w-full pl-9"
-                />
-              </div>
-
-
-              {/* RESET */}
-
-              <AButton
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-[41px] items-center justify-center gap-2 rounded-lg border border-[#dce5f1] bg-white px-3.5 text-[12px] font-semibold text-[#152b4b] transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </AButton>
-
-            </div>
           </div>
 
           {/* COLUMN FILTER PANEL */}
 
           {showColumnFilters && (
             <div className="border-b border-[#e8edf5] bg-[#f8fafc] p-3.5 dark:border-slate-700 dark:bg-slate-800/60">
-
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-[12px] font-semibold text-[#152b4b] dark:text-slate-100">
                   Filter individual columns
@@ -791,12 +683,8 @@ export default function DeviationSummaryReportPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
                 {REPORT_COLUMNS.map((column) => (
-                  <div
-                    key={column.key}
-                    className="min-w-0"
-                  >
+                  <div key={column.key} className="min-w-0">
                     <label className="mb-1 block text-[11px] font-medium text-[#64748b] dark:text-slate-400">
                       {column.label}
                     </label>
@@ -805,10 +693,7 @@ export default function DeviationSummaryReportPage() {
                       name={column.key}
                       type="text"
                       value={filters[column.key] || ""}
-                      handleInputChange={(
-                        name: string,
-                        value: string
-                      ) =>
+                      handleInputChange={(name: string, value: string) =>
                         handleFilterChange(column.key, value)
                       }
                       placeholder={`Search ${column.label.toLowerCase()}`}
@@ -816,7 +701,6 @@ export default function DeviationSummaryReportPage() {
                     />
                   </div>
                 ))}
-
               </div>
             </div>
           )}
@@ -825,27 +709,22 @@ export default function DeviationSummaryReportPage() {
 
           {hasSearched ? (
             <div className="w-full min-w-0 overflow-x-auto">
-
               <div className="min-w-max">
-
                 {filteredRows.length > 0 ? (
                   <DataTable
                     columns={columns}
                     data={filteredRows}
-                    showTopSearch={false}
+                    showTopSearch={true}
                     showExcelExport={true}
-                     showPageSizeInFooter = {true}
+                    resetFilters={true}
+                    showPageSizeInFooter={true}
                     showColumnFilters={true}
                     initialPageSize={10}
                   />
                 ) : (
                   <div className="flex min-h-[250px] flex-col items-center justify-center px-4 text-center">
-
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                      <Search
-                        size={20}
-                        className="text-slate-400"
-                      />
+                      <Search size={20} className="text-slate-400" />
                     </div>
 
                     <h3 className="mt-3 text-[14px] font-semibold text-[#152b4b] dark:text-slate-100">
@@ -855,15 +734,12 @@ export default function DeviationSummaryReportPage() {
                     <p className="mt-1 text-[12px] text-[#64748b] dark:text-slate-400">
                       No deviation records available for the selected dates.
                     </p>
-
                   </div>
                 )}
-
               </div>
             </div>
           ) : (
             <div className="flex min-h-[290px] flex-col items-center justify-center px-4 text-center">
-
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#dce5f1] bg-[#f8fafc] dark:border-slate-700 dark:bg-slate-800">
                 <FileSpreadsheet
                   size={23}
@@ -876,13 +752,11 @@ export default function DeviationSummaryReportPage() {
               </h3>
 
               <p className="mt-1 max-w-[400px] text-[12px] leading-5 text-[#64748b] dark:text-slate-400">
-                Select the date range and click Show to view
-                the deviation summary report.
+                Select the date range and click Show to view the deviation
+                summary report.
               </p>
-
             </div>
           )}
-
         </div>
       </div>
     </div>

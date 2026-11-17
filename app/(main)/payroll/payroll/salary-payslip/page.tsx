@@ -1383,6 +1383,7 @@ export default function EmployeeSalarySlipsPage() {
                 data={slipRows}
                 showTopSearch={true}
                 showExcelExport={true}
+                 resetFilters={true}
                  showPageSizeInFooter = {true}
                 initialPageSize={10}
               />
