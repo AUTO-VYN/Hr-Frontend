@@ -20,7 +20,8 @@ import AButton from "@/components/atoms/Button";
 import Einput from "@/components/atoms/Einput";
 import DataTable from "@/components/Templates/reacttable";
 import HashloaderComponent from "@/components/Templates/hashloader";
-import EselectAll from "./EselectAll";
+
+import Eselect from "@/components/atoms/Eselect";
 
 // --------------------------------------------------
 // API CONFIGURATION
@@ -788,14 +789,14 @@ export default function EarlyLatePunchReportPage() {
             {/* PUNCH FILTER - MULTI SELECT */}
 
             <div className="min-w-0">
-              <EselectAll
+              <Eselect
                 title="Punch Filter"
                 name="punchFilter"
                 option={PUNCH_FILTER_OPTIONS}
                 initialValue={punchFilter}
                 handleInputChange={handlePunchFilterChange}
-                isMulti={true}
-                mb={0}
+                checkbox
+                className="h-[40px] w-full"
               />
             </div>
 

@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { X } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import AButton from "@/components/atoms/Button";
@@ -21,9 +20,7 @@ const DOCUMENT_APPROVAL_API = "/hrmsreport/DocApprovalReport";
 const MASTER_DATA_API = "/employee/MstData";
 
 const FILE_BASE_URL =
-  process.env.Next_Public_File ||
-  process.env.NEXT_PUBLIC_FILE_URL;
- 
+  process.env.NEXT_PUBLIC_FILE_URL || "https://erp.autovyn.com/backend";
 
 // --------------------------------------------------
 // TYPES
@@ -47,7 +44,21 @@ type DocumentRow = {
   DOCUMENT: string;
   UPLOADEDON: any;
   UPLOADEDBY: string;
-  STATUS: string;
+
+  APPROVER1: string;
+  APPR1_REMARK: string;
+  APPR1_DATE: any;
+
+  APPROVER2: string;
+  APPR2_REMARK: string;
+  APPR2_DATE: any;
+
+  APPROVER3: string;
+  APPR3_REMARK: string;
+  APPR3_DATE: any;
+  FINAL_STATUS: string;
+  FIN_APPR: number | null;
+  OVERALL_STATUS: string;
   [key: string]: any;
 };
 
@@ -57,11 +68,7 @@ type DocumentRow = {
 
 const getText = (...values: any[]): string => {
   for (const value of values) {
-    if (
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    ) {
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
       return String(value).trim();
     }
   }
@@ -121,12 +128,10 @@ const formatDate = (value: any) => {
   }
 
   const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const month = date.toLocaleString("en-US", { month: "short" });
   const year = date.getFullYear();
 
-  return `${day} ${date.toLocaleString("en-US", {
-    month: "short",
-  })} ${year}`;
+  return `${day} ${month} ${year}`;
 };
 
 const formatDocType = (type: any) => {
@@ -146,6 +151,10 @@ const formatDocType = (type: any) => {
   return map[String(type).toLowerCase()] || String(type).toUpperCase();
 };
 
+// --------------------------------------------------
+// DOCUMENT URL
+// --------------------------------------------------
+
 const getFileUrl = (docPath: any): string => {
   if (!docPath) return "";
 
@@ -155,142 +164,102 @@ const getFileUrl = (docPath: any): string => {
     return "";
   }
 
+  // Already a complete fetch URL.
   if (/^https?:\/\//i.test(raw)) {
     return raw;
   }
 
-  const cleanPath = raw.replace(/\\/g, "/").replace(/^\/+/, "");
-  const fileBaseUrl = String(FILE_BASE_URL).replace(/\/+$/, "");
+  const baseUrl = FILE_BASE_URL.replace(/\/+$/, "");
 
-  return `${fileBaseUrl}/fetch?filePath=${encodeURIComponent(cleanPath)}`;
+  // Handle paths already containing fetch?filePath=
+  if (/\/fetch\?filePath=/i.test(raw)) {
+    return raw.startsWith("/") ? `${baseUrl}${raw}` : `${baseUrl}/${raw}`;
+  }
+
+  // Handle backend relative fetch paths.
+  if (/^fetch\?filePath=/i.test(raw)) {
+    return `${baseUrl}/${raw}`;
+  }
+
+  // Handle paths containing query strings.
+  const cleanPath = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+
+  return `${baseUrl}/fetch?filePath=${encodeURIComponent(cleanPath)}`;
 };
 
 // --------------------------------------------------
 // NORMALIZE DOCUMENT RESPONSE
 // --------------------------------------------------
 
-const normalizeDocumentRow = (
-  item: any,
-  index: number,
-): DocumentRow => {
-  const finalStatus = getText(
-    item.Overall_Status,
-    item.FINAL_STATUS,
-    item.Final_Status,
-  );
+const normalizeDocumentRow = (item: any, index: number): DocumentRow => {
+  const finalApproval =
+    item.Fin_Appr ?? item.FIN_APPR ?? item.Fin_Appr_Status ?? null;
 
-  const finApproval =
-    item.Fin_Appr ?? item.FIN_APPR ?? item.Fin_Appr_Status;
-
-  let status = finalStatus;
-
-  if (!status) {
-    if (finApproval == 1) {
-      status = "APPROVED";
-    } else if (finApproval == 0) {
-      status = "REJECTED";
-    } else {
-      status = "PENDING";
-    }
-  }
+  const finalStatus =
+    finalApproval === 1 || String(finalApproval) === "1"
+      ? "APPROVED"
+      : finalApproval === 0 || String(finalApproval) === "0"
+        ? "REJECTED"
+        : "PENDING";
 
   return {
     ...item,
 
-    id: index,
+    id: item.UTD ?? index,
+    SRNO: index + 1,
 
-    SRNO: Number(
-      item.SRNO ??
-        item.SrNo ??
-        item.SR_NO ??
-        item.sr_no ??
-        index + 1,
-    ),
-
-    EMPCODE: getText(
-      item.EMPCODE,
-      item.Emp_Code,
-      item.EmpCode,
-      item.EMP_CODE,
-      item.EmployeeCode,
-    ),
-
-    EMPNAME: getText(
-      item.EMPNAME,
-      item.Emp_Name,
-      item.EmpName,
-      item.EMP_NAME,
-      item.EmployeeName,
-      item.FULL_NAME,
-    ),
-
-    DESIGNATION: getText(
-      item.DESIGNATION,
-      item.Designation,
-      item.Design_Name,
-      item.DESIGN_NAME,
-    ),
+    EMPCODE: getText(item.Emp_Code, item.EMPCODE),
+    EMPNAME: getText(item.Emp_Name, item.EMPNAME),
+    DESIGNATION: getText(item.Designation, item.DESIGNATION),
 
     BRANCH: getText(
-      item.BRANCH,
-      item.Branch,
       item.Location_Name,
-      item.LOCATION,
-      item.Loc_Name,
       item.Branch_Name,
+      item.BRANCH,
+      item.Loc_Code,
     ),
 
-    DOCUMENTTYPE: getText(
-      item.DOCUMENTTYPE,
-      item.DocumentType,
-      item.DOC_TYPE,
-      item.Doc_Type,
-      item.Document_Type,
-    ),
+    DOCUMENTTYPE: getText(item.Doc_Type, item.DOCUMENTTYPE),
 
-    DOCUMENTNAME: getText(
-      item.DOCUMENTNAME,
-      item.DocumentName,
-      item.DOC_NAME,
-      item.Doc_Name,
-      item.FileName,
-      item.FILE_NAME,
-    ),
+    DOCUMENTNAME: getText(item.Doc_Name, item.DOCUMENTNAME),
 
-    DOCUMENT: getText(
-      item.DOCUMENT,
-      item.Document,
-      item.DOC_PATH,
-      item.Doc_Path,
-      item.FILE_PATH,
-      item.FilePath,
-      item.IMAGE_PATH,
-    ),
+    DOCUMENT: getText(item.Doc_Path, item.DOCUMENT),
 
-    UPLOADEDON:
-      item.UPLOADEDON ??
-      item.UploadedOn ??
-      item.CREATED_AT ??
-      item.UPLOAD_DATE ??
-      item.Upload_Date ??
-      item.Created_Date ??
-      null,
+    UPLOADEDON: item.CREATED_AT ?? item.UPLOADEDON ?? null,
 
-    UPLOADEDBY: getText(
-      item.UPLOADEDBY,
-      item.UploadedBy,
-      item.UPLOAD_BY,
-      item.Upload_By,
-      item.Created_By_Name,
-      item.Created_By,
-    ),
+    UPLOADEDBY: getText(item.Created_By_Name, item.Created_By, item.UPLOADEDBY),
 
-    STATUS: status,
+    // APPROVER 1
+    APPROVER1: getText(item.apr1_name, item.Appr_1_Code, item.APPROVER1),
+
+    APPR1_REMARK: getText(item.Appr_1_Rem, item.APPR1_REMARK),
+
+    APPR1_DATE: item.Appr_1_Date ?? item.APPR1_DATE ?? null,
+
+    // APPROVER 2
+    APPROVER2: getText(item.apr2_name, item.Appr_2_Code, item.APPROVER2),
+
+    APPR2_REMARK: getText(item.Appr_2_Rem, item.APPR2_REMARK),
+
+    APPR2_DATE: item.Appr_2_Date ?? item.APPR2_DATE ?? null,
+
+    // APPROVER 3
+    APPROVER3: getText(item.apr3_name, item.Appr_3_Code, item.APPROVER3),
+
+    APPR3_REMARK: getText(item.Appr_3_Rem, item.APPR3_REMARK),
+
+    APPR3_DATE: item.Appr_3_Date ?? item.APPR3_DATE ?? null,
+
+    FIN_APPR: finalApproval,
+
+    FINAL_STATUS: finalStatus,
+
+    OVERALL_STATUS: getText(item.Overall_Status, finalStatus),
   };
 };
 
 // --------------------------------------------------
-// NORMALIZE BRANCH OPTIONS
+// BRANCH OPTIONS
 // --------------------------------------------------
 
 const normalizeBranchOptions = (list: any[]): SelectOption[] => {
@@ -317,10 +286,8 @@ const normalizeBranchOptions = (list: any[]): SelectOption[] => {
         item.Loc_Name,
       );
 
-      if (!value) return null;
-
-      // Remove ALL BRANCH from individual branch options.
       if (
+        !value ||
         label.toLowerCase().includes("all branch") ||
         value.includes(",")
       ) {
@@ -355,9 +322,7 @@ export default function DocumentApprovalTrackingPage() {
 
   const defaultDates = useMemo(() => getDefaultDates(), []);
 
-  // --------------------------------------------------
   // FILTER STATES
-  // --------------------------------------------------
 
   const [dateFrom, setDateFrom] = useState(defaultDates.from);
   const [dateTo, setDateTo] = useState(defaultDates.to);
@@ -378,9 +343,7 @@ export default function DocumentApprovalTrackingPage() {
   const [status, setStatus] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
 
-  // --------------------------------------------------
   // TABLE STATES
-  // --------------------------------------------------
 
   const [rows, setRows] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -391,9 +354,7 @@ export default function DocumentApprovalTrackingPage() {
   const [showColumnFilters, setShowColumnFilters] = useState(false);
   const [filters, setFilters] = useState<Record<string, string>>({});
 
-  // --------------------------------------------------
   // API HEADERS
-  // --------------------------------------------------
 
   const apiHeaders = useMemo(
     () => ({
@@ -406,9 +367,7 @@ export default function DocumentApprovalTrackingPage() {
     [user?.Comp_Code, user?.name, user?.branch],
   );
 
-  // --------------------------------------------------
-  // FETCH BRANCHES USING MstData
-  // --------------------------------------------------
+  // FETCH BRANCHES
 
   useEffect(() => {
     if (!user?.Comp_Code) return;
@@ -419,13 +378,9 @@ export default function DocumentApprovalTrackingPage() {
       setMasterLoading(true);
 
       try {
-        // user.branch:
-        // Single branch  -> "1"
-        // Multiple       -> "1,2,3,4,5,6,7"
-
         const branchPayload = String(user?.branch ?? "")
           .split(",")
-          .map((item: string) => item.trim())
+          .map((item) => item.trim())
           .filter(Boolean)
           .join(",");
 
@@ -437,21 +392,14 @@ export default function DocumentApprovalTrackingPage() {
 
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}${MASTER_DATA_API}`,
-          {
-            branch: branchPayload,
-          },
-          {
-            headers: apiHeaders,
-          },
+          { branch: branchPayload },
+          { headers: apiHeaders },
         );
 
         if (cancelled) return;
 
-        console.log("MstData API Response:", response?.data);
-
         const responseData = response?.data;
 
-        // API response contains Locations array.
         const locations = Array.isArray(responseData?.Locations)
           ? responseData.Locations
           : Array.isArray(responseData?.data?.Locations)
@@ -460,12 +408,9 @@ export default function DocumentApprovalTrackingPage() {
 
         const formattedBranches = normalizeBranchOptions(locations);
 
-        console.log("Formatted Branch Options:", formattedBranches);
-
         setBranchOptions(formattedBranches);
 
         setBranch((previous) => {
-          // Keep existing selected branch if still available.
           if (
             previous &&
             formattedBranches.some((item) => item.value === previous)
@@ -473,30 +418,24 @@ export default function DocumentApprovalTrackingPage() {
             return previous;
           }
 
-          // Single branch user: select matching branch automatically.
           if (
             !branchPayload.includes(",") &&
-            formattedBranches.some(
-              (item) => item.value === branchPayload,
-            )
+            formattedBranches.some((item) => item.value === branchPayload)
           ) {
             return branchPayload;
           }
 
-          // Multi branch user: do not force one branch.
           return "";
         });
       } catch (error) {
-        console.error("Error fetching MstData branches:", error);
+        console.error("Error fetching branches:", error);
 
         if (!cancelled) {
           setBranchOptions([]);
           setBranch("");
         }
       } finally {
-        if (!cancelled) {
-          setMasterLoading(false);
-        }
+        if (!cancelled) setMasterLoading(false);
       }
     };
 
@@ -507,9 +446,7 @@ export default function DocumentApprovalTrackingPage() {
     };
   }, [user?.Comp_Code, user?.branch, apiHeaders]);
 
-  // --------------------------------------------------
-  // FETCH DOCUMENT APPROVAL REPORT
-  // --------------------------------------------------
+  // FETCH REPORT
 
   const fetchReport = useCallback(async () => {
     if (!user?.Comp_Code) {
@@ -540,12 +477,10 @@ export default function DocumentApprovalTrackingPage() {
       const params = {
         DateFrom: dateFrom,
         DateTo: dateTo,
-        branch: branch,
-        status: status,
+        branch,
+        status,
         empcode: employeeSearch.trim(),
       };
-
-      console.log("Document Approval Tracking Params:", params);
 
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_URL}${DOCUMENT_APPROVAL_API}`,
@@ -584,17 +519,10 @@ export default function DocumentApprovalTrackingPage() {
         setRows([]);
         setHasSearched(true);
 
-        const message = responseData?.Message || responseData?.message;
-
-        if (message) {
-          showSideAlert(message, "info");
-        } else {
-          Swal.fire({
-            icon: "info",
-            title: "No records found",
-            text: "No document records found for the selected filters.",
-          });
-        }
+        showSideAlert(
+          responseData?.Message || responseData?.message || "No records found",
+          "info",
+        );
       }
     } catch (error: any) {
       console.error("Document Approval Tracking Error:", error);
@@ -610,18 +538,9 @@ export default function DocumentApprovalTrackingPage() {
     } finally {
       setLoading(false);
     }
-  }, [
-    user?.Comp_Code,
-    dateFrom,
-    dateTo,
-    branch,
-    status,
-    employeeSearch,
-  ]);
+  }, [user?.Comp_Code, dateFrom, dateTo, branch, status, employeeSearch]);
 
-  // --------------------------------------------------
   // OPEN DOCUMENT
-  // --------------------------------------------------
 
   const handleOpenDocument = useCallback((documentPath: string) => {
     const url = getFileUrl(documentPath);
@@ -631,54 +550,50 @@ export default function DocumentApprovalTrackingPage() {
       return;
     }
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }, []);
 
-  // --------------------------------------------------
   // TABLE COLUMNS
-  // --------------------------------------------------
 
   const columns = useMemo(
     () => [
       {
-        Header: "SR NO",
+        Header: "Sr.no",
         accessor: "SRNO",
         width: 75,
-        Cell: ({ value }: any) => (
-          <span className="font-semibold text-[#152b4b] dark:text-slate-100">
-            {value ?? "—"}
-          </span>
-        ),
       },
       {
-        Header: "EMP CODE",
+        Header: "Empcode",
         accessor: "EMPCODE",
-        width: 120,
-        Cell: ({ value }: any) => (
-          <span className="font-mono text-[12px] font-bold text-[#152b4b] dark:text-slate-100">
-            {value || "—"}
-          </span>
-        ),
+        width: 115,
       },
       {
-        Header: "EMPLOYEE NAME",
+        Header: "Employeename",
         accessor: "EMPNAME",
-        width: 220,
+        width: 200,
       },
       {
-        Header: "DESIGNATION",
+        Header: "Designation",
         accessor: "DESIGNATION",
-        width: 170,
+        width: 160,
       },
       {
-        Header: "BRANCH",
+        Header: "Location / Branch",
         accessor: "BRANCH",
-        width: 130,
+        width: 150,
       },
       {
-        Header: "DOCUMENT TYPE",
+        Header: "Document Type",
         accessor: "DOCUMENTTYPE",
-        width: 150,
+        width: 145,
         Cell: ({ value }: any) => (
           <span className="inline-flex whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {formatDocType(value)}
@@ -686,66 +601,121 @@ export default function DocumentApprovalTrackingPage() {
         ),
       },
       {
-        Header: "DOCUMENT NAME",
+        Header: "Document Name",
         accessor: "DOCUMENTNAME",
-        width: 230,
+        width: 210,
       },
       {
-        Header: "DOCUMENT",
+        Header: "View Document",
         accessor: "DOCUMENT",
-        width: 100,
-        Cell: ({ row, value }: any) => {
-          const documentPath = value || row?.original?.DOCUMENT;
+        width: 120,
+        Cell: ({ value }: any) => {
+          const documentUrl = getFileUrl(value);
 
-          return (
-            <button
-              type="button"
-              onClick={() => handleOpenDocument(documentPath)}
-              disabled={!documentPath}
-              className="font-semibold text-indigo-600 decoration-indigo-300 underline-offset-2 transition hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline dark:text-indigo-400"
+          return documentUrl ? (
+            <a
+              href={documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 rounded-md  px-3 py-1.5 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300"
             >
               Open
-            </button>
+            </a>
+          ) : (
+            <span className="text-xs text-slate-400">Unavailable</span>
           );
         },
       },
       {
-        Header: "UPLOADED ON",
+        Header: "Uploaded Date",
         accessor: "UPLOADEDON",
-        width: 140,
+        width: 135,
         Cell: ({ value }: any) => (
           <span className="whitespace-nowrap">{formatDate(value)}</span>
         ),
       },
       {
-        Header: "UPLOADED BY",
+        Header: "Uploaded By",
         accessor: "UPLOADEDBY",
-        width: 170,
+        width: 155,
+      },
+
+      // APPROVER 1
+      {
+        Header: "Approver1",
+        accessor: "APPROVER1",
+        width: 150,
       },
       {
-        Header: "STATUS",
-        accessor: "STATUS",
-        width: 120,
+        Header: "Appr 1 Remark",
+        accessor: "APPR1_REMARK",
+        width: 200,
+      },
+      {
+        Header: "Appr 1 Date",
+        accessor: "APPR1_DATE",
+        width: 130,
+        Cell: ({ value }: any) => formatDate(value),
+      },
+
+      // APPROVER 2
+      {
+        Header: "Approver2",
+        accessor: "APPROVER2",
+        width: 150,
+      },
+      {
+        Header: "Appr 2 Remark",
+        accessor: "APPR2_REMARK",
+        width: 200,
+      },
+      {
+        Header: "Appr 2 Date",
+        accessor: "APPR2_DATE",
+        width: 130,
+        Cell: ({ value }: any) => formatDate(value),
+      },
+
+      // APPROVER 3
+      {
+        Header: "Approver3",
+        accessor: "APPROVER3",
+        width: 150,
+      },
+      {
+        Header: "Appr 3 Remark",
+        accessor: "APPR3_REMARK",
+        width: 200,
+      },
+      {
+        Header: "Appr 3 Date",
+        accessor: "APPR3_DATE",
+        width: 130,
+        Cell: ({ value }: any) => formatDate(value),
+      },
+      {
+        Header: "Final Status",
+        accessor: "FINAL_STATUS",
+        width: 130,
         Cell: ({ value }: any) => {
-          const currentStatus = String(value || "").toLowerCase();
-
-          const isApproved =
-            currentStatus.includes("approv") || currentStatus === "1";
-
-          const isRejected =
-            currentStatus.includes("reject") || currentStatus === "0";
-
-          const className = isApproved
-            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-            : isRejected
-              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+          const approved = value === "APPROVED";
+          const rejected = value === "REJECTED";
+          const pending = !approved && !rejected;
 
           return (
             <span
-              className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${className}`}
+              className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-bold ${
+                approved
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                  : rejected
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                    : pending
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                      : ""
+              }`}
             >
-              {value || "Pending"}
+              {pending ? "PENDING" : value}
             </span>
           );
         },
@@ -754,9 +724,7 @@ export default function DocumentApprovalTrackingPage() {
     [handleOpenDocument],
   );
 
-  // --------------------------------------------------
   // FILTER HANDLING
-  // --------------------------------------------------
 
   const handleFilterChange = (name: string, value: string) => {
     setFilters((previous) => ({
@@ -765,20 +733,6 @@ export default function DocumentApprovalTrackingPage() {
     }));
   };
 
-  const resetFilters = () => {
-    setSearch("");
-
-    setFilters(
-      Object.fromEntries(
-        columns.map((column: any) => [column.accessor, ""]),
-      ),
-    );
-  };
-
-  // --------------------------------------------------
-  // FILTERED ROWS
-  // --------------------------------------------------
-
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -786,87 +740,29 @@ export default function DocumentApprovalTrackingPage() {
       const matchesSearch =
         !query ||
         Object.values(row).some((value) =>
-          String(value ?? "").toLowerCase().includes(query),
+          String(value ?? "")
+            .toLowerCase()
+            .includes(query),
         );
 
-      const matchesColumns = Object.entries(filters).every(
-        ([key, value]) => {
-          if (!value.trim()) return true;
+      const matchesColumns = Object.entries(filters).every(([key, value]) => {
+        if (!value.trim()) return true;
 
-          return String(row[key] ?? "")
-            .toLowerCase()
-            .includes(value.trim().toLowerCase());
-        },
-      );
+        return String(row[key] ?? "")
+          .toLowerCase()
+          .includes(value.trim().toLowerCase());
+      });
 
       return matchesSearch && matchesColumns;
     });
   }, [rows, search, filters]);
-
-  // --------------------------------------------------
-  // EXCEL EXPORT
-  // --------------------------------------------------
-
-  const exportToExcel = () => {
-    if (!filteredRows.length) {
-      showSideAlert("There are no records available to export", "info");
-      return;
-    }
-
-    const exportColumns = columns.filter(
-      (column: any) => column.accessor !== "DOCUMENT",
-    );
-
-    const headers = exportColumns.map((column: any) => column.Header);
-    const accessors = exportColumns.map(
-      (column: any) => column.accessor,
-    );
-
-    const escapeCSV = (value: any) =>
-      `"${String(value ?? "").replace(/"/g, '""')}"`;
-
-    const csvContent = [
-      headers.map(escapeCSV).join(","),
-      ...filteredRows.map((row) =>
-        accessors
-          .map((accessor: string) =>
-            escapeCSV(
-              accessor === "UPLOADEDON"
-                ? formatDate(row[accessor])
-                : accessor === "DOCUMENTTYPE"
-                  ? formatDocType(row[accessor])
-                  : row[accessor],
-            ),
-          )
-          .join(","),
-      ),
-    ].join("\n");
-
-    const blob = new Blob(["\uFEFF" + csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `Document_Approval_Tracking_${dateFrom}_to_${dateTo}.csv`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.URL.revokeObjectURL(url);
-  };
 
   const columnFilters = columns.map((column: any) => [
     column.accessor,
     column.Header,
   ]);
 
-  // --------------------------------------------------
   // RESET ALL
-  // --------------------------------------------------
 
   const resetAll = () => {
     setDateFrom(defaultDates.from);
@@ -881,9 +777,7 @@ export default function DocumentApprovalTrackingPage() {
     setShowColumnFilters(false);
   };
 
-  // --------------------------------------------------
   // RENDER
-  // --------------------------------------------------
 
   return (
     <div className="min-h-screen min-w-0 bg-[#f5f8fc] p-3 transition-colors dark:bg-[#0b1220] sm:p-4 lg:p-5">
@@ -904,8 +798,6 @@ export default function DocumentApprovalTrackingPage() {
 
         <div className="rounded-xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.03)] dark:border-slate-700 dark:bg-slate-900 sm:p-5">
           <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            {/* DATE FROM */}
-
             <div className="min-w-0">
               <Einput
                 title="Date from"
@@ -918,8 +810,6 @@ export default function DocumentApprovalTrackingPage() {
                 className="h-[40px] w-full"
               />
             </div>
-
-            {/* DATE TO */}
 
             <div className="min-w-0">
               <Einput
@@ -934,8 +824,6 @@ export default function DocumentApprovalTrackingPage() {
               />
             </div>
 
-            {/* BRANCH */}
-
             <div className="min-w-0">
               <Eselect
                 title="Branch"
@@ -948,8 +836,6 @@ export default function DocumentApprovalTrackingPage() {
                 className="h-[40px] w-full"
               />
             </div>
-
-            {/* STATUS */}
 
             <div className="min-w-0">
               <Eselect
@@ -964,8 +850,6 @@ export default function DocumentApprovalTrackingPage() {
               />
             </div>
 
-            {/* EMPLOYEE SEARCH */}
-
             <div className="min-w-0">
               <Einput
                 title="Emp code / name"
@@ -979,8 +863,6 @@ export default function DocumentApprovalTrackingPage() {
                 placeholder="Optional"
               />
             </div>
-
-            {/* SHOW BUTTON */}
 
             <div className="min-w-0">
               <AButton
