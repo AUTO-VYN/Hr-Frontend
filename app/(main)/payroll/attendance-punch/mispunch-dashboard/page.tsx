@@ -9,13 +9,9 @@ import {
   AlertCircle,
   CheckCircle2,
   FileDown,
-  RotateCcw,
   CheckCheck,
-  Building2,
-  MapPin,
-  Layers,
   PieChart as PieIcon,
-  Filter,
+
 } from "lucide-react";
 import { LuRefreshCcwDot } from "react-icons/lu";
 import Swal from "sweetalert2";
@@ -24,8 +20,7 @@ import Swal from "sweetalert2";
 import Button from "@/components/atoms/Button";
 import Chart from "@/components/atoms/chart";
 import Eselect from "@/components/atoms/Eselect";
-import Einput from "@/components/atoms/Einput";
-import CardView from "@/components/Templates/card";
+import { StatCard } from "@/components/Templates/card";
 import ReactTable from "@/components/Templates/reacttable";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
@@ -436,110 +431,94 @@ export default function MisPunchDashboardPage() {
       </div>
 
       {/* ==================================================================== */}
-      {/* 3. FOUR METRIC SUMMARY CARDS (Screenshot 1 Style) */}
+      {/* 3. FOUR METRIC SUMMARY CARDS (Using Template StatCard) */}
       {/* ==================================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: TOTAL MIS-PUNCH */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Total Mis-Punch
-              </span>
+        <StatCard
+          title="Total Mis-Punch"
+          count={totalDC.toLocaleString()}
+          icon={<AlertTriangle className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+          className="!h-auto !min-h-[125px] !p-5 !bg-white dark:!bg-slate-900 !border-slate-200/90 dark:!border-slate-800 !rounded-2xl cursor-default hover:shadow-2xs active:scale-100"
+          iconClassName="!w-7 !h-7 !rounded-lg !bg-indigo-50 dark:bg-indigo-950/60 !border-none !text-indigo-600 dark:!text-indigo-400"
+          titleClassName="!text-[11px] !font-bold !text-slate-500 dark:!text-slate-400 !uppercase !tracking-wider"
+          countClassName="!text-2xl sm:!text-3xl !font-bold !text-slate-900 dark:!text-white !mt-2.5"
+          subtitle={
+            <div className="text-xs font-semibold text-rose-500 flex items-center gap-1.5 mt-2">
+              <span>+{data1?.chart_data ? Math.round(Number(data1.chart_data)) : 0}</span>
+              <span className="text-slate-400 font-normal">in peak location</span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-3">
-              {totalDC.toLocaleString()}
-            </div>
-          </div>
-          <div className="text-xs font-semibold text-rose-500 flex items-center gap-1.5 mt-2">
-            <span>+{data1?.chart_data ? Math.round(Number(data1.chart_data)) : 0}</span>
-            <span className="text-slate-400 font-normal">in peak location</span>
-          </div>
-        </div>
+          }
+        />
 
         {/* Card 2: PRIMARY MIS-PUNCH OCCURRENCE */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <Brain className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                {data1?.loc_code ? `${data1.loc_code}` : "Primary Occurrence"}
-              </span>
+        <StatCard
+          title={data1?.loc_code ? `${data1.loc_code}` : "Primary Occurrence"}
+          count={Number(data1?.chart_data || 0).toLocaleString()}
+          icon={<Brain className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
+          badge={
+            <span className="text-xs font-bold text-amber-500">
+              {totalDC > 0
+                ? `${Math.round(((data1?.chart_data || 0) / totalDC) * 100)}%`
+                : "0%"}
+            </span>
+          }
+          className="!h-auto !min-h-[125px] !p-5 !bg-white dark:!bg-slate-900 !border-slate-200/90 dark:!border-slate-800 !rounded-2xl cursor-default hover:shadow-2xs active:scale-100"
+          iconClassName="!w-7 !h-7 !rounded-lg !bg-amber-50 dark:bg-amber-950/60 !border-none !text-amber-600 dark:!text-amber-400"
+          titleClassName="!text-[11px] !font-bold !text-slate-500 dark:!text-slate-400 !uppercase !tracking-wider truncate"
+          countClassName="!text-2xl sm:!text-3xl !font-bold !text-slate-900 dark:!text-white !mt-2.5"
+          subtitle={
+            <div className="text-xs font-medium text-slate-400 mt-2 truncate">
+              Most common occurrence
             </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                {Number(data1?.chart_data || 0).toLocaleString()}
-              </span>
-              <span className="text-xs font-bold text-amber-500">
-                {totalDC > 0
-                  ? `${Math.round(((data1?.chart_data || 0) / totalDC) * 100)}%`
-                  : "0%"}
-              </span>
-            </div>
-          </div>
-          <div className="text-xs font-medium text-slate-400 mt-2 truncate">
-            Most common occurrence
-          </div>
-        </div>
+          }
+        />
 
         {/* Card 3: SECONDARY MIS-PUNCH OCCURRENCE */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                {data2?.loc_code ? `${data2.loc_code}` : "Secondary Occurrence"}
-              </span>
+        <StatCard
+          title={data2?.loc_code ? `${data2.loc_code}` : "Secondary Occurrence"}
+          count={Number(data2?.chart_data || 0).toLocaleString()}
+          icon={<AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
+          badge={
+            <span className="text-xs font-bold text-rose-500">
+              {totalDC > 0
+                ? `${Math.round(((data2?.chart_data || 0) / totalDC) * 100)}%`
+                : "0%"}
+            </span>
+          }
+          className="!h-auto !min-h-[125px] !p-5 !bg-white dark:!bg-slate-900 !border-slate-200/90 dark:!border-slate-800 !rounded-2xl cursor-default hover:shadow-2xs active:scale-100"
+          iconClassName="!w-7 !h-7 !rounded-lg !bg-rose-50 dark:bg-rose-950/60 !border-none !text-rose-600 dark:!text-rose-400"
+          titleClassName="!text-[11px] !font-bold !text-slate-500 dark:!text-slate-400 !uppercase !tracking-wider truncate"
+          countClassName="!text-2xl sm:!text-3xl !font-bold !text-slate-900 dark:!text-white !mt-2.5"
+          subtitle={
+            <div className="text-xs font-medium text-slate-400 mt-2 truncate">
+              Second highest location
             </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                {Number(data2?.chart_data || 0).toLocaleString()}
-              </span>
-              <span className="text-xs font-bold text-rose-500">
-                {totalDC > 0
-                  ? `${Math.round(((data2?.chart_data || 0) / totalDC) * 100)}%`
-                  : "0%"}
-              </span>
-            </div>
-          </div>
-          <div className="text-xs font-medium text-slate-400 mt-2 truncate">
-            Second highest location
-          </div>
-        </div>
+          }
+        />
 
         {/* Card 4: TERTIARY MIS-PUNCH OCCURRENCE */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                {data3?.loc_code ? `${data3.loc_code}` : "Tertiary Occurrence"}
-              </span>
+        <StatCard
+          title={data3?.loc_code ? `${data3.loc_code}` : "Tertiary Occurrence"}
+          count={Number(data3?.chart_data || 0).toLocaleString()}
+          icon={<CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+          badge={
+            <span className="text-xs font-bold text-emerald-500">
+              {totalDC > 0
+                ? `${Math.round(((data3?.chart_data || 0) / totalDC) * 100)}%`
+                : "0%"}
+            </span>
+          }
+          className="!h-auto !min-h-[125px] !p-5 !bg-white dark:!bg-slate-900 !border-slate-200/90 dark:!border-slate-800 !rounded-2xl cursor-default hover:shadow-2xs active:scale-100"
+          iconClassName="!w-7 !h-7 !rounded-lg !bg-emerald-50 dark:bg-emerald-950/60 !border-none !text-emerald-600 dark:!text-emerald-400"
+          titleClassName="!text-[11px] !font-bold !text-slate-500 dark:!text-slate-400 !uppercase !tracking-wider truncate"
+          countClassName="!text-2xl sm:!text-3xl !font-bold !text-slate-900 dark:!text-white !mt-2.5"
+          subtitle={
+            <div className="text-xs font-medium text-slate-400 mt-2 truncate">
+              Within policy follow-up
             </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                {Number(data3?.chart_data || 0).toLocaleString()}
-              </span>
-              <span className="text-xs font-bold text-emerald-500">
-                {totalDC > 0
-                  ? `${Math.round(((data3?.chart_data || 0) / totalDC) * 100)}%`
-                  : "0%"}
-              </span>
-            </div>
-          </div>
-          <div className="text-xs font-medium text-slate-400 mt-2 truncate">
-            Within policy follow-up
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* ==================================================================== */}
@@ -612,6 +591,7 @@ export default function MisPunchDashboardPage() {
               categories={locationChart.categories}
               data={locationChart.values}
               colors={["#00a884"]}
+              exporting={true}
               height={
                 chartViewMode.location === "all"
                   ? Math.max(220, locationChart.displayedCount * 36)
@@ -761,6 +741,7 @@ export default function MisPunchDashboardPage() {
               categories={regionChart.categories}
               data={regionChart.values}
               colors={["#e11d48"]}
+              exporting={true}
               height={
                 chartViewMode.region === "all"
                   ? Math.max(220, regionChart.displayedCount * 36)
@@ -910,6 +891,7 @@ export default function MisPunchDashboardPage() {
               categories={sectionChart.categories}
               data={sectionChart.values}
               colors={["#f59e0b"]}
+              exporting={true}
               height={
                 chartViewMode.section === "all"
                   ? Math.max(220, sectionChart.displayedCount * 36)
@@ -1059,6 +1041,7 @@ export default function MisPunchDashboardPage() {
               categories={divisionChart.categories}
               data={divisionChart.values}
               colors={["#8b5cf6"]}
+              exporting={true}
               height={
                 chartViewMode.division === "all"
                   ? Math.max(220, divisionChart.displayedCount * 36)

@@ -5,6 +5,23 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Loader2, PieChart as PieIcon } from "lucide-react";
 
+// Initialize Highcharts exporting module safely on the client
+if (typeof window !== "undefined") {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const exportingInit = require("highcharts/modules/exporting");
+    const offlineExportingInit = require("highcharts/modules/offline-exporting");
+    if (typeof exportingInit === "function") {
+      exportingInit(Highcharts);
+      offlineExportingInit(Highcharts);
+    } else if (exportingInit && typeof exportingInit.default === "function") {
+      exportingInit.default(Highcharts);
+    }
+  } catch (err) {
+    // ignore in environments without window/DOM
+  }
+}
+
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
@@ -81,6 +98,8 @@ export interface ChartProps {
   emptyText?: string;
   /** Custom additional Highcharts options override */
   options?: Highcharts.Options;
+  /** Enable/disable Highcharts exporting menu (fullscreen, print, png, jpeg, pdf, svg) */
+  exporting?: boolean;
   /** Chart container extra classes */
   className?: string;
   /** Chart click / point events */
@@ -130,6 +149,7 @@ export function Chart({
   loading = false,
   emptyText = "No data available",
   options: customOptions,
+  exporting = false,
   className = "",
   onPointClick,
 }: ChartProps) {
@@ -268,6 +288,9 @@ export function Chart({
       colors: colors,
       credits: {
         enabled: false,
+      },
+      exporting: {
+        enabled: exporting,
       },
       legend: {
         enabled: showLegend,
@@ -500,6 +523,7 @@ export function Chart({
     showDataLabels,
     normalizedSeries,
     customOptions,
+    exporting,
   ]);
 
   return (

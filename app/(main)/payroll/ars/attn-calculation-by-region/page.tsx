@@ -5,6 +5,9 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import Link from "next/link";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
+import Button from "@/components/atoms/Button";
+import Eselect from "@/components/atoms/Eselect";
+import Einput from "@/components/atoms/Einput";
 import {
   Calculator,
   Check,
@@ -411,13 +414,14 @@ export default function AttendanceByRegionPage() {
               <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                 Choose your region
               </span>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleResetScope}
-                className="rounded-[8px] border border-[#E2E8F0] bg-white px-[11px] py-[6px] text-[11.5px] font-[550] text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#1E293B] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:bg-[#182235] dark:hover:text-[#E7ECF3]"
+                className="!h-auto !rounded-[8px] !border-[#E2E8F0] !bg-white !px-[11px] !py-[6px] !text-[11.5px] !font-[550] !text-[#64748B] hover:!bg-[#F1F5F9] hover:!text-[#1E293B] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#94A3B8] dark:hover:!bg-[#182235] dark:hover:!text-[#E7ECF3] !shadow-none active:!scale-100"
               >
                 Reset
-              </button>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
@@ -440,28 +444,21 @@ export default function AttendanceByRegionPage() {
                     </span>
                   )}
                 </div>
-                <div className="relative">
-                  <select
-                    value={month}
-                    onChange={(e) => setMonth(e.target.value)}
-                    className={`h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition dark:bg-[#0E1524] dark:text-[#E7ECF3] ${
-                      hasAttemptedRun && !month
-                        ? "border-[#E11D48] ring-1 ring-[#E11D48]/30 focus:border-[#E11D48]"
-                        : "border-[#E2E8F0] focus:border-[#4F46E5] dark:border-[#1F2937] dark:focus:border-[#8B84FF]"
-                    }`}
-                  >
-                    {MONTH_OPTIONS.map((m) => (
-                      <option
-                        key={m.value}
-                        value={m.value}
-                        className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
-                      >
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748B]" />
-                </div>
+                <Eselect
+                  name="month"
+                  placeholder="Select month"
+                  option={MONTH_OPTIONS.filter((m) => m.value !== "").map((m) => ({
+                    label: m.label,
+                    value: m.value,
+                  }))}
+                  initialValue={month}
+                  handleInputChange={(name, val) => setMonth(val)}
+                  className={`!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none ${
+                    hasAttemptedRun && !month
+                      ? "!border-[#E11D48] ring-1 ring-[#E11D48]/30"
+                      : "focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                  }`}
+                />
               </div>
 
               {/* YEAR */}
@@ -469,24 +466,16 @@ export default function AttendanceByRegionPage() {
                 <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                   Year
                 </span>
-                <div className="relative">
-                  <select
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border border-[#E2E8F0] bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
-                  >
-                    {YEARS.map((y) => (
-                      <option
-                        key={y}
-                        value={y}
-                        className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
-                      >
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748B]" />
-                </div>
+                <Eselect
+                  name="year"
+                  option={YEARS.map((y) => ({
+                    label: y,
+                    value: y,
+                  }))}
+                  initialValue={year}
+                  handleInputChange={(name, val) => setYear(val)}
+                  className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                />
               </div>
             </div>
           </div>
@@ -495,18 +484,19 @@ export default function AttendanceByRegionPage() {
           <div className="overflow-hidden rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border-b border-[#E2E8F0] px-[15px] py-3 dark:border-[#1F2937]">
               <div className="flex shrink-0 items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={toggleAll}
                   title={allOn ? "Deselect all" : "Select all"}
-                  className={`grid h-[17px] w-[17px] shrink-0 place-items-center rounded-[5px] border transition ${
+                  className={`!grid !h-[17px] !w-[17px] !p-0 shrink-0 place-items-center !rounded-[5px] border transition !shadow-none ${
                     allOn
-                      ? "border-[#4F46E5] bg-[#4F46E5] text-white dark:border-[#8B84FF] dark:bg-[#8B84FF]"
-                      : "border-[#CBD5E1] bg-transparent text-transparent dark:border-[#374151]"
+                      ? "!border-[#4F46E5] !bg-[#4F46E5] !text-white dark:!border-[#8B84FF] dark:!bg-[#8B84FF]"
+                      : "!border-[#CBD5E1] !bg-transparent !text-transparent dark:!border-[#374151]"
                   }`}
                 >
                   <Check className="h-3 w-3 stroke-[3]" />
-                </button>
+                </Button>
 
                 <span className="shrink-0 whitespace-nowrap text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
                   Regions
@@ -527,13 +517,16 @@ export default function AttendanceByRegionPage() {
               </div>
 
               <div className="relative w-full sm:w-[220px]">
-                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
-                <input
-                  type="search"
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
+                <Einput
+                  name="search"
+                  type="text"
+                  hideLabel
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search regions"
-                  className="h-8 w-full rounded-[9px] border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#1E293B] outline-none placeholder:text-[#64748B]/70 focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
+                  wrapperClassName="w-full"
+                  className="!h-8 !w-full !rounded-[9px] !border-[#E2E8F0] !bg-white !pl-8 !pr-2.5 !text-[12px] !text-[#1E293B] placeholder:!text-[#64748B]/70 focus-visible:!ring-0 focus-visible:!border-[#4F46E5] dark:!border-[#1F2937] dark:!bg-[#0E1524] dark:!text-[#E7ECF3] dark:focus-visible:!border-[#8B84FF] !shadow-none"
                 />
               </div>
             </div>
@@ -554,14 +547,15 @@ export default function AttendanceByRegionPage() {
                     const metaText = `${r.empCount || 200} employees`;
 
                     return (
-                      <button
+                      <Button
                         key={r.value}
                         type="button"
+                        variant="ghost"
                         onClick={() => toggleRegion(r.value)}
-                        className={`flex items-center gap-[9px] rounded-[8px] px-[9px] py-2 text-left transition ${
+                        className={`!flex !w-full !justify-start !items-center !gap-[9px] !rounded-[8px] !px-[9px] !py-2 !h-auto text-left transition !shadow-none !font-normal ${
                           isChecked
-                            ? "bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                            : "bg-transparent text-[#1E293B] hover:bg-slate-100/70 dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+                            ? "!bg-[#EEF2FF] !text-[#4F46E5] dark:!bg-[#1E1B4B] dark:!text-[#8B84FF]"
+                            : "!bg-transparent !text-[#1E293B] hover:!bg-slate-100/70 dark:!text-[#E7ECF3] dark:hover:!bg-[#182235]"
                         }`}
                       >
                         <span
@@ -585,7 +579,7 @@ export default function AttendanceByRegionPage() {
                         <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
                           {metaText}
                         </span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -611,7 +605,7 @@ export default function AttendanceByRegionPage() {
                 )}
               </div>
 
-              <button
+              <Button
                 type="button"
                 disabled={running}
                 onClick={() => {
@@ -627,25 +621,17 @@ export default function AttendanceByRegionPage() {
                   }
                   handleRun();
                 }}
-                className={`flex shrink-0 items-center gap-[7px] rounded-[9px] px-[17px] py-[9px] text-[12.5px] font-[600] text-white transition ${
+                loading={running}
+                icon={!running ? <Calculator className="h-3.5 w-3.5 text-white" /> : undefined}
+                className={`flex shrink-0 items-center gap-[7px] !rounded-[9px] !px-[17px] !py-[9px] !h-[38px] !text-[12.5px] !font-[600] !text-white transition !shadow-none ${
                   isReadyToRun
-                    ? "cursor-pointer bg-[#10B981] hover:brightness-105 active:scale-[0.99]"
-                    : "cursor-pointer bg-[#475569] hover:bg-[#334155]"
+                    ? "!cursor-pointer !bg-[#10B981] hover:!brightness-105 active:!scale-[0.99]"
+                    : "!cursor-pointer !bg-[#334155] hover:!bg-[#1E293B]"
                 }`}
                 title={!isReadyToRun ? "Fill required fields to calculate" : "Run calculation"}
               >
-                {running ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Calculating…</span>
-                  </>
-                ) : (
-                  <>
-                    <Calculator className="h-3.5 w-3.5" />
-                    <span>Run calculation</span>
-                  </>
-                )}
-              </button>
+                <span>{running ? "Calculating…" : "Run calculation"}</span>
+              </Button>
             </div>
           </div>
 

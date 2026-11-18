@@ -371,6 +371,11 @@ export interface StatCardProps {
   iconClassName?: string;
   titleClassName?: string;
   countClassName?: string;
+  badge?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  subtitleClassName?: string;
+  iconBox?: boolean;
+  uppercase?: boolean;
 }
 
 const variantStyles: Record<
@@ -488,6 +493,11 @@ export function StatCard({
   iconClassName,
   titleClassName,
   countClassName,
+  badge,
+  subtitle,
+  subtitleClassName,
+  iconBox = true,
+  uppercase = true,
 }: StatCardProps) {
   const styles = variantStyles[variant] || variantStyles.indigo;
   const activeStyle = activeClassName || styles.active;
@@ -503,23 +513,45 @@ export function StatCard({
         isActive ? activeStyle : inactiveStyle
       } ${className}`}
     >
-      <div className="flex items-center gap-2.5">
-        {icon && (
-          <div
-            className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconStyle}`}
-          >
-            {icon}
-          </div>
-        )}
+      <div className="flex items-center gap-2">
+        {icon &&
+          (iconBox ? (
+            <div
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconStyle}`}
+            >
+              {icon}
+            </div>
+          ) : (
+            <span className="shrink-0 flex items-center">{icon}</span>
+          ))}
         <span
-          className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate ${titleStyle}`}
+          className={`text-[11px] sm:text-xs font-bold ${
+            uppercase ? "uppercase tracking-wider" : ""
+          } truncate ${titleStyle}`}
         >
           {title}
         </span>
       </div>
       <div className={`text-2xl sm:text-3xl font-extrabold ${countStyle}`}>
-        {count}
+        {badge ? (
+          <div className="flex items-baseline gap-2">
+            <span>{count}</span>
+            {badge}
+          </div>
+        ) : (
+          count
+        )}
       </div>
+      {subtitle && (
+        <div
+          className={
+            subtitleClassName ||
+            "text-xs font-medium text-slate-400 mt-1 truncate"
+          }
+        >
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 }
