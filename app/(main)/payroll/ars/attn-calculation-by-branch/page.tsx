@@ -6,6 +6,9 @@ import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import Link from "next/link";
+import Button from "@/components/atoms/Button";
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
 import {
   X,
   Search,
@@ -728,13 +731,14 @@ export default function AttnCalculationByBranchPage() {
               <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                 Choose your locations
               </span>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleResetScope}
-                className="rounded-[8px] border border-[#E2E8F0] bg-white px-[11px] py-[6px] text-[11.5px] font-[550] text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#1E293B] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:bg-[#182235] dark:hover:text-[#E7ECF3]"
+                className="!h-auto !rounded-[8px] !border-[#E2E8F0] !bg-white !px-[11px] !py-[6px] !text-[11.5px] !font-[550] !text-[#64748B] hover:!bg-[#F1F5F9] hover:!text-[#1E293B] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#94A3B8] dark:hover:!bg-[#182235] dark:hover:!text-[#E7ECF3] !shadow-none active:!scale-100"
               >
                 Reset
-              </button>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_150px_120px]">
@@ -743,44 +747,48 @@ export default function AttnCalculationByBranchPage() {
                 <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                   Channel
                 </span>
-                <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
-                  {selectedChannels.map((ch) => (
-                    <span
-                      key={ch}
-                      className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                    >
-                      {getChannelLabel(ch)}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveChannel(ch);
-                        }}
-                        className="opacity-80 hover:opacity-100"
+                {selectedChannels.length > 0 ? (
+                  <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
+                    {selectedChannels.map((ch) => (
+                      <span
+                        key={ch}
+                        className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <select
-                    value=""
-                    onChange={(e) => handleAddChannel(e.target.value)}
-                    className="flex-1 min-w-[90px] cursor-pointer appearance-none border-none bg-transparent text-[12px] text-[#64748B] outline-none hover:text-[#1E293B] dark:text-[#94A3B8] dark:hover:text-[#E7ECF3]"
-                  >
-                    <option value="">Add channel</option>
-                    {channelOptions
-                      .filter((o) => !selectedChannels.includes(o.value))
-                      .map((opt) => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                        {getChannelLabel(ch)}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveChannel(ch);
+                          }}
+                          className="!p-0 !h-auto !w-auto opacity-80 hover:opacity-100 !bg-transparent !shadow-none text-[#4F46E5] dark:text-[#8B84FF]"
                         >
-                          {opt.label}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </span>
+                    ))}
+                    <div className="flex-1 min-w-[110px]">
+                      <Eselect
+                        name="addChannel"
+                        placeholder="Add channel"
+                        option={channelOptions.filter((o) => !selectedChannels.includes(o.value))}
+                        initialValue=""
+                        handleInputChange={(name, val) => handleAddChannel(val)}
+                        className="!h-7 !min-h-7 !border-none !bg-transparent !shadow-none !px-1 !text-[12px] !text-[#64748B] focus-within:!ring-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Eselect
+                    name="channel"
+                    placeholder="Add channel"
+                    option={channelOptions}
+                    initialValue=""
+                    handleInputChange={(name, val) => handleAddChannel(val)}
+                    className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#64748B] dark:!text-[#94A3B8] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                  />
+                )}
               </div>
 
               {/* CLUSTER */}
@@ -788,44 +796,48 @@ export default function AttnCalculationByBranchPage() {
                 <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                   Cluster
                 </span>
-                <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
-                  {selectedClusters.map((cl) => (
-                    <span
-                      key={cl}
-                      className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                    >
-                      {getClusterLabel(cl)}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveCluster(cl);
-                        }}
-                        className="opacity-80 hover:opacity-100"
+                {selectedClusters.length > 0 ? (
+                  <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
+                    {selectedClusters.map((cl) => (
+                      <span
+                        key={cl}
+                        className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <select
-                    value=""
-                    onChange={(e) => handleAddCluster(e.target.value)}
-                    className="flex-1 min-w-[90px] cursor-pointer appearance-none border-none bg-transparent text-[12px] text-[#64748B] outline-none hover:text-[#1E293B] dark:text-[#94A3B8] dark:hover:text-[#E7ECF3]"
-                  >
-                    <option value="">Add cluster</option>
-                    {clusterOptions
-                      .filter((o) => !selectedClusters.includes(o.value))
-                      .map((opt) => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                        {getClusterLabel(cl)}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveCluster(cl);
+                          }}
+                          className="!p-0 !h-auto !w-auto opacity-80 hover:opacity-100 !bg-transparent !shadow-none text-[#4F46E5] dark:text-[#8B84FF]"
                         >
-                          {opt.label}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </span>
+                    ))}
+                    <div className="flex-1 min-w-[110px]">
+                      <Eselect
+                        name="addCluster"
+                        placeholder="Add cluster"
+                        option={clusterOptions.filter((o) => !selectedClusters.includes(o.value))}
+                        initialValue=""
+                        handleInputChange={(name, val) => handleAddCluster(val)}
+                        className="!h-7 !min-h-7 !border-none !bg-transparent !shadow-none !px-1 !text-[12px] !text-[#64748B] focus-within:!ring-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Eselect
+                    name="cluster"
+                    placeholder="Add cluster"
+                    option={clusterOptions}
+                    initialValue=""
+                    handleInputChange={(name, val) => handleAddCluster(val)}
+                    className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#64748B] dark:!text-[#94A3B8] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                  />
+                )}
               </div>
 
               {/* MONTH */}
@@ -847,28 +859,21 @@ export default function AttnCalculationByBranchPage() {
                     </span>
                   )}
                 </div>
-                <div className="relative">
-                  <select
-                    value={month}
-                    onChange={(e) => setMonth(e.target.value)}
-                    className={`h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition dark:bg-[#0E1524] dark:text-[#E7ECF3] ${
-                      hasAttemptedRun && !month
-                        ? "border-[#E11D48] ring-1 ring-[#E11D48]/30 focus:border-[#E11D48]"
-                        : "border-[#E2E8F0] focus:border-[#4F46E5] dark:border-[#1F2937] dark:focus:border-[#8B84FF]"
-                    }`}
-                  >
-                    {MONTH_OPTIONS.map((m) => (
-                      <option
-                        key={m.value}
-                        value={m.value}
-                        className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
-                      >
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748B]" />
-                </div>
+                <Eselect
+                  name="month"
+                  placeholder="Select month"
+                  option={MONTH_OPTIONS.filter((m) => m.value !== "").map((m) => ({
+                    label: m.label,
+                    value: m.value,
+                  }))}
+                  initialValue={month}
+                  handleInputChange={(name, val) => setMonth(val)}
+                  className={`!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none ${
+                    hasAttemptedRun && !month
+                      ? "!border-[#E11D48] ring-1 ring-[#E11D48]/30"
+                      : "focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                  }`}
+                />
               </div>
 
               {/* YEAR */}
@@ -876,24 +881,16 @@ export default function AttnCalculationByBranchPage() {
                 <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
                   Year
                 </span>
-                <div className="relative">
-                  <select
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="h-[38px] w-full cursor-pointer appearance-none rounded-[9px] border border-[#E2E8F0] bg-white pl-3 pr-7 text-[12.5px] text-[#1E293B] outline-none transition focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
-                  >
-                    {generateFinancialYearsArray().map((y) => (
-                      <option
-                        key={y}
-                        value={y}
-                        className="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100"
-                      >
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748B]" />
-                </div>
+                <Eselect
+                  name="year"
+                  option={generateFinancialYearsArray().map((y) => ({
+                    label: y,
+                    value: y,
+                  }))}
+                  initialValue={year}
+                  handleInputChange={(name, val) => setYear(val)}
+                  className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                />
               </div>
             </div>
           </div>
@@ -902,18 +899,19 @@ export default function AttnCalculationByBranchPage() {
           <div className="overflow-hidden rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border-b border-[#E2E8F0] px-[15px] py-3 dark:border-[#1F2937]">
               <div className="flex shrink-0 items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={handleSelectAll}
                   title={isAllSelected ? "Deselect all" : "Select all"}
-                  className={`grid h-[17px] w-[17px] shrink-0 place-items-center rounded-[5px] border transition ${
+                  className={`!grid !h-[17px] !w-[17px] !p-0 shrink-0 place-items-center !rounded-[5px] border transition !shadow-none ${
                     isAllSelected
-                      ? "border-[#4F46E5] bg-[#4F46E5] text-white dark:border-[#8B84FF] dark:bg-[#8B84FF]"
-                      : "border-[#CBD5E1] bg-transparent text-transparent dark:border-[#374151]"
+                      ? "!border-[#4F46E5] !bg-[#4F46E5] !text-white dark:!border-[#8B84FF] dark:!bg-[#8B84FF]"
+                      : "!border-[#CBD5E1] !bg-transparent !text-transparent dark:!border-[#374151]"
                   }`}
                 >
                   <Check className="h-3 w-3 stroke-[3]" />
-                </button>
+                </Button>
 
                 <span className="shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
                   Locations
@@ -934,13 +932,16 @@ export default function AttnCalculationByBranchPage() {
               </div>
 
               <div className="relative w-full sm:w-[220px]">
-                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
-                <input
-                  type="search"
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
+                <Einput
+                  name="searchQuery"
+                  type="text"
+                  hideLabel
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search locations"
-                  className="h-8 w-full rounded-[9px] border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#1E293B] outline-none placeholder:text-[#64748B]/70 focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
+                  wrapperClassName="w-full"
+                  className="!h-8 !w-full !rounded-[9px] !border-[#E2E8F0] !bg-white !pl-8 !pr-2.5 !text-[12px] !text-[#1E293B] placeholder:!text-[#64748B]/70 focus-visible:!ring-0 focus-visible:!border-[#4F46E5] dark:!border-[#1F2937] dark:!bg-[#0E1524] dark:!text-[#E7ECF3] dark:focus-visible:!border-[#8B84FF] !shadow-none"
                 />
               </div>
             </div>
@@ -967,14 +968,15 @@ export default function AttnCalculationByBranchPage() {
                     const metaText = `${ch} · ${cl} · ${emp} emp`;
 
                     return (
-                      <button
+                      <Button
                         key={loc.value}
                         type="button"
+                        variant="ghost"
                         onClick={() => handleToggleLocation(loc.value)}
-                        className={`flex items-center gap-[9px] rounded-[8px] px-[9px] py-2 text-left transition ${
+                        className={`!flex !w-full !justify-start !items-center !gap-[9px] !rounded-[8px] !px-[9px] !py-2 !h-auto text-left transition !shadow-none !font-normal ${
                           isChecked
-                            ? "bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                            : "bg-transparent text-[#1E293B] hover:bg-slate-100/70 dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+                            ? "!bg-[#EEF2FF] !text-[#4F46E5] dark:!bg-[#1E1B4B] dark:!text-[#8B84FF]"
+                            : "!bg-transparent !text-[#1E293B] hover:!bg-slate-100/70 dark:!text-[#E7ECF3] dark:hover:!bg-[#182235]"
                         }`}
                       >
                         <span
@@ -998,7 +1000,7 @@ export default function AttnCalculationByBranchPage() {
                         <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
                           {metaText}
                         </span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -1024,7 +1026,7 @@ export default function AttnCalculationByBranchPage() {
                 )}
               </div>
 
-              <button
+              <Button
                 type="button"
                 disabled={isRunning}
                 onClick={() => {
@@ -1040,25 +1042,17 @@ export default function AttnCalculationByBranchPage() {
                   }
                   handleRunCalculation();
                 }}
-                className={`flex shrink-0 items-center gap-[7px] rounded-[9px] px-[17px] py-[9px] text-[12.5px] font-semibold text-white transition ${
+                loading={isRunning}
+                icon={!isRunning ? <Calculator className="h-3.5 w-3.5 text-white" /> : undefined}
+                className={`flex shrink-0 items-center gap-[7px] !rounded-[9px] !px-[17px] !py-[9px] !h-[38px] !text-[12.5px] !font-semibold !text-white transition !shadow-none ${
                   isReadyToRun
-                    ? "cursor-pointer bg-[#10B981] hover:brightness-105 active:scale-[0.99]"
-                    : "cursor-pointer bg-[#475569] hover:bg-[#334155]"
+                    ? "!cursor-pointer !bg-[#10B981] hover:!brightness-105 active:!scale-[0.99]"
+                    : "!cursor-pointer !bg-[#334155] hover:!bg-[#1E293B]"
                 }`}
                 title={!isReadyToRun ? "Fill required fields to calculate" : "Run calculation"}
               >
-                {isRunning ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Calculating…</span>
-                  </>
-                ) : (
-                  <>
-                    <Calculator className="h-3.5 w-3.5" />
-                    <span>Run calculation</span>
-                  </>
-                )}
-              </button>
+                <span>{isRunning ? "Calculating…" : "Run calculation"}</span>
+              </Button>
             </div>
           </div>
 

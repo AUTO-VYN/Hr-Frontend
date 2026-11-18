@@ -1,5 +1,5 @@
-"use client";
 // @ts-nocheck
+"use client";
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -16,6 +16,13 @@ import { useCurrentUser } from "@/app/hooks/use-current-user";
 import useExcelDownload from "@/app/hooks/excel-download";
 import HashloaderComponent from "@/components/Templates/hashloader";
 import FileViewer from "@/components/atoms/Fileviewer";
+
+// Mandatory template & atom components
+import Einput from "@/components/atoms/Einput";
+import Eselect from "@/components/atoms/Eselect";
+import Button from "@/components/atoms/Button";
+import Card, { StatCard } from "@/components/Templates/card";
+import ReactTable from "@/components/Templates/reacttable";
 
 /* ------------------------------------------------------------------ */
 /*  CONSTANTS + PURE HELPERS (no state, same output as production)     */
@@ -266,12 +273,13 @@ const statusCell = ({ value }: any) => {
 };
 
 const inTimeCell = ({ value, row }: any) => {
+  const rowData = row?.original || row;
   const isManual =
-    row?.In1Mannual === "Y" ||
-    row?.in1mannual === "Y" ||
-    row?.In1Mannual === true ||
-    row?.in1 === "Y" ||
-    row?.in1 === true;
+    rowData?.In1Mannual === "Y" ||
+    rowData?.in1mannual === "Y" ||
+    rowData?.In1Mannual === true ||
+    rowData?.in1 === "Y" ||
+    rowData?.in1 === true;
 
   if (!value) {
     return (
@@ -328,12 +336,13 @@ const inTimeCell = ({ value, row }: any) => {
 };
 
 const outTimeCell = ({ value, row }: any) => {
+  const rowData = row?.original || row;
   const isManual =
-    row?.Out1Mannual === "Y" ||
-    row?.out1mannual === "Y" ||
-    row?.Out1Mannual === true ||
-    row?.out1 === "Y" ||
-    row?.out1 === true;
+    rowData?.Out1Mannual === "Y" ||
+    rowData?.out1mannual === "Y" ||
+    rowData?.Out1Mannual === true ||
+    rowData?.out1 === "Y" ||
+    rowData?.out1 === true;
 
   if (!value) {
     return (
@@ -842,34 +851,34 @@ const MispunchApproverMobile = () => {
               decide without leaving the queue.
             </p>
           </div>
-          <label className="ars-field-wrap" style={{ width: 262 }}>
-            <span className="ars-label">Approver role</span>
-            <select
-              className="ars-field"
-              value={formData.selectedOption}
-              onChange={(e) => {
-                handleSelectChange("selectedOption", e.target.value);
+          <div style={{ width: 262 }}>
+            <Eselect
+              title="Approver role"
+              name="selectedOption"
+              option={options}
+              initialValue={formData.selectedOption}
+              handleInputChange={(name, val) => {
+                handleSelectChange("selectedOption", val);
                 setReasonF(ALL_REASONS);
                 setPageIndex(0);
               }}
-            >
-              {options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              ShortName
+              className="!h-[37px] !min-h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-within:!ring-0 focus-within:!border-[var(--brand)]"
+              labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
+            />
+          </div>
         </div>
 
         <div className="ars-kpis">
           {kpis.map((k) => (
-            <div
+            <Card
               key={k.label}
-              className="ars-card"
-              style={{ padding: "13px 15px" }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              title={k.label}
+              count={k.value}
+              subtitle={k.sub}
+              iconBox={false}
+              uppercase={false}
+              icon={
                 <span
                   style={{
                     width: 7,
@@ -878,20 +887,13 @@ const MispunchApproverMobile = () => {
                     background: k.tint,
                   }}
                 />
-                <span
-                  className="ars-muted"
-                  style={{ fontSize: 11.5, fontWeight: 600 }}
-                >
-                  {k.label}
-                </span>
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 650, marginTop: 7 }}>
-                {k.value}
-              </div>
-              <div className="ars-muted" style={{ fontSize: 11, marginTop: 3 }}>
-                {k.sub}
-              </div>
-            </div>
+              }
+              inactiveClassName="!bg-[var(--card)] !border-[var(--border)] hover:!border-[var(--border)]"
+              className="ars-card !h-auto !min-h-0 !p-[13px_15px] !rounded-[12px] !shadow-[var(--shadow)] !block cursor-default hover:!shadow-[var(--shadow)] active:!scale-100"
+              titleClassName="!text-[11.5px] !font-semibold !text-[var(--muted)]"
+              countClassName="!text-[22px] !font-[650] !text-[var(--fg)] !mt-[7px] !leading-tight"
+              subtitleClassName="!text-[11px] !font-normal !text-[var(--muted)] !mt-[3px] truncate"
+            />
           ))}
         </div>
 
@@ -906,103 +908,93 @@ const MispunchApproverMobile = () => {
           >
             {/* filters: server filters (need Show Data) + client view filters */}
             <div className="ars-card ars-filters">
-              <label className="ars-field-wrap">
-                <span className="ars-label">Location</span>
-                <select
-                  className="ars-field"
-                  value={formData.EmpLoc ?? ""}
-                  onChange={(e) => handleSelectChange("EmpLoc", e.target.value)}
-                >
-                  {branches.map((b: any) => (
-                    <option key={b.value} value={b.value}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ars-field-wrap">
-                <span className="ars-label">Employee code</span>
-                <input
-                  className="ars-field"
-                  type="text"
-                  value={formData.Emp_Code ?? ""}
-                  onChange={(e) =>
-                    handleSelectChange("Emp_Code", e.target.value || null)
-                  }
-                />
-              </label>
-              <label className="ars-field-wrap">
-                <span className="ars-label">Office date</span>
-                <input
-                  className="ars-field"
-                  type="date"
-                  value={formData.OfficeDate ?? ""}
-                  onChange={(e) =>
-                    handleSelectChange("OfficeDate", e.target.value || null)
-                  }
-                />
-              </label>
+              <Eselect
+                title="Location"
+                name="EmpLoc"
+                option={branches}
+                initialValue={formData.EmpLoc ?? ""}
+                handleInputChange={(name, val) => handleSelectChange("EmpLoc", val)}
+                ShortName
+                className="!h-[37px] !min-h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-within:!ring-0 focus-within:!border-[var(--brand)]"
+                labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
+              />
+              <Einput
+                title="Employee code"
+                type="text"
+                name="Emp_Code"
+                value={formData.Emp_Code ?? ""}
+                onChange={(e) =>
+                  handleSelectChange("Emp_Code", e.target.value || null)
+                }
+                ShortName
+                className="!h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-visible:!ring-0 focus-visible:!border-[var(--brand)]"
+                labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
+              />
+              <Einput
+                title="Office date"
+                type="date"
+                name="OfficeDate"
+                value={formData.OfficeDate ?? ""}
+                onChange={(e) =>
+                  handleSelectChange("OfficeDate", e.target.value || null)
+                }
+                ShortName
+                className="!h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-visible:!ring-0 focus-visible:!border-[var(--brand)]"
+                labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
+              />
               <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                <button
-                  className="ars-btn"
-                  style={{ flex: 1, height: 36, justifyContent: "center" }}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ars-btn flex-1 !h-[37px] !justify-center !rounded-[9px] !text-[12.5px] !font-[550] !border-[var(--border)] !bg-[var(--card)] !text-[var(--fg)] hover:!bg-[var(--hover)] !shadow-none active:!scale-100"
                   onClick={handleReset}
                 >
                   Reset filters
-                </button>
-                <button
-                  className="ars-btn ars-primary"
-                  style={{ flex: 1, height: 36, justifyContent: "center" }}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="ars-btn ars-primary flex-1 !h-[37px] !justify-center !rounded-[9px] !text-[12.5px] !font-[550] !bg-[#4F46E5] hover:!bg-[#4338CA] !border-[#4F46E5] !text-white !shadow-none active:!scale-100"
                   onClick={handleshow}
                 >
                   Show data
-                </button>
+                </Button>
               </div>
-              <label
-                className="ars-field-wrap"
-                style={{ gridColumn: "span 2" }}
-              >
-                <span className="ars-label">Search</span>
-                <input
-                  className="ars-field"
+              <div style={{ gridColumn: "span 2" }}>
+                <Einput
+                  title="Search"
+                  type="text"
+                  name="search"
                   value={search}
                   placeholder="Search any column"
                   onChange={(e) => {
                     setSearch(e.target.value);
                     setPageIndex(0);
                   }}
+                  ShortName
+                  className="!h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-visible:!ring-0 focus-visible:!border-[var(--brand)] placeholder:!text-[var(--muted)] placeholder:!text-[12.5px]"
+                  labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
                 />
-              </label>
-              <label
-                className="ars-field-wrap"
-                style={{ gridColumn: "span 2" }}
-              >
-                <span className="ars-label">Reason</span>
-                <select
-                  className="ars-field"
-                  value={reasonF}
-                  onChange={(e) => {
-                    setReasonF(e.target.value);
+              </div>
+              <div style={{ gridColumn: "span 2" }}>
+                <Eselect
+                  title="Reason"
+                  name="reasonF"
+                  option={reasonOptions.map((r) => ({ label: r, value: r }))}
+                  initialValue={reasonF}
+                  handleInputChange={(name, val) => {
+                    setReasonF(val);
                     setPageIndex(0);
                   }}
-                >
-                  {reasonOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  ShortName
+                  className="!h-[37px] !min-h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-within:!ring-0 focus-within:!border-[var(--brand)]"
+                  labelClassName="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-[0.03em]"
+                />
+              </div>
             </div>
 
             <div className="ars-card" style={{ overflow: "hidden" }}>
               <div className="ars-tablehead">
-                <span
-                  className={`ars-box ${selectAll ? "on" : ""}`}
-                  onClick={toggleSelectAll}
-                >
-                  {selectAll && <FaCheck size={9} />}
-                </span>
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>
                   {filteredRows.length} requests
                 </span>
@@ -1019,168 +1011,76 @@ const MispunchApproverMobile = () => {
                     gap: 8,
                   }}
                 >
-                  <button
-                    type="button"
-                    className="ars-btn"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={onclickExceldownload}
                     disabled={isExcelLoading || filteredRows.length === 0}
-                    style={{
-                      height: 32,
-                      padding: "0 12px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
+                    icon={<FaFileExcel style={{ color: "#10B981" }} />}
+                    className="ars-btn !h-[33px] !px-3 !rounded-[9px] !text-[12.5px] !font-[550] !border-[var(--border)] !bg-[var(--card)] !text-[var(--fg)] hover:!bg-[var(--hover)] !shadow-none active:!scale-100"
                     title="Export filtered regularization requests to Excel"
                   >
-                    <FaFileExcel style={{ color: "#10B981" }} />
                     <span>
                       {isExcelLoading ? "Exporting..." : "Export to Excel"}
                     </span>
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              <div style={{ maxHeight: 520, overflow: "auto" }}>
-                <table className="ars-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 40 }} />
-                      {visibleColumns.map((c: any, i: number) => (
-                        <th
-                          key={`${c.accessor}-${i}`}
-                          onClick={() => onSort(c.accessor)}
-                          style={{
-                            color:
-                              sortKey === c.accessor
-                                ? "var(--brand)"
-                                : "var(--muted)",
-                          }}
-                        >
-                          {c.Header}
-                          {sortKey === c.accessor
-                            ? sortAsc
-                              ? " ↑"
-                              : " ↓"
-                            : ""}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageRows.map((row: any, ri: number) => {
-                      const utd = row["UTD"];
-                      const sel = isSelected(utd);
-                      const open = detailRow === row;
-                      return (
-                        <tr
-                          key={utd ?? ri}
-                          className="ars-tr"
-                          style={{
-                            background: open
-                              ? "var(--brand-soft)"
-                              : sel
-                                ? "rgba(79,70,229,.06)"
-                                : "transparent",
-                          }}
-                          onClick={() => toggleRowSelection(utd, row)}
-                          onDoubleClick={() => onRowDoubleClick(row)}
-                        >
-                          <td>
-                            <span
-                              className={`ars-box ${sel ? "on" : ""}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleRowSelection(utd, row);
-                              }}
-                            >
-                              {sel && <FaCheck size={9} />}
-                            </span>
-                          </td>
-                          {visibleColumns.map((c: any, ci: number) => (
-                            <td
-                              key={`${c.accessor}-${ci}`}
-                              style={{
-                                maxWidth: c.width || "auto",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                              title={String(row[c.accessor] ?? "")}
-                            >
-                              {renderCell(c, row)}
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {!isLoading && filteredRows.length === 0 && (
-                  <div style={{ padding: "56px 20px", textAlign: "center" }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>
-                      Nothing left to regularize
-                    </div>
-                    <div
-                      className="ars-muted"
-                      style={{ fontSize: 12, marginTop: 4 }}
-                    >
-                      No pending punches match this role and filter.
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* pagination (old Previous / Page x of y / Next) */}
-              <div className="ars-pager">
-                <button
-                  className="ars-btn"
-                  disabled={safePage === 0}
-                  onClick={() => setPageIndex(safePage - 1)}
-                >
-                  Previous
-                </button>
-                <span className="ars-muted" style={{ fontSize: 12 }}>
-                  Page{" "}
-                  <b style={{ color: "var(--fg)" }}>
-                    {safePage + 1} of {pageCount}
-                  </b>{" "}
-                  ({filteredRows.length} items)
-                </span>
-                <button
-                  className="ars-btn"
-                  disabled={safePage >= pageCount - 1}
-                  onClick={() => setPageIndex(safePage + 1)}
-                >
-                  Next
-                </button>
-              </div>
+              <ReactTable
+                columns={visibleColumns}
+                data={filteredRows}
+                check={true}
+                selectValue="UTD"
+                setsellectedrowdata={(newSelected) => {
+                  setsellectedrowdata(newSelected || []);
+                  if (newSelected && newSelected.length > 0) {
+                    const last = newSelected[newSelected.length - 1];
+                    if (last?.rowData) onRowDoubleClick(last.rowData);
+                  }
+                }}
+                onRowDoubleClick={(row) => onRowDoubleClick(row)}
+                height={460}
+                showTopSearch={false}
+                showExcelExport={false}
+                initialPageSize={PAGE_SIZE}
+                showPageSizeInFooter={true}
+                containerClassName="!border-none !shadow-none !rounded-none !bg-transparent"
+              />
 
               {/* action bar: remark + reject + approve */}
               <div className="ars-actions">
-                <input
-                  className="ars-field"
-                  style={{ width: 300, maxWidth: "100%" }}
+                <Einput
+                  type="text"
+                  name="remark"
+                  hideLabel
                   maxLength={500}
                   value={remark ?? ""}
                   placeholder="Remark — required to reject"
                   onChange={(e) => handleRemark("remark", e.target.value)}
+                  wrapperClassName="w-[300px] max-w-full"
+                  className="!h-[37px] !rounded-[9px] !text-[12.5px] !border-[var(--border)] !bg-[var(--field)] !text-[var(--fg)] !px-[10px] !shadow-none focus-visible:!ring-0 focus-visible:!border-[var(--brand)] placeholder:!text-[var(--muted)]"
                 />
                 <div style={{ flex: 1 }} />
-                <button
-                  className="ars-btn ars-danger"
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={<FaTimes size={11} />}
                   onClick={() => handlereject()}
+                  className="ars-btn ars-danger !h-[34px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !border-[rgba(225,29,72,.4)] !text-[#E11D48] !bg-transparent hover:!bg-[rgba(225,29,72,.08)] !shadow-none active:!scale-100"
                 >
-                  <FaTimes size={11} />
                   Reject
-                </button>
-                <button
-                  className="ars-btn ars-ok"
-                  style={{ opacity: selectedrowdata.length ? 1 : 0.6 }}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<FaCheck size={11} />}
                   onClick={() => handleapprove()}
+                  className="ars-btn ars-ok !h-[34px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !bg-[#10B981] hover:!bg-[#059669] !border-[#10B981] !text-white !shadow-none active:!scale-100"
+                  style={{ opacity: selectedrowdata.length ? 1 : 0.6 }}
                 >
-                  <FaCheck size={11} />
                   Approve {selectedrowdata.length}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1431,28 +1331,31 @@ const MispunchApproverMobile = () => {
 
                   {/* single-row actions reuse the same API functions */}
                   <div style={{ display: "flex", gap: 9 }}>
-                    <button
-                      className="ars-btn ars-danger"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() =>
                         handlereject([
                           { id: detailRow.UTD, rowData: detailRow },
                         ])
                       }
+                      className="ars-btn ars-danger !h-[34px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !border-[rgba(225,29,72,.4)] !text-[#E11D48] !bg-transparent hover:!bg-[rgba(225,29,72,.08)] !shadow-none active:!scale-100"
                     >
                       Reject
-                    </button>
-                    <button
-                      className="ars-btn ars-ok"
-                      style={{ flex: 1, justifyContent: "center" }}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={<FaCheck size={11} />}
                       onClick={() =>
                         handleapprove([
                           { id: detailRow.UTD, rowData: detailRow },
                         ])
                       }
+                      className="ars-btn ars-ok flex-1 !justify-center !h-[34px] !px-3.5 !rounded-[9px] !text-[12.5px] !font-[550] !bg-[#10B981] hover:!bg-[#059669] !border-[#10B981] !text-white !shadow-none active:!scale-100"
                     >
-                      <FaCheck size={11} />
                       Approve this punch
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

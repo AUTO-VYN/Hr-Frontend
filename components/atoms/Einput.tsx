@@ -3,19 +3,21 @@ import { Input } from "../ui/input";
 import { cn } from "@/lib/utils";
 
 interface AinputProps extends InputHTMLAttributes<HTMLInputElement> {
-  title: string;
-  type: string;
+  title?: string;
+  type?: string;
   name: string;
   disabled?: boolean;
-  handleInputChange: (name: string, value: any) => void;
+  handleInputChange?: (name: string, value: any) => void;
   required?: boolean;
-  value: string | number | null;
+  value?: string | number | null;
 
   readOnly?: boolean;
   errorMessage?: string;
   redlabel?: string;
   autoComplete?: string;
   ShortName?: boolean;
+  hideLabel?: boolean;
+  wrapperClassName?: string;
 
   // ✅ attach button/icon inside input (right side)
   rightElement?: React.ReactNode;
@@ -24,7 +26,7 @@ interface AinputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 const Ainput: FC<AinputProps> = ({
   title,
-  type,
+  type = "text",
   name,
   handleInputChange,
   required,
@@ -38,15 +40,18 @@ const Ainput: FC<AinputProps> = ({
   redlabel,
   style,
   ShortName,
+  hideLabel,
+  wrapperClassName,
   autoComplete,
   rightElement,
   placeholder,
   labelClassName,
   ...rest
 }) => {
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const v = event.target.value;
+const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+const v = event.target.value;
 
+  if (handleInputChange) {
     if (type === "date" && v === "") {
       handleInputChange(name, null);
       return;
@@ -57,9 +62,13 @@ const Ainput: FC<AinputProps> = ({
       return;
     }
     handleInputChange(name, v);
-    
-  };
+  }
 
+  // ✅ Agar standard onChange pass kiya ho (jaise search ya bulk inputs me):
+  if (rest.onChange) {
+    rest.onChange(event);
+  }
+};
   const toTitleCase = (str?: string) => {
     if (!str) return "";
     return str
@@ -73,27 +82,30 @@ const Ainput: FC<AinputProps> = ({
     autoComplete !== undefined ? autoComplete : "off";
 
   const isDate = type === "date";
+  const showLabel = Boolean(title && !hideLabel);
 
   return (
-    <div className="w-full space-y-1.5">
-      <label
-        className={cn(
-          "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 max-w-full overflow-hidden",
-          labelClassName,
-        )}
-        htmlFor={name}
-      >
-        <span className="shrink-0">{ShortName ? title : toTitleCase(title)}</span>
-        {redlabel ? <span className="text-red-500 shrink-0">{redlabel}</span> : null}
-        {errorMessage ? (
-          <span
-            className="text-red-500 text-[11px] truncate shrink min-w-0"
-            title={errorMessage}
-          >
-            {errorMessage}
-          </span>
-        ) : null}
-      </label>
+    <div className={cn("w-full", showLabel && "space-y-1.5", wrapperClassName)}>
+      {showLabel && (
+        <label
+          className={cn(
+            "flex items-center gap-2 text-[12px] font-medium leading-none text-slate-600 dark:text-slate-300 max-w-full overflow-hidden",
+            labelClassName,
+          )}
+          htmlFor={name}
+        >
+          <span className="shrink-0">{ShortName ? title : toTitleCase(title)}</span>
+          {redlabel ? <span className="text-red-500 shrink-0">{redlabel}</span> : null}
+          {errorMessage ? (
+            <span
+              className="text-red-500 text-[11px] truncate shrink min-w-0"
+              title={errorMessage}
+            >
+              {errorMessage}
+            </span>
+          ) : null}
+        </label>
+      )}
 
       <div className="relative">
         <Input

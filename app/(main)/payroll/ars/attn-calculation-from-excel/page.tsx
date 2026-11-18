@@ -31,7 +31,7 @@ import HashloaderComponent from "@/components/Templates/hashloader";
 import ReactTable from "@/components/Templates/reacttable";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
-import AButton from "@/components/atoms/Button";
+import Button from "@/components/atoms/Button";
 
 type Row = Record<string, any>;
 type Tab = "ok" | "bad";
@@ -422,6 +422,89 @@ export default function Approver2() {
 
   const reasonColor = tab === "bad" ? "#E11D48" : "#10B981";
 
+  const tableColumns = useMemo(
+    () => [
+      {
+        Header: "Row",
+        accessor: (r: Row, i: number) => getLine(r, i),
+        id: "line",
+        Cell: ({ value }: any) => (
+          <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
+            {value}
+          </span>
+        ),
+      },
+      {
+        Header: "Emp code",
+        accessor: (r: Row) => getCode(r) || "—",
+        id: "code",
+        Cell: ({ value }: any) => (
+          <span className="font-[550]">{value}</span>
+        ),
+      },
+      {
+        Header: "Employee",
+        accessor: (r: Row) => getName(r) || "—",
+        id: "name",
+        Cell: ({ row }: any) => (
+          <div>
+            <span className="block truncate font-[550]">
+              {getName(row.original) || "—"}
+            </span>
+            <span className="mt-[2px] block text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+              {getLocation(row.original) || "—"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        Header: "Date",
+        accessor: (r: Row) => getDate(r) || "—",
+        id: "date",
+        Cell: ({ value }: any) => (
+          <span className="text-[#64748B] dark:text-[#94A3B8]">{value}</span>
+        ),
+      },
+      {
+        Header: "In",
+        accessor: (r: Row) => getIn(r) || "—",
+        id: "inT",
+        Cell: ({ value }: any) => (
+          <div className="text-right font-[550]">{value}</div>
+        ),
+      },
+      {
+        Header: "Out",
+        accessor: (r: Row) => getOut(r) || "—",
+        id: "outT",
+        Cell: ({ value }: any) => (
+          <div className="text-right font-[550]">{value}</div>
+        ),
+      },
+      {
+        Header: tab === "bad" ? "Reason" : "Result",
+        accessor: (r: Row) =>
+          getReason(r) || (tab === "ok" ? "Ready to calculate" : "—"),
+        id: "reason",
+        Cell: ({ row }: any) => {
+          const val = getReason(row.original);
+          if (val) {
+            return (
+              <span
+                className="inline-block rounded-full px-2 py-[3px] text-[10.5px] font-bold"
+                style={{ color: reasonColor, background: `${reasonColor}1F` }}
+              >
+                {val}
+              </span>
+            );
+          }
+          return <span className="text-[#64748B] dark:text-[#94A3B8]">—</span>;
+        },
+      },
+    ],
+    [tab, reasonColor]
+  );
+
   /* ---------------- Render ---------------- */
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-['Inter',system-ui,sans-serif] text-[#1E293B] antialiased dark:bg-[#0A0F1C] dark:text-[#E7ECF3]">
@@ -438,23 +521,25 @@ export default function Approver2() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={handleReset}
-              className="flex shrink-0 items-center gap-1.5 rounded-[9px] border border-[#E2E8F0] bg-white px-3.5 py-2 text-[12px] font-[550] text-[#64748B] shadow-sm transition hover:bg-[#F1F5F9] hover:text-[#1E293B] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:bg-[#182235] dark:hover:text-[#E7ECF3]"
+              className="!flex !h-9 !shrink-0 !items-center !gap-1.5 !rounded-[9px] !border-[#E2E8F0] !bg-white !px-3.5 !py-2 !text-[12px] !font-[550] !text-[#64748B] !shadow-sm hover:!bg-[#F1F5F9] hover:!text-[#1E293B] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#94A3B8] dark:hover:!bg-[#182235] dark:hover:!text-[#E7ECF3] active:!scale-100"
+              icon={<RotateCcw className="h-3.5 w-3.5" />}
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Reset</span>
-            </button>
+              Reset
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={handleDownloadSample}
-              className="flex shrink-0 items-center gap-1.5 rounded-[9px] border border-[#E2E8F0] bg-white px-3.5 py-2 text-[12px] font-[550] text-[#1E293B] shadow-sm transition hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+              className="!flex !h-9 !shrink-0 !items-center !gap-1.5 !rounded-[9px] !border-[#E2E8F0] !bg-white !px-3.5 !py-2 !text-[12px] !font-[550] !text-[#1E293B] !shadow-sm hover:!bg-[#F1F5F9] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#E7ECF3] dark:hover:!bg-[#182235] active:!scale-100"
+              icon={<FileSpreadsheet className="h-4 w-4 text-[#10B981]" />}
             >
-              <FileSpreadsheet className="h-4 w-4 text-[#10B981]" />
-              <span>Sample file</span>
-            </button>
+              Sample file
+            </Button>
           </div>
         </div>
 
@@ -468,22 +553,24 @@ export default function Approver2() {
                   Upload punch sheet
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={handleDownloadSample}
-                    className="flex items-center gap-1.5 text-[11.5px] font-[550] text-[#4F46E5] transition hover:underline dark:text-[#8B84FF]"
+                    className="!flex !h-auto !items-center !gap-1.5 !p-0 !text-[11.5px] !font-[550] !text-[#4F46E5] hover:!bg-transparent hover:!underline dark:!text-[#8B84FF] !shadow-none active:!scale-100"
+                    icon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#10B981]" />}
                   >
-                    <FileSpreadsheet className="h-3.5 w-3.5 text-[#10B981]" />
-                    <span>Download sample</span>
-                  </button>
-                  <button
+                    Download sample
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={handleReset}
-                    className="flex items-center gap-1.5 rounded-[8px] border border-[#E2E8F0] bg-white px-[11px] py-[5px] text-[11.5px] font-[550] text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#1E293B] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#94A3B8] dark:hover:bg-[#182235] dark:hover:text-[#E7ECF3]"
+                    className="!flex !h-[26px] !items-center !gap-1.5 !rounded-[8px] !border-[#E2E8F0] !bg-white !px-[11px] !py-[5px] !text-[11.5px] !font-[550] !text-[#64748B] hover:!bg-[#F1F5F9] hover:!text-[#1E293B] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#94A3B8] dark:hover:!bg-[#182235] dark:hover:!text-[#E7ECF3] !shadow-none active:!scale-100"
+                    icon={<RotateCcw className="h-3 w-3" />}
                   >
-                    <RotateCcw className="h-3 w-3" />
-                    <span>Reset</span>
-                  </button>
+                    Reset
+                  </Button>
                 </div>
               </div>
               <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_150px_120px_auto]">
@@ -500,20 +587,21 @@ export default function Approver2() {
                       </span>
                     )}
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={(e) => {
                       e.preventDefault();
                       acceptFile(e.dataTransfer.files?.[0]);
                     }}
                     onDragOver={(e) => e.preventDefault()}
-                    className={`flex h-[38px] w-full items-center gap-[10px] rounded-[9px] border border-dashed px-[11px] text-left text-[12.5px] transition ${
+                    className={`!flex !h-[38px] !w-full !items-center !justify-start !gap-[10px] !rounded-xl !border border-dashed !px-[11px] text-left !text-[12.5px] transition !shadow-none !font-normal active:!scale-100 ${
                       file
-                        ? "border-emerald-500/50 bg-emerald-500/10 text-[#1E293B] dark:text-[#E7ECF3]"
+                        ? "!border-emerald-500/50 !bg-emerald-500/10 !text-[#1E293B] dark:!text-[#E7ECF3]"
                         : fileMissing
-                        ? "border-[#E11D48] bg-rose-50/50 text-[#E11D48] dark:bg-rose-950/20"
-                        : "border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] hover:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#94A3B8] dark:hover:border-[#8B84FF]"
+                        ? "!border-[#E11D48] !bg-rose-50/50 !text-[#E11D48] dark:!bg-rose-950/20"
+                        : "!border-[#CBD5E1] !bg-[#F8FAFC] !text-[#64748B] hover:!border-[#4F46E5] dark:!border-[#1F2937] dark:!bg-[#0E1524] dark:text-[#94A3B8] dark:hover:!border-[#8B84FF]"
                     }`}
                   >
                     {file ? (
@@ -527,7 +615,7 @@ export default function Approver2() {
                     <span className="shrink-0 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                       {file ? `${(file.size / 1024).toFixed(0)} KB` : "or drag it here"}
                     </span>
-                  </button>
+                  </Button>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -550,60 +638,60 @@ export default function Approver2() {
                       </span>
                     )}
                   </div>
-                  <select
-                    value={month}
-                    onChange={(e) => {
+                  <Eselect
+                    name="month"
+                    option={MONTHS}
+                    initialValue={month}
+                    placeholder="Select month"
+                    handleInputChange={(_name, val) => {
                       clearMessages();
-                      setMonth(e.target.value);
+                      setMonth(val || "");
                     }}
-                    className={`${fieldBase} ${
-                      monthMissing ? "border-[#E11D48] ring-1 ring-[#E11D48]/30 focus:border-[#E11D48]" : ""
+                    className={`!h-[38px] !min-h-[38px] !rounded-xl !text-[12.5px] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none focus-within:!ring-0 ${
+                      monthMissing
+                        ? "!border-[#E11D48] ring-1 ring-[#E11D48]/30"
+                        : "!border-[#CBD5E1] dark:!border-[#1F2937] focus-within:!border-[#4F46E5]"
                     }`}
-                  >
-                    <option value="">Select month</option>
-                    {MONTHS.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Year */}
                 <div className="flex min-w-0 flex-col gap-[5px]">
                   <span className={sectionLabel}>Year</span>
-                  <select
-                    value={year}
-                    onChange={(e) => {
+                  <Eselect
+                    name="year"
+                    option={getYearOptions().map((y) => ({ label: y, value: y }))}
+                    initialValue={year}
+                    handleInputChange={(_name, val) => {
                       clearMessages();
-                      setYear(e.target.value);
+                      setYear(val || "");
                     }}
-                    className={fieldBase}
-                  >
-                    {getYearOptions().map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
+                    className="!h-[38px] !min-h-[38px] !rounded-xl !text-[12.5px] !border-[#CBD5E1] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
+                  />
                 </div>
 
                 {/* Import */}
-                <button
+                <Button
                   type="button"
                   disabled={importing}
                   onClick={runImport}
-                  className={`flex h-9 items-center justify-center gap-[7px] rounded-[9px] px-[17px] text-[12.5px] font-semibold text-white transition ${
+                  className={`!flex !h-[38px] !items-center !justify-center !gap-[7px] !rounded-xl !px-[17px] !text-[12.5px] !font-semibold !text-white transition !shadow-none active:!scale-95 ${
                     importing
-                      ? "cursor-not-allowed bg-[#4F46E5]/70"
+                      ? "cursor-not-allowed !bg-[#4F46E5]/70"
                       : importReady
-                      ? "cursor-pointer bg-[#4F46E5] hover:brightness-110"
-                      : "cursor-pointer bg-[#64748B] hover:brightness-110"
+                      ? "cursor-pointer !bg-[#4F46E5] hover:!brightness-110"
+                      : "cursor-pointer !bg-[#475569] hover:!bg-[#334155]"
                   }`}
+                  icon={
+                    importing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )
+                  }
                 >
-                  {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                   {importing ? "Importing…" : hasImported ? "Re-import" : "Import"}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -633,146 +721,76 @@ export default function Approver2() {
                     const active = tab === t.key;
                     const activeTone =
                       t.key === "ok"
-                        ? "border-[#4F46E5] bg-[#EEF2FF] text-[#4F46E5] dark:border-[#8B84FF] dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                        : "border-[#E11D48] bg-rose-50 text-[#E11D48] dark:border-rose-500 dark:bg-rose-950/40 dark:text-rose-300";
+                        ? "!border-[#4F46E5] !bg-[#EEF2FF] !text-[#4F46E5] dark:!border-[#8B84FF] dark:!bg-[#1E1B4B] dark:!text-[#8B84FF]"
+                        : "!border-[#E11D48] !bg-rose-50 !text-[#E11D48] dark:!border-rose-500 dark:!bg-rose-950/40 dark:!text-rose-300";
                     return (
-                      <button
+                      <Button
                         key={t.key}
                         type="button"
+                        variant="ghost"
                         onClick={() => {
                           setTab(t.key);
                           setQuery("");
                         }}
-                        className={`flex items-center gap-2 whitespace-nowrap rounded-[9px] border px-3 py-[6px] text-[12.5px] font-semibold transition ${
+                        className={`!flex !h-[33px] !items-center !gap-2 whitespace-nowrap !rounded-[9px] !border !px-3 !py-[6px] !text-[12.5px] !font-semibold transition !shadow-none active:!scale-100 ${
                           active
                             ? activeTone
-                            : "border-[#E2E8F0] bg-white text-[#1E293B] hover:bg-[#F8FAFC] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+                            : "!border-[#E2E8F0] !bg-white !text-[#1E293B] hover:!bg-[#F8FAFC] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#E7ECF3] dark:hover:!bg-[#182235]"
                         }`}
                       >
                         <span className="h-2 w-2 rounded-full" style={{ background: t.dot }} />
                         {t.label}
                         <span className="tabular-nums text-[#64748B] dark:text-[#94A3B8]">{t.count}</span>
-                      </button>
+                      </Button>
                     );
                   })}
 
                   <div className="flex-1" />
 
                   <div className="relative w-full sm:w-[200px]">
-                    <Search className="absolute left-[9px] top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
-                    <input
-                      type="search"
+                    <Search className="pointer-events-none absolute left-[9px] top-1/2 z-10 h-[14px] w-[14px] -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
+                    <Einput
+                      name="search"
+                      type="text"
+                      hideLabel
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search rows"
-                      className="h-8 w-full rounded-[9px] border border-[#E2E8F0] bg-white pl-[30px] pr-[10px] text-[12px] text-[#1E293B] outline-none placeholder:text-[#64748B]/70 focus:border-[#4F46E5] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#E7ECF3] dark:focus:border-[#8B84FF]"
+                      wrapperClassName="w-full"
+                      className="!h-8 !w-full !rounded-[9px] !border-[#E2E8F0] !bg-white !pl-[30px] !pr-[10px] !text-[12px] !text-[#1E293B] placeholder:!text-[#64748B]/70 focus-visible:!ring-0 focus-visible:!border-[#4F46E5] dark:!border-[#1F2937] dark:!bg-[#0E1524] dark:!text-[#E7ECF3] dark:focus-visible:!border-[#8B84FF] !shadow-none"
                     />
                   </div>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={handleExportExcel}
                     disabled={isExcelLoading}
-                    className={smallGhostBtn}
+                    className="!flex !h-8 !shrink-0 !items-center !gap-1.5 whitespace-nowrap !rounded-[9px] !border !border-[#E2E8F0] !bg-white !px-3 !py-[7px] !text-[12px] !font-[550] !text-[#1E293B] transition hover:!bg-[#F1F5F9] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#E7ECF3] dark:hover:!bg-[#182235] !shadow-none active:!scale-100"
+                    icon={
+                      isExcelLoading ? (
+                        <Loader2 className="h-[14px] w-[14px] animate-spin" />
+                      ) : (
+                        <Download className="h-[14px] w-[14px]" />
+                      )
+                    }
                   >
-                    {isExcelLoading ? (
-                      <Loader2 className="h-[14px] w-[14px] animate-spin" />
-                    ) : (
-                      <Download className="h-[14px] w-[14px]" />
-                    )}
                     {isExcelLoading ? "Exporting…" : "Export"}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Table */}
-                <div className="max-h-[430px] overflow-auto">
-                  <table className="w-full border-separate border-spacing-0 text-[12.5px]">
-                    <thead>
-                      <tr>
-                        {[
-                          { label: "Row", align: "text-left" },
-                          { label: "Emp code", align: "text-left" },
-                          { label: "Employee", align: "text-left" },
-                          { label: "Date", align: "text-left" },
-                          { label: "In", align: "text-right" },
-                          { label: "Out", align: "text-right" },
-                          { label: tab === "bad" ? "Reason" : "Result", align: "text-left" },
-                        ].map((c) => (
-                          <th
-                            key={c.label}
-                            className={`sticky top-0 z-[5] whitespace-nowrap border-b border-[#E2E8F0] bg-[#F8FAFC] px-3 py-[9px] text-[10.5px] font-[650] uppercase tracking-[0.05em] text-[#64748B] dark:border-[#1F2937] dark:bg-[#0E1524] dark:text-[#94A3B8] ${c.align}`}
-                          >
-                            {c.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visible.map((r, i) => (
-                        <tr key={i} className="transition hover:bg-[#F1F5F9] dark:hover:bg-[#182235]">
-                          <td className="whitespace-nowrap border-b border-[#E2E8F0] px-3 py-[9px] text-[11.5px] text-[#64748B] dark:border-[#1F2937] dark:text-[#94A3B8]">
-                            {getLine(r, i)}
-                          </td>
-                          <td className="whitespace-nowrap border-b border-[#E2E8F0] px-3 py-[9px] font-[550] dark:border-[#1F2937]">
-                            {getCode(r) || "—"}
-                          </td>
-                          <td className="min-w-[170px] border-b border-[#E2E8F0] px-3 py-[9px] dark:border-[#1F2937]">
-                            <span className="block truncate font-[550]">{getName(r) || "—"}</span>
-                            <span className="mt-[2px] block text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                              {getLocation(r) || "—"}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap border-b border-[#E2E8F0] px-3 py-[9px] text-[#64748B] dark:border-[#1F2937] dark:text-[#94A3B8]">
-                            {getDate(r) || "—"}
-                          </td>
-                          <td className="whitespace-nowrap border-b border-[#E2E8F0] px-3 py-[9px] text-right font-[550] dark:border-[#1F2937]">
-                            {getIn(r) || "—"}
-                          </td>
-                          <td className="whitespace-nowrap border-b border-[#E2E8F0] px-3 py-[9px] text-right font-[550] dark:border-[#1F2937]">
-                            {getOut(r) || "—"}
-                          </td>
-                          <td className="min-w-[210px] border-b border-[#E2E8F0] px-3 py-[9px] dark:border-[#1F2937]">
-                            {getReason(r) ? (
-                              <span
-                                className="inline-block rounded-full px-2 py-[3px] text-[10.5px] font-bold"
-                                style={{ color: reasonColor, background: `${reasonColor}1F` }}
-                              >
-                                {getReason(r)}
-                              </span>
-                            ) : (
-                              <span className="text-[#64748B] dark:text-[#94A3B8]">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  {visible.length === 0 && (
-                    <div className="px-5 py-12 text-center">
-                      <div className="mx-auto grid h-10 w-10 place-items-center rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] dark:border-[#1F2937] dark:bg-[#0E1524]">
-                        {query.trim() ? (
-                          <Search className="h-5 w-5 text-[#64748B] dark:text-[#94A3B8]" />
-                        ) : tab === "bad" ? (
-                          <CheckCheck className="h-5 w-5 text-[#10B981]" />
-                        ) : (
-                          <Inbox className="h-5 w-5 text-[#64748B] dark:text-[#94A3B8]" />
-                        )}
-                      </div>
-                      <h4 className="mt-3 text-[13px] font-[600]">
-                        {query.trim()
-                          ? "No row matches that search"
-                          : tab === "bad"
-                          ? "No rejected rows"
-                          : "No imported rows"}
-                      </h4>
-                      {query.trim() && (
-                        <p className="mt-1 text-[12px] text-[#64748B] dark:text-[#94A3B8]">
-                          Clear the search to see all rows.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                <div className="overflow-hidden">
+                  <ReactTable
+                    columns={tableColumns}
+                    data={visible}
+                    height={430}
+                    showTopSearch={false}
+                    showExcelExport={false}
+                    initialPageSize={50}
+                    showPageSizeInFooter={true}
+                    containerClassName="!border-none !shadow-none !rounded-none !bg-transparent"
+                  />
                 </div>
 
                 {/* Footer */}
@@ -783,15 +801,16 @@ export default function Approver2() {
                   </span>
 
                   {tab === "bad" && errored.length > 0 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={handleDownloadFailedExcel}
                       disabled={isExcelLoading}
-                      className="flex items-center gap-1.5 rounded-[9px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] font-[550] text-[#1E293B] transition hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:bg-[#111827] dark:text-[#E7ECF3] dark:hover:bg-[#182235]"
+                      className="!flex !h-8 !items-center !gap-1.5 !rounded-[9px] !border-[#E2E8F0] !bg-white !px-3 !py-2 !text-[12px] !font-[550] !text-[#1E293B] transition hover:!bg-[#F1F5F9] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#E7ECF3] dark:hover:!bg-[#182235] !shadow-none active:!scale-100"
+                      icon={<FileDown className="h-3.5 w-3.5 text-[#E11D48]" />}
                     >
-                      <FileDown className="h-3.5 w-3.5 text-[#E11D48]" />
                       Download failed rows
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

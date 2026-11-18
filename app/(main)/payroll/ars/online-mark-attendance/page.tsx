@@ -7,7 +7,6 @@ import { useCurrentUser } from "@/app/hooks/use-current-user";
 import { useSecureStorage } from "@/app/hooks/comp-key-data";
 import FileViewer from "@/components/atoms/Fileviewer";
 import HashloaderComponent from "@/components/Templates/hashloader";
-import ReactTable from "@/components/Templates/reacttable";
 import AttendanceDataTable from "./components/AttendanceDataTable";
 import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
@@ -2729,12 +2728,15 @@ export default function OnlineMarkAttendancePage() {
               }
               subtitle="Sample records for illustration. Rows are coloured by status, with rejected rows first in priority."
               headerSearch={
-                <input
+                <Einput
                   type="text"
+                  name="tableSearch"
+                  hideLabel
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
                   placeholder="Search rows..."
-                  className="h-8 px-2.5 w-56 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-medium focus:outline-none focus:border-indigo-500 transition-all shadow-2xs backdrop-blur-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                  wrapperClassName="w-56"
+                  className="!h-8 !px-2.5 rounded-xl border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-medium focus-visible:border-indigo-500 shadow-2xs backdrop-blur-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               }
               headerStats={
@@ -2767,27 +2769,33 @@ export default function OnlineMarkAttendancePage() {
                     <span className="h-4 w-px bg-indigo-300 dark:bg-indigo-700" />
 
                     <div className="flex items-center gap-2">
-                      <input
+                      <Einput
                         type="time"
+                        name="bulkIn"
+                        hideLabel
                         value={bulkIn}
                         onChange={(e) => setBulkIn(e.target.value)}
                         disabled={
                           isLeaveReasonBulk(bulkReason, leaveTypeValues) ||
                           isFixedBulk(bulkReason, MPList)
                         }
-                        className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
+                        wrapperClassName="w-24"
+                        className="!h-8 !px-2 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
                         title="Bulk In Time"
                       />
                       <span className="text-xs text-slate-400">–</span>
-                      <input
+                      <Einput
                         type="time"
+                        name="bulkOut"
+                        hideLabel
                         value={bulkOut}
                         onChange={(e) => setBulkOut(e.target.value)}
                         disabled={
                           isLeaveReasonBulk(bulkReason, leaveTypeValues) ||
                           isFixedBulk(bulkReason, MPList)
                         }
-                        className="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
+                        wrapperClassName="w-24"
+                        className="!h-8 !px-2 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50"
                         title="Bulk Out Time"
                       />
                     </div>
@@ -2818,12 +2826,15 @@ export default function OnlineMarkAttendancePage() {
                       ))}
                     </select>
 
-                    <input
+                    <Einput
                       type="text"
+                      name="bulkSplRemark"
+                      hideLabel
                       value={bulkSplRemark}
                       onChange={(e) => setBulkSplRemark(e.target.value)}
                       placeholder="Payroll remark (optional)"
-                      className="h-8 px-2 w-48 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                      wrapperClassName="w-48"
+                      className="!h-8 !px-2 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
                     />
 
                     <div className="flex items-center gap-2 ml-auto">

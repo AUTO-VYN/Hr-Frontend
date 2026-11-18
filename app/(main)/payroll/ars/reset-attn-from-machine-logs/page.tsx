@@ -5,6 +5,8 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import HashloaderComponent from "@/components/Templates/hashloader";
+import Button from "@/components/atoms/Button";
+import Einput from "@/components/atoms/Einput";
 import {
   Search,
   Check,
@@ -501,14 +503,17 @@ export default function ResetAttnFromMachineLogsPage() {
               </div>
 
               {/* Search input with clean focus ring */}
-              <div className="relative flex items-center mb-3">
-                <Search size={14} className="absolute left-3 text-[#94A3B8] pointer-events-none" />
-                <input
+              <div className="relative mb-3">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#94A3B8] pointer-events-none" />
+                <Einput
+                  name="locSearch"
                   type="text"
+                  hideLabel
                   placeholder="Search branches"
                   value={locSearch}
                   onChange={(e) => setLocSearch(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0E1524] border border-[#E2E8F0] dark:border-[#1F2937] rounded-lg pl-8 pr-3 py-1.5 text-[12.5px] text-[#0F172A] dark:text-[#E7ECF3] outline-none focus:border-[#6366F1] focus:ring-1 focus:ring-[#6366F1]/30 transition-all placeholder:text-[#94A3B8]"
+                  wrapperClassName="w-full"
+                  className="!w-full !bg-white dark:!bg-[#0E1524] !border-[#E2E8F0] dark:!border-[#1F2937] !rounded-lg !pl-8 !pr-3 !py-1.5 !h-[33px] !text-[12.5px] !text-[#0F172A] dark:!text-[#E7ECF3] focus-visible:!ring-1 focus-visible:!ring-[#6366F1]/30 focus-visible:!border-[#6366F1] !shadow-none placeholder:!text-[#94A3B8]"
                 />
               </div>
 

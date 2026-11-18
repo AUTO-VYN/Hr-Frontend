@@ -38,6 +38,8 @@ type Props = {
 
   rightElement?: React.ReactNode;
   labelClassName?: string;
+  hideChevron?: boolean;
+  showBadges?: boolean;
 };
 
 const Eselect = ({
@@ -60,6 +62,8 @@ const Eselect = ({
   placeholder = "Select",
   rightElement,
   labelClassName,
+  hideChevron,
+  showBadges,
 }: Props) => {
   const [inputValue, setInputValue] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
@@ -557,18 +561,42 @@ const Eselect = ({
           className
         )}
       >
-        <div className={cn("truncate", selectedOptions.length ? "" : "text-slate-400")}>
-          {selectedOptions.length
-            ? checkbox && selectedOptions.length === option.length && option.length > 1
+        <div className={cn("truncate flex items-center gap-1.5 flex-wrap min-w-0 flex-1", selectedOptions.length ? "" : "text-slate-400")}>
+          {(isMulti || showBadges) && selectedOptions.length ? (
+            <>
+              {selectedOptions.map((o) => (
+                <span
+                  key={String(o.value)}
+                  className="inline-flex items-center gap-1 rounded-[5px] bg-[#EEF2FF] px-2 py-0.5 text-[11.5px] font-semibold text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF] shrink-0"
+                >
+                  {o.label}
+                  <span
+                    role="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(o);
+                    }}
+                    className="hover:text-red-500 cursor-pointer ml-0.5 text-[12px] font-bold leading-none"
+                  >
+                    ×
+                  </span>
+                </span>
+              ))}
+              <span className="text-slate-400 text-[12px] truncate">{placeholder}</span>
+            </>
+          ) : selectedOptions.length ? (
+            checkbox && selectedOptions.length === option.length && option.length > 1
               ? `All Selected (${option.length})`
               : selectedOptions.map((o) => o.label).join(", ")
-            : placeholder}
+          ) : (
+            placeholder
+          )}
         </div>
 
-        {!disabled ? (
+        {!disabled && !hideChevron ? (
           <BiChevronDown
             size={18}
-            className={cn("text-slate-500 transition", open && "rotate-180")}
+            className={cn("text-slate-500 transition shrink-0 ml-1", open && "rotate-180")}
           />
         ) : null}
 
