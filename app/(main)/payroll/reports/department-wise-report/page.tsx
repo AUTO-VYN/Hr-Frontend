@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 import AButton from "@/components/atoms/Button";
 import Eselect from "@/components/atoms/Eselect";
-import EselectAll from "./EselectAll";
 import HashloaderComponent from "@/components/Templates/hashloader";
 
 // --------------------------------------------------
@@ -716,7 +715,7 @@ export default function DepartmentWiseReportPage() {
             {/* DEPARTMENT */}
             <div className="flex min-w-0 flex-col">
               <div className="min-h-[20px]">
-                <EselectAll
+                <Eselect
                   title="Department"
                   name="department"
                   option={departmentOptions}
@@ -732,6 +731,7 @@ export default function DepartmentWiseReportPage() {
                     );
                   }}
                   className="w-full h-[42px]"
+                  checkbox
                 />
               </div>
             </div>
