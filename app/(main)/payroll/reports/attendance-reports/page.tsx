@@ -87,13 +87,20 @@ const getArray = (value: any): any[] => {
 };
 
 const getResponseRows = (response: any): any[] => {
+  const data = response?.data;
+
   const candidates = [
-    response?.data?.data,
-    response?.data?.Data,
-    response?.data?.result,
-    response?.data?.Result,
-    response?.data?.recordset,
-    response?.data,
+    data?.data,
+    data?.Data,
+    data?.result,
+    data?.Result,
+    data?.recordset,
+    data?.recordsets?.[0],
+    data?.employees,
+    data?.Employees,
+    data?.employee,
+    data?.Employee,
+    data,
   ];
 
   for (const item of candidates) {
@@ -106,6 +113,11 @@ const getResponseRows = (response: any): any[] => {
         item.result,
         item.Result,
         item.recordset,
+        item.recordsets?.[0],
+        item.employees,
+        item.Employees,
+        item.employee,
+        item.Employee,
       ];
 
       for (const value of nested) {
@@ -171,32 +183,30 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+
 const getMonthDates = (year: string, month: string) => {
   const selectedYear = Number(year);
   const selectedMonth = Number(month);
 
-  // October: 26 September to 25 October
-  if (selectedMonth === 10) {
-    return {
-      dateFrom: formatDate(new Date(selectedYear, 8, 26)),
-      dateTo: formatDate(new Date(selectedYear, 9, 25)),
-    };
-  }
-
-  // November: 26 October to 25 November
-  if (selectedMonth === 11) {
+  // October aur November dono ke liye same attendance period
+  if (selectedMonth === 10 || selectedMonth === 11) {
     return {
       dateFrom: formatDate(new Date(selectedYear, 9, 26)),
       dateTo: formatDate(new Date(selectedYear, 10, 25)),
     };
   }
 
-  // Remaining months: normal calendar dates
+  // Baaki months ke liye normal calendar period
   return {
-    dateFrom: formatDate(new Date(selectedYear, selectedMonth - 1, 1)),
-    dateTo: formatDate(new Date(selectedYear, selectedMonth, 0)),
+    dateFrom: formatDate(
+      new Date(selectedYear, selectedMonth - 1, 1)
+    ),
+    dateTo: formatDate(
+      new Date(selectedYear, selectedMonth, 0)
+    ),
   };
 };
+
 
 const REPORTS: ReportItem[] = [
   {
@@ -324,7 +334,7 @@ export default function AttendanceReportsPage() {
   const [employeeCode, setEmployeeCode] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [employeeType, setEmployeeType] = useState("Regular");
+  const [employeeType, setEmployeeType] = useState("1");
   const [leftEmployees, setLeftEmployees] = useState("0");
 
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
@@ -345,47 +355,47 @@ export default function AttendanceReportsPage() {
   const [departmentSearch, setDepartmentSearch] = useState("");
   const [designationSearch, setDesignationSearch] = useState("");
 
-const postApi = useCallback(
-  async (path: string, payload: any) => {
-    if (!API_URL) {
-      throw new Error("NEXT_PUBLIC_URL is not configured.");
-    }
+  const postApi = useCallback(
+    async (path: string, payload: any) => {
+      if (!API_URL) {
+        throw new Error("NEXT_PUBLIC_URL is not configured.");
+      }
 
-    if (!user?.Comp_Code) {
-      throw new Error("Company code is not ready.");
-    }
+      if (!user?.Comp_Code) {
+        throw new Error("Company code is not ready.");
+      }
 
-    return axios.post(`${API_URL}${path}`, payload, {
-      headers: {
-        compcode: user.Comp_Code,
-        name: user?.name || "",
-        token: user?.email || "",
-      },
-    });
-  },
-  [user?.Comp_Code, user?.name, user?.email],
-);
+      return axios.post(`${API_URL}${path}`, payload, {
+        headers: {
+          compcode: user.Comp_Code,
+          name: user?.name || "",
+          token: user?.email || "",
+        },
+      });
+    },
+    [user?.Comp_Code, user?.name, user?.email],
+  );
 
-const getApi = useCallback(
-  async (path: string) => {
-    if (!API_URL) {
-      throw new Error("NEXT_PUBLIC_URL is not configured.");
-    }
+  const getApi = useCallback(
+    async (path: string) => {
+      if (!API_URL) {
+        throw new Error("NEXT_PUBLIC_URL is not configured.");
+      }
 
-    if (!user?.Comp_Code) {
-      throw new Error("Company code is not ready.");
-    }
+      if (!user?.Comp_Code) {
+        throw new Error("Company code is not ready.");
+      }
 
-    return axios.get(`${API_URL}${path}`, {
-      headers: {
-        compcode: user.Comp_Code,
-        name: user?.name || "",
-        token: user?.email || "",
-      },
-    });
-  },
-  [user?.Comp_Code, user?.name, user?.email],
-);
+      return axios.get(`${API_URL}${path}`, {
+        headers: {
+          compcode: user.Comp_Code,
+          name: user?.name || "",
+          token: user?.email || "",
+        },
+      });
+    },
+    [user?.Comp_Code, user?.name, user?.email],
+  );
 
   const handleInputChange = (name: string, value: any) => {
     const selectedValue = String(value ?? "");
@@ -427,7 +437,7 @@ const getApi = useCallback(
     setEmployeeCode("");
     setEmployeeSearch("");
     setSelectedEmployee(null);
-    setEmployeeType("Regular");
+    setEmployeeType("1");
     setLeftEmployees("0");
   };
 
@@ -585,69 +595,72 @@ const getApi = useCallback(
     };
   }, [fetchEmployees, user?.Comp_Code, user?.branch]);
 
-  const employeeOptions = useMemo(() => {
-    return employees
-      .map((item: any) => {
-        const code = getText(
-          item?.EMPCODE,
-          item?.EmpCode,
-          item?.EmployeeCode,
-          item?.Emp_Code,
-          item?.value,
-          item?.Code,
-        );
+const employeeOptions = useMemo(() => {
+  return employees
+    .map((item: any) => {
+      const code = getText(
+        item?.EMPCODE,
+        item?.EmpCode,
+        item?.EmployeeCode,
+        item?.Emp_Code,
+        item?.Employee_Code,
+        item?.EMP_CODE,
+        item?.Emp_Code_No,
+        item?.Employee_Code_No,
+        item?.value,
+        item?.Code,
+      );
 
-        const directName = getText(
-          item?.EmployeeName,
-          item?.EmpName,
-          item?.EMP_NAME,
-          item?.Emp_Name,
-          item?.Name,
-          item?.name,
-        );
+      const directName = getText(
+        item?.EmployeeName,
+        item?.EmpName,
+        item?.EMP_NAME,
+        item?.Emp_Name,
+        item?.Employee_Name,
+        item?.EMPLOYEE_NAME,
+        item?.Name,
+        item?.name,
+      );
 
-        const rawLabel = getText(item?.label);
+      const rawLabel = getText(item?.label);
 
-        // Agar API label mein "CODE | NAME" bhej rahi hai
-        let name = directName;
+      let name = directName;
 
-        if (!name && rawLabel) {
-          if (rawLabel.includes("|")) {
-            name = rawLabel.split("|").slice(1).join("|").trim();
-          } else if (code && rawLabel.startsWith(code)) {
-            name = rawLabel
-              .slice(code.length)
-              .replace(/^[\s-]+/, "")
-              .trim();
-          } else {
-            name = rawLabel;
-          }
+      if (!name && rawLabel) {
+        if (rawLabel.includes("|")) {
+          name = rawLabel.split("|").slice(1).join("|").trim();
+        } else if (code && rawLabel.startsWith(code)) {
+          name = rawLabel
+            .slice(code.length)
+            .replace(/^[\s-]+/, "")
+            .trim();
+        } else {
+          name = rawLabel;
         }
+      }
 
-        if (!code) return null;
+      if (!code) return null;
 
-        return {
-          value: code,
-          label: name ? `${code} - ${name}` : code,
-          raw: item,
-        };
-      })
-      .filter(Boolean) as (Option & { raw: any })[];
-  }, [employees]);
+      return {
+        value: code,
+        label: name ? `${code} - ${name}` : code,
+        raw: item,
+      };
+    })
+    .filter(Boolean) as (Option & { raw: any })[];
+}, [employees]);
 
-  const filteredEmployees = useMemo(() => {
-    const search = employeeSearch.trim().toLowerCase();
+ const filteredEmployees = useMemo(() => {
+  const search = employeeSearch.trim().toLowerCase();
 
-    if (!search) return employeeOptions.slice(0, 30);
+  if (!search) return employeeOptions;
 
-    return employeeOptions
-      .filter(
-        (item) =>
-          item.value.toLowerCase().includes(search) ||
-          item.label.toLowerCase().includes(search),
-      )
-      .slice(0, 30);
-  }, [employeeOptions, employeeSearch]);
+  return employeeOptions.filter(
+    (item) =>
+      item.value.toLowerCase().includes(search) ||
+      item.label.toLowerCase().includes(search),
+  );
+}, [employeeOptions, employeeSearch]);
 
   const selectEmployee = (code: string) => {
     const selected = employeeOptions.find((item) => item.value === code);
@@ -776,94 +789,107 @@ const getApi = useCallback(
     };
   };
 
- const downloadBlob = async (
-  blob: Blob,
-  fileName: string,
-  format: "XLS" | "PDF",
-) => {
-  if (!(blob instanceof Blob)) {
-    throw new Error("Invalid file response received from server.");
-  }
-
-  const buffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-
-  if (format === "PDF") {
-    const signature = new TextDecoder().decode(bytes.slice(0, 5));
-
-    if (signature !== "%PDF-") {
-      throw new Error("Server did not return a valid PDF file.");
+  const downloadBlob = async (
+    blob: Blob,
+    fileName: string,
+    format: "XLS" | "PDF",
+  ) => {
+    if (!(blob instanceof Blob)) {
+      throw new Error("Invalid file response received from server.");
     }
-  } else {
-    const contentType = blob.type || "";
 
-    if (
-      contentType.includes("application/json") ||
-      contentType.includes("text/")
-    ) {
-      const responseText = await blob.text();
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
 
-      throw new Error(responseText || "Report download failed.");
+    if (format === "PDF") {
+      const signature = new TextDecoder().decode(bytes.slice(0, 5));
+
+      if (signature !== "%PDF-") {
+        throw new Error("Server did not return a valid PDF file.");
+      }
+    } else {
+      const contentType = blob.type || "";
+
+      if (
+        contentType.includes("application/json") ||
+        contentType.includes("text/")
+      ) {
+        const responseText = await blob.text();
+
+        throw new Error(responseText || "Report download failed.");
+      }
     }
-  }
 
-  const mimeType =
-    format === "PDF"
-      ? "application/pdf"
-      : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const mimeType =
+      format === "PDF"
+        ? "application/pdf"
+        : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-  const finalBlob = new Blob([buffer], { type: mimeType });
-  const url = window.URL.createObjectURL(finalBlob);
-  const link = document.createElement("a");
+    const finalBlob = new Blob([buffer], { type: mimeType });
+    const url = window.URL.createObjectURL(finalBlob);
+    const link = document.createElement("a");
 
-  link.href = url;
-  link.download = fileName;
+    link.href = url;
+    link.download = fileName;
 
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-};
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+  };
 
- 
+
+
 
 
 const handleDownload = async (
   report: ReportItem,
-  format: "XLS" | "PDF",
+  format: "XLS" | "PDF"
 ) => {
-  if (!dateFrom || !dateTo) {
-    Swal.fire({
-      icon: "warning",
-      title: "Select date range",
-      text: "Please select both Date from and Date to.",
-    });
-    return;
-  }
-
-  if (dateFrom > dateTo) {
-    Swal.fire({
-      icon: "warning",
-      title: "Invalid date range",
-      text: "Date from cannot be greater than Date to.",
-    });
-    return;
-  }
+  const key = `${report.id}-${format}`;
 
   if (!user?.Comp_Code) {
     Swal.fire({
       icon: "warning",
-      title: "Please wait",
-      text: "Company information is still loading.",
+      title: "User details missing",
+      text: "Please login again and try.",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2500,
     });
     return;
   }
 
-  const downloadKey = `${report.id}-${format}`;
+  if (!dateFrom || !dateTo) {
+    Swal.fire({
+      icon: "warning",
+      title: "Select date range",
+      text: "Please select both From Date and To Date.",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2500,
+    });
+    return;
+  }
+
+  if (new Date(dateFrom) > new Date(dateTo)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Invalid date range",
+      text: "From Date cannot be greater than To Date.",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2500,
+    });
+    return;
+  }
 
   try {
-    setDownloading(downloadKey);
+    setDownloading(key);
 
     const payload = getReportPayload(report);
 
@@ -871,172 +897,250 @@ const handleDownload = async (
       report.id === "attendance-single" ||
       report.id === "attendance-multi";
 
-    const isOvertime = report.id === "overtime";
+    const postReportIds = [
+      "mobile-attendance",
+      "daily-attendance",
+      "machine-punching",
+      "without-inout",
+      "attendance-inout",
+      "overtime",
+      "gate-pass",
+      "outdoor-transaction",
+      "daily-overtime",
+    ];
 
     const commonHeaders = {
       compcode: user.Comp_Code,
-      name: user?.name || "",
-      token: user?.email || "",
+      name: user.name || "",
+      token: user.email || "",
     };
 
-    let response;
+    const outputFormat =
+      format === "PDF" ? "pdf" : "excel";
+
+    let response: any;
 
     // ==========================================
-    // ATTENDANCE REPORT API
+    // ATTENDANCE SINGLE / MULTI REPORT
     // ==========================================
+  
+if (isAttendance) {
+  const attendancePayload = {
+    reporttype: report.reportType,
+    dateFrom: payload.dateFrom,
+    dateto: payload.dateto,
+    compcode: user.Comp_Code,
+    region: payload.region || "",
+    channel: payload.channel || "",
+    Cluster: payload.Cluster || "",
+    LeftEmp: String(payload.LeftEmp),
+    department: payload.department || "",
+    designation: payload.designation || "",
+    empcode: payload.empcode || "",
+    emptype: String(payload.emptype),
+    location: Number(payload.location) || Number(user?.branch) || 1,
+    section: payload.section || "",
+    user_location: 0,
+  };
 
-    if (isAttendance) {
-      const attendancePayload = {
-        ...payload,
-        reporttype: report.reportType,
+  response = await axios.post(
+    `${API_URL}${report.endpoint}?compcode=${user.Comp_Code}`,
+    attendancePayload,
+    {
+      headers: commonHeaders,
+      responseType: "blob",
+    }
+  );
+}
+
+
+    // ==========================================
+    // OTHER POST REPORTS
+    // ==========================================
+    else if (postReportIds.includes(report.id)) {
+      const commonReportPayload: any = {
+        dateFrom: payload.dateFrom,
+        dateto: payload.dateto,
         compcode: user.Comp_Code,
-        output: format === "PDF" ? "pdf" : "excel",
+        region: payload.region,
+        channel: payload.channel,
+        Cluster: payload.Cluster,
         LeftEmp: String(payload.LeftEmp),
-        location: payload.location || Number(user?.branch) || 1,
+        department: payload.department,
+        empcode: payload.empcode,
+        emptype: String(payload.emptype),
+        location:
+          payload.location || Number(user?.branch) || 1,
+        section: payload.section,
         user_location: 0,
       };
 
+      // Designation required reports
+      if (
+        report.id === "mobile-attendance" ||
+        report.id === "daily-attendance" ||
+        report.id === "machine-punching" ||
+        report.id === "without-inout" ||
+        report.id === "overtime"
+      ) {
+        commonReportPayload.designation =
+          payload.designation;
+      }
+
+      // Without In-Out
+      if (report.id === "without-inout") {
+        commonReportPayload.reporttype = 2;
+        commonReportPayload.InoutTime = 1;
+      }
+
+      // Overtime
+      if (report.id === "overtime") {
+        commonReportPayload.reporttype = 2;
+      }
+
       response = await axios.post(
         `${API_URL}${report.endpoint}?compcode=${user.Comp_Code}`,
-        attendancePayload,
+        commonReportPayload,
         {
           headers: commonHeaders,
-          responseType: format === "PDF" ? "json" : "blob",
-        },
+          responseType: "blob",
+        }
       );
-    } else {
-      // ==========================================
-      // OTHER XLS REPORTS
-      // ==========================================
+    }
 
-      const requestParams = {
-        ...payload,
-        compcode: user.Comp_Code,
-
-        ...(isOvertime
-          ? {
-              reporttype: 2,
-              location:
-                payload.location ||
-                Number(user?.branch) ||
-                1,
-              user_location: 0,
-              LeftEmp: String(payload.LeftEmp),
-            }
-          : {}),
-      };
-
+    // ==========================================
+    // OTHER GET REPORTS
+    // ==========================================
+    else {
       response = await axios.get(
         `${API_URL}${report.endpoint}`,
         {
-          params: requestParams,
+          params: {
+            ...payload,
+            compcode: user.Comp_Code,
+          },
           headers: commonHeaders,
           responseType: "blob",
-        },
+        }
       );
     }
 
     // ==========================================
-    // FILE NAME
+    // RESPONSE VALIDATION
     // ==========================================
-
-    const extension = format === "PDF" ? "pdf" : "xlsx";
-
-    const safeName = report.title
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "_");
-
-    const fileName = `${safeName}_${dateFrom}_${dateTo}.${extension}`;
-
-    // ==========================================
-    // ATTENDANCE PDF USING pdf-lib
-    // ==========================================
-
-    if (isAttendance && format === "PDF") {
-      const reportData = response.data;
-
-      if (
-        !reportData ||
-        !Array.isArray(reportData.rows)
-      ) {
-        throw new Error(
-          reportData?.Message ||
-            reportData?.message ||
-            reportData?.error ||
-            "Attendance report data is not available.",
-        );
-      }
-
-      if (reportData.rows.length === 0) {
-        throw new Error(
-          "No attendance records found for the selected filters.",
-        );
-      }
-
+    if (!response?.data) {
       throw new Error(
-        "Please connect the existing AttendancePDFDownloader pdf-lib generator.",
+        "No report data received from server."
       );
     }
 
+    // Check whether API returned an error instead of a file
+    if (
+      response.data instanceof Blob &&
+      response.data.type.includes("application/json")
+    ) {
+      const errorText = await response.data.text();
+
+      try {
+        const errorData = JSON.parse(errorText);
+
+        throw new Error(
+          errorData?.message ||
+          errorData?.Message ||
+          errorData?.error ||
+          "Report generation failed."
+        );
+      } catch (parseError: any) {
+        if (parseError instanceof SyntaxError) {
+          throw new Error(errorText || "Report generation failed.");
+        }
+        throw parseError;
+      }
+    }
+
     // ==========================================
-    // EXISTING XLS DOWNLOAD
+    // DOWNLOAD FILE
     // ==========================================
+    const fileName = `${report.title.replace(
+      /[^a-zA-Z0-9-_]/g,
+      "_"
+    )}_${dateFrom}_to_${dateTo}`;
 
     await downloadBlob(
       response.data,
       fileName,
-      "XLS",
+      format
     );
 
+    // ==========================================
+    // SUCCESS MESSAGE
+    // ==========================================
     Swal.fire({
       icon: "success",
-      title: "Download completed",
-      text: "Report downloaded successfully.",
-      timer: 1500,
+      title: "Download started",
+      text: `${report.title} ${format} report downloaded successfully.`,
+      toast: true,
+      position: "top-end",
       showConfirmButton: false,
+      timer: 2500,
     });
 
   } catch (error: any) {
-    console.error(
-      `${report.title} download error:`,
-      error,
-    );
+    console.error("Report download error:", error);
 
-    let message = getApiError(error);
+    let errorMessage =
+      "Unable to download report. Please try again.";
 
     if (error?.response?.data instanceof Blob) {
       try {
-        const responseText =
+        const errorText =
           await error.response.data.text();
 
-        try {
-          const parsed = JSON.parse(responseText);
+        console.error(
+          "Report API error response:",
+          errorText
+        );
 
-          message =
-            parsed?.message ||
-            parsed?.Message ||
-            parsed?.error ||
-            responseText;
+        try {
+          const errorData = JSON.parse(errorText);
+
+          errorMessage =
+            errorData?.message ||
+            errorData?.Message ||
+            errorData?.error ||
+            errorMessage;
         } catch {
-          message = responseText || message;
+          errorMessage = errorText || errorMessage;
         }
-      } catch {
-        message =
-          "Unable to download report. Please check the selected filters.";
+      } catch (readError) {
+        console.error(
+          "Unable to read error response:",
+          readError
+        );
       }
+    } else {
+      errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.Message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        errorMessage;
     }
 
     Swal.fire({
       icon: "error",
       title: "Download failed",
-      text: message,
+      text: errorMessage,
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3500,
     });
 
   } finally {
     setDownloading(null);
   }
 };
-
 
 
 
@@ -1068,52 +1172,87 @@ const handleDownload = async (
   const scopeLabel = selectedEmployee
     ? `${employeeCode} · ${getEmployeeName(selectedEmployee)}`
     : "All employees matching selected filters";
+const renderFilterCard = (
+  title: string,
+  options: Option[],
+  selected: string[],
+  setter: React.Dispatch<React.SetStateAction<string[]>>,
+  search: string,
+  setSearch: React.Dispatch<React.SetStateAction<string>>,
+) => (
+  <FilterCard
+    title={title}
+    options={options}
+    selected={selected}
+    onChange={(value: string) => toggleItem(value, setter)}
+    search={search}
+    onSearch={setSearch}
+    onAll={(shouldSelect: boolean) => {
+      setter(
+        shouldSelect
+          ? options.map((item) => item.value)
+          : []
+      );
+    }}
+  />
+);
 
-  const renderFilterCard = (
-    title: string,
-    options: Option[],
-    selected: string[],
-    setter: React.Dispatch<React.SetStateAction<string[]>>,
-    search: string,
-    setSearch: React.Dispatch<React.SetStateAction<string>>,
-  ) => (
-    <FilterCard
-      title={title}
-      options={options}
-      selected={selected}
-      onChange={(value: string) => toggleItem(value, setter)}
-      search={search}
-      onSearch={setSearch}
-      onAll={() => setter(options.map((item) => item.value))}
-    />
-  );
+ const renderReportButton = (report: ReportItem, format: "XLS" | "PDF") => {
+  const key = `${report.id}-${format}`;
+  const isLoading = downloading === key;
 
-  const renderReportButton = (report: ReportItem, format: "XLS" | "PDF") => {
-    const key = `${report.id}-${format}`;
-    const isLoading = downloading === key;
+  const isAttendance =
+    report.id === "attendance-single" ||
+    report.id === "attendance-multi";
 
-    return (
-      <button
-        key={key}
-        type="button"
-        onClick={() => handleDownload(report, format)}
-        disabled={!!downloading || masterLoading || employeeLoading}
-        className={`inline-flex h-[32px] min-w-[62px] items-center justify-center gap-1.5 rounded-lg border border-[#dce5f1] bg-white px-2.5 text-[11px] font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 ${
-          format === "PDF"
-            ? "text-red-600 dark:text-red-400"
-            : "text-emerald-600 dark:text-emerald-400"
-        }`}
-      >
-        {isLoading ? (
-          <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          <Download size={13} />
-        )}
-        {format}
-      </button>
-    );
+  // Attendance PDF: use existing pdf-lib downloader component
+if (isAttendance && format === "PDF") {
+  const payload = getReportPayload(report);
+
+  const attendancePayload = {
+    ...payload,
+    reporttype: report.reportType,
+    compcode: user?.Comp_Code,
+    output: "pdf",
+    LeftEmp: String(payload.LeftEmp),
+    location: payload.location || Number(user?.branch) || 1,
+    user_location: 0,
   };
 
+  return (
+    <AttendancePDFDownloader
+      key={key}
+      url={`${API_URL}${report.endpoint}?compcode=${user?.Comp_Code}`}
+      text="PDF"
+      payload={attendancePayload}
+      className="inline-flex h-[33px] min-w-[47px] items-center justify-center gap-1 rounded-[7px] border border-[#e2e8f0] bg-white px-2 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 dark:border-slate-700 dark:bg-slate-800 dark:text-red-400"
+      icon={<Download size={10} />}
+    />
+  );
+}
+
+  // Existing XLS download button
+  return (
+    <button
+      key={key}
+      type="button"
+      onClick={() => handleDownload(report, format)}
+      disabled={!!downloading || masterLoading || employeeLoading}
+      className={`inline-flex h-[32px] min-w-[62px] items-center justify-center gap-1.5 rounded-lg border border-[#dce5f1] bg-white px-2.5 text-[11px] font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 ${
+        format === "PDF"
+          ? "text-red-600 dark:text-red-400"
+          : "text-emerald-600 dark:text-emerald-400"
+      }`}
+    >
+      {isLoading ? (
+        <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : (
+        <Download size={13} />
+      )}
+      {format}
+    </button>
+  );
+};
   return (
     <div className="min-h-screen min-w-0 bg-[#f5f8fc] p-3 dark:bg-[#0b1220] sm:p-4 lg:p-6">
       <HashloaderComponent

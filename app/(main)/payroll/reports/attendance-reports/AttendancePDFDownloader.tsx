@@ -1,4 +1,5 @@
 "use client"
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { FaDownload } from 'react-icons/fa';
@@ -511,18 +512,24 @@ const AttendancePDFDownloader = ({
     }
   };
 
-  return (
-    <div className={`flex gap-2 ${className}`}>
-      <div onClick={isLoading ? undefined : handleDownload} className="w-full cursor-pointer text-center flex justify-between pl-3 rounded-full shadow-sm shadow-dark font-medium bg-[#dbeafe] text-[#1e40af]">
-        <p className="text-center pt-1 flex items-center gap-1">
-          {isLoading ? (progress || 'Generating PDF...') : <>{icon}{text}</>}
-        </p>
-        <Button className="bg-[#2b56f2d8] rounded-r-full ml-2 text-white h-full p-2 w-12">
-          {isLoading ? <CgSpinner className="animate-spin text-white" /> : <FaDownload />}
-        </Button>
-      </div>
-    </div>
-  );
+
+return (
+  <button
+    type="button"
+    onClick={handleDownload}
+    disabled={isLoading}
+    className={`inline-flex h-[24px] min-w-[48px] items-center justify-center gap-1 rounded-[7px] border border-[#e2e8f0] bg-white px-2 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 ${className}`}
+  >
+    {isLoading ? (
+      <CgSpinner className="animate-spin" size={11} />
+    ) : (
+      icon || <FaDownload size={11} />
+    )}
+
+    <span>{isLoading ? "PDF" : text}</span>
+  </button>
+);
+
 };
 
 export default AttendancePDFDownloader;

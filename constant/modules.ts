@@ -324,6 +324,10 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
         name: "User Activity History Report",
         slug: "user-history-page",
       },
+      {
+        name: "Location Wise Mispunch",
+        slug: "location-wise-mispunch",
+      },
     ],
   },
   {
