@@ -42,6 +42,7 @@ type TransferRequest = {
   NewCreatedAt?: string;
   Status?: string;
   status?: string;
+  Reason?: string; // 👈 Ye line add karein
   [key: string]: any;
 };
 
@@ -73,6 +74,7 @@ export default function EmployeeLocationTransferPage() {
   const [employee, setEmployee] = useState<any>(null);
   const [approvalRoute, setApprovalRoute] = useState<ApproverRouteItem[]>([]);
   const [isApproverLoading, setIsApproverLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [formData, setFormData] = useState({
     EmpCode: "",
@@ -87,8 +89,8 @@ export default function EmployeeLocationTransferPage() {
   });
 
   const fetchApprovers = useCallback(
-    async (targetEmpCode?: string) => {
-      const empCodeToUse = targetEmpCode || formData.EmpCode || user?.EMPCODE;
+    async () => {
+      const empCodeToUse = user?.EMPCODE;
       if (!empCodeToUse) return;
 
       setIsApproverLoading(true);
@@ -111,10 +113,10 @@ export default function EmployeeLocationTransferPage() {
         const rawList = Array.isArray(response.data?.Result)
           ? response.data.Result
           : Array.isArray(response.data?.data)
-          ? response.data.data
-          : Array.isArray(response.data)
-          ? response.data
-          : [];
+            ? response.data.data
+            : Array.isArray(response.data)
+              ? response.data
+              : [];
 
         if (!rawList.length) {
           setApprovalRoute([]);
@@ -196,12 +198,12 @@ export default function EmployeeLocationTransferPage() {
         setIsApproverLoading(false);
       }
     },
-    [formData.EmpCode, user?.EMPCODE, user?.Comp_Code, user?.name]
+    [user?.EMPCODE, user?.Comp_Code, user?.name]
   );
 
   useEffect(() => {
     if (user?.EMPCODE) {
-      fetchApprovers(user.EMPCODE);
+      fetchApprovers();
     }
   }, [user?.EMPCODE, fetchApprovers]);
 
@@ -227,10 +229,10 @@ export default function EmployeeLocationTransferPage() {
         EmpCode: value,
         ...(employee && value.trim() !== prev.EmpCode.trim()
           ? {
-              EmpName: "",
-              CurrtBranch: "",
-              TransferTo: "",
-            }
+            EmpName: "",
+            CurrtBranch: "",
+            TransferTo: "",
+          }
           : {}),
       }));
 
@@ -286,10 +288,10 @@ export default function EmployeeLocationTransferPage() {
 
   const isFormReady = Boolean(
     employeeSelected &&
-      formData.TransferTo &&
-      !sameBranch &&
-      formData.EffectiveDate &&
-      formData.Reason.trim()
+    formData.TransferTo &&
+    !sameBranch &&
+    formData.EffectiveDate &&
+    formData.Reason.trim()
   );
 
   const initials = useMemo(() => {
@@ -321,12 +323,12 @@ export default function EmployeeLocationTransferPage() {
       },
       ...(employee.REPORTING_TO || employee.HOD || employee.Reporting
         ? [
-            {
-              label: "Reporting 1",
-              value:
-                employee.REPORTING_TO || employee.HOD || employee.Reporting,
-            },
-          ]
+          {
+            label: "Reporting 1",
+            value:
+              employee.REPORTING_TO || employee.HOD || employee.Reporting,
+          },
+        ]
         : []),
     ];
   }, [employee, currentBranchName]);
@@ -417,14 +419,13 @@ export default function EmployeeLocationTransferPage() {
         loginEMPCODE: user?.EMPCODE ?? "",
       }));
 
-      fetchApprovers(empCode);
       showAlert("Employee details fetched successfully.", "success");
     } catch (error: any) {
       console.error("GetEmployeeLocation error:", error);
 
       showAlert(
         error?.response?.data?.message ??
-          "Unable to fetch employee details.",
+        "Unable to fetch employee details.",
         "error",
       );
     } finally {
@@ -434,6 +435,8 @@ export default function EmployeeLocationTransferPage() {
 
   // Save transfer using the existing backend endpoint.
   const DataSave = async () => {
+    setIsSubmitted(true);
+
     if (!formData.EmpCode || !employee) {
       showAlert("Please select an employee and get details.", "warning");
       return;
@@ -512,6 +515,7 @@ export default function EmployeeLocationTransferPage() {
       }
 
       setEmployee(null);
+      setIsSubmitted(false);
 
       setFormData((prev) => ({
         ...prev,
@@ -528,7 +532,7 @@ export default function EmployeeLocationTransferPage() {
 
       showAlert(
         error?.response?.data?.message ??
-          "Unable to save employee transfer.",
+        "Unable to save employee transfer.",
         "error",
       );
     } finally {
@@ -537,11 +541,12 @@ export default function EmployeeLocationTransferPage() {
   };
 
   const clearForm = () => {
+    setIsSubmitted(false);
     setEmployee(null);
     setTransferOptions([]);
     setBranchOptions([]);
     if (user?.EMPCODE) {
-      fetchApprovers(user.EMPCODE);
+      fetchApprovers();
     }
 
     setFormData((prev) => ({
@@ -554,6 +559,18 @@ export default function EmployeeLocationTransferPage() {
       EffectiveDate: new Date().toISOString().slice(0, 10),
       Reason: "",
     }));
+  };
+
+  const getTransferStatus = (finAppr: any): string => {
+    if (finAppr === 1 || finAppr === "1") {
+      return "Approve";
+    }
+
+    if (finAppr === 0 || finAppr === "0") {
+      return "Reject";
+    }
+
+    return "Pending";
   };
 
   const exportRequests = () => {
@@ -570,6 +587,7 @@ export default function EmployeeLocationTransferPage() {
       "TRANSFER TO",
       "REQUEST DATE",
       "STATUS",
+      "REASON", 
     ];
 
     const escapeCsv = (value: any) =>
@@ -581,8 +599,9 @@ export default function EmployeeLocationTransferPage() {
       row.Emp_Name,
       row.CurrtBranch_name,
       row.TransferTo_name,
+      row.Reason ?? "—",  // 👈 2. Value me add 
       formatDate(row.NewCreatedAt),
-      row.Status ?? row.status ?? "",
+      getTransferStatus(row.fin_appr ?? row.Fin_Appr ?? row.fin_Appr ?? row.FIN_APPR),
     ]);
 
     const csv = [headers, ...rows]
@@ -634,8 +653,7 @@ export default function EmployeeLocationTransferPage() {
     () => [
       {
         Header: "ID",
-        accessor: (row: TransferRequest) => row.ID ?? row.UTD ?? "—",
-        id: "ID",
+        accessor: (row: TransferRequest) => String(row.ID ?? row.UTD ?? "—"),
       },
       {
         Header: "EMPLOYEE CODE",
@@ -662,19 +680,20 @@ export default function EmployeeLocationTransferPage() {
         accessor: (row: TransferRequest) => formatDate(row.NewCreatedAt),
         id: "NewCreatedAt",
       },
+           {
+        Header: "REASON",
+        accessor: (row: TransferRequest) => row.Reason ?? "—",
+        id: "Reason",
+      },
+
       {
         Header: "STATUS",
-        accessor: (row: TransferRequest) => row.Status ?? row.status ?? "—",
+        accessor: (row: TransferRequest) => {
+          const finAppr = row.fin_appr ?? row.Fin_Appr ?? row.fin_Appr ?? row.FIN_APPR;
+          return getTransferStatus(finAppr);
+        },
         id: "Status",
         Cell: ({ value }: { value: string }) => {
-          if (!value || value === "—") {
-            return (
-              <span className="text-slate-400 dark:text-slate-500">
-                —
-              </span>
-            );
-          }
-
           const st = getStatusStyle(value);
 
           return (
@@ -744,9 +763,8 @@ export default function EmployeeLocationTransferPage() {
 
               <span className="text-right text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
                 {employeeSelected
-                  ? `${employee?.EMPLOYEEDESIGNATION ?? "Employee"}${
-                      employee?.DIVISION ? ` · ${employee.DIVISION}` : ""
-                    }`
+                  ? `${employee?.EMPLOYEEDESIGNATION ?? "Employee"}${employee?.DIVISION ? ` · ${employee.DIVISION}` : ""
+                  }`
                   : "Search by code or name"}
               </span>
             </div>
@@ -765,8 +783,9 @@ export default function EmployeeLocationTransferPage() {
                     handleInputChange={handleInputChange}
                     className={cn(
                       inputClass,
+                      isSubmitted &&
                       (!formData.EmpCode.trim() || !employee) &&
-                        "!border-[rgba(225,29,72,0.45)]"
+                      "!border-[rgba(225,29,72,0.45)]"
                     )}
                   />
                 </div>
@@ -873,8 +892,9 @@ export default function EmployeeLocationTransferPage() {
                       required
                       className={cn(
                         selectTriggerClass,
+                        isSubmitted &&
                         (!formData.TransferTo || sameBranch) &&
-                          "!border-[rgba(225,29,72,0.45)]"
+                        "!border-[rgba(225,29,72,0.45)]"
                       )}
                     />
                   </div>
@@ -883,14 +903,16 @@ export default function EmployeeLocationTransferPage() {
                     <Einput
                       title="Effective date"
                       name="EffectiveDate"
-                      redlabel=" *"
+                      redlabel="*"
                       type="date"
                       value={formData.EffectiveDate}
+                      disabled={true}
                       handleInputChange={handleInputChange}
                       className={cn(
                         inputClass,
+                        isSubmitted &&
                         !formData.EffectiveDate &&
-                          "!border-[rgba(225,29,72,0.45)]"
+                        "!border-[rgba(225,29,72,0.45)]"
                       )}
                     />
                   </div>
@@ -935,8 +957,9 @@ export default function EmployeeLocationTransferPage() {
                   handleInputChange={handleInputChange}
                   className={cn(
                     inputClass,
+                    isSubmitted &&
                     !formData.Reason.trim() &&
-                      "!border-[rgba(225,29,72,0.45)]"
+                    "!border-[rgba(225,29,72,0.45)]"
                   )}
                 />
               </div>
@@ -1003,11 +1026,10 @@ export default function EmployeeLocationTransferPage() {
                 {checks.map((check, index) => (
                   <div key={index} className="flex items-center gap-[9px] text-[12px]">
                     <span
-                      className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] ${
-                        check.valid
+                      className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] ${check.valid
                           ? "bg-[#10B981]/15 text-[#10B981]"
                           : "bg-[#F59E0B]/15 text-[#B45309] dark:text-[#F59E0B]"
-                      }`}
+                        }`}
                     >
                       {check.valid ? (
                         <Check className="h-5 w-5 stroke-[2.5]" />
@@ -1039,16 +1061,7 @@ export default function EmployeeLocationTransferPage() {
               </span>
             </div>
 
-            <div className="w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={exportRequests}
-                className="inline-flex h-[30px] w-full items-center justify-center gap-1.5 rounded-[8px] border border-[#E2E8F0] bg-transparent px-[11px] text-[12px] font-[550] text-[#1E293B] hover:bg-[#F1F5F9] dark:border-[#1F2937] dark:text-[#E7ECF3] dark:hover:bg-[#182235] transition sm:w-auto cursor-pointer"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                <span>Export</span>
-              </button>
-            </div>
+
           </div>
 
           <div className="w-full min-w-0 overflow-x-auto dark:bg-[#111827]">
@@ -1070,9 +1083,8 @@ export default function EmployeeLocationTransferPage() {
         <div className="mx-auto flex w-full max-w-[1800px] min-w-0 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <p className="min-w-0 truncate text-[12.5px] text-[#64748B] dark:text-[#94A3B8] sm:flex-1">
             {formData.EmpName
-              ? `${formData.EmpName} · ${currentBranchName || ""} → ${
-                  destinationBranchName || "not set"
-                }`
+              ? `${formData.EmpName} · ${currentBranchName || ""} → ${destinationBranchName || "not set"
+              }`
               : "No employee selected"}
           </p>
 
@@ -1089,13 +1101,8 @@ export default function EmployeeLocationTransferPage() {
             <button
               type="button"
               onClick={DataSave}
-              disabled={isLoading || !isFormReady}
-              className={cn(
-                "inline-flex h-[38px] w-full min-w-0 items-center justify-center gap-[7px] rounded-[10px] px-[17px] text-[12.5px] font-semibold text-white transition active:scale-[0.98] sm:w-auto",
-                isFormReady
-                  ? "bg-[#4F46E5] hover:brightness-[1.08] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] cursor-pointer"
-                  : "bg-[#64748B] dark:bg-[#94A3B8] opacity-70 cursor-not-allowed shadow-none"
-              )}
+              disabled={isLoading}
+              className="inline-flex h-[38px] w-full min-w-0 items-center justify-center gap-[7px] rounded-[10px] px-[17px] text-[12.5px] font-semibold text-white transition active:scale-[0.98] sm:w-auto bg-[#4F46E5] hover:brightness-[1.08] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_26px_-14px_rgba(15,23,42,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_10px_26px_-14px_rgba(0,0,0,0.6)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send className="h-3.5 w-3.5 shrink-0" />
               <span>Submit for approval</span>

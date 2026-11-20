@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -165,8 +165,8 @@ export default function AttnCalculationByBranchPage() {
   const [showWarning, setShowWarning] = useState<boolean>(false);
   const [showLockLocations, setShowLockLocations] = useState<boolean>(false);
 
-  // Run history (starts with default runs matching design, restored from localStorage if available)
-  const [lastRuns, setLastRuns] = useState<RunHistoryItem[]>(INITIAL_LAST_RUNS);
+  // Run history
+  const [lastRuns, setLastRuns] = useState<RunHistoryItem[]>([]);
 
   // Blocking checks (null = unknown / fetch failed)
   const [pendingMispunchCount, setPendingMispunchCount] = useState<number | null>(null);
@@ -186,6 +186,98 @@ export default function AttnCalculationByBranchPage() {
       // Ignore storage errors
     }
   }, []);
+
+  // Fetch live last runs from /admin/getLocationsWithProcessStatus
+  const fetchLastRuns = useCallback(async () => {
+    if (!compcode || !user?.EMPCODE) return;
+    const targetMonth = month || String(new Date().getMonth() + 1);
+    const targetYear = year || String(new Date().getFullYear());
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/admin/getLocationsWithProcessStatus`,
+        {
+          Month: targetMonth,
+          Year: targetYear,
+          EMPCODE: user.EMPCODE,
+          compCode: compcode,
+        },
+        { headers: { compcode, name: username } }
+      );
+
+      if (res.data?.success && Array.isArray(res.data?.data)) {
+        const locations = res.data.data;
+        const currentMonthObj = MONTH_OPTIONS.find(
+          (m) => m.value === String(targetMonth)
+        );
+        const currentMonthShort =
+          currentMonthObj?.short || currentMonthObj?.label || targetMonth;
+
+        const liveRuns: RunHistoryItem[] = locations
+          .filter(
+            (loc: any) =>
+              loc.processes?.attendanceCalc?.completionDate ||
+              loc.processes?.attendanceCalc?.isCompleted
+          )
+          .map((loc: any) => {
+            const calc = loc.processes?.attendanceCalc ?? {};
+            const locName = loc.name || loc.label || `Branch - ${loc.id}`;
+
+            let dateFormatted = "";
+            if (calc.completionDate) {
+              const dateObj = new Date(calc.completionDate);
+              dateFormatted = !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : String(calc.completionDate);
+            }
+
+            const isDone = calc.isCompleted === true;
+            const metaParts = [
+              dateFormatted || "Completed recently",
+              calc.completedBy ? `by ${calc.completedBy}` : null,
+              calc.pendingCount > 0 ? `${calc.pendingCount} pending` : null,
+            ].filter(Boolean);
+
+            return {
+              scope: `${locName} · ${currentMonthShort} ${targetYear}`,
+              meta: metaParts.join(" · "),
+              status: isDone ? ("Completed" as const) : ("Partial" as const),
+              completionDate: calc.completionDate || "",
+            };
+          })
+          .sort((a: any, b: any) => {
+            if (!a.completionDate) return 1;
+            if (!b.completionDate) return -1;
+            return (
+              new Date(b.completionDate).getTime() -
+              new Date(a.completionDate).getTime()
+            );
+          })
+          .slice(0, 5);
+
+        if (liveRuns.length > 0) {
+          setLastRuns(liveRuns);
+          try {
+            localStorage.setItem(
+              LAST_RUNS_STORAGE_KEY,
+              JSON.stringify(liveRuns)
+            );
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch last runs from API:", err);
+    }
+  }, [compcode, user?.EMPCODE, month, year, username]);
+
+  useEffect(() => {
+    fetchLastRuns();
+  }, [fetchLastRuns]);
 
   // Fetch pending mispunches from backend
   useEffect(() => {
@@ -668,6 +760,28 @@ export default function AttnCalculationByBranchPage() {
         localStorage.setItem(LAST_RUNS_STORAGE_KEY, JSON.stringify(nextRuns));
       } catch (e) {
         // Ignore storage errors
+      }
+
+      // Update process completion and refresh live runs from API
+      try {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/admin/updateProcessCompletion`,
+          {
+            locations: selectedLocations,
+            Month: month,
+            Year: year,
+            Process_Type: "ATTENDANCE_CALC",
+            Is_Completed: true,
+            Lock_Date: null,
+            Remarks: "Attendance calculation completed",
+            EMPCODE: user?.EMPCODE,
+            compCode: compcode,
+          },
+          { headers: { compcode, name: username } }
+        );
+        fetchLastRuns();
+      } catch (e) {
+        console.error("Error updating process completion:", e);
       }
     } catch (error: any) {
       clearInterval(progressTimer);
@@ -1246,30 +1360,36 @@ export default function AttnCalculationByBranchPage() {
               Last runs
             </span>
             <div className="mt-3 flex flex-col gap-2">
-              {lastRuns.map((run, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-[10px] border border-[#E2E8F0] p-[10px] dark:border-[#1F2937]"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
-                      {run.scope}
-                    </span>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
-                        run.status === "Completed"
-                          ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
-                          : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
-                      }`}
-                    >
-                      {run.status}
-                    </span>
+              {lastRuns.length === 0 ? (
+                <p className="text-[12px] text-[#64748B] dark:text-[#94A3B8] italic">
+                  No runs recorded yet for this period.
+                </p>
+              ) : (
+                lastRuns.map((run, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-[10px] border border-[#E2E8F0] p-[10px] dark:border-[#1F2937]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[12px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
+                        {run.scope}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
+                          run.status === "Completed"
+                            ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
+                            : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
+                        }`}
+                      >
+                        {run.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                      {run.meta}
+                    </div>
                   </div>
-                  <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                    {run.meta}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
@@ -153,6 +153,98 @@ export default function AttnCalculationWithLeavePage() {
       // Ignore storage errors
     }
   }, []);
+
+  // Fetch live last runs from /admin/getLocationsWithProcessStatus
+  const fetchLastRuns = useCallback(async () => {
+    if (!compcode || !user?.EMPCODE) return;
+    const targetMonth = month || String(new Date().getMonth() + 1);
+    const targetYear = year || String(new Date().getFullYear());
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/admin/getLocationsWithProcessStatus`,
+        {
+          Month: targetMonth,
+          Year: targetYear,
+          EMPCODE: user.EMPCODE,
+          compCode: compcode,
+        },
+        { headers: { compcode, name: username } }
+      );
+
+      if (res.data?.success && Array.isArray(res.data?.data)) {
+        const locations = res.data.data;
+        const currentMonthObj = MONTH_OPTIONS.find(
+          (m) => m.value === String(targetMonth)
+        );
+        const currentMonthShort =
+          currentMonthObj?.short || currentMonthObj?.label || targetMonth;
+
+        const liveRuns: RunHistoryItem[] = locations
+          .filter(
+            (loc: any) =>
+              loc.processes?.attendanceCalc?.completionDate ||
+              loc.processes?.attendanceCalc?.isCompleted
+          )
+          .map((loc: any) => {
+            const calc = loc.processes?.attendanceCalc ?? {};
+            const locName = loc.name || loc.label || `Branch - ${loc.id}`;
+
+            let dateFormatted = "";
+            if (calc.completionDate) {
+              const dateObj = new Date(calc.completionDate);
+              dateFormatted = !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : String(calc.completionDate);
+            }
+
+            const isDone = calc.isCompleted === true;
+            const metaParts = [
+              dateFormatted || "Completed recently",
+              calc.completedBy ? `by ${calc.completedBy}` : null,
+              calc.pendingCount > 0 ? `${calc.pendingCount} pending` : null,
+            ].filter(Boolean);
+
+            return {
+              scope: `${locName} · ${currentMonthShort} ${targetYear}`,
+              meta: metaParts.join(" · "),
+              status: isDone ? ("Completed" as const) : ("Partial" as const),
+              completionDate: calc.completionDate || "",
+            };
+          })
+          .sort((a: any, b: any) => {
+            if (!a.completionDate) return 1;
+            if (!b.completionDate) return -1;
+            return (
+              new Date(b.completionDate).getTime() -
+              new Date(a.completionDate).getTime()
+            );
+          })
+          .slice(0, 5);
+
+        if (liveRuns.length > 0) {
+          setLastRuns(liveRuns);
+          try {
+            localStorage.setItem(
+              LAST_RUNS_STORAGE_KEY,
+              JSON.stringify(liveRuns)
+            );
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch last runs from API:", err);
+    }
+  }, [compcode, user?.EMPCODE, month, year, username]);
+
+  useEffect(() => {
+    fetchLastRuns();
+  }, [fetchLastRuns]);
 
   // Fetch pending mispunches from backend
   useEffect(() => {
@@ -635,6 +727,8 @@ export default function AttnCalculationWithLeavePage() {
         "Error occurred while updating location. Please try again.",
         "error"
       );
+    } finally {
+      fetchLastRuns();
     }
   };
 

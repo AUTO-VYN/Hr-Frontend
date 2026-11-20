@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Link from "next/link";
@@ -35,30 +35,9 @@ interface RunHistoryItem {
   status: "Completed" | "Partial";
 }
 
-const DEFAULT_REGIONS: RegionItem[] = [
-  { label: "CENTRAL 1", value: 1, empCount: 412 },
-  { label: "WEST 4", value: 2, empCount: 268 },
-  { label: "NORTH 2", value: 3, empCount: 197 },
-  { label: "SOUTH 1", value: 4, empCount: 154 },
-];
+const DEFAULT_REGIONS: RegionItem[] = [];
 
-const INITIAL_LAST_RUNS: RunHistoryItem[] = [
-  {
-    scope: "Delhi cluster · Jun 2026",
-    meta: "1,204 employees · 38 s · by Anand K.",
-    status: "Completed",
-  },
-  {
-    scope: "West 4 · Jun 2026",
-    meta: "268 employees · 12 attendance locks skipped",
-    status: "Partial",
-  },
-  {
-    scope: "All branches · May 2026",
-    meta: "3,940 employees · 2 m 06 s",
-    status: "Completed",
-  },
-];
+const INITIAL_LAST_RUNS: RunHistoryItem[] = [];
 
 const MONTH_OPTIONS = [
   { label: "Select month", value: "", short: "Select month" },
@@ -123,24 +102,212 @@ export default function AttendanceByRegionPage() {
   const [locked, setLocked] = useState<any[]>([]);
   const [showLocked, setShowLocked] = useState(false);
 
-  const [lastRuns, setLastRuns] = useState<RunHistoryItem[]>(INITIAL_LAST_RUNS);
+  const [lastRuns, setLastRuns] = useState<RunHistoryItem[]>([]);
   const [pendingMispunchCount, setPendingMispunchCount] = useState<number | null>(null);
   const [isLoadingMispunches, setIsLoadingMispunches] = useState<boolean>(false);
 
-  // Restore run history from localStorage
+  // Restore run history from localStorage (filtering out any old hardcoded items)
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LAST_RUNS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLastRuns(parsed);
+        if (Array.isArray(parsed)) {
+          const cleanRuns = parsed.filter((item: any) => {
+            const str = `${item?.scope || ""} ${item?.meta || ""}`.toLowerCase();
+            return (
+              !str.includes("delhi cluster") &&
+              !str.includes("anand k") &&
+              !str.includes("attendance locks skipped") &&
+              !str.includes("all branches") &&
+              !str.includes("west 4 · jun 2026") &&
+              !str.includes("jun 2026")
+            );
+          });
+          setLastRuns(cleanRuns);
+          try {
+            localStorage.setItem(
+              LAST_RUNS_STORAGE_KEY,
+              JSON.stringify(cleanRuns)
+            );
+          } catch (e) {}
         }
       }
     } catch (e) {
       // Ignore storage errors
     }
   }, []);
+
+  // Frontend Master Mapping: Fetch branches with regions and process status to compute region last runs
+  const fetchRegionLastRuns = useCallback(async () => {
+    if (!compcode || !user?.EMPCODE) return;
+    const targetMonth = month || String(new Date().getMonth() + 1);
+    const targetYear = year || String(currentFinancialYear() + 1);
+
+    try {
+      const locationsArray = user?.branch
+        ? String(user.branch)
+            .split(",")
+            .map(Number)
+            .filter((n) => !isNaN(n) && n > 0)
+        : [];
+
+      // Fetch branch-to-region mapping and process status in parallel
+      const [locRes, statusRes] = await Promise.all([
+        axios
+          .post(
+            `${process.env.NEXT_PUBLIC_URL}/ars/Emp_AtnrunGetLocation_1`,
+            {
+              locations: locationsArray,
+              Channel: null,
+              Cluster: null,
+              Region: null,
+            },
+            { headers: { compcode, name: username } }
+          )
+          .catch(() => ({ data: { results: [] } })),
+        axios
+          .post(
+            `${process.env.NEXT_PUBLIC_URL}/admin/getLocationsWithProcessStatus`,
+            {
+              Month: targetMonth,
+              Year: targetYear,
+              EMPCODE: user.EMPCODE,
+              compCode: compcode,
+            },
+            { headers: { compcode, name: username } }
+          )
+          .catch(() => ({ data: { data: [] } })),
+      ]);
+
+      const branchList: any[] = locRes?.data?.results || [];
+      const statusList: any[] = statusRes?.data?.data || [];
+
+      if (branchList.length === 0 && statusList.length === 0) return;
+
+      // Create branchId -> process status map
+      const branchStatusMap: Record<number, any> = {};
+      statusList.forEach((item: any) => {
+        branchStatusMap[Number(item.id)] = item.processes?.attendanceCalc || {};
+      });
+
+      // Group branches by region
+      const regionBranchMap: Record<
+        string,
+        { branches: any[]; runDetails: any[] }
+      > = {};
+
+      branchList.forEach((b: any) => {
+        const matchedRegion = regions.find((reg) => {
+          const regLabel = String(reg.label || "").trim().toLowerCase();
+          const regVal = String(reg.value ?? "").trim().toLowerCase();
+          const branchRegion = String(b.Region || b.region || "")
+            .trim()
+            .toLowerCase();
+          return branchRegion === regLabel || branchRegion === regVal;
+        });
+
+        const regionKey =
+          matchedRegion?.label ||
+          String(b.Region || b.region || "").trim().toUpperCase();
+
+        if (!regionKey) return;
+
+        if (!regionBranchMap[regionKey]) {
+          regionBranchMap[regionKey] = { branches: [], runDetails: [] };
+        }
+        regionBranchMap[regionKey].branches.push(b);
+
+        const status = branchStatusMap[Number(b.value)];
+        if (status) {
+          regionBranchMap[regionKey].runDetails.push(status);
+        }
+      });
+
+      const currentMonthObj = MONTH_OPTIONS.find(
+        (m) => m.value === String(targetMonth)
+      );
+      const currentMonthShort =
+        currentMonthObj?.short || currentMonthObj?.label || targetMonth;
+
+      // Build region-wise run history
+      const liveRuns: (RunHistoryItem & { completionDate?: string })[] = [];
+
+      Object.entries(regionBranchMap).forEach(([regionLabel, data]) => {
+        const { branches, runDetails } = data;
+        const totalBranches = branches.length;
+        const completedRuns = runDetails.filter(
+          (r) => r.isCompleted === true || Boolean(r.completionDate)
+        );
+        const completedCount = completedRuns.length;
+
+        // Find latest completionDate in this region
+        const runsWithDate = completedRuns.filter((r) => r.completionDate);
+        runsWithDate.sort(
+          (a, b) =>
+            new Date(b.completionDate).getTime() -
+            new Date(a.completionDate).getTime()
+        );
+        const latestRun = runsWithDate[0];
+
+        const isDone = completedCount > 0 && completedCount === totalBranches;
+
+        let dateFormatted = "";
+        if (latestRun?.completionDate) {
+          const d = new Date(latestRun.completionDate);
+          dateFormatted = !isNaN(d.getTime())
+            ? d.toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : String(latestRun.completionDate);
+        }
+
+        if (completedCount > 0) {
+          const metaParts = [
+            `${totalBranches} branch${totalBranches > 1 ? "es" : ""} (${completedCount}/${totalBranches} calculated)`,
+            dateFormatted || "Recently calculated",
+            latestRun?.completedBy ? `by ${latestRun.completedBy}` : null,
+          ].filter(Boolean);
+
+          liveRuns.push({
+            scope: `${regionLabel} · ${currentMonthShort} ${targetYear}`,
+            meta: metaParts.join(" · "),
+            status: isDone ? "Completed" : "Partial",
+            completionDate: latestRun?.completionDate || "",
+          });
+        }
+      });
+
+      // Sort live runs by completionDate descending
+      liveRuns.sort((a, b) => {
+        if (!a.completionDate) return 1;
+        if (!b.completionDate) return -1;
+        return (
+          new Date(b.completionDate).getTime() -
+          new Date(a.completionDate).getTime()
+        );
+      });
+
+      if (liveRuns.length > 0) {
+        setLastRuns(liveRuns.slice(0, 5));
+        try {
+          localStorage.setItem(
+            LAST_RUNS_STORAGE_KEY,
+            JSON.stringify(liveRuns.slice(0, 5))
+          );
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.error("Failed to map region last runs:", err);
+    }
+  }, [compcode, user?.EMPCODE, user?.branch, month, year, username, regions]);
+
+  useEffect(() => {
+    fetchRegionLastRuns();
+  }, [fetchRegionLastRuns]);
 
   // Fetch pending mispunches from live backend API
   useEffect(() => {
@@ -205,26 +372,16 @@ export default function AttendanceByRegionPage() {
             raw.map((r: any, idx: number) => ({
               label: String(r.label || r.Region || "").toUpperCase(),
               value: r.value ?? idx + 1,
-              empCount:
-                r.empCount ??
-                (r.label?.includes("CENTRAL")
-                  ? 412
-                  : r.label?.includes("WEST")
-                  ? 268
-                  : r.label?.includes("NORTH")
-                  ? 197
-                  : r.label?.includes("SOUTH")
-                  ? 154
-                  : 150 + ((idx * 37) % 250)),
+              empCount: r.empCount ?? r.count ?? r.EMP_COUNT ?? undefined,
             }))
           );
         }
       })
       .catch(() => {
-        setRegions(DEFAULT_REGIONS);
+        setRegions([]);
       })
       .finally(() => setLoading(false));
-  }, [user?.branch, user?.Comp_Code, user?.name]);
+  }, [user?.branch, user?.Comp_Code, user?.name, user?.EMPCODE]);
 
   // Warning after 1.5s, locked list after 2s (same timing as ERP page)
   useEffect(() => {
@@ -325,11 +482,20 @@ export default function AttendanceByRegionPage() {
       setRunDone(true);
 
       const returnedLocked = res?.data?.lockedLocations || [];
-      const empCount = totalEmployeesSelected || 412;
+      const computedTotal =
+        res?.data?.total ??
+        res?.data?.totalEmployees ??
+        res?.data?.empCount ??
+        (totalEmployeesSelected > 0 ? totalEmployeesSelected : 0);
+      const computedPaidDays =
+        res?.data?.paidDays ??
+        (computedTotal > 0 ? computedTotal : 0);
+      const computedAbsents = res?.data?.absents ?? 0;
+
       setRunStats({
-        total: empCount,
-        paidDays: Math.round(empCount * 0.94),
-        absents: Math.round(empCount * 0.05),
+        total: computedTotal,
+        paidDays: computedPaidDays,
+        absents: computedAbsents,
         locked: returnedLocked.length,
       });
 
@@ -343,9 +509,19 @@ export default function AttendanceByRegionPage() {
         .filter((r) => selected.includes(r.value))
         .map((r) => r.label)
         .join(", ");
+
+      const metaParts: string[] = [];
+      if (computedTotal > 0) {
+        metaParts.push(`${computedTotal.toLocaleString()} employees`);
+      }
+      metaParts.push(`${durationSec} s`);
+      if (username) {
+        metaParts.push(`by ${username}`);
+      }
+
       const newRun: RunHistoryItem = {
         scope: `${regionNames || "Selected regions"} · ${monthName} ${year}`,
-        meta: `${empCount.toLocaleString()} employees · ${durationSec} s${username ? ` · by ${username}` : ""}`,
+        meta: metaParts.join(" · "),
         status: returnedLocked.length > 0 ? "Partial" : "Completed",
       };
       const nextRuns = [newRun, ...lastRuns].slice(0, 5);
@@ -357,11 +533,11 @@ export default function AttendanceByRegionPage() {
       clearInterval(progressTimer);
       setProgress(100);
       setRunDone(true);
-      const empCount = totalEmployeesSelected || 412;
+      const computedTotal = totalEmployeesSelected > 0 ? totalEmployeesSelected : 0;
       setRunStats({
-        total: empCount,
-        paidDays: Math.round(empCount * 0.94),
-        absents: Math.round(empCount * 0.05),
+        total: computedTotal,
+        paidDays: computedTotal,
+        absents: 0,
         locked: 0,
       });
       showSideAlert("Attendance calculation completed", "success");
@@ -371,9 +547,19 @@ export default function AttendanceByRegionPage() {
         .filter((r) => selected.includes(r.value))
         .map((r) => r.label)
         .join(", ");
+
+      const metaParts: string[] = [];
+      if (computedTotal > 0) {
+        metaParts.push(`${computedTotal.toLocaleString()} employees`);
+      }
+      metaParts.push(`${durationSec} s`);
+      if (username) {
+        metaParts.push(`by ${username}`);
+      }
+
       const newRun: RunHistoryItem = {
         scope: `${regionNames || "Selected regions"} · ${monthName} ${year}`,
-        meta: `${empCount.toLocaleString()} employees · ${durationSec} s${username ? ` · by ${username}` : ""}`,
+        meta: metaParts.join(" · "),
         status: "Completed",
       };
       const nextRuns = [newRun, ...lastRuns].slice(0, 5);
@@ -383,6 +569,7 @@ export default function AttendanceByRegionPage() {
       } catch (e) {}
     } finally {
       setRunning(false);
+      fetchRegionLastRuns();
     }
   };
 
@@ -390,7 +577,9 @@ export default function AttendanceByRegionPage() {
     ? "Pick the month to calculate"
     : selected.length === 0
     ? "Select at least one region"
-    : `${selected.length} region${selected.length > 1 ? "s" : ""} · about ${totalEmployeesSelected.toLocaleString()} employees · ${monthName} ${year}`;
+    : totalEmployeesSelected > 0
+    ? `${selected.length} region${selected.length > 1 ? "s" : ""} · about ${totalEmployeesSelected.toLocaleString()} employees · ${monthName} ${year}`
+    : `${selected.length} region${selected.length > 1 ? "s" : ""} selected · ${monthName} ${year}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] dark:bg-[#0A0F1C] dark:text-[#E7ECF3] px-6 py-5 md:px-8 md:py-6 font-['Inter',system-ui,sans-serif] antialiased [font-feature-settings:'tnum'_1]">
@@ -544,7 +733,6 @@ export default function AttendanceByRegionPage() {
                 <div className="grid grid-cols-1 gap-[3px]">
                   {filtered.map((r) => {
                     const isChecked = selected.includes(r.value);
-                    const metaText = `${r.empCount || 200} employees`;
 
                     return (
                       <Button
@@ -576,9 +764,11 @@ export default function AttendanceByRegionPage() {
                           {r.label}
                         </span>
 
-                        <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                          {metaText}
-                        </span>
+                        {typeof r.empCount === "number" && r.empCount > 0 && (
+                          <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+                            {r.empCount.toLocaleString()} employees
+                          </span>
+                        )}
                       </Button>
                     );
                   })}
@@ -822,30 +1012,36 @@ export default function AttendanceByRegionPage() {
               Last runs
             </span>
             <div className="mt-3 flex flex-col gap-2">
-              {lastRuns.map((run, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-[10px] border border-[#E2E8F0] p-[10px] dark:border-[#1F2937]"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
-                      {run.scope}
-                    </span>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
-                        run.status === "Completed"
-                          ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
-                          : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
-                      }`}
-                    >
-                      {run.status}
-                    </span>
+              {lastRuns.length === 0 ? (
+                <p className="text-[12px] text-[#64748B] dark:text-[#94A3B8] italic">
+                  No runs recorded yet for this period.
+                </p>
+              ) : (
+                lastRuns.map((run, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-[10px] border border-[#E2E8F0] p-[10px] dark:border-[#1F2937]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[12px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
+                        {run.scope}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
+                          run.status === "Completed"
+                            ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
+                            : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
+                        }`}
+                      >
+                        {run.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                      {run.meta}
+                    </div>
                   </div>
-                  <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                    {run.meta}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -873,7 +1069,7 @@ export default function AttendanceByRegionPage() {
                   {isLoadingMispunches
                     ? "Checking…"
                     : pendingMispunchCount === null
-                    ? "14 open"
+                    ? "—"
                     : `${pendingMispunchCount} open`}
                 </span>
               </Link>

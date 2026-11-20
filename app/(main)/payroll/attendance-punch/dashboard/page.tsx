@@ -334,7 +334,7 @@ export default function AttendanceDashboardPage() {
 
       // 1. Primary API: /hrmsreport/getDashboardData
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL_LOCAL}/hrmsreport/getDashboardData`,
+        `${process.env.NEXT_PUBLIC_URL}/hrmsreport/getDashboardData`,
         {
           selectedDate: dates?.DATE_TO,
           Loc_code: branchArray,

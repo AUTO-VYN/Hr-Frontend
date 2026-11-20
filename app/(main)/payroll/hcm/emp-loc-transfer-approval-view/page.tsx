@@ -901,6 +901,43 @@ const result = await axios.post(
         Header: "APPROVAL CHAIN",
         accessor: "approvalChain",
         disableSortBy: true,
+        getExcelValue: ({ item }: any) => {
+          const getLevelColor = (stat: any) => {
+            const level = getApprovalLevel(stat);
+            if (level === "approved") return "FF10B981"; // Green
+            if (level === "rejected") return "FFE11D48"; // Red
+            if (level === "pending") return "FFF59E0B"; // Amber / Orange
+            return "FF94A3B8"; // Gray
+          };
+
+          return {
+            richText: [
+              {
+                text: "L1",
+                font: {
+                  color: { argb: getLevelColor(item?.APPR_1_STAT) },
+                  bold: true,
+                },
+              },
+              { text: "   " },
+              {
+                text: "L2",
+                font: {
+                  color: { argb: getLevelColor(item?.APPR_2_STAT) },
+                  bold: true,
+                },
+              },
+              { text: "   " },
+              {
+                text: "L3",
+                font: {
+                  color: { argb: getLevelColor(item?.APPR_3_STAT) },
+                  bold: true,
+                },
+              },
+            ],
+          };
+        },
 
         Cell: ({ row }: any) => {
           const item = row.original;
@@ -1005,8 +1042,9 @@ const result = await axios.post(
 
       {
         id: "status",
-        Header: "Status",
+        Header: "Action",
         accessor: "status",
+        showInExcel: false,
         Cell: ({ row }: any) => {
           const request = row.original;
 
@@ -1167,13 +1205,17 @@ const result = await axios.post(
                   columns={transferColumns.filter(
                     (col: any) => col.accessor !== "select",
                   )}
+                  columnsDownload={transferColumns.filter(
+                    (col: any) =>
+                      col.accessor !== "select" && col.showInExcel !== false,
+                  )}
                   data={filteredRequests}
                   initialPageSize={10}
                   check={status === "Pending"}
                   selectValue="UTD"
                   selectedRows={selectedRows}
                   setSelectedRows={setSelectedRows}
-                  showPageSizeInFooter
+                  showPageSizeInFooter={true}
                   containerClassName="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border border-[#E2E8F0] dark:border-[#1F2937]"
                 />
               </div>
@@ -1301,33 +1343,6 @@ const result = await axios.post(
               <div className="grid grid-cols-1 gap-3 rounded-[11px] border border-[#E2E8F0] bg-white p-4 dark:border-[#1F2937] dark:bg-[#111827] sm:grid-cols-2">
                 <div>
                   <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
-                    Reason
-                  </p>
-
-                  <p className="mt-1 break-words text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
-                    {statusDialogRequest.REASON ??
-                      statusDialogRequest.Reason ??
-                      statusDialogRequest.reason ??
-                      "No reason recorded"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
-                    Effective Date
-                  </p>
-
-                  <p className="mt-1 text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
-                    {formatDate(
-                      statusDialogRequest.EFFECTIVE_DATE ??
-                        statusDialogRequest.EffectiveDate ??
-                        statusDialogRequest.effective_date,
-                    ) || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
                     Employee
                   </p>
 
@@ -1348,6 +1363,19 @@ const result = await axios.post(
                     {statusDialogRequest.CurrtBranch_name || "—"}
                     {" → "}
                     {statusDialogRequest.TransferTo_name || "—"}
+                  </p>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#64748B] dark:text-[#94A3B8]">
+                    Reason
+                  </p>
+
+                  <p className="mt-1 break-words text-[12.5px] font-medium text-[#1E293B] dark:text-[#E7ECF3]">
+                    {statusDialogRequest.REASON ??
+                      statusDialogRequest.Reason ??
+                      statusDialogRequest.reason ??
+                      "No reason recorded"}
                   </p>
                 </div>
               </div>

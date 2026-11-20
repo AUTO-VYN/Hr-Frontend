@@ -53,7 +53,13 @@ const useExcelDownload = () => {
           const { accessor, Cell } = col;
           let value1;
 
-          if (accessor === "acnt_id") {
+          if (typeof col.getExcelValue === "function") {
+            try {
+              value1 = col.getExcelValue({ row: { original: item }, item, value: item[accessor] });
+            } catch (err) {
+              console.error("Error in getExcelValue:", err);
+            }
+          } else if (accessor === "acnt_id") {
             // Directly take value from original object
             value1 = item[accessor];
           } else {
@@ -72,7 +78,9 @@ const useExcelDownload = () => {
             }
           }
 
-          if (typeof value1 === "string") {
+          if (value1 && typeof value1 === "object" && Array.isArray(value1.richText)) {
+            rowData[accessor] = value1;
+          } else if (typeof value1 === "string") {
             rowData[accessor] = value1;
           } else if (typeof value1 === "object" && value1 !== null) {
             rowData[accessor] = extractTextFromHtml(value1);
@@ -104,7 +112,17 @@ const useExcelDownload = () => {
       worksheet.columns.forEach(column => {
         let maxWidth = column.header.length + 5; // Initial width based on header length
         column.eachCell({ includeEmpty: true }, cell => {
-          const cellLength = cell.value ? cell.value.toString().length : 0;
+          let cellLength = 0;
+          if (cell.value) {
+            if (typeof cell.value === "object" && Array.isArray(cell.value.richText)) {
+              cellLength = cell.value.richText.reduce(
+                (acc, r) => acc + (r.text ? r.text.length : 0),
+                0
+              );
+            } else {
+              cellLength = cell.value.toString().length;
+            }
+          }
           if (cellLength > maxWidth) {
             maxWidth = cellLength;
           }

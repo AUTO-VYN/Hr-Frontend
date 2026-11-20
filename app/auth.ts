@@ -92,7 +92,7 @@ export const {
         session.user.Phy_Loc = (token.Phy_Loc as any) || 0;
         session.user.EMPCODE = (token.EMPCODE as any) || 0;
         session.user.emp_dms_code = (token.emp_dms_code as any) || 0;
-        session.user.AutoVynRights = (token.AutoVynRights as any) || 0;
+        session.user.AutoVynRights = (token.AutoVynRights as any) || 0;    
         session.user.Deal = (token.Deal as any) || [];
         session.user.Primary_Branch = token.Primary_Branch as any;
         session.user.shortcuts = token.shortcuts as any;
