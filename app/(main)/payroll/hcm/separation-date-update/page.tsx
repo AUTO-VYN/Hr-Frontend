@@ -62,6 +62,7 @@ export default function EmpLocTranshfr() {
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [falg, setFalg] = useState(false);
   const [otp, setOtp] = useState<string | null>("");
   const [timeRemaining, setTimeRemaining] = useState(60);
@@ -246,6 +247,7 @@ export default function EmpLocTranshfr() {
   };
 
   const DataSave = async () => {
+    setIsSubmitted(true);
     if (!Formdata?.EmpCode) {
       showSideAlert("Please Fill Employee Code", "warning");
       return;
@@ -313,6 +315,7 @@ export default function EmpLocTranshfr() {
         CreatedBy: user?.name,
       });
       setFalg(false);
+      setIsSubmitted(false);
     } catch (error) {
       console.error("Error saving separation data:", error);
       showSideAlert("An error occurred while saving.", "error");
@@ -656,7 +659,9 @@ export default function EmpLocTranshfr() {
                   disabled={falg}
                   className={cn(
                     inputClass,
-                    !Formdata?.EmpCode && "!border-[rgba(225,29,72,0.45)]"
+                    isSubmitted &&
+                      !Formdata?.EmpCode &&
+                      "!border-[rgba(225,29,72,0.45)]"
                   )}
                 />
               </div>
@@ -747,7 +752,9 @@ export default function EmpLocTranshfr() {
                 disabled={falg}
                 className={cn(
                   inputClass,
-                  !Formdata?.Laft_Date && "!border-[rgba(225,29,72,0.45)]"
+                  isSubmitted &&
+                    !Formdata?.Laft_Date &&
+                    "!border-[rgba(225,29,72,0.45)]"
                 )}
               />
             </div>
