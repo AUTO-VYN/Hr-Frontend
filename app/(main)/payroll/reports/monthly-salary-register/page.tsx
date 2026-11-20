@@ -344,27 +344,27 @@ export default function MonthlySalaryRegisterPage() {
   // (defined early because templates / report calls use it)
   // ---------------------------------------------------
 
- const getFilterPayload = useCallback(() => {
-  const userLocations = selectedLocations.map((item) => getCode(item));
+  const getFilterPayload = useCallback(() => {
+    const userLocations = selectedLocations.map((item) => getCode(item));
 
-  return {
-    location: userLocations.filter(Boolean),
-    Region: region === "all" ? "" : getCode(region),
-    CHANNEL: channel === "all" ? "" : getCode(channel),
-    CLUSTER: cluster === "all" ? "" : getCode(cluster),
-    SECTION: section === "all" ? "" : getCode(section),
-    DIVISION: department === "all" ? "" : getCode(department),
-    DESIGNATION: designation === "all" ? "" : getCode(designation),
-  };
-}, [
-  selectedLocations,
-  region,
-  channel,
-  cluster,
-  section,
-  department,
-  designation,
-]);
+    return {
+      location: userLocations.filter(Boolean),
+      Region: region === "all" ? "" : getCode(region),
+      CHANNEL: channel === "all" ? "" : getCode(channel),
+      CLUSTER: cluster === "all" ? "" : getCode(cluster),
+      SECTION: section === "all" ? "" : getCode(section),
+      DIVISION: department === "all" ? "" : getCode(department),
+      DESIGNATION: designation === "all" ? "" : getCode(designation),
+    };
+  }, [
+    selectedLocations,
+    region,
+    channel,
+    cluster,
+    section,
+    department,
+    designation,
+  ]);
   // ---------------------------------------------------
   // OPTIONS
   // ---------------------------------------------------
@@ -914,11 +914,17 @@ export default function MonthlySalaryRegisterPage() {
 
       setTemplateName(name);
 
+      // Reset selected columns after successful Excel download
+      // Reset columns only after template is successfully saved
+      setSelectedFields([]);
+      setSavedTemplate("none");
+      setTemplateName("");
+
       Swal.fire({
         icon: "success",
-        title: "Template saved",
-        text: `"${name}" has been saved successfully.`,
-        timer: 1500,
+        title: "Excel downloaded",
+        text: "Monthly salary report downloaded successfully.",
+        timer: 1600,
         showConfirmButton: false,
       });
     } catch (error) {
@@ -1171,18 +1177,16 @@ export default function MonthlySalaryRegisterPage() {
       return;
     }
 
-      // LOCATION REQUIRED VALIDATION
-  if (!selectedLocations.length) {
-    Swal.fire({
-      icon: "warning",
-      title: "Location Required",
-      text: "Please select at least one location before downloading the salary register.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#4f46e5",
-    });
-    return;
-  }
-
+    if (!selectedLocations.length) {
+      Swal.fire({
+        icon: "warning",
+        title: "Location Required",
+        text: "Please select at least one location before downloading the salary register.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#4f46e5",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -1239,7 +1243,7 @@ export default function MonthlySalaryRegisterPage() {
 
       window.URL.revokeObjectURL(url);
 
-      // Save selected configuration as a database template.
+      // Save current selection before resetting the UI
       const name =
         templateName.trim() || `Monthly Salary ${getMonthLabel(month)} ${year}`;
 
@@ -1250,7 +1254,15 @@ export default function MonthlySalaryRegisterPage() {
 
       await fetchTemplates();
 
-      setTemplateName(name);
+      // RESET ALL SELECTED FIELDS
+      setSelectedFields([]);
+
+      // RESET ALL SELECTED LOCATIONS / BRANCHES
+      setSelectedLocations([]);
+
+      // RESET TEMPLATE SELECTION
+      setSavedTemplate("none");
+      setTemplateName("");
 
       Swal.fire({
         icon: "success",
@@ -1262,7 +1274,6 @@ export default function MonthlySalaryRegisterPage() {
     } catch (error) {
       console.error("Monthly salary Excel download:", error);
 
-      // If server returns JSON inside Blob, extract its message.
       let message = getApiError(error);
 
       const responseData = (error as any)?.response?.data;
@@ -1271,10 +1282,11 @@ export default function MonthlySalaryRegisterPage() {
         try {
           const text = await responseData.text();
           const parsed = JSON.parse(text);
+
           message =
             parsed?.message || parsed?.Message || parsed?.error || message;
         } catch {
-          // Keep the original error message.
+          // Keep original error message.
         }
       }
 
@@ -1286,27 +1298,6 @@ export default function MonthlySalaryRegisterPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ---------------------------------------------------
-  // RESET FILTERS
-  // ---------------------------------------------------
-
-  const handleResetFilters = () => {
-    setSelectedLocations([]);
-    setRegion("all");
-    setChannel("all");
-    setCluster("all");
-    setSection("all");
-    setDepartment("all");
-    setDesignation("all");
-
-    setEmployeeType("both");
-    setSavedTemplate("none");
-    setTemplateName("");
-
-    setFieldSearch("");
-    setSelectedFields([]);
   };
 
   const periodLabel = `${getMonthLabel(month)} ${year}`;
