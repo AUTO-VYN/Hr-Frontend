@@ -900,8 +900,8 @@ export default function LeaveBalanceReportViewPage() {
           {/* TABLE / EMPTY STATE */}
 
           {hasSearched ? (
-            <div className="w-full min-w-0 overflow-x-auto">
-              <div className="min-w-max">
+            <div className="w-full min-w-0 ">
+              <div >
                 {filteredRows.length > 0 ? (
                   <DataTable
                     columns={columns}

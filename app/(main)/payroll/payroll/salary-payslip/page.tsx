@@ -448,8 +448,6 @@ const normalizeSalaryData = (item: any, employee: SlipRow): SlipRow => {
   };
 };
 
-
-
 export default function EmployeeSalarySlipsPage() {
   const user = useCurrentUser();
   const router = useRouter();
@@ -1268,6 +1266,7 @@ export default function EmployeeSalarySlipsPage() {
         </div>
 
         {/* FILTER BOXES */}
+
         <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <FilterCard
             title="Locations"
@@ -1278,8 +1277,10 @@ export default function EmployeeSalarySlipsPage() {
             }
             search={locationSearch}
             onSearch={setLocationSearch}
-            onAll={() =>
-              setSelectedLocations(locations.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedLocations(
+                shouldSelect ? locations.map((item) => item.value) : [],
+              )
             }
           />
 
@@ -1290,7 +1291,11 @@ export default function EmployeeSalarySlipsPage() {
             onChange={(value) => toggleCheckboxItem(value, setSelectedRegions)}
             search={regionSearch}
             onSearch={setRegionSearch}
-            onAll={() => setSelectedRegions(regions.map((item) => item.value))}
+            onAll={(shouldSelect) =>
+              setSelectedRegions(
+                shouldSelect ? regions.map((item) => item.value) : [],
+              )
+            }
           />
 
           <FilterCard
@@ -1302,8 +1307,10 @@ export default function EmployeeSalarySlipsPage() {
             }
             search={deptSearch}
             onSearch={setDeptSearch}
-            onAll={() =>
-              setSelectedDepartments(departments.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedDepartments(
+                shouldSelect ? departments.map((item) => item.value) : [],
+              )
             }
           />
 
@@ -1314,8 +1321,10 @@ export default function EmployeeSalarySlipsPage() {
             onChange={(value) => toggleCheckboxItem(value, setSelectedChannels)}
             search={channelSearch}
             onSearch={setChannelSearch}
-            onAll={() =>
-              setSelectedChannels(channels.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedChannels(
+                shouldSelect ? channels.map((item) => item.value) : [],
+              )
             }
           />
 
@@ -1326,8 +1335,10 @@ export default function EmployeeSalarySlipsPage() {
             onChange={(value) => toggleCheckboxItem(value, setSelectedClusters)}
             search={clusterSearch}
             onSearch={setClusterSearch}
-            onAll={() =>
-              setSelectedClusters(clusters.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedClusters(
+                shouldSelect ? clusters.map((item) => item.value) : [],
+              )
             }
           />
 
@@ -1338,8 +1349,10 @@ export default function EmployeeSalarySlipsPage() {
             onChange={(value) => toggleCheckboxItem(value, setSelectedSections)}
             search={sectionSearch}
             onSearch={setSectionSearch}
-            onAll={() =>
-              setSelectedSections(sections.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedSections(
+                shouldSelect ? sections.map((item) => item.value) : [],
+              )
             }
           />
 
@@ -1352,8 +1365,10 @@ export default function EmployeeSalarySlipsPage() {
             }
             search={designationSearch}
             onSearch={setDesignationSearch}
-            onAll={() =>
-              setSelectedDesignations(designations.map((item) => item.value))
+            onAll={(shouldSelect) =>
+              setSelectedDesignations(
+                shouldSelect ? designations.map((item) => item.value) : [],
+              )
             }
           />
         </div>
@@ -1383,8 +1398,8 @@ export default function EmployeeSalarySlipsPage() {
                 data={slipRows}
                 showTopSearch={true}
                 showExcelExport={true}
-                 resetFilters={true}
-                 showPageSizeInFooter = {true}
+                resetFilters={true}
+                showPageSizeInFooter={true}
                 initialPageSize={10}
               />
             </div>

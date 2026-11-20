@@ -652,6 +652,38 @@ const TripReportPage = () => {
     await fetchLocationLog(tourId);
   };
 
+  const previewLocation = (loc: LocationLog) => {
+    const L = window.L;
+
+    if (!L || !mapInstanceRef.current) return;
+
+    const lat = Number.parseFloat(String(loc.Latitude ?? ""));
+    const lng = Number.parseFloat(String(loc.Longitude ?? ""));
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      showAlert("Location coordinates are not available.", "warning");
+      return;
+    }
+
+    const map = mapInstanceRef.current;
+
+    map.flyTo([lat, lng], 17, {
+      animate: true,
+      duration: 1,
+    });
+
+    // Open the matching marker popup
+    map.eachLayer((layer: any) => {
+      if (
+        layer instanceof L.Marker &&
+        layer.getLatLng().lat === lat &&
+        layer.getLatLng().lng === lng
+      ) {
+        layer.openPopup();
+      }
+    });
+  };
+
   // --------------------------------------------------
   // RENDER LEAFLET MAP
   // --------------------------------------------------
@@ -1104,7 +1136,14 @@ const TripReportPage = () => {
                             ? new Date(loc.Fetched_At).toLocaleString()
                             : "—"}
                         </span>
-
+                        <button
+                          type="button"
+                          onClick={() => previewLocation(loc)}
+                          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+                        >
+                          <MapPin size={12} />
+                          Preview
+                        </button>
                         <span
                           className="whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] text-white"
                           style={{

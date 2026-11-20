@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -20,15 +21,22 @@ const FilterCard = ({
       .includes(search.trim().toLowerCase()),
   );
 
-  const allSelected = options.length > 0 && selected.length === options.length;
+  const allSelected =
+    options.length > 0 &&
+    options.every((item) => selected.includes(item.value));
+
   const partiallySelected =
-    selected.length > 0 && selected.length < options.length;
+    selected.length > 0 && !allSelected;
 
   useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate = partiallySelected;
     }
   }, [partiallySelected]);
+
+  const handleSelectAll = () => {
+    onAll(!allSelected);
+  };
 
   return (
     <div className="flex h-[240px] min-w-0 flex-col overflow-hidden rounded-xl border border-[#dce5f1] bg-white shadow-[0_2px_5px_rgba(15,23,42,0.04)] dark:border-slate-700 dark:bg-slate-900">
@@ -39,9 +47,10 @@ const FilterCard = ({
             ref={selectAllRef}
             type="checkbox"
             checked={allSelected}
-            onChange={onAll}
+            onChange={handleSelectAll}
             className="h-[15px] w-[15px] shrink-0 cursor-pointer rounded border-slate-300 accent-blue-600"
           />
+
           <span className="truncate text-[12px] font-semibold text-[#152b4b] dark:text-slate-100">
             {title}
           </span>
@@ -49,14 +58,13 @@ const FilterCard = ({
 
         <button
           type="button"
-          onClick={onAll}
+          onClick={handleSelectAll}
           className="shrink-0 text-[11px] font-medium text-[#64748b] transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
         >
-          All
+          {allSelected ? "Unselect All" : "All"}
         </button>
       </div>
 
-      
       {/* Search */}
       <div className="shrink-0 border-b border-[#e8edf5] px-2.5 py-[9px] dark:border-slate-700">
         <div className="relative">
@@ -65,6 +73,7 @@ const FilterCard = ({
             strokeWidth={1.8}
             className="pointer-events-none absolute left-[13px] top-1/2 z-10 -translate-y-1/2 text-slate-500 dark:text-slate-400"
           />
+
           <input
             type="text"
             value={search}
@@ -90,6 +99,7 @@ const FilterCard = ({
                 onChange={() => onChange(item.value)}
                 className="h-[14px] w-[14px] shrink-0 cursor-pointer rounded border-slate-300 accent-blue-600"
               />
+
               <span className="min-w-0 break-words text-[11px] font-medium text-[#183153] dark:text-slate-300">
                 {item.label}
               </span>
