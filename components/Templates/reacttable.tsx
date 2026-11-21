@@ -297,7 +297,7 @@ export default function ServiceTablePagination({
 
   // Filter client data if column filters are active
   const filteredDataByColumns = useMemo(() => {
-    if (serverMode) return data;
+    // if (serverMode) return data;
     const activeEntries = Object.entries(activeColumnFilters).filter(
       ([_, v]) => v && String(v).trim() !== "",
     );

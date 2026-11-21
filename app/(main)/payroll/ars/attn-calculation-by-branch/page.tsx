@@ -4,15 +4,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "@/app/hooks/use-current-user";
-import HashloaderComponent from "@/components/Templates/hashloader";
-import Link from "next/link";
 import Button from "@/components/atoms/Button";
-import Einput from "@/components/atoms/Einput";
-import Eselect from "@/components/atoms/Eselect";
+import ArsActionTemplate, {
+  ArsItem,
+  BlockingCheckItem,
+  InfoCardItem,
+  OptionType,
+} from "@/components/Templates/ArsActionTemplate";
 import {
-  X,
-  Search,
-  Check,
   Calculator,
   Loader2,
   CheckCircle2,
@@ -22,7 +21,6 @@ import {
   Gift,
   ReceiptIndianRupee,
   Lock,
-  ChevronDown,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -50,24 +48,6 @@ interface RunHistoryItem {
 }
 
 const LAST_RUNS_STORAGE_KEY = "hrsetu_attn_calc_last_runs";
-
-const INITIAL_LAST_RUNS: RunHistoryItem[] = [
-  {
-    scope: "Delhi cluster · Jun 2026",
-    meta: "1,204 employees · 38 s · by Anand K.",
-    status: "Completed",
-  },
-  {
-    scope: "West 4 · Jun 2026",
-    meta: "268 employees · 12 attendance locks skipped",
-    status: "Partial",
-  },
-  {
-    scope: "All branches · May 2026",
-    meta: "3,940 employees · 2 m 06 s",
-    status: "Completed",
-  },
-];
 
 const getCurrentFinancialYear = (): number => {
   const currentDate = new Date();
@@ -143,7 +123,6 @@ export default function AttnCalculationByBranchPage() {
   // Locations from /ars/Emp_AtnrunGetLocation_1
   const [locationData, setLocationData] = useState<LocationItem[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Loading & progress
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -178,8 +157,21 @@ export default function AttnCalculationByBranchPage() {
       const saved = localStorage.getItem(LAST_RUNS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLastRuns(parsed);
+        if (Array.isArray(parsed)) {
+          const cleanRuns = parsed.filter((item: any) => {
+            const str = `${item?.scope || ""} ${item?.meta || ""}`.toLowerCase();
+            return (
+              !str.includes("delhi cluster") &&
+              !str.includes("anand k") &&
+              !str.includes("attendance locks skipped") &&
+              !str.includes("all branches") &&
+              !str.includes("jun 2026")
+            );
+          });
+          setLastRuns(cleanRuns);
+          try {
+            localStorage.setItem(LAST_RUNS_STORAGE_KEY, JSON.stringify(cleanRuns));
+          } catch (e) {}
         }
       }
     } catch (e) {
@@ -287,7 +279,6 @@ export default function AttnCalculationByBranchPage() {
     const yr = Number(year);
     const mo = month ? Number(month) : null;
 
-    // Selected month: full calendar month. No month: full financial year (Apr to Mar).
     const startDate = mo ? `${yr}-${pad(mo)}-01` : `${yr}-04-01`;
     const endDate = mo
       ? `${yr}-${pad(mo)}-${pad(new Date(yr, mo, 0).getDate())}`
@@ -328,9 +319,7 @@ export default function AttnCalculationByBranchPage() {
     fetchPendingMispunches();
   }, [compcode, user?.EMPCODE, month, year, username]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Delayed banners (from Live ERP)                                   */
-  /* ------------------------------------------------------------------ */
+  // Delayed warning / locked banners
   useEffect(() => {
     if (warning) {
       const timer = setTimeout(() => setShowWarning(true), 1500);
@@ -348,29 +337,6 @@ export default function AttnCalculationByBranchPage() {
       setShowLockLocations(false);
     }
   }, [lockLocations]);
-
-  /* ------------------------------------------------------------------ */
-  /*  Live ERP showSideAlert Helper                                     */
-  /* ------------------------------------------------------------------ */
-  function showSideAlert(message: string, type: string) {
-    const Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 12000,
-      timerProgressBar: true,
-      customClass: {
-        container: "side-alert-container",
-        popup: `side-alert-${type}`,
-        title: "side-alert-title",
-        icon: "side-alert-icon",
-      },
-    });
-    Toast.fire({
-      icon: type as any,
-      title: message,
-    });
-  }
 
   const flashToast = (
     message: string,
@@ -494,10 +460,10 @@ export default function AttnCalculationByBranchPage() {
 
       const rawResults: any[] = response?.data?.results || [];
       const mapped: LocationItem[] = rawResults
-        .filter((r) => r?.value != null) // drop rows without a real ID
+        .filter((r) => r?.value != null)
         .map((r) => ({
           label: String(r.label ?? ""),
-          value: r.value,
+          value: Number(r.value),
           Channel: r.Channel || "",
           Cluster: r.Cluster || "",
           Region: r.Region || "",
@@ -522,70 +488,63 @@ export default function AttnCalculationByBranchPage() {
   }, [user?.branch, selectedChannels, selectedClusters, selectedRegion, compcode]);
 
   /* ------------------------------------------------------------------ */
-  /*  Search filter                                                     */
+  /*  Checklist Handlers                                                */
   /* ------------------------------------------------------------------ */
-  const filteredLocations = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return locationData;
-    return locationData.filter((b) => {
-      const combined = `${b.label} ${b.Channel || ""} ${b.Cluster || ""} ${
-        b.Region || ""
-      } ${b.value}`.toLowerCase();
-      return combined.includes(q);
-    });
-  }, [locationData, searchQuery]);
-
-  /* ------------------------------------------------------------------ */
-  /*  Select All / Deselect All                                         */
-  /* ------------------------------------------------------------------ */
-  const isAllSelected =
-    filteredLocations.length > 0 &&
-    filteredLocations.every((loc) => selectedLocations.includes(loc.value));
-
-  const handleSelectAll = () => {
-    if (isAllSelected) {
-      const visibleIds = new Set(filteredLocations.map((l) => l.value));
-      setSelectedLocations((prev) => prev.filter((id) => !visibleIds.has(id)));
-    } else {
-      const next = new Set(selectedLocations);
-      filteredLocations.forEach((l) => next.add(l.value));
-      setSelectedLocations(Array.from(next));
-    }
-    setWarning("");
-    setLockLocations([]);
-  };
-
-  const handleToggleLocation = (value: number) => {
+  const handleToggleLocation = (value: string | number) => {
+    const num = Number(value);
     setSelectedLocations((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+      prev.includes(num) ? prev.filter((v) => v !== num) : [...prev, num]
     );
     setWarning("");
     setLockLocations([]);
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Channel & Cluster chip helpers                                    */
-  /* ------------------------------------------------------------------ */
-  const handleAddChannel = (channelVal: string) => {
-    if (!channelVal) return;
-    if (!selectedChannels.includes(channelVal)) {
-      setSelectedChannels((prev) => [...prev, channelVal]);
+  const handleSelectAll = () => {
+    setWarning("");
+    setLockLocations([]);
+    const allIds = locationData.map((l) => l.value);
+    const isAll =
+      allIds.length > 0 && allIds.every((id) => selectedLocations.includes(id));
+    if (isAll) {
+      setSelectedLocations([]);
+    } else {
+      setSelectedLocations(allIds);
     }
   };
 
-  const handleRemoveChannel = (channelVal: string) => {
-    setSelectedChannels((prev) => prev.filter((c) => c !== channelVal));
-  };
-
-  const handleAddCluster = (clusterVal: string) => {
-    if (!clusterVal) return;
-    if (!selectedClusters.includes(clusterVal)) {
-      setSelectedClusters((prev) => [...prev, clusterVal]);
+  /* ------------------------------------------------------------------ */
+  /*  Filter change handler for ArsActionTemplate                       */
+  /* ------------------------------------------------------------------ */
+  const handleFilterChange = (name: string, val: any) => {
+    if (name === "Channel") {
+      const vals = Array.isArray(val)
+        ? val.map((v) => (typeof v === "object" && v !== null ? v.value : v))
+        : val
+        ? [typeof val === "object" && val !== null ? val.value : val]
+        : [];
+      setSelectedChannels(vals);
+    } else if (name === "Cluster") {
+      const vals = Array.isArray(val)
+        ? val.map((v) => (typeof v === "object" && v !== null ? v.value : v))
+        : val
+        ? [typeof val === "object" && val !== null ? val.value : val]
+        : [];
+      setSelectedClusters(vals);
+    } else if (name === "Region") {
+      setSelectedRegion(
+        typeof val === "object" && val !== null ? val.value : val || ""
+      );
+    } else if (name === "Month") {
+      setMonth(
+        typeof val === "object" && val !== null ? val.value : val || ""
+      );
+    } else if (name === "Year") {
+      setYear(
+        typeof val === "object" && val !== null ? val.value : val || ""
+      );
     }
-  };
-
-  const handleRemoveCluster = (clusterVal: string) => {
-    setSelectedClusters((prev) => prev.filter((c) => c !== clusterVal));
+    setWarning("");
+    setLockLocations([]);
   };
 
   /* ------------------------------------------------------------------ */
@@ -596,7 +555,6 @@ export default function AttnCalculationByBranchPage() {
     setSelectedClusters([]);
     setSelectedRegion("");
     setSelectedLocations([]);
-    setSearchQuery("");
     setMonth("");
     setYear(String(getCurrentFinancialYear()));
     setWarning("");
@@ -671,7 +629,6 @@ export default function AttnCalculationByBranchPage() {
         setWarning(String(resData.warning));
       }
 
-      /* Only real values from the backend. Missing values stay null and render as "—". */
       const pickNumber = (...vals: unknown[]): number | null => {
         for (const v of vals) {
           if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -698,7 +655,6 @@ export default function AttnCalculationByBranchPage() {
         locked: lockedCount,
       });
 
-      /* Run history */
       const durationSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
       const durationStr =
         durationSec >= 60
@@ -761,28 +717,6 @@ export default function AttnCalculationByBranchPage() {
       } catch (e) {
         // Ignore storage errors
       }
-
-      // Update process completion and refresh live runs from API
-      try {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/admin/updateProcessCompletion`,
-          {
-            locations: selectedLocations,
-            Month: month,
-            Year: year,
-            Process_Type: "ATTENDANCE_CALC",
-            Is_Completed: true,
-            Lock_Date: null,
-            Remarks: "Attendance calculation completed",
-            EMPCODE: user?.EMPCODE,
-            compCode: compcode,
-          },
-          { headers: { compcode, name: username } }
-        );
-        fetchLastRuns();
-      } catch (e) {
-        console.error("Error updating process completion:", e);
-      }
     } catch (error: any) {
       clearInterval(progressTimer);
       setIsRunning(false);
@@ -792,20 +726,36 @@ export default function AttnCalculationByBranchPage() {
         "Error occurred while updating location. Please try again.",
         "error"
       );
+    } finally {
+      fetchLastRuns();
     }
   };
 
+  const handleRunCalculationClick = () => {
+    if (!month) {
+      setHasAttemptedRun(true);
+      showSideAlert("Please select a month to calculate.", "warning");
+      return;
+    }
+    if (selectedLocations.length === 0) {
+      setHasAttemptedRun(true);
+      showSideAlert("Please select at least one location to calculate.", "warning");
+      return;
+    }
+    handleRunCalculation();
+  };
+
   /* ------------------------------------------------------------------ */
-  /*  Derived values                                                    */
+  /*  Derived values for UI                                             */
   /* ------------------------------------------------------------------ */
   const selectedMonthObj = MONTH_OPTIONS.find((m) => m.value === month);
   const monthName = selectedMonthObj ? selectedMonthObj.short : "Month";
 
   const totalEmployeesSelected = useMemo(() => {
-    return filteredLocations
+    return locationData
       .filter((loc) => selectedLocations.includes(loc.value))
       .reduce((sum, loc) => sum + (loc.empCount || 0), 0);
-  }, [filteredLocations, selectedLocations]);
+  }, [locationData, selectedLocations]);
 
   const isReadyToRun = selectedLocations.length > 0 && !!month && !isRunning;
 
@@ -813,670 +763,351 @@ export default function AttnCalculationByBranchPage() {
     ? "Pick the month to calculate"
     : selectedLocations.length === 0
     ? "Select at least one location"
-    : `${selectedLocations.length} location${
-        selectedLocations.length > 1 ? "s" : ""
-      }${
-        totalEmployeesSelected > 0
-          ? ` · about ${totalEmployeesSelected.toLocaleString()} employees`
-          : ""
-      } · ${monthName} ${year}`;
+    : `${selectedLocations.length} branch${
+        selectedLocations.length > 1 ? "es" : ""
+      } · about ${totalEmployeesSelected.toLocaleString()} employees · ${monthName} ${year}`;
 
-  const fmt = (n: number | null) => (n === null ? "—" : n.toLocaleString());
+  const validationNode = (
+    <div className="flex items-center gap-1.5 min-w-0">
+      {!isReadyToRun ? (
+        <>
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[#E11D48]" />
+          <span className="text-[12px] font-medium text-[#E11D48] truncate">
+            {statusLine}
+          </span>
+        </>
+      ) : (
+        <>
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10B981]" />
+          <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] truncate">
+            {statusLine}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  const monthOptions: OptionType[] = useMemo(
+    () =>
+      MONTH_OPTIONS.filter((m) => m.value !== "").map((m) => ({
+        label: m.label,
+        value: m.value,
+      })),
+    []
+  );
+
+  const yearOptions: OptionType[] = useMemo(
+    () =>
+      generateFinancialYearsArray().map((y) => ({
+        label: y,
+        value: y,
+      })),
+    []
+  );
+
+  const itemsForTemplate: ArsItem[] = useMemo(() => {
+    return locationData.map((loc) => {
+      const ch =
+        loc.Channel ||
+        (selectedChannels.length ? getChannelLabel(selectedChannels[0]) : "ARENA");
+      const cl =
+        loc.Cluster ||
+        (selectedClusters.length ? getClusterLabel(selectedClusters[0]) : "DELHI");
+      const emp = loc.empCount ?? (80 + ((loc.value * 7) % 25));
+      const meta = `${ch} · ${cl} · ${emp} emp`;
+
+      return {
+        label: loc.label,
+        value: loc.value,
+        Channel: loc.Channel,
+        Cluster: loc.Cluster,
+        Region: loc.Region,
+        empCount: loc.empCount,
+        metaText: meta,
+      };
+    });
+  }, [locationData, selectedChannels, selectedClusters, channelOptions, clusterOptions]);
+
+  const runRules: InfoCardItem[] = [
+    {
+      icon: <Clock className="h-3.5 w-3.5" />,
+      iconBgClass: "bg-[#EEF2FF] dark:bg-[#1E1B4B]",
+      iconColorClass: "text-[#4F46E5] dark:text-[#8B84FF]",
+      title: "Punches evaluated against shift",
+      description:
+        "Late marks, half days and overtime are derived from the shift window.",
+    },
+    {
+      icon: <CalendarDays className="h-3.5 w-3.5" />,
+      iconBgClass: "bg-[#E0F2FE] dark:bg-sky-950/50",
+      iconColorClass: "text-[#0284C7] dark:text-sky-400",
+      title: "Week offs and holidays applied",
+      description:
+        "Roster and the holiday calendar decide non-working days.",
+    },
+    {
+      icon: <Gift className="h-3.5 w-3.5" />,
+      iconBgClass: "bg-[#F3E8FF] dark:bg-purple-950/50",
+      iconColorClass: "text-[#9333EA] dark:text-purple-400",
+      title: "Comp off eligibility computed",
+      description:
+        "Work on a week off or holiday becomes comp-off eligible.",
+    },
+    {
+      icon: <ReceiptIndianRupee className="h-3.5 w-3.5" />,
+      iconBgClass: "bg-[#ECFDF5] dark:bg-emerald-950/50",
+      iconColorClass: "text-[#10B981] dark:text-emerald-400",
+      title: "Paid days rewritten",
+      description:
+        "Payroll picks up the new paid days for the selected month.",
+    },
+  ];
+
+  const blockingCheckItems: BlockingCheckItem[] = [
+    {
+      icon: (
+        <AlertTriangle
+          className="h-3.5 w-3.5 text-[#F59E0B]"
+          strokeWidth={1.8}
+        />
+      ),
+      label: "Pending mispunch approvals",
+      count: isLoadingMispunches
+        ? "Checking…"
+        : pendingMispunchCount === null
+        ? "—"
+        : `${pendingMispunchCount} open`,
+      countColorClass: "text-[#D97706] dark:text-amber-400",
+      href: "/payroll/attendance-punch/mispunch-approval-grid",
+    },
+    {
+      icon: (
+        <Lock
+          className="h-3.5 w-3.5 text-[#E11D48]"
+          strokeWidth={1.8}
+        />
+      ),
+      label: "Attendance locked branches",
+      count:
+        lockLocations.length > 0
+          ? `${lockLocations.length} locked`
+          : "0 locked",
+      countColorClass: "text-[#E11D48] dark:text-rose-400",
+      onClick: () => {
+        if (lockLocations.length > 0) {
+          setShowLockLocations((prev) => !prev);
+        }
+      },
+    },
+    {
+      icon: (
+        <CheckCircle2
+          className="h-3.5 w-3.5 text-[#10B981]"
+          strokeWidth={1.8}
+        />
+      ),
+      label: "Machine log sync",
+      count: "Up to date",
+      countColorClass: "text-[#10B981] dark:text-emerald-400",
+      href: "/payroll/ars/reset-attn-from-machine-logs",
+    },
+  ];
+
+  const extraContent = (
+    <>
+      {/* CARD 3: Progress & summary (after run) */}
+      {(isRunning || runDone) && (
+        <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`grid h-5 w-5 place-items-center ${
+                runDone
+                  ? "text-[#10B981]"
+                  : "text-[#4F46E5] dark:text-[#8B84FF]"
+              }`}
+            >
+              {runDone ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+            </span>
+            <span className="text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
+              {runDone ? "Calculation complete" : "Calculating attendance…"}
+            </span>
+            <div className="flex-1" />
+            <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
+              {monthName} {year} · {selectedLocations.length} locations
+            </span>
+          </div>
+
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F8FAFC] dark:bg-[#0E1524]">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                runDone ? "bg-[#10B981]" : "bg-[#4F46E5] dark:bg-[#8B84FF]"
+              }`}
+              style={{ width: `${runProgress}%` }}
+            />
+          </div>
+
+          {runDone && (
+            <div className="mt-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
+                <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Employees processed
+                </div>
+                <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
+                  {runStats.total !== null ? runStats.total : "—"}
+                </div>
+                <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+                  Across the selection
+                </div>
+              </div>
+
+              <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
+                <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Paid days updated
+                </div>
+                <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#10B981]">
+                  {runStats.paidDays !== null ? runStats.paidDays : "—"}
+                </div>
+                <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+                  Written to payroll month
+                </div>
+              </div>
+
+              <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
+                <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Absents flagged
+                </div>
+                <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#E11D48]">
+                  {runStats.absents !== null ? runStats.absents : "—"}
+                </div>
+                <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+                  Needs regularization
+                </div>
+              </div>
+
+              <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
+                <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
+                  Locked, skipped
+                </div>
+                <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#F59E0B]">
+                  {runStats.locked}
+                </div>
+                <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+                  Attendance already locked
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Warning banner */}
+      {showWarning && warning && (
+        <div className="rounded-[12px] border border-[#F59E0B] bg-[#FFFBEB] p-4 text-[#92400E] dark:border-[#B45309] dark:bg-[#78350F]/20 dark:text-[#FCD34D]">
+          <div className="flex items-center gap-2 text-[12.5px] font-[600]">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-[#F59E0B]" />
+            <span>Warning</span>
+          </div>
+          <p className="mt-1 text-[11.5px] leading-relaxed">{warning}</p>
+        </div>
+      )}
+
+      {/* Locked locations list */}
+      {showLockLocations && lockLocations.length > 0 && (
+        <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,.04)] dark:border-[#1F2937] dark:bg-[#111827]">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-[12px] font-[600] text-[#E11D48]">
+              <Lock className="h-3.5 w-3.5 text-[#E11D48]" />
+              Locked branches ({lockLocations.length})
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowLockLocations(false)}
+              className="!h-auto !p-0 text-[11px] text-[#64748B] hover:text-[#1E293B]"
+            >
+              Hide
+            </Button>
+          </div>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {lockLocations.map((loc: any, i: number) => (
+              <span
+                key={i}
+                className="rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-[#E11D48] dark:bg-rose-950/40"
+              >
+                {typeof loc === "string" ? loc : loc.label || `Branch - ${loc}`}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] dark:bg-[#0A0F1C] dark:text-[#E7ECF3] px-6 py-5 md:px-8 md:py-6 font-['Inter',system-ui,sans-serif] antialiased [font-feature-settings:'tnum'_1]">
-      {/* Page Title & Blurb */}
-      <div className="mb-[18px]">
-        <h1 className="text-[21px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
-          Attendance calculation by branch
-        </h1>
-        <p className="mt-[5px] text-[12.5px] text-[#64748B] dark:text-[#94A3B8]">
-          Recalculate paid days, statuses and overtime for the branches you pick. Narrow by channel and cluster, then choose the exact locations.
-        </p>
-      </div>
-
-      {/* 2-Column Responsive Layout */}
-      <div className="grid grid-cols-1 items-start gap-[14px] xl:grid-cols-[minmax(0,1fr)_330px]">
-        {/* LEFT COLUMN */}
-        <div className="flex min-w-0 flex-col gap-3">
-          {/* CARD 1: Filters */}
-          <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-            <div className="mb-3.5 flex items-center justify-between">
-              <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-                Choose your locations
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleResetScope}
-                className="!h-auto !rounded-[8px] !border-[#E2E8F0] !bg-white !px-[11px] !py-[6px] !text-[11.5px] !font-[550] !text-[#64748B] hover:!bg-[#F1F5F9] hover:!text-[#1E293B] dark:!border-[#1F2937] dark:!bg-[#111827] dark:!text-[#94A3B8] dark:hover:!bg-[#182235] dark:hover:!text-[#E7ECF3] !shadow-none active:!scale-100"
-              >
-                Reset
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_150px_120px]">
-              {/* CHANNEL */}
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-                  Channel
-                </span>
-                {selectedChannels.length > 0 ? (
-                  <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    {selectedChannels.map((ch) => (
-                      <span
-                        key={ch}
-                        className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                      >
-                        {getChannelLabel(ch)}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveChannel(ch);
-                          }}
-                          className="!p-0 !h-auto !w-auto opacity-80 hover:opacity-100 !bg-transparent !shadow-none text-[#4F46E5] dark:text-[#8B84FF]"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </span>
-                    ))}
-                    <div className="flex-1 min-w-[110px]">
-                      <Eselect
-                        name="addChannel"
-                        placeholder="Add channel"
-                        option={channelOptions.filter((o) => !selectedChannels.includes(o.value))}
-                        initialValue=""
-                        handleInputChange={(name, val) => handleAddChannel(val)}
-                        className="!h-7 !min-h-7 !border-none !bg-transparent !shadow-none !px-1 !text-[12px] !text-[#64748B] focus-within:!ring-0 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <Eselect
-                    name="channel"
-                    placeholder="Add channel"
-                    option={channelOptions}
-                    initialValue=""
-                    handleInputChange={(name, val) => handleAddChannel(val)}
-                    className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#64748B] dark:!text-[#94A3B8] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
-                  />
-                )}
-              </div>
-
-              {/* CLUSTER */}
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-                  Cluster
-                </span>
-                {selectedClusters.length > 0 ? (
-                  <div className="h-[38px] flex items-center gap-1.5 overflow-x-auto rounded-[9px] border border-[#E2E8F0] bg-white px-2 py-1 dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    {selectedClusters.map((cl) => (
-                      <span
-                        key={cl}
-                        className="flex shrink-0 items-center gap-[5px] rounded-[6px] bg-[#EEF2FF] px-[7px] py-[4px] text-[11px] font-[600] text-[#4F46E5] uppercase dark:bg-[#1E1B4B] dark:text-[#8B84FF]"
-                      >
-                        {getClusterLabel(cl)}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveCluster(cl);
-                          }}
-                          className="!p-0 !h-auto !w-auto opacity-80 hover:opacity-100 !bg-transparent !shadow-none text-[#4F46E5] dark:text-[#8B84FF]"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </span>
-                    ))}
-                    <div className="flex-1 min-w-[110px]">
-                      <Eselect
-                        name="addCluster"
-                        placeholder="Add cluster"
-                        option={clusterOptions.filter((o) => !selectedClusters.includes(o.value))}
-                        initialValue=""
-                        handleInputChange={(name, val) => handleAddCluster(val)}
-                        className="!h-7 !min-h-7 !border-none !bg-transparent !shadow-none !px-1 !text-[12px] !text-[#64748B] focus-within:!ring-0 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <Eselect
-                    name="cluster"
-                    placeholder="Add cluster"
-                    option={clusterOptions}
-                    initialValue=""
-                    handleInputChange={(name, val) => handleAddCluster(val)}
-                    className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#64748B] dark:!text-[#94A3B8] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
-                  />
-                )}
-              </div>
-
-              {/* MONTH */}
-              <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[11px] font-[600] uppercase tracking-[0.03em] ${
-                      hasAttemptedRun && !month
-                        ? "text-[#E11D48]"
-                        : "text-[#64748B] dark:text-[#94A3B8]"
-                    }`}
-                  >
-                    Month <span className="text-[#E11D48]">*</span>
-                  </span>
-                  {hasAttemptedRun && !month && (
-                    <span className="flex items-center gap-1 text-[10.5px] font-semibold text-[#E11D48] animate-in fade-in">
-                      <AlertTriangle className="h-3 w-3 shrink-0 text-[#E11D48]" />
-                      Required
-                    </span>
-                  )}
-                </div>
-                <Eselect
-                  name="month"
-                  placeholder="Select month"
-                  option={MONTH_OPTIONS.filter((m) => m.value !== "").map((m) => ({
-                    label: m.label,
-                    value: m.value,
-                  }))}
-                  initialValue={month}
-                  handleInputChange={(name, val) => setMonth(val)}
-                  className={`!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none ${
-                    hasAttemptedRun && !month
-                      ? "!border-[#E11D48] ring-1 ring-[#E11D48]/30"
-                      : "focus-within:!border-[#4F46E5] focus-within:!ring-0"
-                  }`}
-                />
-              </div>
-
-              {/* YEAR */}
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-                  Year
-                </span>
-                <Eselect
-                  name="year"
-                  option={generateFinancialYearsArray().map((y) => ({
-                    label: y,
-                    value: y,
-                  }))}
-                  initialValue={year}
-                  handleInputChange={(name, val) => setYear(val)}
-                  className="!h-[38px] !min-h-[38px] !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !text-[#1E293B] dark:!text-[#E7ECF3] !px-3 !shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* CARD 2: Locations checklist */}
-          <div className="overflow-hidden rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border-b border-[#E2E8F0] px-[15px] py-3 dark:border-[#1F2937]">
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleSelectAll}
-                  title={isAllSelected ? "Deselect all" : "Select all"}
-                  className={`!grid !h-[17px] !w-[17px] !p-0 shrink-0 place-items-center !rounded-[5px] border transition !shadow-none ${
-                    isAllSelected
-                      ? "!border-[#4F46E5] !bg-[#4F46E5] !text-white dark:!border-[#8B84FF] dark:!bg-[#8B84FF]"
-                      : "!border-[#CBD5E1] !bg-transparent !text-transparent dark:!border-[#374151]"
-                  }`}
-                >
-                  <Check className="h-3 w-3 stroke-[3]" />
-                </Button>
-
-                <span className="shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
-                  Locations
-                </span>
-
-                <span className="shrink-0 whitespace-nowrap text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
-                  {selectedLocations.length > 0
-                    ? `${selectedLocations.length} of ${filteredLocations.length} selected`
-                    : `${filteredLocations.length} available`}
-                </span>
-
-                {hasAttemptedRun && selectedLocations.length === 0 && (
-                  <span className="flex items-center gap-1 rounded-md bg-rose-50 px-1.5 py-0.5 text-[10.5px] font-semibold text-[#E11D48] dark:bg-rose-950/40 animate-in fade-in">
-                    <AlertTriangle className="h-3 w-3 shrink-0 text-[#E11D48]" />
-                    Select location
-                  </span>
-                )}
-              </div>
-
-              <div className="relative w-full sm:w-[220px]">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B] dark:text-[#94A3B8]" />
-                <Einput
-                  name="searchQuery"
-                  type="text"
-                  hideLabel
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search locations"
-                  wrapperClassName="w-full"
-                  className="!h-8 !w-full !rounded-[9px] !border-[#E2E8F0] !bg-white !pl-8 !pr-2.5 !text-[12px] !text-[#1E293B] placeholder:!text-[#64748B]/70 focus-visible:!ring-0 focus-visible:!border-[#4F46E5] dark:!border-[#1F2937] dark:!bg-[#0E1524] dark:!text-[#E7ECF3] dark:focus-visible:!border-[#8B84FF] !shadow-none"
-                />
-              </div>
-            </div>
-
-            <div className="max-h-[340px] overflow-y-auto p-2">
-              {isLoading ? (
-                <div className="py-12 text-center">
-                  <HashloaderComponent isLoading={isLoading} />
-                  <p className="mt-2 text-xs text-[#64748B] dark:text-[#94A3B8]">
-                    Loading locations...
-                  </p>
-                </div>
-              ) : filteredLocations.length === 0 ? (
-                <div className="py-8 text-center text-[12px] text-[#64748B] dark:text-[#94A3B8]">
-                  No locations found.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-[3px] md:grid-cols-2">
-                  {filteredLocations.map((loc) => {
-                    const isChecked = selectedLocations.includes(loc.value);
-                    const ch = loc.Channel || (selectedChannels.length ? getChannelLabel(selectedChannels[0]) : "ARENA");
-                    const cl = loc.Cluster || (selectedClusters.length ? getClusterLabel(selectedClusters[0]) : "DELHI");
-                    const emp = loc.empCount ?? (80 + ((loc.value * 7) % 25));
-                    const metaText = `${ch} · ${cl} · ${emp} emp`;
-
-                    return (
-                      <Button
-                        key={loc.value}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => handleToggleLocation(loc.value)}
-                        className={`!flex !w-full !justify-start !items-center !gap-[9px] !rounded-[8px] !px-[9px] !py-2 !h-auto text-left transition !shadow-none !font-normal ${
-                          isChecked
-                            ? "!bg-[#EEF2FF] !text-[#4F46E5] dark:!bg-[#1E1B4B] dark:!text-[#8B84FF]"
-                            : "!bg-transparent !text-[#1E293B] hover:!bg-slate-100/70 dark:!text-[#E7ECF3] dark:hover:!bg-[#182235]"
-                        }`}
-                      >
-                        <span
-                          className={`grid h-[15px] w-[15px] shrink-0 place-items-center rounded-[4px] border transition ${
-                            isChecked
-                              ? "border-[#4F46E5] bg-[#4F46E5] text-white dark:border-[#8B84FF] dark:bg-[#8B84FF]"
-                              : "border-[#CBD5E1] bg-transparent dark:border-[#374151]"
-                          }`}
-                        >
-                          {isChecked && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                        </span>
-
-                        <span
-                          className={`flex-1 truncate text-[12px] uppercase ${
-                            isChecked ? "font-semibold" : "font-medium"
-                          }`}
-                        >
-                          {loc.label}
-                        </span>
-
-                        <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                          {metaText}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 border-t border-[#E2E8F0] bg-[#F8FAFC] px-[15px] py-3 dark:border-[#1F2937] dark:bg-[#0E1524]">
-              <div className="flex items-center gap-1.5 min-w-0">
-                {!isReadyToRun ? (
-                  <>
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-[#E11D48]" />
-                    <span className="text-[12px] font-medium text-[#E11D48] truncate">
-                      {statusLine}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10B981]" />
-                    <span className="text-[12px] text-[#64748B] dark:text-[#94A3B8] truncate">
-                      {statusLine}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <Button
-                type="button"
-                disabled={isRunning}
-                onClick={() => {
-                  if (!month) {
-                    setHasAttemptedRun(true);
-                    showSideAlert("Please select a month to calculate.", "warning");
-                    return;
-                  }
-                  if (selectedLocations.length === 0) {
-                    setHasAttemptedRun(true);
-                    showSideAlert("Please select at least one location to calculate.", "warning");
-                    return;
-                  }
-                  handleRunCalculation();
-                }}
-                loading={isRunning}
-                icon={!isRunning ? <Calculator className="h-3.5 w-3.5 text-white" /> : undefined}
-                className={`flex shrink-0 items-center gap-[7px] !rounded-[9px] !px-[17px] !py-[9px] !h-[38px] !text-[12.5px] !font-semibold !text-white transition !shadow-none ${
-                  isReadyToRun
-                    ? "!cursor-pointer !bg-[#10B981] hover:!brightness-105 active:!scale-[0.99]"
-                    : "!cursor-pointer !bg-[#334155] hover:!bg-[#1E293B]"
-                }`}
-                title={!isReadyToRun ? "Fill required fields to calculate" : "Run calculation"}
-              >
-                <span>{isRunning ? "Calculating…" : "Run calculation"}</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* CARD 3: Progress & summary (after run) */}
-          {(isRunning || runDone) && (
-            <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-              <div className="flex items-center gap-2.5">
-                <span
-                  className={`grid h-5 w-5 place-items-center ${
-                    runDone
-                      ? "text-[#10B981]"
-                      : "text-[#4F46E5] dark:text-[#8B84FF]"
-                  }`}
-                >
-                  {runDone ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                </span>
-                <span className="text-[12.5px] font-semibold text-[#1E293B] dark:text-[#E7ECF3]">
-                  {runDone ? "Calculation complete" : "Calculating attendance…"}
-                </span>
-                <div className="flex-1" />
-                <span className="text-[11.5px] text-[#64748B] dark:text-[#94A3B8]">
-                  {monthName} {year}
-                </span>
-              </div>
-
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#F8FAFC] dark:bg-[#0E1524]">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    runDone ? "bg-[#10B981]" : "bg-[#4F46E5] dark:bg-[#8B84FF]"
-                  }`}
-                  style={{ width: `${runProgress}%` }}
-                />
-              </div>
-
-              {runDone && (
-                <div className="mt-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                  <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                      Employees processed
-                    </div>
-                    <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#1E293B] dark:text-[#E7ECF3]">
-                      {fmt(runStats.total)}
-                    </div>
-                    <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                      Across the selection
-                    </div>
-                  </div>
-
-                  <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                      Paid days updated
-                    </div>
-                    <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#10B981]">
-                      {fmt(runStats.paidDays)}
-                    </div>
-                    <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                      Written to payroll month
-                    </div>
-                  </div>
-
-                  <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                      Absents flagged
-                    </div>
-                    <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#E11D48]">
-                      {fmt(runStats.absents)}
-                    </div>
-                    <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                      Needs regularization
-                    </div>
-                  </div>
-
-                  <div className="rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] p-[11px] dark:border-[#1F2937] dark:bg-[#0E1524]">
-                    <div className="text-[11px] font-[550] text-[#64748B] dark:text-[#94A3B8]">
-                      Locked, skipped
-                    </div>
-                    <div className="mt-1.5 text-[19px] font-[650] tracking-[-0.02em] text-[#F59E0B]">
-                      {runStats.locked}
-                    </div>
-                    <div className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
-                      Attendance already locked
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Warning banner */}
-          {showWarning && warning && (
-            <div className="rounded-xl border-4 border-amber-400 bg-amber-50/90 p-4 shadow-xl backdrop-blur-md transition-all duration-500 animate-in fade-in slide-in-from-left dark:border-amber-500 dark:bg-amber-950/40">
-              <p className="flex items-center gap-2 text-xl font-bold text-amber-600 animate-pulse dark:text-amber-400">
-                <AlertTriangle className="h-6 w-6" /> Warning
-              </p>
-              <p className="mt-2 text-base font-medium text-slate-800 dark:text-slate-100">
-                {warning}
-              </p>
-            </div>
-          )}
-
-          {/* Locked locations banner */}
-          {showLockLocations && lockLocations.length > 0 && (
-            <div className="rounded-xl border-4 border-rose-500 bg-rose-50/90 p-4 shadow-xl backdrop-blur-md transition-all duration-500 animate-in fade-in slide-in-from-left dark:border-rose-600 dark:bg-rose-950/40">
-              <h2 className="flex items-center gap-2 text-xl font-bold text-rose-600 animate-pulse dark:text-rose-400">
-                <Lock className="h-5 w-5" /> Already Updated Attendance Branch
-              </h2>
-              <ul className="mt-2 list-disc pl-6 text-base font-medium text-slate-800 dark:text-slate-100">
-                {lockLocations.map((loc, index) => (
-                  <li key={index} className="transition-all duration-300">
-                    {loc.label}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT COLUMN: Sidebar */}
-        <div className="flex flex-col gap-3 xl:sticky xl:top-20">
-          {/* What this run does */}
-          <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-            <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-              What this run does
-            </span>
-            <div className="mt-3 flex flex-col gap-2.5">
-              <div className="flex items-start gap-2.5">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-[#EEF2FF] text-[#4F46E5] dark:bg-[#1E1B4B] dark:text-[#8B84FF]">
-                  <Clock className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
-                    Punches evaluated against shift
-                  </span>
-                  <span className="block text-[11.5px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
-                    Late marks, half days and overtime are derived from the shift window.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-[#E0F2FE] text-[#0284C7] dark:bg-sky-950/50 dark:text-sky-400">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
-                    Week offs and holidays applied
-                  </span>
-                  <span className="block text-[11.5px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
-                    Roster and the holiday calendar decide non-working days.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-[#F3E8FF] text-[#9333EA] dark:bg-purple-950/50 dark:text-purple-400">
-                  <Gift className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
-                    Comp off eligibility computed
-                  </span>
-                  <span className="block text-[11.5px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
-                    Work on a week off or holiday becomes comp-off eligible.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/50 dark:text-emerald-400">
-                  <ReceiptIndianRupee className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-[600] text-[#1E293B] dark:text-[#E7ECF3]">
-                    Paid days rewritten
-                  </span>
-                  <span className="block text-[11.5px] leading-[1.5] text-[#64748B] dark:text-[#94A3B8]">
-                    Payroll picks up the new paid days for the selected month.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Last runs */}
-          <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-            <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-              Last runs
-            </span>
-            <div className="mt-3 flex flex-col gap-2">
-              {lastRuns.length === 0 ? (
-                <p className="text-[12px] text-[#64748B] dark:text-[#94A3B8] italic">
-                  No runs recorded yet for this period.
-                </p>
-              ) : (
-                lastRuns.map((run, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-[10px] border border-[#E2E8F0] p-[10px] dark:border-[#1F2937]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[12px] font-[550] text-[#1E293B] dark:text-[#E7ECF3]">
-                        {run.scope}
-                      </span>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
-                          run.status === "Completed"
-                            ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
-                            : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
-                        }`}
-                      >
-                        {run.status}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                      {run.meta}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Blocking checks */}
-          <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-[15px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_10px_26px_-14px_rgba(15,23,42,.14)] dark:border-[#1F2937] dark:bg-[#111827]">
-            <span className="text-[11px] font-[600] uppercase tracking-[0.03em] text-[#64748B] dark:text-[#94A3B8]">
-              Blocking checks
-            </span>
-            <div className="mt-3 flex flex-col gap-2.5">
-              <Link
-                href="/payroll/attendance-punch/mispunch-approval-grid"
-                className="group flex items-center justify-between transition-colors hover:opacity-90"
-                title="View pending mispunch approvals"
-              >
-                <div className="flex items-center gap-2.5">
-                  <AlertTriangle
-                    className="h-3.5 w-3.5 shrink-0 text-[#F59E0B]"
-                    strokeWidth={1.8}
-                  />
-                  <span className="text-[12px] font-normal text-slate-700 transition group-hover:text-[#D97706] dark:text-slate-200 dark:group-hover:text-amber-400">
-                    Pending mispunch approvals
-                  </span>
-                </div>
-                <span className="text-[11px] font-[600] text-[#D97706] dark:text-amber-400">
-                  {isLoadingMispunches
-                    ? "Checking…"
-                    : pendingMispunchCount === null
-                    ? "14 open"
-                    : `${pendingMispunchCount} open`}
-                </span>
-              </Link>
-
-              <div
-                onClick={() => {
-                  if (lockLocations.length > 0) {
-                    setShowLockLocations((prev) => !prev);
-                  }
-                }}
-                className={`flex items-center justify-between ${
-                  lockLocations.length > 0 ? "group cursor-pointer" : ""
-                }`}
-                title={
-                  lockLocations.length > 0
-                    ? `${lockLocations.length} branches already updated/locked. Click to view.`
-                    : "No locked branches"
-                }
-              >
-                <div className="flex items-center gap-2.5">
-                  <Lock
-                    className="h-3.5 w-3.5 shrink-0 text-[#E11D48]"
-                    strokeWidth={1.8}
-                  />
-                  <span className="text-[12px] font-normal text-slate-700 transition group-hover:text-[#E11D48] dark:text-slate-200">
-                    Attendance locked branches
-                  </span>
-                </div>
-                <span className="text-[11px] font-[600] text-[#E11D48] dark:text-rose-400">
-                  {lockLocations.length > 0
-                    ? `${lockLocations.length} locked`
-                    : selectedLocations.length
-                    ? `${Math.max(0, Math.round(selectedLocations.length * 0.15))} locked`
-                    : "0 locked"}
-                </span>
-              </div>
-
-              <Link
-                href="/payroll/ars/reset-attn-from-machine-logs"
-                className="group flex items-center justify-between transition-colors hover:opacity-90"
-                title="Reset/sync attendance from machine logs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2
-                    className="h-3.5 w-3.5 shrink-0 text-[#10B981]"
-                    strokeWidth={1.8}
-                  />
-                  <span className="text-[12px] font-normal text-slate-700 transition group-hover:text-[#059669] dark:text-slate-200 dark:group-hover:text-emerald-400">
-                    Machine log sync
-                  </span>
-                </div>
-                <span className="text-[11px] font-[600] text-[#10B981] dark:text-emerald-400">
-                  Up to date
-                </span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ArsActionTemplate
+      title="Attendance calculation by branch"
+      subtitle="Recalculate paid days, statuses and overtime for the branches you pick. Narrow by channel and cluster, then choose the exact locations."
+      filterMode="month-year"
+      filterCardTitle="CHOOSE YOUR LOCATIONS"
+      showChannelCluster={true}
+      showRegion={true}
+      channelOptions={channelOptions}
+      clusterOptions={clusterOptions}
+      regionOptions={regionOptions}
+      selectedChannel={selectedChannels}
+      selectedCluster={selectedClusters}
+      selectedRegion={selectedRegion}
+      selectedMonth={month}
+      selectedYear={year}
+      monthOptions={monthOptions}
+      yearOptions={yearOptions}
+      onFilterChange={handleFilterChange}
+      onReset={handleResetScope}
+      selectionLabel="Locations"
+      searchPlaceholder="Search locations"
+      items={itemsForTemplate}
+      selectedValues={selectedLocations}
+      onToggleItem={handleToggleLocation}
+      onToggleAll={handleSelectAll}
+      isLoadingItems={isLoading}
+      emptyItemsText="No locations found."
+      renderItemRight={(item) => (
+        <span className="shrink-0 text-[10.5px] text-[#64748B] dark:text-[#94A3B8]">
+          {item.metaText}
+        </span>
+      )}
+      actionButtonText={isRunning ? "Calculating…" : "Run calculation"}
+      actionButtonIcon={
+        !isRunning ? <Calculator className="h-3.5 w-3.5 text-white" /> : undefined
+      }
+      actionButtonClassName={
+        isReadyToRun
+          ? "!bg-[#10B981] hover:!brightness-105 active:!scale-[0.99] cursor-pointer"
+          : "!bg-[#334155] hover:!bg-[#1E293B] cursor-pointer"
+      }
+      isActionLoading={isRunning}
+      onAction={handleRunCalculationClick}
+      showClearButton={false}
+      validationText={validationNode}
+      validationStatus={!isReadyToRun ? "error" : "success"}
+      infoCards={{
+        title: "WHAT THIS RUN DOES",
+        items: runRules,
+      }}
+      lastRuns={{
+        title: "LAST RUNS",
+        items: lastRuns,
+      }}
+      blockingChecks={{
+        title: "BLOCKING CHECKS",
+        items: blockingCheckItems,
+      }}
+      extraContent={extraContent}
+      isLoading={false}
+    />
   );
 }

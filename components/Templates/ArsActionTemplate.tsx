@@ -106,6 +106,7 @@ export interface ArsActionTemplateProps {
 
   // Filter props for "month-year" mode
   showChannelCluster?: boolean;
+  showRegion?: boolean;
   monthOptions?: OptionType[];
   yearOptions?: OptionType[];
   selectedMonth?: any;
@@ -127,10 +128,13 @@ export interface ArsActionTemplateProps {
   validationStatus?: "error" | "success" | "warning";
   actionButtonText: string;
   actionButtonIcon?: React.ReactNode;
+  actionButtonClassName?: string;
   onAction: () => void;
   isActionLoading?: boolean;
   showClearButton?: boolean;
   onClear?: () => void;
+  extraContent?: React.ReactNode;
+  children?: React.ReactNode;
 
   // Right Sidebar Cards
   currentlyLocked?: {
@@ -180,6 +184,7 @@ export default function ArsActionTemplate({
   onQuickSet,
 
   showChannelCluster = true,
+  showRegion = false,
   monthOptions = [],
   yearOptions = [],
   selectedMonth,
@@ -199,10 +204,13 @@ export default function ArsActionTemplate({
   validationStatus = "error",
   actionButtonText,
   actionButtonIcon,
+  actionButtonClassName,
   onAction,
   isActionLoading = false,
   showClearButton = true,
   onClear,
+  extraContent,
+  children,
 
   currentlyLocked,
   infoCards,
@@ -410,7 +418,11 @@ export default function ArsActionTemplate({
             {filterMode === "month-year" && (
               <div
                 className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${
-                  showChannelCluster ? "lg:grid-cols-4" : "lg:grid-cols-2"
+                  showChannelCluster && (showRegion || regionOptions.length > 0)
+                    ? "lg:grid-cols-5"
+                    : showChannelCluster
+                    ? "lg:grid-cols-4"
+                    : "lg:grid-cols-2"
                 } items-end`}
               >
                 {showChannelCluster && (
@@ -448,6 +460,24 @@ export default function ArsActionTemplate({
                         className="!h-[38px] !min-h-[38px] !mt-0 !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !px-2.5 shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0 cursor-pointer"
                       />
                     </div>
+
+                    {/* REGION */}
+                    {(showRegion || regionOptions.length > 0) && (
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <span className="text-[11px] font-[650] uppercase tracking-[0.04em] text-[#64748B] dark:text-[#94A3B8]">
+                          REGION
+                        </span>
+                        <Eselect
+                          name="Region"
+                          option={regionOptions}
+                          placeholder="All regions"
+                          initialValue={selectedRegion}
+                          handleInputChange={onFilterChange}
+                          mb={0}
+                          className="!h-[38px] !min-h-[38px] !mt-0 !rounded-[9px] !text-[12.5px] !border-[#E2E8F0] dark:!border-[#1F2937] !bg-white dark:!bg-[#0E1524] !px-3 shadow-none focus-within:!border-[#4F46E5] focus-within:!ring-0 cursor-pointer"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -652,13 +682,19 @@ export default function ArsActionTemplate({
                   onClick={onAction}
                   loading={isActionLoading}
                   icon={actionButtonIcon}
-                  className="!h-[38px] !rounded-[9px] !px-5 !text-[12.5px] !font-semibold !bg-[#334155] hover:!bg-[#1E293B] text-white !shadow-none active:scale-[0.98] transition-all"
+                  className={`!h-[38px] !rounded-[9px] !px-5 !text-[12.5px] !font-semibold text-white !shadow-none active:scale-[0.98] transition-all ${
+                    actionButtonClassName || "!bg-[#334155] hover:!bg-[#1E293B]"
+                  }`}
                 >
                   {actionButtonText}
                 </Button>
               </div>
             </div>
           </div>
+
+          {/* Extra Content (Progress, Summary stats, Banners, etc.) */}
+          {extraContent}
+          {children}
         </div>
 
         {/* ===================== RIGHT SIDEBAR ===================== */}
@@ -781,10 +817,10 @@ export default function ArsActionTemplate({
                           {run.scope}
                         </span>
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${
+                          className={`rounded-full px-2 py-0.5 text-[10.5px] font-[700] ${
                             run.status === "Completed"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                              : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                              ? "bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/60 dark:text-emerald-400"
+                              : "bg-[#FEF3C7] text-[#F59E0B] dark:bg-amber-950/60 dark:text-amber-400"
                           }`}
                         >
                           {run.status}

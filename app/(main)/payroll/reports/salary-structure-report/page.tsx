@@ -1008,7 +1008,6 @@ export default function SalaryStructureReportPage() {
                     showColumnFilters={true}
                      showPageSizeInFooter = {true}
                      resetFilters={true}
-                    initialPageSize={10}
                   />
                 ) : (
                   <div className="flex min-h-[250px] flex-col items-center justify-center px-4 text-center">
