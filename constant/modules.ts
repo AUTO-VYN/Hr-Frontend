@@ -328,6 +328,7 @@ export const PAYROLL_MODULES: ModuleGroup[] = [
         name: "Location Wise Mispunch",
         slug: "location-wise-mispunch",
       },
+      {name:"Face punch machine report",slug:"face-punch-machine-report"},
     ],
   },
   {

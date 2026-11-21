@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 
-import { Search, RotateCcw, X, FileSpreadsheet } from "lucide-react";
+import { Search, RotateCcw, X, FileSpreadsheet, Loader2 } from "lucide-react";
 
 import { useCurrentUser } from "@/app/hooks/use-current-user";
 
@@ -536,7 +536,7 @@ const getColumnWidth = (key: string): number => {
 // --------------------------------------------------
 
 export default function MisPunchApproverReportPage() {
-  const user = useCurrentUser();
+  const user: any = useCurrentUser();
   const router = useRouter();
 
   // --------------------------------------------------
@@ -562,15 +562,46 @@ export default function MisPunchApproverReportPage() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalRecords, setTotalRecords] = useState<number>(0);
+
+  const serverPagination = useMemo(
+    () => ({
+      currentPage,
+      pageSize,
+      totalPages,
+      totalRecords,
+    }),
+    [currentPage, pageSize, totalPages, totalRecords],
+  );
+
   // --------------------------------------------------
   // TABLE STATES
   // --------------------------------------------------
 
   const [search, setSearch] = useState("");
-
+  const [isSearching, setIsSearching] = useState(false);
   const [showColumnFilters, setShowColumnFilters] = useState(false);
-
   const [filters, setFilters] = useState<Record<string, string>>({});
+
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    setIsSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        await fetchReport(1, pageSize, val, false);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+  };
 
   // --------------------------------------------------
   // EMPLOYEE DETAIL DIALOG
@@ -675,7 +706,12 @@ export default function MisPunchApproverReportPage() {
   // --------------------------------------------------
 
   const fetchRowsForStatus = useCallback(
-    async (backendStatus?: number): Promise<any[]> => {
+    async (
+      targetPage: number = 1,
+      targetPageSize: number = 10,
+      searchQuery: string = "",
+      backendStatus?: number,
+    ): Promise<{ rows: any[]; totalPages: number; totalRecords: number }> => {
       // ----------------------------------------------
       // ATTENDANCE REPORT
       // ----------------------------------------------
@@ -683,15 +719,13 @@ export default function MisPunchApproverReportPage() {
       if (reportType === "Attendance report") {
         const apiUrl = `${process.env.NEXT_PUBLIC_URL}${ATTENDANCE_REPORT_API}`;
 
-        const PAGE_SIZE = 500;
-        const PARALLEL_PAGES = 4;
-
-        const createPayload = (page: number) => ({
+        const payload = {
           dateFrom,
           dateto: dateTo,
           status: "3", // Current page ka status preserve kiya hai
           region: "",
           channel: "",
+          search: searchQuery,
           Cluster: "",
           location: "",
           section: "",
@@ -701,21 +735,19 @@ export default function MisPunchApproverReportPage() {
           empcode: "",
           reporttype: "attendance",
           LeftEmp: 1,
-          page,
-          pageSize: PAGE_SIZE,
-          limit: PAGE_SIZE,
+          page: targetPage,
+          pageSize: targetPageSize,
+          limit: targetPageSize,
           loc_code: Number(user?.branch),
-          search: "",
-        });
+        };
 
-        // First page
-        const firstResponse = await axios.post(apiUrl, createPayload(1), {
+        const response = await axios.post(apiUrl, payload, {
           headers: apiHeaders,
           params: { compcode: user?.Comp_Code },
           timeout: 60000,
         });
 
-        const firstData = firstResponse?.data;
+        const firstData = response?.data;
 
         if (firstData?.success === false || firstData?.status === false) {
           throw new Error(
@@ -723,74 +755,29 @@ export default function MisPunchApproverReportPage() {
           );
         }
 
-        const collected = [...getResponseArray(firstData)];
+        const collected = getResponseArray(firstData);
 
-        const totalPages = Math.max(
+        const tPages = Math.max(
           1,
           Number(
             firstData?.pagination?.totalPages ??
-              firstData?.data?.pagination?.totalPages ??
-              1,
+            firstData?.data?.pagination?.totalPages ??
+            1,
           ),
         );
+        const tRecords = Number(
+          firstData?.pagination?.totalRecords ??
+          firstData?.pagination?.total ??
+          firstData?.data?.pagination?.totalRecords ??
+          firstData?.data?.pagination?.total ??
+          0,
+        );
 
-        console.log("Attendance Total Pages:", totalPages);
-        console.log("Attendance Page 1 Records:", collected.length);
-
-        // Remaining pages - 4 pages parallel mein
-        for (
-          let startPage = 2;
-          startPage <= totalPages;
-          startPage += PARALLEL_PAGES
-        ) {
-          const pageNumbers = Array.from(
-            {
-              length: Math.min(PARALLEL_PAGES, totalPages - startPage + 1),
-            },
-            (_, index) => startPage + index,
-          );
-
-          const responses = await Promise.all(
-            pageNumbers.map(async (pageNo) => {
-              const response = await axios.post(apiUrl, createPayload(pageNo), {
-                headers: apiHeaders,
-                params: { compcode: user?.Comp_Code },
-                timeout: 60000,
-              });
-
-              console.log(`Attendance API Page ${pageNo}`);
-
-              return {
-                pageNo,
-                data: response?.data,
-              };
-            }),
-          );
-
-          // Page order maintain rahega
-          responses
-            .sort((a, b) => a.pageNo - b.pageNo)
-            .forEach(({ pageNo, data }) => {
-              if (data?.success === false || data?.status === false) {
-                throw new Error(
-                  data?.message || `Attendance page ${pageNo} failed`,
-                );
-              }
-
-              const pageRows = getResponseArray(data);
-
-              console.log(
-                `Attendance Page ${pageNo} Records:`,
-                pageRows.length,
-              );
-
-              collected.push(...pageRows);
-            });
-        }
-
-        console.log("Attendance Total Records:", collected.length);
-
-        return collected;
+        return {
+          rows: collected,
+          totalPages: tPages,
+          totalRecords: tRecords || collected.length,
+        };
       }
 
       // ----------------------------------------------
@@ -799,70 +786,62 @@ export default function MisPunchApproverReportPage() {
 
       const apiUrl = `${process.env.NEXT_PUBLIC_URL}${APPROVAL_REPORT_API}`;
 
-      let page = 1;
-      let totalPages = 1;
+      const payload = {
+        dateFrom,
+        dateto: dateTo,
+        status: backendStatus ?? 1,
+        region: "",
+        channel: "",
+        Cluster: "",
+        location: "",
+        section: "",
+        department: "",
+        designation: "",
+        emptype: "",
+        empcode: "",
+        reporttype: "OD_report",
+        LeftEmp: 1,
+        page: targetPage,
+        pageSize: targetPageSize,
+        limit: targetPageSize,
+        loc_code: user?.branch,
+        search: searchQuery,
+      };
 
-      const collected: any[] = [];
+      const response = await axios.post(apiUrl, payload, {
+        headers: apiHeaders,
+        params: {
+          compcode: user?.Comp_Code,
+        },
+      });
 
-      do {
-        const payload = {
-          dateFrom,
-          dateto: dateTo,
-          status: backendStatus ?? 1,
-          region: "",
-          channel: "",
-          Cluster: "",
-          location: "",
-          section: "",
-          department: "",
-          designation: "",
-          emptype: "",
-          empcode: "",
-          reporttype: "OD_report",
-          LeftEmp: 1,
-          page,
-          pageSize: FETCH_PAGE_SIZE,
-          limit: FETCH_PAGE_SIZE,
-          loc_code: user?.branch,
-          search: "",
-        };
+      const responseData = response?.data;
 
-        console.log(
-          `Approval Report Payload (status ${backendStatus}, page ${page}):`,
-          payload,
+      if (
+        responseData?.Status === false ||
+        responseData?.status === false ||
+        responseData?.success === false
+      ) {
+        throw new Error(
+          responseData?.message ||
+          responseData?.Message ||
+          "Unable to fetch Approval report.",
         );
+      }
 
-        const response = await axios.post(apiUrl, payload, {
-          headers: apiHeaders,
-          params: {
-            compcode: user?.Comp_Code,
-          },
-        });
+      const pageRows = getResponseArray(responseData);
+      const tPages = Number(responseData?.pagination?.totalPages) || 1;
+      const tRecords = Number(
+        responseData?.pagination?.totalRecords ??
+        responseData?.pagination?.total ??
+        0,
+      );
 
-        const responseData = response?.data;
-
-        if (
-          responseData?.Status === false ||
-          responseData?.status === false ||
-          responseData?.success === false
-        ) {
-          throw new Error(
-            responseData?.message ||
-              responseData?.Message ||
-              "Unable to fetch Approval report.",
-          );
-        }
-
-        const pageRows = getResponseArray(responseData);
-
-        collected.push(...pageRows);
-
-        totalPages = Number(responseData?.pagination?.totalPages) || 1;
-
-        page += 1;
-      } while (page <= totalPages);
-
-      return collected;
+      return {
+        rows: pageRows,
+        totalPages: tPages,
+        totalRecords: tRecords || pageRows.length,
+      };
     },
     [reportType, dateFrom, dateTo, user?.branch, user?.Comp_Code, apiHeaders],
   );
@@ -871,119 +850,149 @@ export default function MisPunchApproverReportPage() {
   // FETCH REPORT
   // --------------------------------------------------
 
-  const fetchReport = useCallback(async () => {
-    if (!user?.Comp_Code) {
-      showSideAlert(
-        "Company information missing. Please login again.",
-        "warning",
-      );
-      return;
-    }
-
-    if (!user?.branch) {
-      showSideAlert("Branch information missing.", "warning");
-      return;
-    }
-
-    if (!validateFilters()) return;
-
-    setLoading(true);
-    setHasSearched(false);
-
-    try {
-      let result: any[] = [];
-
-      if (reportType === "Attendance report") {
-        // Attendance API is called only once.
-        result = await fetchRowsForStatus();
-      } else {
-        // Approval report uses selected status.
-        const backendStatuses =
-          status === "All"
-            ? ALL_BACKEND_STATUSES
-            : [STATUS_API_MAP[status] ?? 1];
-
-        for (const backendStatus of backendStatuses) {
-          const statusRows = await fetchRowsForStatus(backendStatus);
-
-          result = result.concat(statusRows);
-        }
+  const fetchReport = useCallback(
+    async (
+      targetPage: number = 1,
+      targetPageSize: number = pageSize,
+      searchQuery: string = search,
+      showLoader: boolean = true,
+    ) => {
+      if (!user?.Comp_Code) {
+        showSideAlert(
+          "Company information missing. Please login again.",
+          "warning",
+        );
+        return;
       }
 
-      console.log(`${reportType} Total Rows:`, result.length);
+      if (!user?.branch) {
+        showSideAlert("Branch information missing.", "warning");
+        return;
+      }
 
-      let mappedRows: ReportRow[] = [];
-      let dynamicHeaders: string[] = [];
+      if (!validateFilters()) return;
 
-      if (reportType === "Attendance report") {
-        // Attendance report fixed columns and field mapping
-        mappedRows = mapAttendanceRows(result);
+      if (showLoader) {
+        setLoading(true);
+      }
 
-        dynamicHeaders = ATTENDANCE_HEADERS;
-      } else {
-        // Approval report existing mapping unchanged
-        mappedRows = mapReportRows(result, []).map((item, index) => ({
-          ...item,
-          srno: index + 1,
-        }));
+      try {
+        let result: any[] = [];
+        let tPages = 1;
+        let tRecords = 0;
 
-        if (mappedRows.length > 0) {
-          const firstRowKeys = Object.keys(mappedRows[0]);
-
-          dynamicHeaders = PREFERRED_HEADERS.filter((key) =>
-            firstRowKeys.includes(key),
+        if (reportType === "Attendance report") {
+          const res = await fetchRowsForStatus(
+            targetPage,
+            targetPageSize,
+            searchQuery,
           );
+          result = res.rows;
+          tPages = res.totalPages;
+          tRecords = res.totalRecords;
+        } else {
+          const backendStatus = STATUS_API_MAP[status] ?? 1;
+          const res = await fetchRowsForStatus(
+            targetPage,
+            targetPageSize,
+            searchQuery,
+            backendStatus,
+          );
+          result = res.rows;
+          tPages = res.totalPages;
+          tRecords = res.totalRecords;
+        }
 
-          if (dynamicHeaders.length <= 1) {
-            dynamicHeaders = [
-              "srno",
-              ...firstRowKeys.filter(
-                (key) => key !== "srno" && !HIDDEN_KEYS.includes(key),
-              ),
-            ];
+        console.log(`${reportType} Page ${targetPage} Rows:`, result.length);
+
+        let mappedRows: ReportRow[] = [];
+        let dynamicHeaders: string[] = [];
+
+        if (reportType === "Attendance report") {
+          mappedRows = mapAttendanceRows(result);
+          dynamicHeaders = ATTENDANCE_HEADERS;
+        } else {
+          mappedRows = mapReportRows(result, []).map((item, index) => ({
+            ...item,
+            srno: (targetPage - 1) * targetPageSize + index + 1,
+          }));
+
+          if (mappedRows.length > 0) {
+            const firstRowKeys = Object.keys(mappedRows[0]);
+
+            dynamicHeaders = PREFERRED_HEADERS.filter((key) =>
+              firstRowKeys.includes(key),
+            );
+
+            if (dynamicHeaders.length <= 1) {
+              dynamicHeaders = [
+                "srno",
+                ...firstRowKeys.filter(
+                  (key) => key !== "srno" && !HIDDEN_KEYS.includes(key),
+                ),
+              ];
+            }
           }
         }
+
+        setHeaders(dynamicHeaders);
+        setRows(mappedRows);
+        setCurrentPage(targetPage);
+        setPageSize(targetPageSize);
+        setTotalPages(tPages);
+        setTotalRecords(tRecords);
+
+        setFilters(Object.fromEntries(dynamicHeaders.map((key) => [key, ""])));
+        setHasSearched(true);
+
+        if (mappedRows.length === 0) {
+          if (showLoader) {
+            showSideAlert("No records found.", "info");
+          }
+        } else if (showLoader) {
+          showSideAlert(
+            `Page ${targetPage} loaded (${mappedRows.length} records).`,
+            "success",
+          );
+        }
+      } catch (error: any) {
+        console.error(`${reportType} Error:`, error);
+
+        setRows([]);
+        setHeaders([]);
+        setHasSearched(true);
+
+        Swal.fire({
+          icon: "error",
+          title: "Report failed",
+          text: getApiError(error),
+        });
+      } finally {
+        if (showLoader) {
+          setLoading(false);
+        }
       }
+    },
+    [
+      user?.Comp_Code,
+      user?.branch,
+      validateFilters,
+      pageSize,
+      reportType,
+      status,
+      fetchRowsForStatus,
+      search,
+    ],
+  );
 
-      setHeaders(dynamicHeaders);
-      setRows(mappedRows);
+  const handlePageChange = (newPage: number, showLoader = true) => {
+    fetchReport(newPage, pageSize, search, showLoader);
+  };
 
-      setFilters(Object.fromEntries(dynamicHeaders.map((key) => [key, ""])));
-
-      setSearch("");
-      setHasSearched(true);
-
-      if (mappedRows.length === 0) {
-        showSideAlert("No records found.", "info");
-      } else {
-        showSideAlert(
-          `${mappedRows.length} records fetched successfully.`,
-          "success",
-        );
-      }
-    } catch (error: any) {
-      console.error(`${reportType} Error:`, error);
-
-      setRows([]);
-      setHeaders([]);
-      setHasSearched(true);
-
-      Swal.fire({
-        icon: "error",
-        title: "Report failed",
-        text: getApiError(error),
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    user?.Comp_Code,
-    user?.branch,
-    reportType,
-    status,
-    validateFilters,
-    fetchRowsForStatus,
-  ]);
+  const handlePageSizeChange = (newSize: number) => {
+    const validSize = newSize === -1 ? 500 : newSize;
+    fetchReport(1, validSize, search, true);
+  };
 
   // --------------------------------------------------
   // INPUT HANDLERS
@@ -1117,8 +1126,8 @@ export default function MisPunchApproverReportPage() {
         1,
         Number(
           firstData?.pagination?.totalPages ??
-            firstData?.data?.pagination?.totalPages ??
-            1,
+          firstData?.data?.pagination?.totalPages ??
+          1,
         ),
       );
 
@@ -1154,8 +1163,8 @@ export default function MisPunchApproverReportPage() {
       console.error("Employee attendance detail error:", error);
       showSideAlert(
         error?.response?.data?.message ||
-          error?.message ||
-          "Unable to fetch attendance details.",
+        error?.message ||
+        "Unable to fetch attendance details.",
         "error",
       );
       setAttendanceDetailRows([]);
@@ -1322,28 +1331,19 @@ export default function MisPunchApproverReportPage() {
   // --------------------------------------------------
 
   const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const activeFilters = Object.entries(filters).filter(
+      ([_, v]) => v && v.trim() !== "",
+    );
+    if (activeFilters.length === 0) return rows;
 
     return rows.filter((row) => {
-      const matchesSearch =
-        !query ||
-        headers.some((key) =>
-          String(row[key] ?? "")
-            .toLowerCase()
-            .includes(query),
-        );
-
-      const matchesColumns = Object.entries(filters).every(([key, value]) => {
-        if (!value.trim()) return true;
-
+      return activeFilters.every(([key, value]) => {
         return String(row[key] ?? "")
           .toLowerCase()
           .includes(value.trim().toLowerCase());
       });
-
-      return matchesSearch && matchesColumns;
     });
-  }, [rows, headers, search, filters]);
+  }, [rows, filters]);
 
   // --------------------------------------------------
   // RESET TABLE FILTERS
@@ -1371,6 +1371,10 @@ export default function MisPunchApproverReportPage() {
     setFilters({});
     setHasSearched(false);
     setShowColumnFilters(false);
+    setCurrentPage(1);
+    setPageSize(10);
+    setTotalPages(1);
+    setTotalRecords(0);
   };
 
   // --------------------------------------------------
@@ -1404,11 +1408,10 @@ export default function MisPunchApproverReportPage() {
 
         <div className="rounded-2xl border border-[#dce5f1] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.03)] dark:border-slate-700 dark:bg-slate-900 sm:p-5">
           <div
-            className={`grid grid-cols-1 items-end gap-4 sm:grid-cols-2 ${
-              showStatusField
+            className={`grid grid-cols-1 items-end gap-4 sm:grid-cols-2 ${showStatusField
                 ? "xl:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto]"
                 : "xl:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto]"
-            }`}
+              }`}
           >
             {/* REPORT TYPE */}
 
@@ -1473,7 +1476,7 @@ export default function MisPunchApproverReportPage() {
             <div className="flex items-end">
               <AButton
                 type="button"
-                onClick={fetchReport}
+                onClick={() => fetchReport(1, pageSize, search, true)}
                 disabled={loading}
                 className="inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-7 text-[13px] font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
               >
@@ -1497,7 +1500,7 @@ export default function MisPunchApproverReportPage() {
                 <span className="font-semibold text-[#152b4b] dark:text-slate-100">
                   {filteredRows.length}
                 </span>{" "}
-                of {rows.length} rows
+                of {totalRecords || rows.length} rows
               </p>
             </div>
           </div>
@@ -1548,34 +1551,32 @@ export default function MisPunchApproverReportPage() {
           {/* TABLE */}
 
           {hasSearched ? (
-            <div className="w-full min-w-0">
-              <div>
-                {filteredRows.length > 0 ? (
-                  <DataTable
-                    columns={columns}
-                    data={filteredRows}
-                    showTopSearch={true}
-                    resetFilters={true}
-                    showExcelExport={true}
-                    showColumnFilters={true}
-                    showPageSizeInFooter={true}
-                  />
-                ) : (
-                  <div className="flex min-h-[250px] flex-col items-center justify-center px-4 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                      <Search size={20} className="text-slate-400" />
-                    </div>
-
-                    <h3 className="mt-3 text-[14px] font-semibold text-[#152b4b] dark:text-slate-100">
-                      No records found
-                    </h3>
-
-                    <p className="mt-1 text-[12px] text-[#64748b] dark:text-slate-400">
-                      No records available for the selected filters.
-                    </p>
+            <div className="relative w-full min-w-0">
+              {isSearching && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[1px] dark:bg-slate-900/60 rounded-2xl">
+                  <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-[12.5px] font-medium text-slate-700 dark:text-slate-200">
+                      Searching...
+                    </span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              <DataTable
+                columns={columns}
+                data={filteredRows}
+                showTopSearch={true}
+                resetFilters={true}
+                showExcelExport={true}
+                showColumnFilters={true}
+                showPageSizeInFooter={true}
+                serverMode={true}
+                serverPagination={serverPagination}
+                onServerPageChange={handlePageChange}
+                onServerPageSizeChange={handlePageSizeChange}
+                searchValue={search}
+                onSearchChange={handleSearchChange}
+              />
             </div>
           ) : (
             <div className="flex min-h-[290px] flex-col items-center justify-center px-4 text-center">
@@ -1611,11 +1612,10 @@ export default function MisPunchApproverReportPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="employee-detail-title"
-            className={`relative flex max-h-[94vh] w-full flex-col overflow-hidden rounded-lg border border-slate-700 bg-white shadow-2xl dark:border-slate-600 dark:bg-slate-900 ${
-              reportType === "Attendance report"
+            className={`relative flex max-h-[94vh] w-full flex-col overflow-hidden rounded-lg border border-slate-700 bg-white shadow-2xl dark:border-slate-600 dark:bg-slate-900 ${reportType === "Attendance report"
                 ? "max-w-[1480px]"
                 : "max-w-[1120px]"
-            }`}
+              }`}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-slate-300 px-5 py-3 dark:border-slate-700">
               <h2
@@ -1684,11 +1684,11 @@ export default function MisPunchApproverReportPage() {
                           <span className="font-medium">
                             {label === "Date Of Joining"
                               ? formatDateOnly(
-                                  getFieldValue(selectedEmployee, aliases),
-                                )
+                                getFieldValue(selectedEmployee, aliases),
+                              )
                               : displayValue(
-                                  getFieldValue(selectedEmployee, aliases),
-                                )}
+                                getFieldValue(selectedEmployee, aliases),
+                              )}
                           </span>
                         </div>
                       ))}
@@ -2019,11 +2019,11 @@ export default function MisPunchApproverReportPage() {
                           <span className="font-semibold">
                             {label === "Joining Date"
                               ? formatDateOnly(
-                                  getFieldValue(selectedEmployee, aliases),
-                                )
+                                getFieldValue(selectedEmployee, aliases),
+                              )
                               : displayValue(
-                                  getFieldValue(selectedEmployee, aliases),
-                                )}
+                                getFieldValue(selectedEmployee, aliases),
+                              )}
                           </span>
                         </div>
                       ))}
