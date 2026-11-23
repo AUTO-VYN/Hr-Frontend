@@ -21,8 +21,8 @@ import Einput from "@/components/atoms/Einput";
 import Eselect from "@/components/atoms/Eselect";
 import { cn } from "@/lib/utils";
 
-// Re-export atom components for convenience
-export { Einput, Eselect, DataTable, StatCard };
+// Re-export atom components for convenience (Eselect is the standard select field)
+export { AButton, Einput, Eselect, DataTable, StatCard };
 
 // ----------------------------------------------------------------------
 // EXCEL DROPZONE COMPONENT
@@ -162,6 +162,18 @@ export const ExcelDropzone: React.FC<ExcelDropzoneProps> = ({
 // TEMPLATE PROPS
 // ----------------------------------------------------------------------
 
+export interface TemplateSelectField {
+  title?: string;
+  name: string;
+  option: { value: any; label: string }[];
+  value?: any;
+  handleInputChange?: (name: string, value: any) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+}
+
 export interface ExcelImportTemplateProps {
   title: string;
   subtitle?: string;
@@ -171,8 +183,19 @@ export interface ExcelImportTemplateProps {
   hideBack?: boolean;
   isLoading?: boolean;
 
-  // Main Card Slot (e.g. dropzone, filters, import button)
+  // Main Card Slot (Custom override if passed)
   uploadCard?: React.ReactNode;
+
+  // Standard Built-in Upload Card Props
+  file?: File | null;
+  onFileSelect?: (file: File | null) => void;
+  onImport?: () => void;
+  importButtonText?: string;
+  isImportDisabled?: boolean;
+  selectFields?: TemplateSelectField[];
+  filters?: React.ReactNode;
+  dropzoneAccept?: string;
+  dropzoneHint?: string;
 
   // Optional Right-side Helper Card (e.g. Deduction codes table)
   helperCard?: React.ReactNode;
@@ -213,6 +236,15 @@ export default function ExcelImportTemplate({
   hideBack = false,
   isLoading = false,
   uploadCard,
+  file,
+  onFileSelect,
+  onImport,
+  importButtonText = "Import",
+  isImportDisabled,
+  selectFields,
+  filters,
+  dropzoneAccept,
+  dropzoneHint,
   helperCard,
   columnsList,
   columnsCardFooterText = "After import, imported and rejected rows appear here with the reason for each rejection.",
@@ -268,7 +300,7 @@ export default function ExcelImportTemplate({
                 variant="outline"
                 size="md"
                 onClick={onDownloadSample}
-                className="rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-indigo-700 dark:text-indigo-400 dark:border-slate-700 dark:bg-[#0B1220] dark:hover:bg-slate-800 px-4 text-xs font-semibold shadow-xs flex items-center gap-1.5"
+                className="rounded-lg border-slate-200 bg-white hover:bg-slate-50 text-indigo-700 dark:text-indigo-400 dark:border-slate-700 dark:bg-[#0B1220] dark:hover:bg-slate-800 px-4 text-md font-semibold shadow-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{downloadSampleText}</span>
@@ -281,7 +313,7 @@ export default function ExcelImportTemplate({
                 variant="outline"
                 size="md"
                 onClick={handleBack}
-                className="rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:text-slate-300 dark:border-slate-700 dark:bg-[#0B1220] dark:hover:bg-slate-800 px-4 text-xs font-semibold shadow-xs flex items-center gap-1.5"
+                className="rounded-lg border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:text-slate-300 dark:border-slate-700 dark:bg-[#0B1220] dark:hover:bg-slate-800 px-4 text-md font-semibold shadow-xs flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -294,9 +326,80 @@ export default function ExcelImportTemplate({
         {/* UPLOAD & HELPER SECTION */}
         {/* ============================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Upload Card */}
+          {/* Upload Card: either custom uploadCard OR built-in standardized card */}
           <div className={cn(helperCard ? "lg:col-span-8" : "lg:col-span-12")}>
-            {uploadCard}
+            {uploadCard ? (
+              uploadCard
+            ) : onFileSelect ? (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1220] p-4 sm:p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] space-y-4">
+                {/* Standard Select Fields using Eselect */}
+                {selectFields && selectFields.length > 0 && (
+                  <div
+                    className={cn(
+                      "grid gap-3",
+                      selectFields.length === 1
+                        ? "grid-cols-1"
+                        : selectFields.length === 2
+                        ? "grid-cols-1 sm:grid-cols-2"
+                        : "grid-cols-1 sm:grid-cols-3"
+                    )}
+                  >
+                    {selectFields.map((field) => (
+                      <Eselect
+                        key={field.name}
+                        title={field.title}
+                        name={field.name}
+                        option={field.option}
+                        initialValue={field.value}
+                        handleInputChange={field.handleInputChange || (() => {})}
+                        placeholder={field.placeholder || "Select"}
+                        disabled={field.disabled || isLoading}
+                        required={field.required}
+                        redlabel={field.required !== false ? " *" : undefined}
+                        labelClassName="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                        className={cn("!h-10 w-full rounded-xl text-[13px]", field.className)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Optional Custom Filters Slot */}
+                {filters && <div>{filters}</div>}
+
+                {/* Built-in Dropzone */}
+                <ExcelDropzone
+                  file={file}
+                  onFileSelect={onFileSelect}
+                  accept={dropzoneAccept}
+                  hint={dropzoneHint}
+                  disabled={isLoading}
+                />
+
+                {/* Import Action Footer */}
+                {onImport && (
+                  <div className="flex items-center justify-between pt-1">
+                    <AButton
+                      type="button"
+                      onClick={onImport}
+                      loading={isLoading}
+                      disabled={isImportDisabled ?? (!file || isLoading)}
+                      className="rounded-lg bg-[#818CF8] hover:bg-[#6366F1] disabled:bg-[#818CF8]/70 disabled:opacity-100 disabled:cursor-not-allowed text-white min-w-[100px] px-6 h-10 text-md font-semibold shadow-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    >
+                      {importButtonText}
+                    </AButton>
+
+                    {file && (
+                      <span className="text-[12px] text-slate-500 dark:text-slate-400">
+                        Selected:{" "}
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          {file.name}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Optional Right-hand Helper Card */}
@@ -379,7 +482,7 @@ export default function ExcelImportTemplate({
             </div>
 
             {/* Badges list */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 max-h-[108px] overflow-y-auto custom-scrollbar pr-1">
               {columnsList.map((col, idx) => (
                 <span
                   key={idx}

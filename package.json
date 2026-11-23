@@ -39,7 +39,8 @@
     "sweetalert2": "^11.10.6",
     "tailwind-merge": "^2.2.1",
     "use-debounce": "^10.0.0",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20",
